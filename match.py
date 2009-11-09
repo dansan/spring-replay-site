@@ -14,6 +14,9 @@ def keyValPair(line):
 	val = line.split('=')[1]
 	return (key , val)
 
+def find_key(dic, val):
+	return [k for k, v in dic.iteritems() if v == val][0]
+
 def parseSec( sec ):
 	dic = dict()
 	lines=sec.split('\n')
@@ -47,7 +50,14 @@ class MatchToDbWrapper():
 		session.add( match )
 		session.commit()
 		#session.refresh()
-		for key,val in dict(self.options.items() + self.restr.items()).iteritems():
+		for key,val in self.options.iteritems():
+			s = MatchSetting()
+			s.key = key
+			s.val = val
+			s.match_id = match.id
+			session.add( s )
+			session.commit()
+		for key,val in self.restr.iteritems():
 			s = MatchSetting()
 			s.key = key
 			s.val = val
@@ -56,7 +66,7 @@ class MatchToDbWrapper():
 			session.commit()
 		self.CommitPlayerResults(session,match)
 		session.close()
-		GlobalRankingAlgoSelector.GetInstance( 'simple' ).Update( ladder.id, self, db )
+		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, self, db )
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
@@ -87,6 +97,10 @@ class MatchToDbWrapper():
 			r = Result()
 			r.team = team
 			self.players[ name ] = r
+
+		for teamid,ally in self.allies.iteritems():
+			name = find_key( self.teams, teamid )
+			self.players[ name ].ally = ally
 
 		for line in game_section.split('\n'):
 			tokens = line.split()
