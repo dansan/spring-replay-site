@@ -41,7 +41,7 @@ class MatchToDbWrapper(Object):
 		session.add( match )
 		session.commit()
 		session.refresh()
-		for key,val in some_dict.iteritems():
+		for key,val in dict(self.options.items() + self.restr.items()):
 			s = MatchSetting()
 			s.key = key
 			s.val = value
@@ -106,18 +106,4 @@ class MatchToDbWrapper(Object):
 					assert len(tokens) > 1
 					self.game_over = tokens[1]
 					
-			
-			
-#id 				= Column( Integer, primary_key=True )
-#player_id 		= Column( Integer, ForeignKey( Player.id ) )
-#match_id 		= Column( Integer, ForeignKey( Match.id ) )
-#team			= Column( Integer )
-#ally			= Column( Integer )
-#won				= Column( Boolean )
-#disconnect		= Column( Integer )
-#quit			= Column( Integer )
-#desync			= Column( Integer )
-#timeout			= Column( Integer )
-#died			= Column( Integer )
-#connected		= Column( Boolean )
 
