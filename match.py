@@ -79,7 +79,6 @@ class MatchToDbWrapper():
 			result.match_id = match.id
 			session.add( result )
 			session.commit()
-		#return results
 
 	def ParseSpringOutput(self):
 		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
@@ -89,7 +88,6 @@ class MatchToDbWrapper():
 		self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
 
 		game_section 	= getSectionContect( self.springoutput, 'GAME' )
-		print 'game_section\n',game_section
 		num_players = len(self.teams)
 		self.players = dict()
 		
