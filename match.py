@@ -4,6 +4,14 @@ from db_entities import *
 from datetime import datetime,timedelta
 from ranking import *
 
+class InvalidOptionSetup( Exception ):
+	def __init__(self, gameid, ladderid):
+		self.gameid = gameid
+		self.ladderid = ladderid
+
+	def __str__(self):
+		return "Setup for game %s did not match ladder rules for ladder %d" %(self.gameid,self.ladderid)
+
 def getSectionContect( string, name ):
 	b = string.find('BEGIN'+name)
 	e = string.find('END'+name)
@@ -36,12 +44,90 @@ class MatchToDbWrapper():
 		self.game_started	= False
 		self.game_over		= -1
 
+	def CheckOptionOk( self, db, keyname, value ):
+		if db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
+			return False
+		if db.GetOptionKeyExists( self.ladder_id, True, keyname ): # whitelist not empty
+			return db.GetOptionKeyValueExists( self.ladder_id, True, keyname, value )
+		else:
+			return True
+
+	def CheckValidOptionsSetup( self, db ):
+		laddername = db.GetLadderName( self.ladder_id )
+		for key in self.options:
+			value = self.options[key]
+			IsOk = self.CheckOptionOk( db, key, value )
+			if not IsOk:
+				return False
+		return True
+
+	def CheckValidSetup( self, db ):
+		a = self.CheckvalidPlayerSetup(db)
+		b = self.CheckValidOptionsSetup(db)
+		return a and b
+
+	def CheckvalidPlayerSetup( self, db ):
+		laddername = db.GetLadderName( self.ladder_id )
+
+		teamsdict = dict()
+		alliesdict = dict()
+		for player in self.teams:
+			if not db.AccessCheck( self.ladder_id, player, Roles.User ):
+				return False
+			team = self.teams[player]
+			if not team in teamsdict:
+				teamsdict[team] = 1
+			else:
+				teamsdict[team] += 1
+		for team in self.allies:
+			ally = self.allies[team]
+			if not ally in alliesdict:
+				alliesdict[ally] = 1
+			else:
+				alliesdict[ally] += 1
+
+		teamcount = len(teamsdict)
+		allycount = len(alliesdict)
+		minteamcount = db.GetLadderOption( self.ladder_id, "min_team_count" )
+		maxteamcount = db.GetLadderOption( self.ladder_id, "max_team_count" )
+		minallycount = db.GetLadderOption( self.ladder_id, "min_ally_count" )
+		maxallycount = db.GetLadderOption( self.ladder_id, "max_ally_count" )
+		if teamcount < minteamcount:
+			return False
+		if teamcount > maxteamcount:
+			return False
+		if allycount < minallycount:
+			return False
+		if allycount > maxallycount:
+			return False
+		minteamsize = db.GetLadderOption( self.ladder_id, "min_team_size" )
+		maxteamsize = db.GetLadderOption( self.ladder_id, "max_team_size" )
+		minallysize = db.GetLadderOption( self.ladder_id, "min_ally_size" )
+		maxallysize = db.GetLadderOption( self.ladder_id, "max_team_size" )
+		for team in teamsdict:
+			teamsize = teamsdict[team]
+			if teamsize < minteamsize:
+				return False
+			if teamsize > maxteamsize:
+				return False
+
+		for ally in alliesdict:
+			allysize = alliesdict[ally]
+			if allysize < minallysize:
+				return False
+			if allysize > maxallysize:
+				return False
+
+		return True
+
 	def CommitMatch(self,db):
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
+		if not self.CheckValidSetup( db ):
+			raise InvalidOptionSetup( self.gameid["gameid"] , self.ladder_id )
 		session = db.sessionmaker()
 		match = Match()
-		match.date 	= datetime.now() 
+		match.date 	= datetime.now()
 		match.modname  = ''
 		match.mapname = ''
 		match.replay = ''
@@ -82,15 +168,15 @@ class MatchToDbWrapper():
 
 	def ParseSpringOutput(self):
 		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
+		self.gameid		= parseSec( getSectionContect( setup_section, 'GAMEID'      ) )
 		self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
 		self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
 		self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
 		self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
-
 		game_section 	= getSectionContect( self.springoutput, 'GAME' )
 		num_players = len(self.teams)
 		self.players = dict()
-		
+
 		for name,team in self.teams.iteritems():
 			r = Result()
 			r.team = team
@@ -128,5 +214,3 @@ class MatchToDbWrapper():
 				else:
 					assert len(tokens) > 1
 					self.game_over = tokens[1]
-					
-
