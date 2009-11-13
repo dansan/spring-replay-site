@@ -123,14 +123,16 @@ class MatchToDbWrapper():
 	def CommitMatch(self,db):
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
+		gameid = self.gameid["gameid"]
 		if not self.CheckValidSetup( db ):
-			raise InvalidOptionSetup( self.gameid["gameid"] , self.ladder_id )
+			raise InvalidOptionSetup( gameid, self.ladder_id )
 		session = db.sessionmaker()
 		match = Match()
 		match.date 	= datetime.now()
 		match.modname  = ''
 		match.mapname = ''
 		match.replay = ''
+		match.game_id = gameid
 		match.duration = timedelta(days=666)
 		match.ladder_id = ladder.id
 		session.add( match )
