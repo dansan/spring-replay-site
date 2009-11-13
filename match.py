@@ -137,7 +137,7 @@ class MatchToDbWrapper():
 	def CommitMatch(self,db):
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
-		gameid = self.gameid["gameid"]
+		gameid = self.gameid
 		if not self.CheckValidSetup( db ):
 			raise InvalidOptionSetup( gameid, self.ladder_id )
 		session = db.sessionmaker()
@@ -184,7 +184,6 @@ class MatchToDbWrapper():
 
 	def ParseSpringOutput(self):
 		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
-		self.gameid		= parseSec( getSectionContect( setup_section, 'GAMEID'      ) )
 		self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
 		self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
 		self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
@@ -193,6 +192,10 @@ class MatchToDbWrapper():
 		game_section 	= getSectionContect( self.springoutput, 'GAME' )
 		num_players = len(self.teams)
 		self.players = dict()
+		if 'gameid' in self.options.keys():
+			self.gameid = self.options['gameid']
+		else:
+			self.gameid = 'no game id found'
 
 		for name,team in self.teams.iteritems():
 			r = Result()
