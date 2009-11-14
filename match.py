@@ -134,11 +134,11 @@ class MatchToDbWrapper():
 
 		return True
 
-	def CommitMatch(self,db):
+	def CommitMatch(self,db, doValidation=True):
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
 		gameid = self.gameid
-		if not self.CheckValidSetup( db ):
+		if doValidation and not self.CheckValidSetup( db ):
 			raise InvalidOptionSetup( gameid, self.ladder_id )
 		session = db.sessionmaker()
 		match = Match()
