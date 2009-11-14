@@ -179,6 +179,7 @@ class MatchToDbWrapper():
 				session.commit()
 			result.player_id = p.id
 			result.match_id = match.id
+			result.ladder_id = match.ladder_id
 			session.add( result )
 			session.commit()
 
