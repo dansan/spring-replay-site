@@ -37,9 +37,8 @@ def parseSec( sec ):
 
 class MatchToDbWrapper():
 
-	def __init__( self, stdout, battlefounder, ladder_id ):
+	def __init__( self, stdout, ladder_id ):
 		self.springoutput 	= stdout
-		self.battlefounder 	= battlefounder
 		self.ladder_id		= ladder_id
 		self.game_started	= False
 		self.game_over		= -1
@@ -149,6 +148,7 @@ class MatchToDbWrapper():
 		match.game_id = gameid
 		match.duration = timedelta(days=666)
 		match.ladder_id = ladder.id
+		match.last_frame = self.game_over
 		session.add( match )
 		session.commit()
 		#session.refresh()
@@ -168,7 +168,7 @@ class MatchToDbWrapper():
 			session.commit()
 		self.CommitPlayerResults(session,match)
 		session.close()
-		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, self, db )
+		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
@@ -180,6 +180,7 @@ class MatchToDbWrapper():
 			result.player_id = p.id
 			result.match_id = match.id
 			result.ladder_id = match.ladder_id
+			result.date = match.date
 			session.add( result )
 			session.commit()
 
