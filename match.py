@@ -12,6 +12,14 @@ class InvalidOptionSetup( Exception ):
 	def __str__(self):
 		return "Setup for game %s did not match ladder rules for ladder %d" %(self.gameid,self.ladderid)
 
+class BannedPlayersDetectedException( Exception ):
+	def __init__(self, bannedplayers ):
+		self.bannedplayers = bannedplayers
+
+	def __str__(self):
+		return "The game had banned banned players (%s) in it and was not reported!" %(self.bannedplayers )
+
+
 def getSectionContect( string, name ):
 	b = string.find('BEGIN'+name)
 	e = string.find('END'+name)
@@ -71,9 +79,11 @@ class MatchToDbWrapper():
 		teamsdict = dict()
 		alliesdict = dict()
 		countedbots = []
+		bannedplayers = []
 		for player in self.teams:
 			if not db.AccessCheck( self.ladder_id, player, Roles.User ):
-				return False
+				bannedplayers.append( player )
+				continue
 			team = self.teams[player]
 			if not team in teamsdict:
 				teamsdict[team] = 1
@@ -85,6 +95,8 @@ class MatchToDbWrapper():
 					countedbots.append(libname)
 				else:
 					return False
+		if len(bannedplayers) != 0:
+			raise BannedPlayersDetectedException( bannedplayers )
 		for team in self.allies:
 			ally = self.allies[team]
 			if not ally in alliesdict:
