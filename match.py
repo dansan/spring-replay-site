@@ -229,9 +229,6 @@ class MatchToDbWrapper():
 			elif tokens[0] == 'DESYNC':
 				assert len(tokens) > 2
 				self.players[tokens[3]].desync = True
-			elif tokens[0] == 'LEAVE':
-				assert len(tokens) > 2
-				self.players[tokens[2]].quit = tokens[1]
 			elif tokens[0] == 'TEAMDIED':
 				assert len(tokens) > 2
 				for name,team_id in self.teams.iteritems():
