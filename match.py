@@ -206,11 +206,7 @@ class MatchToDbWrapper():
 		game_section 	= getSectionContect( self.springoutput, 'GAME' )
 		num_players = len(self.teams)
 		self.players = dict()
-		if 'gameid' in self.options.keys():
-			self.gameid = self.options['gameid']
-		else:
-			self.gameid = 'no game id found'
-
+		self.gameid = 'no game id found'
 		for name,team in self.teams.iteritems():
 			r = Result()
 			r.team = team
@@ -239,6 +235,9 @@ class MatchToDbWrapper():
 				self.players[tokens[2]].disconnect = tokens[1]
 			elif tokens[0] == 'GAMESTART':
 				self.game_started = True
+			elif tokens[0] == 'GAMEID':
+				assert len(tokens) > 1
+				self.gameid = tokens[1]
 			elif tokens[0] == 'GAMEOVER':
 				if not self.game_started:
 					print 'big bad error'
