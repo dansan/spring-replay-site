@@ -43,13 +43,7 @@ def parseSec( sec ):
 		dic[key] = val
 	return dic
 
-class MatchToDbWrapper():
-
-	def __init__( self, stdout, ladder_id ):
-		self.springoutput 	= stdout
-		self.ladder_id		= ladder_id
-		self.game_started	= False
-		self.game_over		= -1
+class MatchToDbWrapper:
 
 	def CheckOptionOk( self, db, keyname, value ):
 		if db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
@@ -72,6 +66,79 @@ class MatchToDbWrapper():
 		a = self.CheckvalidPlayerSetup(db)
 		b = self.CheckValidOptionsSetup(db)
 		return a and b
+
+	def CommitMatch(self,db, doValidation=True):
+		self.ParseSpringOutput()
+		ladder = db.GetLadder(self.ladder_id )
+		gameid = self.gameid
+		if doValidation and not self.CheckValidSetup( db ):
+			raise InvalidOptionSetup( gameid, self.ladder_id )
+		session = db.sessionmaker()
+		match = Match()
+		match.date 	= datetime.now()
+		match.modname  = ''
+		match.mapname = ''
+		match.replay = ''
+		match.game_id = gameid
+		match.duration = timedelta(days=666)
+		match.ladder_id = ladder.id
+		match.last_frame = self.game_over
+		session.add( match )
+		session.commit()
+		#session.refresh()
+		for key,val in self.options.iteritems():
+			s = MatchSetting()
+			s.key = key
+			s.val = val
+			s.match_id = match.id
+			session.add( s )
+			session.commit()
+		for key,val in self.restr.iteritems():
+			s = MatchSetting()
+			s.key = key
+			s.val = val
+			s.match_id = match.id
+			session.add( s )
+			session.commit()
+		self.CommitPlayerResults(session,match)
+		session.close()
+		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
+
+	def CommitPlayerResults(self,session,match):
+		for name,result in self.players.iteritems():
+			p = session.query( Player ).filter( Player.nick == name ).first()
+			if not p:
+				p = Player( name )
+				session.add( p )
+				session.commit()
+			result.player_id = p.id
+			result.match_id = match.id
+			result.ladder_id = match.ladder_id
+			result.date = match.date
+			session.add( result )
+			session.commit()
+
+	def CommitPlayerResults(self,session,match):
+		for name,result in self.players.iteritems():
+			p = session.query( Player ).filter( Player.nick == name ).first()
+			if not p:
+				p = Player( name )
+				session.add( p )
+				session.commit()
+			result.player_id = p.id
+			result.match_id = match.id
+			result.ladder_id = match.ladder_id
+			result.date = match.date
+			session.add( result )
+			session.commit()
+
+class AutomaticMatchToDbWrapper(MatchToDbWrapper):
+
+	def __init__( self, stdout, ladder_id ):
+		self.springoutput 	= stdout
+		self.ladder_id		= ladder_id
+		self.game_started	= False
+		self.game_over		= -1
 
 	def CheckvalidPlayerSetup( self, db ):
 		laddername = db.GetLadderName( self.ladder_id )
@@ -144,58 +211,7 @@ class MatchToDbWrapper():
 				return False
 
 		return True
-
-	def CommitMatch(self,db, doValidation=True):
-		self.ParseSpringOutput()
-		ladder = db.GetLadder(self.ladder_id )
-		gameid = self.gameid
-		if doValidation and not self.CheckValidSetup( db ):
-			raise InvalidOptionSetup( gameid, self.ladder_id )
-		session = db.sessionmaker()
-		match = Match()
-		match.date 	= datetime.now()
-		match.modname  = ''
-		match.mapname = ''
-		match.replay = ''
-		match.game_id = gameid
-		match.duration = timedelta(days=666)
-		match.ladder_id = ladder.id
-		match.last_frame = self.game_over
-		session.add( match )
-		session.commit()
-		#session.refresh()
-		for key,val in self.options.iteritems():
-			s = MatchSetting()
-			s.key = key
-			s.val = val
-			s.match_id = match.id
-			session.add( s )
-			session.commit()
-		for key,val in self.restr.iteritems():
-			s = MatchSetting()
-			s.key = key
-			s.val = val
-			s.match_id = match.id
-			session.add( s )
-			session.commit()
-		self.CommitPlayerResults(session,match)
-		session.close()
-		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
-
-	def CommitPlayerResults(self,session,match):
-		for name,result in self.players.iteritems():
-			p = session.query( Player ).filter( Player.nick == name ).first()
-			if not p:
-				p = Player( name )
-				session.add( p )
-				session.commit()
-			result.player_id = p.id
-			result.match_id = match.id
-			result.ladder_id = match.ladder_id
-			result.date = match.date
-			session.add( result )
-			session.commit()
-
+		
 	def ParseSpringOutput(self):
 		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
 		self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
@@ -253,3 +269,60 @@ class MatchToDbWrapper():
 				playername = self.bots[playername]
 			tempplayers[playername] = playercontent
 		self.players = tempplayers
+
+class ManualMatchToDbWrapper(MatchToDbWrapper):
+
+	def __init__( self, playerlist, playerscores, teams, ladder_id, options, restrictions, bots ):
+		self.playerscores 	= playerscores
+		self.playerlist		= playerlist
+		self.ladder_id		= ladder_id
+		self.game_started	= False
+		self.game_over		= -1
+		self.options		= options
+		self.restr			= restrictions
+		self.teams			= teams
+		self.bots			= bots
+
+	def CheckvalidPlayerSetup( self, db ):
+		for p in self.playerscores.keys():
+			if not p in self.playerlist:
+				return False
+		return True#we require a score for all players
+
+	def ParseSpringOutput(self):
+		#here we fake a lot of stuff to fit missing, but required, data
+		num_players = len(self.teams)
+		self.players = dict()
+		self.gameid = -1
+		#this is later used to set match.last_frame
+		self.game_over = max( self.playerscores.itervalues() )
+		self.game_started = True
+
+		#this is the worst hack
+		self.allies = dict()
+		for i in range( len(self.playerlist) ):
+			self.allies[i+1] = i+1
+		print self.allies
+
+		dummy = 1
+		for name in self.playerlist:
+			r = Result()
+			#r.team = team
+			r.connected = True
+			#with earlier setting of game_over we emulate same relative scaling as with deaths = game frame no
+			r.died = self.playerscores[ name ]
+			r.team = dummy
+			r.ally = dummy
+			#everything else can stay on defaults (se db_entities.py)
+			self.players[ name ] = r
+			dummy += 1
+
+		#replace ai name with lib name
+		tempplayers = dict()
+		for playername in self.players:
+			playercontent = self.players[playername]
+			if playername in self.bots:
+				playername = self.bots[playername]
+			tempplayers[playername] = playercontent
+		self.players = tempplayers
+		
