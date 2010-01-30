@@ -272,7 +272,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
 class ManualMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__( self, playerlist, playerscores, teams, ladder_id, options, restrictions, bots ):
+	def __init__( self, playerlist, playerscores, teams, ladder_id, options, restrictions, bots, allies, allies_map, teams_map ):
 		self.playerscores 	= playerscores
 		self.playerlist		= playerlist
 		self.ladder_id		= ladder_id
@@ -281,7 +281,10 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.options		= options
 		self.restr			= restrictions
 		self.teams			= teams
+		self.allies			= allies
 		self.bots			= bots
+		self.allies_map		= allies_map
+		self.teams_map		= teams_map
 
 	def CheckvalidPlayerSetup( self, db ):
 		for p in self.playerscores.keys():
@@ -298,12 +301,6 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.game_over = max( self.playerscores.itervalues() )
 		self.game_started = True
 
-		#this is the worst hack
-		self.allies = dict()
-		for i in range( len(self.playerlist) ):
-			self.allies[i+1] = i+1
-		print self.allies
-
 		dummy = 1
 		for name in self.playerlist:
 			r = Result()
@@ -311,11 +308,11 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 			r.connected = True
 			#with earlier setting of game_over we emulate same relative scaling as with deaths = game frame no
 			r.died = self.playerscores[ name ]
-			r.team = dummy
-			r.ally = dummy
+			r.team = self.teams_map[name]
+			r.ally = self.allies_map[name]
 			#everything else can stay on defaults (se db_entities.py)
 			self.players[ name ] = r
-			dummy += 1
+
 
 		#replace ai name with lib name
 		tempplayers = dict()
