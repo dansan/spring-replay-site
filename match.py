@@ -3,6 +3,7 @@
 from db_entities import *
 from datetime import datetime,timedelta
 from ranking import *
+import time
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -296,12 +297,11 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		#here we fake a lot of stuff to fit missing, but required, data
 		num_players = len(self.teams)
 		self.players = dict()
-		self.gameid = -1
+		self.gameid = int(time.time())
 		#this is later used to set match.last_frame
 		self.game_over = max( self.playerscores.itervalues() )
 		self.game_started = True
 
-		dummy = 1
 		for name in self.playerlist:
 			r = Result()
 			#r.team = team
