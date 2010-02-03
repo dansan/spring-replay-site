@@ -196,7 +196,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		minteamsize = db.GetLadderOption( self.ladder_id, "min_team_size" )
 		maxteamsize = db.GetLadderOption( self.ladder_id, "max_team_size" )
 		minallysize = db.GetLadderOption( self.ladder_id, "min_ally_size" )
-		maxallysize = db.GetLadderOption( self.ladder_id, "max_team_size" )
+		maxallysize = db.GetLadderOption( self.ladder_id, "max_ally_size" )
 		for team in teamsdict:
 			teamsize = teamsdict[team]
 			if teamsize < minteamsize:
