@@ -95,7 +95,7 @@ class MatchToDbWrapper:
 			if key == "mapname":
 				match.mapname = val
 			if key == "modname":
-				match.moname = val
+				match.modname = val
 			s.match_id = match.id
 			session.add( s )
 			session.commit()
