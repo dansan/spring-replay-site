@@ -4,6 +4,7 @@ from db_entities import *
 from datetime import datetime,timedelta
 from ranking import *
 import time
+from customlog import Log
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -257,7 +258,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 				self.gameid = tokens[1]
 			elif tokens[0] == 'GAMEOVER':
 				if not self.game_started:
-					print 'big bad error'
+					Log.Error( 'game nost started on gameover found', 'Match.py' )
 				else:
 					assert len(tokens) > 1
 					self.game_over = tokens[1]
