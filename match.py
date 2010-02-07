@@ -77,7 +77,7 @@ class MatchToDbWrapper:
 			raise InvalidOptionSetup( gameid, self.ladder_id )
 		session = db.sessionmaker()
 		match = Match()
-		match.date 	= datetime.now()
+		match.date 	= datetime.datetime.now()
 		match.modname  = ''
 		match.mapname = ''
 		match.replay = ''
