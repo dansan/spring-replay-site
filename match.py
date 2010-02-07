@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from db_entities import *
-from datetime import datetime,timedelta
 from ranking import *
-import time
+import time, datetime
 from customlog import Log
 
 class InvalidOptionSetup( Exception ):
@@ -82,9 +81,9 @@ class MatchToDbWrapper:
 		match.mapname = ''
 		match.replay = ''
 		match.game_id = gameid
-		match.duration = timedelta(days=666)
 		match.ladder_id = ladder.id
 		match.last_frame = self.game_over
+		match.duration = datetime.timedelta( seconds=float(match.last_frame) / 30.0 )
 		session.add( match )
 		session.commit()
 		#session.refresh()
