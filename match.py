@@ -90,18 +90,22 @@ class MatchToDbWrapper:
 		for key,val in self.options.iteritems():
 			s = MatchSetting()
 			s.key = key
-			s.val = val
+			s.value = val
 			if key == "mapname":
 				match.mapname = val
+				session.add( match )
+				session.commit()
 			if key == "modname":
 				match.modname = val
+				session.add( match )
+				session.commit()
 			s.match_id = match.id
 			session.add( s )
-			session.commit()
+			#session.commit()
 		for key,val in self.restr.iteritems():
 			s = MatchSetting()
 			s.key = key
-			s.val = val
+			s.value = val
 			s.match_id = match.id
 			session.add( s )
 			session.commit()
