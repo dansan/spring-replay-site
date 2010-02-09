@@ -258,6 +258,17 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			elif tokens[0] == 'DISCONNECT':
 				assert len(tokens) > 3
 				self.players[tokens[3]].disconnect = tokens[1]
+				if tokens[1] > 0:
+					try:
+						tokens[2] = int(tokens[2])
+						if tokens[2] == 0:
+							self.players[tokens[3]].timeout = True
+						if tokens[2] == 1:
+							self.players[tokens[3]].quit = True
+						if tokens[2] == 2:
+							self.players[tokens[3]].kicked = True
+					except:
+						continue
 			elif tokens[0] == 'GAMESTART':
 				self.game_started = True
 			elif tokens[0] == 'GAMEID':
@@ -265,7 +276,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 				self.gameid = tokens[1]
 			elif tokens[0] == 'GAMEOVER':
 				if not self.game_started:
-					Log.Error( 'game nost started on gameover found', 'Match.py' )
+					Log.Error( 'game not started on gameover found', 'Match.py' )
 				else:
 					assert len(tokens) > 1
 					self.game_over = tokens[1]
