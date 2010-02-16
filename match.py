@@ -228,6 +228,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
 		self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
 		self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
+		self.replay		= parseSec( getSectionContect( setup_section, 'DEMO' 		) )['demopath']
 		game_section 	= getSectionContect( self.springoutput, 'GAME' )
 		num_players = len(self.teams)
 		self.players = dict()
