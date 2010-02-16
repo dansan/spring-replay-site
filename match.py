@@ -79,7 +79,7 @@ class MatchToDbWrapper:
 		match.date 	= datetime.datetime.now()
 		match.modname  = ''
 		match.mapname = ''
-		match.replay = ''
+		match.replay = replay
 		match.game_id = gameid
 		match.ladder_id = ladder.id
 		match.last_frame = self.game_over
