@@ -310,6 +310,7 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.bots			= bots
 		self.allies_map		= allies_map
 		self.teams_map		= teams_map
+		self.replay			= ""
 
 	def CheckvalidPlayerSetup( self, db ):
 		for p in self.playerscores.keys():
