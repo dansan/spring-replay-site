@@ -112,6 +112,7 @@ class MatchToDbWrapper:
 		self.CommitPlayerResults(session,match)
 		session.close()
 		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
+		return match.id
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
