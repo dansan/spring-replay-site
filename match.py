@@ -72,7 +72,6 @@ class MatchToDbWrapper:
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
 		gameid = self.gameid
-		matchid = -1
 		if doValidation and not self.CheckValidSetup( db ):
 			raise InvalidOptionSetup( gameid, self.ladder_id )
 		session = db.sessionmaker()
@@ -85,10 +84,10 @@ class MatchToDbWrapper:
 		match.ladder_id = ladder.id
 		match.last_frame = self.game_over
 		match.duration = datetime.timedelta( seconds=float(match.last_frame) / 30.0 )
-		matchid = match.id
 		session.add( match )
 		session.commit()
 		#session.refresh()
+		matchid = match.id
 		for key,val in self.options.iteritems():
 			s = MatchSetting()
 			s.key = key
