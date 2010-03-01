@@ -2,7 +2,7 @@
 
 from db_entities import *
 from ranking import *
-import time, datetime
+import time, datetime, hashlib, traceback, sys
 from customlog import Log
 
 class InvalidOptionSetup( Exception ):
@@ -228,14 +228,21 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		return True
 
 	def ParseSpringOutput(self):
-		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
-		self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
-		self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
-		self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
-		self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
-		self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
-		self.replay		= parseSec( getSectionContect( self.springoutput, 'DEMO' 		) )['demopath']
-		game_section 	= getSectionContect( self.springoutput, 'GAME' )
+		try:
+			setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
+			self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
+			self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
+			self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
+			self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
+			self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
+			self.replay		= parseSec( getSectionContect( self.springoutput, 'DEMO' 		) )['demopath']
+			game_section 	= getSectionContect( self.springoutput, 'GAME' )
+		except Exception, e:
+			fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
+			fn.write( traceback.print_exc() )
+			fn.write( '\n\n' + self.springoutput )
+			raise e
+			
 		num_players = len(self.teams)
 		self.players = dict()
 		self.gameid = 'no game id found'
