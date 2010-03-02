@@ -239,7 +239,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			game_section 	= getSectionContect( self.springoutput, 'GAME' )
 		except Exception, e:
 			fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
-			fn.write( traceback.print_exc() )
+			fn.write( str(traceback.print_exc()) )
 			fn.write( '\n\n' + self.springoutput )
 			raise e
 			
