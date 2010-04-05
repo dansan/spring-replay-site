@@ -13,6 +13,14 @@ class InvalidOptionSetup( Exception ):
 	def __str__(self):
 		return "Setup for game %s did not match ladder rules for ladder %d" %(self.gameid,self.ladderid)
 
+class UnterminatedReplayException( Exception ):
+	def __init__(self, gameid, ladderid):
+		self.gameid = gameid
+		self.ladderid = ladderid
+
+	def __str__(self):
+		return "Replay for game %s, ladder %d, did not reach completion" %(self.gameid,self.ladderid)
+
 class BannedPlayersDetectedException( Exception ):
 	def __init__(self, bannedplayers ):
 		self.bannedplayers = bannedplayers
@@ -242,7 +250,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			fn.write( str(traceback.print_exc()) )
 			fn.write( '\n\n' + self.springoutput )
 			raise e
-			
+
 		num_players = len(self.teams)
 		self.players = dict()
 		self.gameid = 'no game id found'
@@ -294,7 +302,8 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 				else:
 					assert len(tokens) > 1
 					self.game_over = tokens[1]
-
+		if self.game_over < 0:
+			raise UnterminatedReplayException( self.game_id, self.ladder_id )
 		#replace ai name with lib name
 		tempplayers = dict()
 		for playername in self.players:
