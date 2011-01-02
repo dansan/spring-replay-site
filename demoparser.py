@@ -257,7 +257,6 @@ def parsePacket(packet):
 		cmd = 'mapdraw'
 		data = 'unparsed'
 		return write(locals(), 'cmd', 'data')
-		return
 		size, playerNum, command = struct.unpack('<3B', data[:3])
 		data = data[3:]
 		if command == 0: # point = 0, erase = 1, line = 2
