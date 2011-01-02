@@ -4,6 +4,7 @@ from db_entities import *
 from ranking import *
 import time, datetime, hashlib, traceback, sys
 from customlog import Log
+import demoparser
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -236,6 +237,11 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		return True
 
 	def ParseSpringOutput(self):
+		demofile = open(self.replay, 'rb')
+		parser = demoparser.DemoParser(demofile)
+		header = parser.getHeader()
+		script = parser.getScript()
+
 		try:
 			setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
 			self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
@@ -263,45 +269,49 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			name = find_key( self.teams, teamid )
 			self.players[ name ].ally = ally
 
-		for line in game_section.split('\n'):
-			tokens = line.split()
-			assert len(tokens) > 0
-			if tokens[0] == 'CONNECTED':
-				assert len(tokens) > 1
-				self.players[tokens[1]].connected = True
-			elif tokens[0] == 'DESYNC':
-				assert len(tokens) > 2
-				self.players[tokens[3]].desync = True
-			elif tokens[0] == 'TEAMDIED':
-				assert len(tokens) > 2
-				for name,team_id in self.teams.iteritems():
-					if team_id == tokens[2]:
-						self.players[name].died = tokens[1]
-			elif tokens[0] == 'DISCONNECT':
-				assert len(tokens) > 3
-				self.players[tokens[3]].disconnect = tokens[1]
-				if tokens[1] > 0:
-					try:
-						tokens[2] = int(tokens[2])
-						if tokens[2] == 0:
-							self.players[tokens[3]].timeout = True
-						if tokens[2] == 1:
-							self.players[tokens[3]].quit = True
-						if tokens[2] == 2:
-							self.players[tokens[3]].kicked = True
-					except:
-						continue
-			elif tokens[0] == 'GAMESTART':
-				self.game_started = True
-			elif tokens[0] == 'GAMEID':
-				assert len(tokens) > 1
-				self.gameid = tokens[1]
-			elif tokens[0] == 'GAMEOVER':
-				if not self.game_started:
-					Log.Error( 'game not started on gameover found', 'Match.py' )
-				else:
-					assert len(tokens) > 1
-					self.game_over = tokens[1]
+		packet = True
+		currentFrame = 0
+		playerIDToName = {}
+		while packet:
+			packet = parser.readPacket()
+			try:
+				messageData = parsePacket(packet)
+				if messageData:
+					if messageData['cmd'] == 'newframe':
+						currentFrame = currentFrame + 1
+					elif messageData['cmd'] == 'setplayername':
+						playerIDToName[messageData['playerNum']] = messageData['playerName']
+						self.players[messageData['playerName']].connected = True
+					elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
+						self.game_started = True
+					elif messageData['cmd'] == 'gameover':
+						if not self.game_started:
+							Log.Error( 'game not started on gameover found', 'Match.py' )
+						else:
+							self.game_over = currentFrame
+					elif messageData['cmd'] == 'gameid'':
+						self.gameID = messageData['gameid']
+					elif messageData['cmd'] == 'playerleft':
+						playername = messageData['playerName']
+						if messageData['bIntended'] == 0:
+							self.players[playername].timeout = True
+						if messageData[playername] == 1:
+							self.players[playername].quit = True
+						if messageData['bIntended'] == 2:
+							self.players[playername].kicked = True
+					elif messageData['cmd'] == 'team':
+						if messageData['action'] == 4: #team died event
+							deadTeam = messageData['param']
+							for name,team_id in self.teams.iteritems():
+								if team_id == deadTeam:
+									self.players[name].died = currentFrame
+			except Exception, e:
+				fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
+				fn.write( str(traceback.print_exc()) )
+				fn.write( '\n\n' + self.springoutput )
+				raise e
+
+
 		if self.game_over < 0:
 			raise UnterminatedReplayException( self.game_id, self.ladder_id )
 		#replace ai name with lib name
@@ -365,3 +375,4 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 				playername = self.bots[playername]
 			tempplayers[playername] = playercontent
 		self.players = tempplayers
+
