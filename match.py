@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import time, datetime, hashlib, traceback, sys
+
+from tasbot.customlog import Log
 
 from db_entities import *
 from ranking import *
-import time, datetime, hashlib, traceback, sys
-from customlog import Log
 import demoparser
+
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -286,10 +288,10 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 						self.game_started = True
 					elif messageData['cmd'] == 'gameover':
 						if not self.game_started:
-							Log.Error( 'game not started on gameover found', 'Match.py' )
+							Log.error( 'game not started on gameover found', 'Match.py' )
 						else:
 							self.game_over = currentFrame
-					elif messageData['cmd'] == 'gameid'':
+					elif messageData['cmd'] == 'gameid':
 						self.gameID = messageData['gameid']
 					elif messageData['cmd'] == 'playerleft':
 						playername = messageData['playerName']
