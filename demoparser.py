@@ -93,7 +93,7 @@ class DemoParser:
 		if not data: return False
 		return {'modGameTime':modGameTime, 'length':length, 'data':data}
 
-def return write(locals, *keys):
+def write(locals, *keys):
 	#blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
 	returnval = dict()
 	if locals['cmd'] in blacklist: return
@@ -367,4 +367,3 @@ def parsePacket(packet):
 		cmd = 'teamstat'
 		data = 'unparsed'
 		return write(locals(), 'cmd', 'data')
-
