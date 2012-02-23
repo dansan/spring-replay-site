@@ -3,7 +3,7 @@ import sys, struct, zlib, binascii, time, traceback, os
 class DemoParser:
 	DEMOFILE_MAGIC = 'spring demofile'
 	DEMOFILE_VERSION = 4
-	DEMOFILE_HEADERSIZE = 112
+	DEMOFILE_HEADERSIZES = { 4:112, 5:352 }
 
 	headerTemplate = [
 		'magic',
@@ -32,12 +32,17 @@ class DemoParser:
 		self.handle = handle
 
 		handle.seek(0)
-		magic, version, headerSize = struct.unpack('<16s2i', handle.read(24))
+		firstRead = 24
+		magic, version, headerSize = struct.unpack('<16s2i', handle.read(firstRead))
 		magic = magic.strip('\0')
-		if magic != self.DEMOFILE_MAGIC or version != self.DEMOFILE_VERSION or headerSize != self.DEMOFILE_HEADERSIZE:
-			print 'DemoParser Error: Header version mismatch or corrupt demo.'
+		if magic != self.DEMOFILE_MAGIC or version not in self.DEMOFILE_HEADERSIZES.keys() or self.DEMOFILE_HEADERSIZES[version] != headerSize:
+			print 'DemoParser Error: Header (size %d) version (%d)  mismatch or corrupt demo.' %(headerSize,version)
 			return
-		header = dict(zip(self.headerTemplate, (magic, version, headerSize) + struct.unpack('<16s16sQ12i', handle.read(88))))
+		
+		if version < 5:
+			header = dict(zip(self.headerTemplate, (magic, version, headerSize) + struct.unpack('<16s16sQ12i', handle.read(headerSize-firstRead))))
+		else:
+			header = dict(zip(self.headerTemplate, (magic, version, headerSize) + struct.unpack('<256s16sQ12i', handle.read(headerSize-firstRead))))
 
 		lll = struct.unpack('<2Q', header['gameID']) # gameID is a long long long, which struct can't unpack :)
 		header['gameID'] = (lll[0] << 8) + lll[1]
