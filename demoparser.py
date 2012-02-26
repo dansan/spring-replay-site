@@ -1,8 +1,14 @@
-import sys, struct, zlib, binascii, time, traceback, os
+import sys
+import struct
+import zlib
+import binascii
+import time
+import traceback
+import os
 
 class DemoParser:
 	DEMOFILE_MAGIC = 'spring demofile'
-	DEMOFILE_VERSION = 4
+	# header version -> header size mapping
 	DEMOFILE_HEADERSIZES = { 4:112, 5:352 }
 
 	headerTemplate = [
@@ -72,17 +78,17 @@ class DemoParser:
 		self.reference['teamStats'] = handle.tell()
 		self.teamStats = handle.read(teamStatSize)
 
-		self.seek('demoStream')
+		self._seek('demoStream')
 
-	def read(self, length):
+	def _read(self, length):
 		return self.handle.read(length)
 
-	def seek(self, location):
+	def _seek(self, location):
 		if type(location) == str:
 			self.handle.seek(self.reference[location])
 		else: self.handle.seek(location)
 
-	def tell(self): return self.handle.tell()
+	def _tell(self): return self.handle.tell()
 
 	def getHeader(self): return self.header
 	def getScript(self): return self.script
