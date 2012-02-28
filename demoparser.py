@@ -1,10 +1,7 @@
 import sys
 import struct
 import zlib
-import binascii
-import time
-import traceback
-import os
+
 
 class DemoParser:
 	DEMOFILE_MAGIC = 'spring demofile'
@@ -98,18 +95,18 @@ class DemoParser:
 	def readPacket(self):
 		maxSize = (self.header['demoStreamSize'] or sys.maxint)
 		if maxSize:
-			modGameTime, length = struct.unpack('<fI', self.read(8))
-			if self.tell()+length - self.reference['demoStream'] == maxSize: return False
-			data = self.read(length)
+			modGameTime, length = struct.unpack('<fI', self._read(8))
+			if self._tell()+length - self.reference['demoStream'] == maxSize: return False
+			data = self._read(length)
 		if not data: return False
 		return {'modGameTime':modGameTime, 'length':length, 'data':data}
 
-def write(locals, *keys):
-	#blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
+def write(vars, *keys):
+	blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
 	returnval = dict()
-	if locals['cmd'] in blacklist: return
+	if vars['cmd'] in blacklist: return
 	for key in keys:
-		item = locals[key]
+		item = vars[key]
 		returnval[key] = item
 	return returnval
 
@@ -185,9 +182,10 @@ def parsePacket(packet):
 	elif cmd == 14:
 		cmd = 'aicommand'
 		size, playerNum, unitID, aiID, options = struct.unpack('<hBhiB', data[:10])
-		params = struct.unpack('<%if'%((len(data)-10)/4), data[10:])
-		playerName = players[playerNum] or ''
-		return write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'unitID', 'aiID', 'options', 'params')
+		#params = struct.unpack('<%if'%((len(data)-10)/4), data[10:])
+		#playerName = players[playerNum] or ''
+		return dict()
+		#return write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'unitID', 'aiID', 'options', 'params')
 	elif cmd == 15:
 		cmd = 'aicommands'
 		msgsize, playerNum, unitIDCount = struct.unpack('<hBh', data[:5])
