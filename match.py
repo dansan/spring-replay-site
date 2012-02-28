@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 import time
-import datetime
-import hashlib
 import traceback
-import sys
+import datetime
 
 from tasbot.customlog import Log
 
 from db_entities import *
 from ranking import *
 import demoparser
-
+from script import Script
+from tasbot.customlog import Log
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -118,7 +117,7 @@ class MatchToDbWrapper:
 			s.match_id = match.id
 			session.add( s )
 			#session.commit()
-		for key,val in self.restr.iteritems():
+		for key,val in self.restrictions.iteritems():
 			s = MatchSetting()
 			s.key = key
 			s.value = val
@@ -132,6 +131,8 @@ class MatchToDbWrapper:
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
+			print(name)
+			print(result)
 			p = session.query( Player ).filter( Player.nick == name ).first()
 			if not p:
 				p = Player( name )
@@ -144,35 +145,17 @@ class MatchToDbWrapper:
 			session.add( result )
 			session.commit()
 
-	def CommitPlayerResults(self,session,match):
-		for name,result in self.players.iteritems():
-			p = session.query( Player ).filter( Player.nick == name ).first()
-			if not p:
-				p = Player( name )
-				session.add( p )
-				session.commit()
-			result.player_id = p.id
-			result.match_id = match.id
-			result.ladder_id = match.ladder_id
-			result.date = match.date
-			session.add( result )
-			session.commit()
 
 class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__( self, stdout, ladder_id ):
-		self.springoutput 	= stdout
+	def __init__( self, replay, ladder_id ):
+		self.replay = replay
 		self.ladder_id		= ladder_id
 		self.game_started	= False
 		self.game_over		= -1
-		f  = file( 'last.output', 'w' )
-		f.writelines( stdout )
-		f.flush()
-		f.close()
 
 	def CheckvalidPlayerSetup( self, db ):
 		laddername = db.GetLadderName( self.ladder_id )
-
 		teamsdict = dict()
 		alliesdict = dict()
 		countedbots = []
@@ -243,91 +226,75 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		return True
 
 	def ParseSpringOutput(self):
-		demofile = open(self.replay, 'rb')
-		parser = demoparser.DemoParser(demofile)
-		header = parser.getHeader()
-		script = parser.getScript()
-
-		try:
-			setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
-			self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
-			self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
-			self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
-			self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
-			self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
-			self.replay		= parseSec( getSectionContect( self.springoutput, 'DEMO' 		) )['demopath']
-			game_section 	= getSectionContect( self.springoutput, 'GAME' )
-		except Exception, e:
-			fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
-			fn.write( str(traceback.print_exc()) )
-			fn.write( '\n\n' + self.springoutput )
-			raise e
-
-		num_players = len(self.teams)
-		self.players = dict()
-		self.gameid = 'no game id found'
-		for name,team in self.teams.iteritems():
-			r = Result()
-			r.team = team
-			self.players[ name ] = r
-
-		for teamid,ally in self.allies.iteritems():
-			name = find_key( self.teams, teamid )
-			self.players[ name ].ally = ally
-
-		packet = True
-		currentFrame = 0
-		playerIDToName = {}
-		while packet:
-			packet = parser.readPacket()
-			try:
-				messageData = parsePacket(packet)
-				if messageData:
-					if messageData['cmd'] == 'newframe':
-						currentFrame = currentFrame + 1
-					elif messageData['cmd'] == 'setplayername':
-						playerIDToName[messageData['playerNum']] = messageData['playerName']
-						self.players[messageData['playerName']].connected = True
-					elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
-						self.game_started = True
-					elif messageData['cmd'] == 'gameover':
-						if not self.game_started:
-							Log.error( 'game not started on gameover found', 'Match.py' )
-						else:
-							self.game_over = currentFrame
-					elif messageData['cmd'] == 'gameid':
-						self.gameID = messageData['gameid']
-					elif messageData['cmd'] == 'playerleft':
-						playername = messageData['playerName']
-						if messageData['bIntended'] == 0:
-							self.players[playername].timeout = True
-						if messageData[playername] == 1:
-							self.players[playername].quit = True
-						if messageData['bIntended'] == 2:
-							self.players[playername].kicked = True
-					elif messageData['cmd'] == 'team':
-						if messageData['action'] == 4: #team died event
-							deadTeam = messageData['param']
-							for name,team_id in self.teams.iteritems():
-								if team_id == deadTeam:
-									self.players[name].died = currentFrame
-			except Exception, e:
-				fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
-				fn.write( str(traceback.print_exc()) )
-				fn.write( '\n\n' + self.springoutput )
-				raise e
-
-
-		if self.game_over < 0:
-			raise UnterminatedReplayException( self.game_id, self.ladder_id )
-		#replace ai name with lib name
-		tempplayers = dict()
-		for playername in self.players:
-			playercontent = self.players[playername]
-			if playername in self.bots:
-				playername = self.bots[playername]
-			tempplayers[playername] = playercontent
-		self.players = tempplayers
+		with open(self.replay, 'rb') as demofile:
+			parser = demoparser.DemoParser(demofile)
+			header = parser.getHeader()
+			script = Script(parser.getScript())
+			self.players = script.players
+			self.bots = script.bots
+			self.teams = script.teams
+			self.allies = script.allies
+			self.options = script.modoptions
+			self.restrictions = script.restrictions
+			num_players = len(self.players)
+			self.gameid = 'no game id found'
+	
+			packet = True
+			currentFrame = 0
+			playerIDToName = {}
+			while packet:
+				packet = parser.readPacket()
+				try:
+					messageData = demoparser.parsePacket(packet)
+					def clean(name):
+						return name.replace('\x00','')
+					if messageData:
+						if messageData['cmd'] == 'newframe':
+							currentFrame = currentFrame + 1
+						elif messageData['cmd'] == 'setplayername':
+							clean_name = clean(messageData['playerName']) 
+							playerIDToName[messageData['playerNum']] = clean_name 
+							self.players[clean_name].connected = True
+						elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
+							self.game_started = True
+						elif messageData['cmd'] == 'gameover':
+							if not self.game_started:
+								Log.error( 'game not started on gameover found', 'Match.py' )
+							else:
+								self.game_over = currentFrame
+						elif messageData['cmd'] == 'gameid':
+							self.gameID = messageData['gameID']
+						elif messageData['cmd'] == 'playerleft':
+							playername = clean(messageData['playerName'])
+							if messageData['bIntended'] == 0:
+								self.players[playername].timeout = True
+							if messageData['bIntended'] == 1:
+								self.players[playername].quit = True
+							if messageData['bIntended'] == 2:
+								self.players[playername].kicked = True
+						elif messageData['cmd'] == 'team':
+							if messageData['action'] == 4: #team died event
+								deadTeam = messageData['param']
+								for name,team_id in self.teams.iteritems():
+									if team_id == deadTeam:
+										self.players[name].died = currentFrame
+				except Exception, e:
+#					fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
+					Log.exception(traceback.print_exc(4))
+#					fn.write( '\n\n' + self.springoutput )
+					raise e
+	
+	
+			if self.game_over < 0:
+				raise UnterminatedReplayException( self.game_id, self.ladder_id )
+			#replace ai name with lib name
+#			tempplayers = dict()
+#			for playername in self.players:
+#				playercontent = self.players[playername]
+#				if playername in self.bots:
+#					playername = self.bots[playername]
+#				tempplayers[playername] = playercontent
+#			self.players = tempplayers
 
 class ManualMatchToDbWrapper(MatchToDbWrapper):
 
@@ -338,7 +305,7 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.game_started	= False
 		self.game_over		= -1
 		self.options		= options
-		self.restr			= restrictions
+		self.restrictions	= restrictions
 		self.teams			= teams
 		self.allies			= allies
 		self.bots			= bots
