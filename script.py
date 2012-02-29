@@ -53,13 +53,14 @@ class Script(object):
 		script = script.replace('}','').replace('{','').replace(';','')
 		config.readfp(io.BytesIO(script))
 		self.restrictions = dict()
-		self.maptoptions = dict() 
+		self.mapoptions = dict() 
 		self.modoptions = dict()
 		self.players = defaultdict(Result) 
 		self.bots = dict()
 		self.spectators = dict()
 		self.teams = [] 
 		self.allies = []
+		self.other = dict()
 		for section in config.sections():
 			if section.startswith('player'):
 				player = ScriptPlayer(config,section)
@@ -80,4 +81,8 @@ class Script(object):
 				self.mapoptions = dict(config.items(section))
 			elif section == 'modoptions':
 				self.modoptions = dict(config.items(section))
+			if config.has_option(section, 'mapname'):
+				self.other['mapname'] = config.get(section, 'mapname')
+			if config.has_option(section, 'gametype'):
+				self.other['modname'] = config.get(section, 'gametype')
 				
