@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
 import traceback
-import datetime
 
 from tasbot.customlog import Log
 
@@ -131,8 +130,6 @@ class MatchToDbWrapper:
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
-			print(name)
-			print(result)
 			p = session.query( Player ).filter( Player.nick == name ).first()
 			if not p:
 				p = Player( name )
@@ -228,31 +225,38 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 	def ParseSpringOutput(self):
 		with open(self.replay, 'rb') as demofile:
 			parser = demoparser.DemoParser(demofile)
-			header = parser.getHeader()
 			script = Script(parser.getScript())
+			open('/tmp/sc','w').write(parser.getScript())
 			self.players = script.players
 			self.bots = script.bots
 			self.teams = script.teams
 			self.allies = script.allies
-			self.options = script.modoptions
+			self.options = dict(script.modoptions.items() 
+							+ script.other.items() + script.mapoptions.items())
 			self.restrictions = script.restrictions
-			num_players = len(self.players)
 			self.gameid = 'no game id found'
-	
 			packet = True
 			currentFrame = 0
 			playerIDToName = {}
+			kop = open('/tmp/msg.data','w')
 			while packet:
 				packet = parser.readPacket()
 				try:
 					messageData = demoparser.parsePacket(packet)
+					kop.write(str(messageData))
+					kop.write('\n')
 					def clean(name):
 						return name.replace('\x00','')
 					if messageData:
-						if messageData['cmd'] == 'newframe':
-							currentFrame = currentFrame + 1
+						try:
+							clean_name = clean(messageData['playerName'])
+						except:
+							pass
+						if messageData['cmd'] == 'keyframe':
+							currentFrame = messageData['framenum']
 						elif messageData['cmd'] == 'setplayername':
-							clean_name = clean(messageData['playerName']) 
+							if clean_name in script.spectators.keys():
+								continue 
 							playerIDToName[messageData['playerNum']] = clean_name 
 							self.players[clean_name].connected = True
 						elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
@@ -263,9 +267,11 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 							else:
 								self.game_over = currentFrame
 						elif messageData['cmd'] == 'gameid':
-							self.gameID = messageData['gameID']
+							self.gameid = messageData['gameID']
 						elif messageData['cmd'] == 'playerleft':
 							playername = clean(messageData['playerName'])
+							if clean_name in script.spectators.keys():
+								continue
 							if messageData['bIntended'] == 0:
 								self.players[playername].timeout = True
 							if messageData['bIntended'] == 1:
@@ -273,20 +279,23 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 							if messageData['bIntended'] == 2:
 								self.players[playername].kicked = True
 						elif messageData['cmd'] == 'team':
-							if messageData['action'] == 4: #team died event
+							if clean_name in script.spectators.keys():
+								continue
+							if messageData['action'] == 'team_died': #team died event
 								deadTeam = messageData['param']
-								for name,team_id in self.teams.iteritems():
-									if team_id == deadTeam:
+								for name,rank in self.players.iteritems():
+									if rank.team == deadTeam:
 										self.players[name].died = currentFrame
+							elif messageData['action'] == 'giveaway': 
+								#giving everything away == death 
+								self.players[clean_name].died = currentFrame
 				except Exception, e:
-#					fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
-					Log.exception(traceback.print_exc(4))
-#					fn.write( '\n\n' + self.springoutput )
+					Log.exception(e)
 					raise e
 	
-	
+			kop.close()
 			if self.game_over < 0:
-				raise UnterminatedReplayException( self.game_id, self.ladder_id )
+				raise UnterminatedReplayException( self.gameid, self.ladder_id )
 			#replace ai name with lib name
 #			tempplayers = dict()
 #			for playername in self.players:
