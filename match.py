@@ -122,6 +122,7 @@ class MatchToDbWrapper:
 					import xmlrpcdl
 					db_map = xmlrpcdl.DownloadQueue().add_map(val)
 					session.add(db_map)
+					session.commit()
 				else:
 					db_map = query.one()
 				match.mapname = db_map.name
