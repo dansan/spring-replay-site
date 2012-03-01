@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 import time
 import traceback
+import zipfile
+import zlib
+import os
 
 from tasbot.customlog import Log
+import tasbot
 
 from db_entities import *
 from ranking import *
 import demoparser
 from script import Script
-from tasbot.customlog import Log
+from myutils import mkdir_p
+
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -91,8 +96,13 @@ class MatchToDbWrapper:
 		match = Match()
 		match.date 	= datetime.datetime.now()
 		match.modname  = ''
-		match.mapname = ''
-		match.replay = self.replay
+		replayzip = os.path.basename(self.replay).replace(".sdf",".zip")
+		base = tasbot.config.Config().get('ladder','base_dir')
+		replayzip = os.path.join( base, 'demos', replayzip)
+		mkdir_p(replayzip)
+		with zipfile.ZipFile(replayzip, mode='w') as f_out:
+			f_out.write(self.replay, compress_type=zipfile.ZIP_DEFLATED)
+		match.replay = replayzip
 		match.game_id = gameid
 		match.ladder_id = ladder.id
 		match.last_frame = self.game_over
@@ -101,12 +111,20 @@ class MatchToDbWrapper:
 		session.commit()
 		#session.refresh()
 		matchid = match.id
+		match.mapname = ''
 		for key,val in self.options.iteritems():
 			s = MatchSetting()
 			s.key = key
 			s.value = val
 			if key == "mapname":
-				match.mapname = val
+				query = session.query( Map ).filter( Map.name == val )
+				if query.count() == 0:
+					import xmlrpcdl
+					db_map = xmlrpcdl.DownloadQueue().add_map(val)
+					session.add(db_map)
+				else:
+					db_map = query.one()
+				match.mapname = db_map.name
 				session.add( match )
 				session.commit()
 			if key == "modname":
