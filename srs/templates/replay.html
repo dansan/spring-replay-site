@@ -1,0 +1,23 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}{{ replay.title }} :: {{ replay.short_text }}{% endblock %}
+
+{% block maincontent%}
+        <div class="left">
+            <div class="left_articles">
+                <h2>{{ replay.title }} :: {{ replay.short_text }}</h2>
+                <h3><a href="/download/{{ replay.gameID }}/">Download</a></h3>
+                <p>Tags: {% for tag in replay.tags.all %}<a href="/tag/{{ tag.name }}/">{{ tag.name }}</a> {% endfor %}</p> {{ tags }}
+                {% if replay.notcomplete %}<p><b><font color="red">Replay is incomplete - winner is unknown!</font></b></p>{% endif %}
+            </div>
+	        <center><img src="{{ replay.rmap.img_url }}_{{ replay.gameID }}.jpg" alt="pic of map {{ replay.rmap.name }}" width="450"/></center>
+	        <ul>
+	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
+	            <ul>
+	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}>{{ t.teamleader.name }}</font></li>{% endfor %}
+	            </ul>
+	            <li>&nbsp;</li>{% endfor %}
+	        </ul>
+        </div>
+{% endblock %}
+<a href="/player/{{ player.account.accountid }}/">{{ player.name }}</a>

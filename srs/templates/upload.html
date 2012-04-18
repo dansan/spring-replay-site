@@ -1,0 +1,23 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}Upload{% endblock %}
+
+{% block maincontent%}
+        <div class="left">
+            <div class="left_articles">
+                <h2>Upload</h2>
+                <p>Please supply a Spring Demo File (*.sdf), a short subject, a comment and tags.</p>
+                <p>Please check the <a href="/tags/">list of existing tags</a> first!
+                Note that a tag for the team size (1v1, 2v2, 8v8) is added automatically.
+                Please do not use map names, as maps are categorized separately.</p>
+            </div>
+            
+            <div class="lt"></div>
+            <div class="lbox_long">
+                <form action="." method="post" enctype="multipart/form-data">{% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="submit" value="Submit" />
+                </form>
+            </div>
+        </div>    
+{% endblock %}

@@ -1,0 +1,5 @@
+srs.db
+**.pyc
+srs/static/maps/*.jpg
+srs/static/replays/*.sdf
+srs/map_info_no_deps.py

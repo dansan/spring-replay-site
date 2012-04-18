@@ -1,0 +1,10 @@
+INSERT INTO srs_tag (name) VALUES ('1v1');
+INSERT INTO srs_tag (name) VALUES ('2v2');
+INSERT INTO srs_tag (name) VALUES ('3v3');
+INSERT INTO srs_tag (name) VALUES ('4v4');
+INSERT INTO srs_tag (name) VALUES ('5v5');
+INSERT INTO srs_tag (name) VALUES ('6v6');
+INSERT INTO srs_tag (name) VALUES ('7v7');
+INSERT INTO srs_tag (name) VALUES ('8v8');
+INSERT INTO srs_tag (name) VALUES ('FFA');
+INSERT INTO srs_tag (name) VALUES ('Tourney');

@@ -1,0 +1,10 @@
+Spring Replay Site
+------------------
+
+Website to upload, download, search and comment replays created by games
+running on the SpringRTS engine (http://springrts.com).
+
+Runs on Django / Python (https://www.djangoproject.com/).
+
+Development is done using Django 1.4 and Python 2.7, but it will probably run
+(with minor modifications?) with Django 1.2 and Python 2.6.
