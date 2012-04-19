@@ -7,6 +7,9 @@ urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
     url(r'^upload/$', 'srs.views.upload'),
     url(r'^search/$', 'srs.views.search'),
+    url(r'^login/$', 'srs.views.login'),
+    url(r'^logout/$', 'srs.views.logout'),
+    url(r'^register/$', 'srs.views.register'),
     url(r'^download/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.download'),
     url(r'^admin/', include(admin.site.urls)),
 
@@ -25,5 +28,6 @@ urlpatterns = patterns('',
     url(r'^comments/$', 'srs.views.comments'),
     url(r'^comment/(?P<commentid>\d+)/$', 'srs.views.comment'),
 
+    url(r'^games/$', 'srs.views.games'),
     url(r'^game/(?P<gametype>[\w\ .()-]+)/$', 'srs.views.game'),
 )

@@ -11,9 +11,18 @@ from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
 from django.template import RequestContext
 from django.db.models import Count
+import django.contrib.auth
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+
 from tempfile import mkstemp
 import os
-import shutil 
+import sets
+import shutil
+import functools
+import locale
+import time
+
 import parse_demo_file
 import spring_maps
 import settings
@@ -36,6 +45,7 @@ def index(request):
         c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
+@login_required
 def upload(request):
     c = all_page_infos(request)
     if request.method == 'POST':
@@ -192,6 +202,17 @@ def comment(request, commentid):
     c = all_page_infos(request)
     pass
 
+def games(request):
+    # TODO
+    c = all_page_infos(request)
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    games = sorted(sets.Set([r.gametype for r in Replay.objects.all()]), key=functools.cmp_to_key(locale.strcoll))
+    rep = "<b>TODO</b><br/><br/>list of all %d games:<br/>"%len(games)
+    for game in games:
+        rep += '* <a href="/game/%s/">%s</a><br/>'%(game, game)
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
+
 def game(request, gametype):
     # TODO
     c = all_page_infos(request)
@@ -209,6 +230,35 @@ def search(request):
         resp += 'search results for "%s" and '%request.POST["search"]
     resp += 'advanced search<br/><br/><a href="/">Home</a>'
     return HttpResponse(resp)
+
+def login(request):
+    c = all_page_infos(request)
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = django.contrib.auth.authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
+            if user is not None:
+                if user.is_active:
+                    django.contrib.auth.login(request, user)
+                    nexturl = request.GET.get('next')
+                    # TODO: "next" is never passed...  
+                    if nexturl:
+                        dest = nexturl
+                    else:
+                        dest = "/"
+                    return HttpResponseRedirect(dest)
+    else:
+        form = AuthenticationForm()
+    c['form'] = form
+    return render_to_response('login.html', c, context_instance=RequestContext(request))
+
+def logout(request):
+    django.contrib.auth.logout(request)
+    return HttpResponseRedirect("/")
+
+def register(request):
+    # TODO:
+    pass
 
 ###############################################################################
 

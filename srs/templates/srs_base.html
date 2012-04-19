@@ -17,7 +17,11 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         <div class="header_right">
             <div class="top_info">
                 <div class="top_info_right">
-                    <p>You are not Logged in. <a href="/login/">Log in</a>  or <a href="/register/">register</a> to upload a replay or write a comment!</p>                    
+                    {% if user.is_authenticated %}
+                    <p>Welcome {{ user }}: <a href="/upload/">Upload</a> | <a href="/logout/">Logout</a></p>
+                    {% else %}
+                    <p>You are not Logged in. <a href="/login/">Log in</a>  or <a href="/register/">register</a> to upload a replay or write a comment!</p>
+                    {% endif %}                    
                 </div>      
             </div>
             {% comment %}
@@ -61,16 +65,17 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
                 <p><b>Tags (<a href="/tags/">All</a>)</b><br /><a href="/tag/1v1/">1v1</a> <a href="/tag/2v2/">2v2</a> <a href="/tag/3v3/">3v3</a> <a href="/tag/6v6/">6v6</a> <a href="/tag/8v8/">8v8</a> <a href="/tag/Tourney/">Tourney</a><br />Top {{ top_tags.count }}: {% for tag in top_tags %}<a href="/tag/{{ tag.name }}/">{{ tag.name }}</a> {% endfor %}</p>
                 <p><b>Maps (<a href="/maps/">All</a>)</b><br />Top {{ top_maps.count }}: {% for map in top_maps %}<a href="/map/{{ map.name }}/">{{ map.name }}</a> {% endfor %}</p>
                 <p><b>Players (<a href="/players/">All</a>)</b><br />Top {{ top_players|length }}: {% for name,id in top_players %}<a href="/player/{{ id }}/">{{ name }}</a> {% endfor %}</p>
+                <p><b>Games (<a href="/games/">All</a>)</b></p>
             </div>
             <div class="rt"></div>
             <div class="right_articles">
                 <p><b>Latest Comments (<a href="/comments/">All</a>)</b><br />2012-02-02 | 1v1: Test Test | Test (todo)<br />2012-02-02  | 1v1: Test Test | Test (todo)<br />2012-02-02  | 1v1: Test Test | Test (todo)</p>
-	            </div>
-	            <div class="rt"></div>
-	            <div class="right_articles">
-	                <p><b>Links</b><br /><a href="/upload/">Upload</a><br /><a href="http://springrts.com/">SpringRTS</a><br /><a href="http://springfiles.com/">SpringFiles</a></p>
             </div>
-        </div>  
+            <div class="rt"></div>
+            <div class="right_articles">
+                <p><b>Links</b><br /><a href="http://springrts.com/">SpringRTS</a><br /><a href="http://springfiles.com/">SpringFiles</a></p>
+            </div>
+        </div>
         <div class="footer">
             <p>If you have requests, complaints, praise or want to contribute code please contact Dansan in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/">GitHub</a>.</p>
         </div>

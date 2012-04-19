@@ -6,6 +6,8 @@ MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
 REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
 FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
 thumbnail_sizes = {"tn1": (150, 100), "tn2": (450,1000)}
+LOGIN_URL = "/login/"
+LOGOUT_URL = "/logout/"
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
