@@ -7,7 +7,6 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
-from django.contrib.auth.models import User
 
 class Tag(models.Model):
     name            = models.CharField(max_length=128, unique=True)
@@ -40,7 +39,7 @@ class Replay(models.Model):
     notcomplete     = models.BooleanField()
     rmap            = models.ForeignKey(Map)
     tags            = models.ManyToManyField(Tag)
-    uploader        = User()
+    uploader        = models.IntegerField()
 
     def __unicode__(self):
         return self.title+u" :: "+unicode(self.unixTime)+u" :: "+self.short_text

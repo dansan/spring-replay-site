@@ -6,8 +6,13 @@ MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
 REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
 FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
 thumbnail_sizes = {"tn1": (150, 100), "tn2": (450,1000)}
-LOGIN_URL = "/login/"
-LOGOUT_URL = "/logout/"
+LOGIN_URL = "/accounts/login/"
+LOGOUT_URL = "/accounts/logout/"
+ACCOUNT_ACTIVATION_DAYS = 4
+REGISTRATION_OPEN = True
+EMAIL_HOST = 'localhost'
+DEFAULT_FROM_EMAIL = 'webmaster@replays.admin-box.com'
+LOGIN_REDIRECT_URL = '/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -134,6 +139,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'srs',
+    'registration'
 )
 
 # A sample logging configuration. The only tangible logging

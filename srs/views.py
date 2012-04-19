@@ -14,6 +14,7 @@ from django.db.models import Count
 import django.contrib.auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 
 from tempfile import mkstemp
 import os
@@ -42,6 +43,7 @@ def all_page_infos(request):
 def index(request):
     c = all_page_infos(request)
     for replay in Replay.objects.all().order_by('-pk')[:10]:
+        replay.uploader = User.objects.get(pk=replay.uploader)
         c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
@@ -69,8 +71,7 @@ def upload(request):
                 return HttpResponse('Uploaded replay already exists: <a href="/replay/%s/">%s</a>'%(replay.gameID, replay.__unicode__()))
             except:
                 shutil.move(path, settings.MEDIA_ROOT)
-                replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text)
-
+                replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
             return HttpResponseRedirect("/replay/%s/"%replay.gameID)
 #            except Exception, e:
 #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
@@ -104,6 +105,7 @@ def replay(request, gameID):
         if teams:
             c["allyteams"].append((at, teams))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
+    c["replay"].uploader = User.objects.get(pk=c["replay"].uploader)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
@@ -200,7 +202,7 @@ def comments(request):
 def comment(request, commentid):
     # TODO
     c = all_page_infos(request)
-    pass
+    return HttpResponseRedirect("/")
 
 def games(request):
     # TODO
@@ -231,34 +233,49 @@ def search(request):
     resp += 'advanced search<br/><br/><a href="/">Home</a>'
     return HttpResponse(resp)
 
-def login(request):
-    c = all_page_infos(request)
-    if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            user = django.contrib.auth.authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
-            if user is not None:
-                if user.is_active:
-                    django.contrib.auth.login(request, user)
-                    nexturl = request.GET.get('next')
-                    # TODO: "next" is never passed...  
-                    if nexturl:
-                        dest = nexturl
-                    else:
-                        dest = "/"
-                    return HttpResponseRedirect(dest)
-    else:
-        form = AuthenticationForm()
-    c['form'] = form
-    return render_to_response('login.html', c, context_instance=RequestContext(request))
+#def login(request):
+#    c = all_page_infos(request)
+#    if request.method == 'POST':
+#        form = AuthenticationForm(data=request.POST)
+#        if form.is_valid():
+#            user = django.contrib.auth.authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
+#            if user is not None:
+#                if user.is_active:
+#                    django.contrib.auth.login(request, user)
+#                    nexturl = request.GET.get('next')
+#                    # TODO: "next" is never passed...  
+#                    if nexturl:
+#                        dest = nexturl
+#                    else:
+#                        dest = "/"
+#                    return HttpResponseRedirect(dest)
+#    else:
+#        form = AuthenticationForm()
+#    c['form'] = form
+#    return render_to_response('login.html', c, context_instance=RequestContext(request))
+#
+#def logout(request):
+#    django.contrib.auth.logout(request)
+#    return HttpResponseRedirect("/")
+#
+#def register(request):
+#    # TODO:
+#    pass
 
-def logout(request):
-    django.contrib.auth.logout(request)
+def user_settings(request):
+    # TODO:
+    c = all_page_infos(request)
+    return render_to_response('settings.html', c, context_instance=RequestContext(request))
+
+def users(request):
+    # TODO:
+    c = all_page_infos(request)
     return HttpResponseRedirect("/")
 
-def register(request):
+def see_user(request, username):
     # TODO:
-    pass
+    c = all_page_infos(request)
+    return HttpResponseRedirect("/")
 
 ###############################################################################
 
@@ -273,11 +290,13 @@ def save_uploaded_file(ufile):
     os.close(fd)
     return (path, written_bytes)
 
-def store_demofile_data(demofile, tags, path, filename, short, long_text):
+def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     """
     Store all data about this replay in the database
     """
     replay = Replay()
+    replay.uploader = user.pk
+
     for key in ["versionString", "gameID", "unixTime", "wallclockTime"]:
         replay.__setattr__(key, demofile.header[key])
     for key in ["mapname", "autohostname", "gametype", "startpostype"]:

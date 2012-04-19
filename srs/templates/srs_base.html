@@ -18,9 +18,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="top_info">
                 <div class="top_info_right">
                     {% if user.is_authenticated %}
-                    <p>Welcome {{ user }}: <a href="/upload/">Upload</a> | <a href="/logout/">Logout</a></p>
+                    <p>Welcome {{ user }}. <a href="/upload/">Upload</a> | <a href="/settings/">Settings</a> | <a href="{% url auth_logout %}">Logout</a></p>
                     {% else %}
-                    <p>You are not Logged in. <a href="/login/">Log in</a>  or <a href="/register/">register</a> to upload a replay or write a comment!</p>
+                    <p>You are not Logged in. <a href="{% url auth_login %}">Log in</a>  or <a href="{% url registration_register %}">register</a> to upload a replay or write a comment!</p>
                     {% endif %}                    
                 </div>      
             </div>

@@ -7,9 +7,8 @@ urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
     url(r'^upload/$', 'srs.views.upload'),
     url(r'^search/$', 'srs.views.search'),
-    url(r'^login/$', 'srs.views.login'),
-    url(r'^logout/$', 'srs.views.logout'),
-    url(r'^register/$', 'srs.views.register'),
+    url(r'^settings/$', 'srs.views.user_settings'),
+    url(r'^accounts/', include('registration.backends.default.urls')),
     url(r'^download/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.download'),
     url(r'^admin/', include(admin.site.urls)),
 
@@ -30,4 +29,7 @@ urlpatterns = patterns('',
 
     url(r'^games/$', 'srs.views.games'),
     url(r'^game/(?P<gametype>[\w\ .()-]+)/$', 'srs.views.game'),
+    
+    url(r'^users/$', 'srs.views.users'),
+    url(r'^user/(?P<username>[\w\ .()-]+)/$', 'srs.views.see_user'),
 )

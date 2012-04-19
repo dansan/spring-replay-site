@@ -21,7 +21,7 @@
                 <p>Date: {{ replay.unixTime }}<br/>
                 Game: <a href="/game/{{ replay.gametype }}/">{{ replay.gametype }}</a> (engine {{ replay.versionString }})<br/>
                 Map: <a href="/map/{{ replay.rmap.name }}/">{{ replay.rmap.name }}</a><br/>
-                Upload: 01.01.2013 by [My]System (todo)<br/>
+                Upload: 01.01.2013 by <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a> (todo: date & use nik)<br/>
                 File: <a href="/download/{{ replay.gameID }}/">download</a><br/>
                 Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
                 Tags:{% for tag in replay.tags.all %} <a href="/tag/{{ tag }}/">{{ tag }}</a>{% endfor %}<br/>

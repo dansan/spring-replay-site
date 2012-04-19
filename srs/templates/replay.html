@@ -8,6 +8,7 @@
                 <h2>{{ replay.title }} :: {{ replay.short_text }}</h2>
                 <h3><a href="/download/{{ replay.gameID }}/">Download</a></h3>
                 <p>Tags: {% for tag in replay.tags.all %}<a href="/tag/{{ tag.name }}/">{{ tag.name }}</a> {% endfor %}</p> {{ tags }}
+                <p>Upload: 01.01.2013 by <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a> (todo: date & use nik)</p>
                 {% if replay.notcomplete %}<p><b><font color="red">Replay is incomplete - winner is unknown!</font></b></p>{% endif %}
             </div>
 	        <center><img src="{{ replay.rmap.img_url }}_{{ replay.gameID }}.jpg" alt="pic of map {{ replay.rmap.name }}" width="450"/></center>
