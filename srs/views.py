@@ -269,13 +269,27 @@ def user_settings(request):
 
 def users(request):
     # TODO:
-    c = all_page_infos(request)
-    return HttpResponseRedirect("/")
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    users = sorted(sets.Set([u.username for u in User.objects.all()]), key=functools.cmp_to_key(locale.strcoll))
+    rep = "<b>TODO</b><br/><br/>list of all %d users:<br/>"%len(users)
+    for user in users:
+        rep += '* <a href="/user/%s/">%s</a><br/>'%(user, user)
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
 
 def see_user(request, username):
     # TODO:
-    c = all_page_infos(request)
-    return HttpResponseRedirect("/")
+    rep = "<b>TODO</b><br/><br/>"
+    user = User.objects.filter(username=username)
+    if user:
+        rep += "list of replays uploaded by %s:<br/>"%username
+        for replay in Replay.objects.filter(uploader=user[0].pk):
+            rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+    else:
+        rep += "user %s unknown.<br/>"%username
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
+
 
 ###############################################################################
 
