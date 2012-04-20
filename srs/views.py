@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.http import Http404
 
 from tempfile import mkstemp
 import os
@@ -100,7 +101,7 @@ def replay(request, gameID):
         c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
     except:
         # TODO: nicer error handling
-        HttpResponseRedirect("/")
+        raise Http404
 
     c["allyteams"] = []
     for at in Allyteam.objects.filter(replay=c["replay"]):
@@ -116,7 +117,12 @@ def replay(request, gameID):
 def download(request, gameID):
     # TODO
     c = all_page_infos(request)
-    rf = ReplayFile.objects.get(replay__gameID=gameID)
+    try:
+        rf = ReplayFile.objects.get(replay__gameID=gameID)
+    except:
+        # TODO: nicer error handling
+        raise Http404
+
     rf.download_count += 1
     rf.save()
     return HttpResponseRedirect(settings.STATIC_URL+"replays/"+rf.filename)
@@ -180,7 +186,7 @@ def player(request, accountid):
         accounts.append(PlayerAccount.objects.get(accountid=accountid))
     except:
         # TODO: nicer error handling
-        HttpResponseRedirect("/")
+        raise Http404
     accounts.extend(PlayerAccount.objects.filter(aka=accounts[0]))
     for account in accounts:
         for a in account.names.split(";"):
@@ -205,7 +211,12 @@ def comments(request):
 def comment(request, commentid):
     # TODO
     c = all_page_infos(request)
-    return HttpResponseRedirect("/")
+    try:
+        com = Comment.objects.get(pk=commentid)
+    except:
+        # TODO: nicer error handling
+        raise Http404
+    return HttpResponse(com.__unicode__())
 
 def games(request):
     # TODO
