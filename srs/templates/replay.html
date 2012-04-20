@@ -15,7 +15,7 @@
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
 	            <ul>
-	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}>{{ t.teamleader.name }}</font></li>{% endfor %}
+	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}><a href="/player/{{ t.teamleader.account.accountid }}/">{{ t.teamleader.name }}</a></font></li>{% endfor %}
 	            </ul>
 	            <li>&nbsp;</li>{% endfor %}
 	        </ul>
