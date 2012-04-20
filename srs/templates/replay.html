@@ -14,6 +14,8 @@
                 {% if replay.notcomplete %}<p><b><font color="red">Replay is incomplete - winner is unknown!</font></b></p>{% endif %}
             </div>
 	        <center><img src="{{ replay.rmap.img_url }}_{{ replay.gameID }}.jpg" alt="pic of map {{ replay.rmap.name }}" width="450"/></center>
+	        <p><b>Uploaders Comment:</b> {{ replay.long_text }}</p>
+	        <p><br/></p>
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
 	            <ul>
