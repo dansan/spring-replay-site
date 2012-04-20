@@ -15,6 +15,7 @@ import django.contrib.auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from tempfile import mkstemp
 import os
@@ -34,7 +35,6 @@ def all_page_infos(request):
     c = {}
     c.update(csrf(request))
     c["total_replays"] = Replay.objects.count()
-    c["newest_replays"] = []
     c["top_tags"]       = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_maps"]       = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_players"] = [(Player.objects.filter(account=pa)[0], pa.accountid) for pa in PlayerAccount.objects.exclude(accountid=9999999999).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
@@ -42,6 +42,7 @@ def all_page_infos(request):
 
 def index(request):
     c = all_page_infos(request)
+    c["newest_replays"] = []
     for replay in Replay.objects.all().order_by('-pk')[:10]:
         replay.uploader = User.objects.get(pk=replay.uploader)
         c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
@@ -83,8 +84,9 @@ def upload(request):
 def replays(request):
     # TODO
     c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of all %d replays:<br/>"%Replay.objects.count()
-    for replay in Replay.objects.all().order_by("unixTime"):
+    all_replays = Replay.objects.all().order_by("unixTime")
+    rep = "<b>TODO</b><br/><br/>list of all %d replays:<br/>"%all_replays.count()
+    for replay in all_replays:
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
@@ -94,14 +96,14 @@ def replay(request, gameID):
     c = all_page_infos(request)
 #    return HttpResponse('<b>TODO</b><br/><br/>You are looking at replay %s:<br/>%s<br/><a href="/download/%s/">Download</a><br/><br/><a href="/">Home</a>' % (gameID, Replay.objects.get(gameID=gameID).__unicode__(), gameID))
     try:
-        c["replay"] = Replay.objects.get(gameID=gameID)
+        c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
     except:
         # TODO: nicer error handling
         HttpResponseRedirect("/")
 
     c["allyteams"] = []
     for at in Allyteam.objects.filter(replay=c["replay"]):
-        teams = Team.objects.filter(allyteam=at, replay=c["replay"])
+        teams = Team.objects.prefetch_related("teamleader").filter(allyteam=at, replay=c["replay"])
         if teams:
             c["allyteams"].append((at, teams))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
@@ -131,7 +133,7 @@ def tag(request, reqtag):
     # TODO
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of games with tag '%s':<br/>"%reqtag
-    for replay in Replay.objects.filter(tags=Tag.objects.get(name=reqtag)):
+    for replay in Replay.objects.filter(tags__name=reqtag):
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
@@ -149,7 +151,7 @@ def rmap(request, mapname):
     # TODO
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of games on map '%s':<br/>"%mapname
-    for replay in Replay.objects.filter(rmap=Map.objects.get(name=mapname)):
+    for replay in Replay.objects.filter(rmap__name=mapname):
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
@@ -183,7 +185,7 @@ def player(request, accountid):
         for a in account.names.split(";"):
             rep += '* %s<br/>'%a
 
-    players = Player.objects.filter(account__in=accounts)
+    players = Player.objects.select_related("replay").filter(account__in=accounts)
     rep += "<br/><br/>This player (with one of his accounts/aliases) has played in these games:<br/>"
     for player in players:
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(player.replay.gameID, player.replay.__unicode__())
@@ -229,8 +231,20 @@ def search(request):
     c = all_page_infos(request)
     resp = "<b>TODO</b><br/><br/>"
     if request.method == 'POST':
-        resp += 'search results for "%s" and '%request.POST["search"]
-    resp += 'advanced search<br/><br/><a href="/">Home</a>'
+        st = request.POST["search"]
+        users = User.objects.filter(username__icontains=st).values_list('id', flat=True).order_by('id')
+        replays = Replay.objects.filter(Q(gametype__icontains=st)|
+                                        Q(title__icontains=st)|
+                                        Q(short_text__icontains=st)|
+                                        Q(long_text__icontains=st)|
+                                        Q(rmap__name__icontains=st)|
+                                        Q(tags__name__icontains=st)|
+                                        Q(uploader__in=users)|
+                                        Q(player__account__names__icontains=st))
+
+        resp += 'Your search for "%s" yielded %d results:<br/><br/>'%(st, replays.count())
+        for replay in replays:
+            resp += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     return HttpResponse(resp)
 
 def user_settings(request):
