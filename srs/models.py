@@ -102,14 +102,6 @@ class MapOption(MapModOption):
 class ModOption(MapModOption):
     pass
 
-class Comment(models.Model):
-    comment         = models.TextField()
-    user            = models.IntegerField()
-    replay          = models.ForeignKey(Replay)
-
-    def __unicode__(self):
-        return unicode(self.user)+u": "+self.comment[:20]
-
 class ReplayFile(models.Model):
     filename        = models.CharField(max_length=256)
     path            = models.CharField(max_length=256)

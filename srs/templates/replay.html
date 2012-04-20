@@ -1,4 +1,5 @@
 {% extends 'srs_base.html' %}
+{% load comments %}
 
 {% block pagetitle %}{{ replay.title }} :: {{ replay.short_text }}{% endblock %}
 
@@ -22,6 +23,37 @@
 	            <li><b>Spectators</b></li>
 	            {% for s in specs %}<li>{{ s.name }}</li>{% endfor %}
 	        </ul>
+	        <h3>Comments:</h3>
+	        {% get_comment_count for replay as comment_count %}
+            <p>This event has {{ comment_count }} comments.</p>
+	        {% render_comment_list for replay %}
+	        <a name="afterlastcomment"></a>
+
+	        {% if user.is_authenticated %}
+            <h3>Post a comment:</h3>
+			{% get_comment_form for replay as form %}
+
+			<form action="{% comment_form_target %}" method="post">{% csrf_token %}
+			  <div><input type="hidden" name="next" value="/replay/{{ replay.gameID }}/#afterlastcomment" /></div>
+			  {% for field in form %}
+			    {% if field.is_hidden %}
+			      <div>{{ field }}</div>
+			    {% else %}
+			      {% if field.errors %}{{ field.errors }}{% endif %}
+			      <p
+			        {% if field.errors %} class="error"{% endif %}
+			        {% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}>
+			        {{ field.label_tag }} {{ field }}
+			      </p>
+			    {% endif %}
+			  {% endfor %}
+			  <p class="submit">
+			    <input type="submit" name="post" class="submit-post" value="Post" />
+			    <input type="submit" name="preview" class="submit-preview" value="Preview" />
+			  </p>
+			</form>
+			{% else %}
+			<h3>To post a comment you have to <a href="{% url auth_login %}">log in</a> (<a href="{% url registration_register %}">register</a>).</h3>
+            {% endif %}
         </div>
 {% endblock %}
-<a href="/player/{{ player.account.accountid }}/">{{ player.name }}</a>

@@ -199,25 +199,6 @@ def player(request, accountid):
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
-def comments(request):
-    # TODO
-    c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of all %d comments:<br/>"%Comment.objects.count()
-    for tag in Comment.objects.all():
-        rep += '* <a href="/comment/%s/">%s</a><br/>'%(tag.__unicode__(), tag.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
-
-def comment(request, commentid):
-    # TODO
-    c = all_page_infos(request)
-    try:
-        com = Comment.objects.get(pk=commentid)
-    except:
-        # TODO: nicer error handling
-        raise Http404
-    return HttpResponse(com.__unicode__())
-
 def games(request):
     # TODO
     c = all_page_infos(request)

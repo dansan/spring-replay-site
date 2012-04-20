@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     url(r'^search/$', 'srs.views.search'),
     url(r'^settings/$', 'srs.views.user_settings'),
     url(r'^accounts/', include('registration.backends.default.urls')),
+    url(r'^comments/', include('django.contrib.comments.urls')),
     url(r'^download/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.download'),
     url(r'^admin/', include(admin.site.urls)),
 
@@ -23,9 +24,6 @@ urlpatterns = patterns('',
 
     url(r'^players/$', 'srs.views.players'),
     url(r'^player/(?P<accountid>\d+)/$', 'srs.views.player'),
-
-    url(r'^comments/$', 'srs.views.comments'),
-    url(r'^comment/(?P<commentid>\d+)/$', 'srs.views.comment'),
 
     url(r'^games/$', 'srs.views.games'),
     url(r'^game/(?P<gametype>[\w\ .()-]+)/$', 'srs.views.game'),
