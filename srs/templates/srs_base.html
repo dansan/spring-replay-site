@@ -66,6 +66,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
                 <p><b>Maps (<a href="/maps/">All</a>)</b><br />Top {{ top_maps.count }}: {% for map in top_maps %}<a href="/map/{{ map.name }}/">{{ map.name }}</a> {% endfor %}</p>
                 <p><b>Players (<a href="/players/">All</a>)</b><br />Top {{ top_players|length }}: {% for name,id in top_players %}<a href="/player/{{ id }}/">{{ name }}</a> {% endfor %}</p>
                 <p><b>Games (<a href="/games/">All</a>)</b></p>
+                <p><b>Uploaders (<a href="/users/">All</a>)</b></p>
             </div>
             <div class="rt"></div>
             <div class="right_articles">
