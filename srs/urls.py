@@ -29,7 +29,10 @@ urlpatterns = patterns('',
 
     url(r'^games/$', 'srs.views.games'),
     url(r'^game/(?P<gametype>[\w\ .()-]+)/$', 'srs.views.game'),
-    
+
     url(r'^users/$', 'srs.views.users'),
     url(r'^user/(?P<username>[\w\ .()-]+)/$', 'srs.views.see_user'),
+
+    url(r'^match_date/(?P<shortdate>[\d-]+)/$', 'srs.views.match_date'),
+    url(r'^upload_date/(?P<shortdate>[\d-]+)/$', 'srs.views.upload_date'),
 )

@@ -13,6 +13,10 @@ REGISTRATION_OPEN = True
 EMAIL_HOST = 'localhost'
 DEFAULT_FROM_EMAIL = 'webmaster@replays.admin-box.com'
 LOGIN_REDIRECT_URL = '/'
+DATE_FORMAT = 'd.m.Y'
+DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
+SHORT_DATE_FORMAT = 'd.m.Y'
+SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG

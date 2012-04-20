@@ -28,7 +28,7 @@ class Map(models.Model):
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
     gameID          = models.CharField(max_length=32, unique=True)
-    unixTime        = models.CharField(max_length=32, verbose_name='date of match')
+    unixTime        = models.DateTimeField()
     wallclockTime   = models.CharField(max_length=32, verbose_name='length of match')
     autohostname    = models.CharField(max_length=128, blank=True, null = True)
     gametype        = models.CharField(max_length=256)
@@ -40,6 +40,7 @@ class Replay(models.Model):
     rmap            = models.ForeignKey(Map)
     tags            = models.ManyToManyField(Tag)
     uploader        = models.IntegerField()
+    upload_date     = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.title+u" :: "+unicode(self.unixTime)+u" :: "+self.short_text
@@ -118,3 +119,10 @@ class ReplayFile(models.Model):
 
     def __unicode__(self):
         return self.filename[:20]
+
+class NewsItem(models.Model):
+    text            = models.CharField(max_length=256)
+    post_date       = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return self.text[:50]

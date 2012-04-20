@@ -46,6 +46,7 @@ def index(request):
     for replay in Replay.objects.all().order_by('-pk')[:10]:
         replay.uploader = User.objects.get(pk=replay.uploader)
         c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
+    c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 @login_required
@@ -231,20 +232,23 @@ def search(request):
     c = all_page_infos(request)
     resp = "<b>TODO</b><br/><br/>"
     if request.method == 'POST':
-        st = request.POST["search"]
-        users = User.objects.filter(username__icontains=st).values_list('id', flat=True).order_by('id')
-        replays = Replay.objects.filter(Q(gametype__icontains=st)|
-                                        Q(title__icontains=st)|
-                                        Q(short_text__icontains=st)|
-                                        Q(long_text__icontains=st)|
-                                        Q(rmap__name__icontains=st)|
-                                        Q(tags__name__icontains=st)|
-                                        Q(uploader__in=users)|
-                                        Q(player__account__names__icontains=st))
+        st = request.POST["search"].strip()
+        if st:
+            users = User.objects.filter(username__icontains=st).values_list('id', flat=True).order_by('id')
+            replays = Replay.objects.filter(Q(gametype__icontains=st)|
+                                            Q(title__icontains=st)|
+                                            Q(short_text__icontains=st)|
+                                            Q(long_text__icontains=st)|
+                                            Q(rmap__name__icontains=st)|
+                                            Q(tags__name__icontains=st)|
+                                            Q(uploader__in=users)|
+                                            Q(player__account__names__icontains=st)).distinct()
 
-        resp += 'Your search for "%s" yielded %d results:<br/><br/>'%(st, replays.count())
-        for replay in replays:
-            resp += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+            resp += 'Your search for "%s" yielded %d results:<br/><br/>'%(st, replays.count())
+            for replay in replays:
+                resp += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        else:
+            HttpResponseRedirect("/search/")
     return HttpResponse(resp)
 
 def user_settings(request):
@@ -275,7 +279,24 @@ def see_user(request, username):
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
+def match_date(request, shortdate):
+    # TODO:
+    rep = "<b>TODO</b><br/><br/>"
+    rep += "list of replays played on %s:<br/>"%shortdate
+    for replay in Replay.objects.filter(unixTime__startswith=shortdate):
+        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
 
+def upload_date(request, shortdate):
+    # TODO:
+    rep = "<b>TODO</b><br/><br/>"
+    rep += "list of replays uploaded on %s:<br/>"%shortdate
+    for replay in Replay.objects.filter(upload_date__startswith=shortdate):
+        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
+###############################################################################
 ###############################################################################
 
 def save_uploaded_file(ufile):
@@ -320,7 +341,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # strip comma separated tags and remove empty ones
         tags_ = [t.strip() for t in tags.split(",") if t]
         for tag in tags_:
-            t_obj, _ = Tag.objects.get_or_create(name = tag, defaults={'name': tag})
+            t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
             replay.tags.add(t_obj)
     replay.save()
 
