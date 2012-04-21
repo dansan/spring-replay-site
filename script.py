@@ -73,7 +73,6 @@ class Script(object):
 				if player.spectator:
 					self.spectators[player.name] = player.result()
 				else:
-					print 'PLAYER %s'%player.name
 					self.players[player.name] = player.result()
 			elif section.startswith('AI'):
 				bot = ScriptAI(config,section)
