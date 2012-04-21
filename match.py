@@ -244,6 +244,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 	def ParseSpringOutput(self):
 		with open(self.replay, 'rb') as demofile:
 			parser = demoparser.DemoParser(demofile)
+			open('/tmp/sc.txt', 'w').write(parser.getScript())
 			script = Script(parser.getScript())
 			self.players = script.players
 			self.bots = script.bots
@@ -257,6 +258,8 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			currentFrame = 0
 			playerIDToName = {}
 			kop = open('/tmp/msg.data','w')
+			def _invalidPlayer(name):
+				return name in script.spectators.keys() or name not in self.players
 			while packet:
 				packet = parser.readPacket()
 				try:
@@ -273,8 +276,9 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 						if messageData['cmd'] == 'keyframe':
 							currentFrame = messageData['framenum']
 						elif messageData['cmd'] == 'setplayername':
-							if clean_name in script.spectators.keys():
+							if _invalidPlayer(clean_name):
 								continue 
+							print 'SETPLAYERNAME %s'%clean_name
 							playerIDToName[messageData['playerNum']] = clean_name 
 							self.players[clean_name].connected = True
 						elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
@@ -288,7 +292,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 							self.gameid = messageData['gameID']
 						elif messageData['cmd'] == 'playerleft':
 							playername = clean(messageData['playerName'])
-							if clean_name in script.spectators.keys():
+							if _invalidPlayer(clean_name):
 								continue
 							if messageData['bIntended'] == 0:
 								self.players[playername].timeout = True
