@@ -1,5 +1,5 @@
 import io
-from ConfigParser import SafeConfigParser
+from ConfigParser import RawConfigParser as CfgParser
 from collections import defaultdict
 
 from db_entities import Result
@@ -7,10 +7,13 @@ from db_entities import Result
 class ScriptPlayer(object):
 	def __init__(self,config,section):
 		self.num = int(section[6:])
-		self.team = int(config.get(section, 'Team'))
 		self.name = config.get(section, 'Name')
 		self.rank = int(config.get(section, 'Rank'))
-		self.spectator = config.get(section, 'spectator') != '0'
+		try:
+			self.team = int(config.get(section, 'Team'))
+			self.spectator = False
+		except:
+			self.spectator = True
 		self.ally = -1
 		
 	def result(self):
@@ -49,7 +52,7 @@ class ScriptTeam(object):
 		
 class Script(object):
 	def __init__(self,script):
-		config = SafeConfigParser()
+		config = CfgParser({'team':-1})
 		script = script.replace('}','').replace('{','').replace(';','')
 		config.readfp(io.BytesIO(script))
 		self.restrictions = dict()
