@@ -278,7 +278,6 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 						elif messageData['cmd'] == 'setplayername':
 							if _invalidPlayer(clean_name):
 								continue 
-							print 'SETPLAYERNAME %s'%clean_name
 							playerIDToName[messageData['playerNum']] = clean_name 
 							self.players[clean_name].connected = True
 						elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
