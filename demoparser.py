@@ -187,10 +187,13 @@ def parsePacket(packet):
 		return dict()
 		#return write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'unitID', 'aiID', 'options', 'params')
 	elif cmd == 15:
+		return dict()
 		cmd = 'aicommands'
 		msgsize, playerNum, unitIDCount = struct.unpack('<hBh', data[:5])
 		pos = (unitIDCount*2)+5
-		unitIDs = struct.unpack('<%ih'%(unitIDCount), data[5:pos])
+		d = data[5:pos]
+		print 'pos %d data %s'%(pos,d)
+		unitIDs = struct.unpack('<%dh'%(unitIDCount), data[5:pos])
 		commandCount = struct.unpack('<h', data[pos:pos+2])[0]
 		pos += 2
 		commands = []
