@@ -245,7 +245,6 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		with open(self.replay, 'rb') as demofile:
 			parser = demoparser.DemoParser(demofile)
 			script = Script(parser.getScript())
-			open('/tmp/sc','w').write(parser.getScript())
 			self.players = script.players
 			self.bots = script.bots
 			self.teams = script.teams
