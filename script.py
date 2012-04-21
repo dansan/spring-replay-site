@@ -14,12 +14,15 @@ class ScriptPlayer(object):
 			self.spectator = False
 		except:
 			self.spectator = True
+			self.team = None
 		self.ally = -1
 		
 	def result(self):
 		r = Result()
 		r.ally = self.ally
 		r.team = self.team
+		#if r.team < 0:
+		#	raise Exception('djiepo')
 		return r
 	
 	
@@ -52,7 +55,7 @@ class ScriptTeam(object):
 		
 class Script(object):
 	def __init__(self,script):
-		config = CfgParser({'team':-1})
+		config = CfgParser({'team':None})
 		script = script.replace('}','').replace('{','').replace(';','')
 		config.readfp(io.BytesIO(script))
 		self.restrictions = dict()
@@ -70,6 +73,7 @@ class Script(object):
 				if player.spectator:
 					self.spectators[player.name] = player.result()
 				else:
+					print 'PLAYER %s'%player.name
 					self.players[player.name] = player.result()
 			elif section.startswith('AI'):
 				bot = ScriptAI(config,section)
