@@ -315,7 +315,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 					raise e
 	
 			kop.close()
-			if self.game_over < 0:
+			if self.game_over < 0 or len(self.teams) < 2: 
 				raise UnterminatedReplayException( self.gameid, self.ladder_id )
 			#replace ai name with lib name
 #			tempplayers = dict()
