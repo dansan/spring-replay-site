@@ -92,7 +92,7 @@ class MatchToDbWrapper:
 		gameid = self.gameid
 		if doValidation and not self.CheckValidSetup( db ):
 			raise InvalidOptionSetup( gameid, self.ladder_id )
-		session = db.sessionmaker()
+		session = db.session()
 		match = Match()
 		match.date 	= datetime.datetime.now()
 		match.modname  = ''
