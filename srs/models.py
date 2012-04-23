@@ -33,8 +33,8 @@ class Replay(models.Model):
     autohostname    = models.CharField(max_length=128, blank=True, null = True)
     gametype        = models.CharField(max_length=256)
     startpostype    = models.IntegerField(blank=True, null = True)
-    title           = models.CharField(max_length=32)
-    short_text      = models.CharField(max_length=36)
+    title           = models.CharField(max_length=256)
+    short_text      = models.CharField(max_length=50)
     long_text       = models.CharField(max_length=513)
     notcomplete     = models.BooleanField()
     rmap            = models.ForeignKey(Map)
@@ -43,7 +43,7 @@ class Replay(models.Model):
     upload_date     = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return self.title+u" :: "+self.short_text+u" :: "+self.unixTime.strftime("%Y-%m-%d")
+        return self.title+" "+self.unixTime.strftime("%Y-%m-%d")
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
