@@ -420,7 +420,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     replay.short_text = short
     replay.long_text = long_text
-    replay.title = autotag+" :: "+short+" :: "+replay.rmap.name+" :: "+replay.unixTime.strftime("%Y-%m-%d")
+    replay.title = autotag+" "+short
     replay.save()
 
     return replay
