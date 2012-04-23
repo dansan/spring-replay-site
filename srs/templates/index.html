@@ -15,7 +15,7 @@
 {% for replay,dl in newest_replays %}
 			<div class="lt"></div>
 			<div class="lbox">
-                <h2>{{ replay.title }} {% if replay.short_text %}:: <span class="yellow">{{ replay.short_text }}{% endif %}</span></h2>
+                <p><big><b>{{ replay.title }}</big></b></p>
                 <div class="thumb">
                     <a href="/replay/{{ replay.gameID }}/"><center><img src="{{ replay.rmap.img_url }}_tn1.jpg" alt="pic of map {{ replay.rmap.name }}"/></center>
                     <img src="{{ STATIC_URL }}img/play.gif" alt="Details" /> click for details</a>
