@@ -90,11 +90,13 @@ def create_map_with_positions(replay):
         team_layer = Image.new('RGB', img.size, (256,256,256))
         x,y = img.size
         for at in Allyteam.objects.filter(replay=replay):
-            team_layer.paste(colors[c_count], (int(at.startrectleft*x),
-                                               int(at.startrecttop*y),
-                                               int(at.startrectright*x),
-                                               int(at.startrectbottom*y)))
-            c_count += 1
+            # work around bugged replays (startpostype=2, but has no boxes)
+            if at.startrectleft and at.startrecttop and at.startrectright and at.startrectbottom:
+                team_layer.paste(colors[c_count], (int(at.startrectleft*x),
+                                                   int(at.startrecttop*y),
+                                                   int(at.startrectright*x),
+                                                   int(at.startrectbottom*y)))
+                c_count += 1
         img = ImageChops.multiply(img, team_layer)
         img.thumbnail(settings.thumbnail_sizes["tn2"], Image.ANTIALIAS)
 
