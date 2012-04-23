@@ -43,7 +43,7 @@ class Replay(models.Model):
     upload_date     = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return self.title+u" :: "+unicode(self.unixTime)+u" :: "+self.short_text
+        return self.title+u" :: "+self.short_text+u" :: "+self.unixTime.strftime("%Y-%m-%d")
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()

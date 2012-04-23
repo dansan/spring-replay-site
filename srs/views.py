@@ -25,6 +25,7 @@ import shutil
 import functools
 import locale
 import time
+import datetime
 
 import parse_demo_file
 import spring_maps
@@ -309,8 +310,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay = Replay()
     replay.uploader = user.pk
 
-    for key in ["versionString", "gameID", "unixTime", "wallclockTime"]:
+    for key in ["versionString", "gameID"]:
         replay.__setattr__(key, demofile.header[key])
+    replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S")
+    replay.wallclockTime = time.strptime(demofile.header["wallclockTime"], "%H:%M:%S")
     for key in ["mapname", "autohostname", "gametype", "startpostype"]:
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
@@ -418,7 +421,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     replay.short_text = short
     replay.long_text = long_text
-    replay.title = autotag+" :: "+replay.rmap.name
+    replay.title = autotag+" :: "+short+" :: "+replay.rmap.name+" :: "+replay.unixTime.strftime("%Y-%m-%d")
     replay.save()
 
     return replay
