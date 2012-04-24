@@ -159,7 +159,7 @@ def rmap(request, mapname):
     # TODO
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of games on map '%s':<br/>"%mapname
-    for replay in Replay.objects.filter(rmap__name=mapname):
+    for replay in Replay.objects.filter(map_info__name=mapname):
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
