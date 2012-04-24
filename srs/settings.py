@@ -2,10 +2,11 @@
 
 from os.path import realpath, dirname
 SRS_FILE_ROOT = realpath(dirname(__file__))
+IMG_PATH = SRS_FILE_ROOT+"/static/img/"
 MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
 REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
 FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
-thumbnail_sizes = {"tn1": (150, 100), "tn2": (450,1000)}
+thumbnail_sizes = {"home": (150, 100), "replay": (340,1000)}
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 ACCOUNT_ACTIVATION_DAYS = 4

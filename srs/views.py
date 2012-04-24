@@ -310,6 +310,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay = Replay()
     replay.uploader = user.pk
 
+    # copy match infos 
     for key in ["versionString", "gameID", "wallclockTime"]:
         replay.__setattr__(key, demofile.header[key])
     replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S")
@@ -317,30 +318,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
-    try:
-        replay.rmap = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
-    except:
-        smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
-        smap.fetch_info()
-        smap.fetch_img()
-        startpos = ""
-        for coord in smap.map_info[0]["metadata"]["StartPos"]:
-            startpos += "%f,%f|"%(coord["x"], coord["z"])
-        startpos = startpos[:-1]
-        replay.rmap = Map.objects.create(name=demofile.game_setup["host"]["mapname"], img_path=smap.img_path, img_url=smap.img_url, startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
-
     replay.save()
-
-    if tags:
-        # strip comma separated tags and remove empty ones
-        tags_ = [t.strip() for t in tags.split(",") if t]
-        for tag in tags_:
-            t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
-            replay.tags.add(t_obj)
-    replay.save()
-
-    ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0, replay=replay)
-
+    
+    # save AllyTeams
     allyteams = {}
     for num,val in demofile.game_setup['allyteam'].items():
         allyteam = Allyteam()
@@ -350,15 +330,66 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         allyteam.replay = replay
         allyteam.winner = int(num) in demofile.winningAllyTeams
         allyteam.save()
-    
+
+    # winner known?
     replay.notcomplete = demofile.header['winningAllyTeamsSize'] == 0
 
+    # get / create map infos
+    try:
+        replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
+    except:
+        # 1st time upload for this map: fetch info and full map, create thumb
+        # for index page
+        smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
+        smap.fetch_info()
+        startpos = ""
+        for coord in smap.map_info[0]["metadata"]["StartPos"]:
+            startpos += "%f,%f|"%(coord["x"], coord["z"])
+        startpos = startpos[:-1]
+        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
+        
+        full_img = smap.fetch_img()
+        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
+        smap.make_home_thumb()
+
+    # get / create map thumbs
+    if demofile.game_setup["host"]["startpostype"] == 1:
+        # fixed start positions before game
+        try:
+            replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
+        except:
+            mapfile = spring_maps.create_map_with_positions(replay.map_info)
+            replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
+    elif demofile.game_setup["host"]["startpostype"] == 2:
+        # start boxes
+        mapfile = spring_maps.create_map_with_boxes(replay)
+        replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
+    else:
+        #TODO:
+        raise Exception("not yet implemented")
+
+    replay.save()
+
+    # save tags
+    if tags:
+        # strip comma separated tags and remove empty ones
+        tags_ = [t.strip() for t in tags.split(",") if t]
+        for tag in tags_:
+            t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
+            replay.tags.add(t_obj)
+    replay.save()
+
+    # the replay file
+    ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0, replay=replay)
+
+    # save map and mod options
     for k,v in demofile.game_setup['mapoptions'].items():
         MapOption.objects.create(name=k, value=v, replay=replay)
 
     for k,v in demofile.game_setup['modoptions'].items():
         ModOption.objects.create(name=k, value=v, replay=replay)
 
+    # save players and their accounts
     players = {}
     for k,v in demofile.game_setup['player'].items():
         if not v.has_key("accountid"):
@@ -374,6 +405,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 pa.names += ";"+v["name"]
                 pa.save()
 
+    # save teams
     for num,val in demofile.game_setup['team'].items():
         team = Team()
         try:
@@ -416,8 +448,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     # TODO: SP and bot detection
 
-    spring_maps.create_map_with_positions(replay)
-
+    # save descriptions
     replay.short_text = short
     replay.long_text = long_text
     replay.title = autotag+" "+short

@@ -15,15 +15,21 @@ class Tag(models.Model):
         return self.name
 
 class Map(models.Model):
-    name            = models.CharField(max_length=128, unique=True)
-    img_path        = models.CharField(max_length=128)
-    img_url         = models.CharField(max_length=128)
-    startpos        = models.CharField(max_length=512, blank=True, null = True)
+    name            = models.CharField(max_length=128)
+    startpos        = models.CharField(max_length=1024, blank=True, null = True)
     height          = models.IntegerField()
     width           = models.IntegerField()
 
     def __unicode__(self):
         return self.name
+
+class MapImg(models.Model):
+    filename        = models.CharField(max_length=128)
+    startpostype    = models.IntegerField(blank=True, null = True, verbose_name='-1 means full image')
+    map_info        = models.ForeignKey(Map)
+
+    def __unicode__(self):
+        return self.map.name+" type:"+str(self.startpostype)
 
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
@@ -37,7 +43,8 @@ class Replay(models.Model):
     short_text      = models.CharField(max_length=50)
     long_text       = models.CharField(max_length=513)
     notcomplete     = models.BooleanField()
-    rmap            = models.ForeignKey(Map)
+    map_info        = models.ForeignKey(Map, blank=True, null = True)
+    map_img         = models.ForeignKey(MapImg, blank=True, null = True)
     tags            = models.ManyToManyField(Tag)
     uploader        = models.IntegerField()
     upload_date     = models.DateTimeField(auto_now=True)

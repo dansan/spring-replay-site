@@ -41,66 +41,70 @@ class Spring_maps():
 
     def fetch_img(self):
         """
-        fetches map image from api.springfiles.com, makes thumbnails
+        fetches map image from api.springfiles.com
         """
-        self.img_path  = settings.MAPS_PATH+self.mapname+".jpg"
-        self.img_url   = settings.STATIC_URL+"maps/"+self.mapname
+        urllib.urlretrieve (self.map_info[0]['mapimages'][0], settings.MAPS_PATH+self.mapname+".jpg")
+        return self.mapname+".jpg"
 
-        urllib.urlretrieve (self.map_info[0]['mapimages'][0], self.img_path)
-        image = Image.open(self.img_path)
-        for name,size in settings.thumbnail_sizes.items():
-            im = image.copy()
-            im.thumbnail((size[0], size[1]), Image.ANTIALIAS)
-            im.save(self.img_path[:-4]+"_"+name+".jpg", "JPEG")
+    def make_home_thumb(self):
+        image = Image.open(settings.MAPS_PATH+self.mapname+".jpg")
+        size = settings.thumbnail_sizes["home"]
+        image.thumbnail(size, Image.ANTIALIAS)
+        image.save(settings.MAPS_PATH+self.mapname+"_home.jpg", "JPEG")
+        return self.mapname+"_home.jpg"
 
-def startpos_coord_to_img_coord(replay, st_coord, img):
+def startpos_coord_to_img_coord(smap, st_coord, img):
 #    # magic numbers: font size 14 -> number has around 7x10 px size
 #    # move text a little up and left to show startpos more exact
 #    x_move = -3
 #    y_move = -5
     
-    x_draw = st_coord[0] / replay.rmap.width  * img.size[0]
-    y_draw = st_coord[1] / replay.rmap.height * img.size[1]
+    x_draw = st_coord[0] / smap.width  * img.size[0]
+    y_draw = st_coord[1] / smap.height * img.size[1]
 
 #    return (x_draw+x_move, y_draw+y_move)
     return (x_draw, y_draw)
 
-def create_map_with_positions(replay):
+def create_map_with_positions(smap):
     """
-    create a map picture with start positions / boxes
+    create a map picture with start positions
     """
-    img  = Image.open(replay.rmap.img_path)
-    
-    if replay.startpostype == 1:
-        # pos random / before game
-        img.thumbnail(settings.thumbnail_sizes["tn2"], Image.ANTIALIAS)
-        draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype(settings.FONTS_PATH+"VeraMono.ttf", 14)
-        i = 1
-        for startpos in [(float(pair.split(",")[0]), float(pair.split(",")[1])) for pair in replay.rmap.startpos.split("|")]:
-            draw_pos = startpos_coord_to_img_coord(replay, startpos, img)
-#            draw.text(draw_pos, str(i), font=font)
-	    draw.ellipse((draw_pos[0]-5, draw_pos[1]-5, draw_pos[0]+5,draw_pos[1]+5), outline="white", fill="green")
-            i += 1
-        del draw
-    elif replay.startpostype == 2:
-        # boxes
-        colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # works only for up to 6 AllyTeams...
-        c_count  = 0
-        team_layer = Image.new('RGB', img.size, (256,256,256))
-        x,y = img.size
-        for at in Allyteam.objects.filter(replay=replay):
-            # work around bugged replays (startpostype=2, but has no boxes)
-            if at.startrectleft and at.startrecttop and at.startrectright and at.startrectbottom:
-                team_layer.paste(colors[c_count], (int(at.startrectleft*x),
-                                                   int(at.startrecttop*y),
-                                                   int(at.startrectright*x),
-                                                   int(at.startrectbottom*y)))
-                c_count += 1
-        img = ImageChops.multiply(img, team_layer)
-        img.thumbnail(settings.thumbnail_sizes["tn2"], Image.ANTIALIAS)
+    img  = Image.open(settings.MAPS_PATH+smap.name+".jpg")
+    img.thumbnail(settings.thumbnail_sizes["replay"], Image.ANTIALIAS)
+    draw = ImageDraw.Draw(img)
+#    font = ImageFont.truetype(settings.FONTS_PATH+"VeraMono.ttf", 14)
+#    i = 1
+    for startpos in [(float(pair.split(",")[0]), float(pair.split(",")[1])) for pair in smap.startpos.split("|")]:
+        draw_pos = startpos_coord_to_img_coord(smap, startpos, img)
+#        draw.text(draw_pos, str(i), font=font)
+        draw.ellipse((draw_pos[0]-5, draw_pos[1]-5, draw_pos[0]+5,draw_pos[1]+5), outline="white", fill="green")
+#        i += 1
+    del draw
+    img.save(settings.MAPS_PATH+smap.name+"_positions.jpg", "JPEG")
+    return smap.name+"_positions.jpg"
 
-    img.save(replay.rmap.img_path[:-4]+"_"+str(replay.gameID)+".jpg", "JPEG")
+def create_map_with_boxes(replay):
+    """
+    create a map picture with start boxes
+    """
+    img  = Image.open(settings.MAPS_PATH+replay.map_info.name+".jpg")
+    colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # works only for up to 6 AllyTeams...
+    c_count  = 0
+    team_layer = Image.new('RGB', img.size, (256,256,256))
+    x,y = img.size
+    for at in Allyteam.objects.filter(replay=replay):
+        # work around bugged replays (startpostype=2, but has no boxes)
+        if at.startrectleft != None and at.startrecttop != None and at.startrectright != None and at.startrectbottom != None:
+            team_layer.paste(colors[c_count], (int(at.startrectleft*x),
+                                               int(at.startrecttop*y),
+                                               int(at.startrectright*x),
+                                               int(at.startrectbottom*y)))
+            c_count += 1
+    img = ImageChops.multiply(img, team_layer)
+    img.thumbnail(settings.thumbnail_sizes["replay"], Image.ANTIALIAS)
+    filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
+    img.save(settings.MAPS_PATH+filename, "JPEG")
+    return filename
 
 def main(argv=None):
     if argv is None:

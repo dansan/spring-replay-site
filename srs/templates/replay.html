@@ -5,17 +5,26 @@
 
 {% block maincontent%}
         <div class="left">
-            <div class="left_articles">
-                <h2>{{ replay.title }} :: {{ replay.short_text }}</h2>
-                <h3><a href="/download/{{ replay.gameID }}/">Download</a></h3>
-                <p>Tags: {% for tag in replay.tags.all %}<a href="/tag/{{ tag.name }}/">{{ tag.name }}</a> {% endfor %}</p> {{ tags }}
-                <p>Played: <a href="/match_date/{{ replay.unixTime|date:"Y-m-d" }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}
-                <p>Uploaded by: <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a> on <a href="/upload_date/{{ replay.upload_date|date:"Y-m-d" }}/">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</p>
-                {% if replay.notcomplete %}<p><b><font color="red">Replay is incomplete - winner is unknown!</font></b></p>{% endif %}
+            <div class="lt"></div>
+            <div class="lbox">
+                <p><big><b>{{ replay.title }}</big></b></p>
+                <p>Date: <a href="/match_date/{{ replay.unixTime|date:"Y-m-d" }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}<br/>
+                Game: <a href="/game/{{ replay.gametype }}/">{{ replay.gametype }}</a> (engine {{ replay.versionString }})<br/>
+                Map: <a href="/map/{{ replay.map_info.name }}/">{{ replay.map_info.name }}</a><br/>
+                Upload: <a href="/upload_date/{{ replay.upload_date|date:"Y-m-d" }}/">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> by <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a><br/>
+                File: <a href="/download/{{ replay.gameID }}/"><b>download</b></a><br/>
+                Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
+                Tags:{% for tag in replay.tags.all %} <a href="/tag/{{ tag }}/">{{ tag }}</a>{% endfor %}<br/>
+                Downloads / Comments: {{ dl }} / nyi (todo)</p>
             </div>
-	        <center><img src="{{ replay.rmap.img_url }}_{{ replay.gameID }}.jpg" alt="pic of map {{ replay.rmap.name }}" width="450"/></center>
-	        <p><b>Uploaders Comment:</b> {{ replay.long_text }}</p>
+        <div class="left" style="width: 340px;">
+	        <center><img src="{{ STATIC_URL }}maps/{{ replay.map_img.filename }}" alt="pic of map {{ replay.map_info.name }}" width="340"/></center>
 	        <p><br/></p>
+	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
+	        <p><br/></p>
+	    </div>
+	    <div class="left" style="width: 130px; padding: 0 8px;">
+	        {% if replay.notcomplete %}<p><b><font color="maroon">Replay is incomplete, winner and match length are unknown. Please leave a comment.</font></b></p>{% endif %}
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
 	            <ul>
@@ -25,12 +34,16 @@
 	            <li><b>Spectators</b></li>
 	            {% for s in specs %}<li>{{ s.name }}</li>{% endfor %}
 	        </ul>
+	   </div>
+	   <div class="left">
+       <div class="footer"></div>
 	        <h3>Comments:</h3>
 	        {% get_comment_count for replay as comment_count %}
             <p>This event has {{ comment_count }} comments.</p>
 	        {% render_comment_list for replay %}
 	        <a name="afterlastcomment"></a>
 
+            <div class="footer"></div>
 	        {% if user.is_authenticated %}
             <h3>Post a comment:</h3>
 			{% get_comment_form for replay as form %}
@@ -57,5 +70,6 @@
 			{% else %}
 			<h3>To post a comment you have to <a href="{% url auth_login %}">log in</a> (<a href="{% url registration_register %}">register</a>).</h3>
             {% endif %}
+        </div>
         </div>
 {% endblock %}
