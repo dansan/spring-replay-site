@@ -17,6 +17,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import Http404
+from django.contrib.comments import Comment
 
 from tempfile import mkstemp
 import os
@@ -40,6 +41,7 @@ def all_page_infos(request):
     c["top_tags"]       = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_maps"]       = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_players"] = [(Player.objects.filter(account=pa)[0], pa.accountid) for pa in PlayerAccount.objects.exclude(accountid=9999999999).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
+    c["latest_comments"] = Comment.objects.reverse()[:5]
     return c
 
 def index(request):
@@ -289,6 +291,17 @@ def upload_date(request, shortdate):
         rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
+
+def all_comments(request):
+    # TODO:
+    all_c = Comment.objects.all()
+    rep = "<b>TODO</b><br/><br/>"
+    rep += "list of all %d comments:<br/>"%all_c.count()
+    for c in all_c:
+        rep += '* User <a href="/user/%s/">%s</a> commented on <a href="/replay/%s/">replay %s</a>: %s <a href="%s">more...</a><br/>'%(c.user_name, c.user_name, c.content_object.gameID, c.content_object.__unicode__(), c.comment[:20], c.get_absolute_url())
+    rep += '<br/><br/><a href="/">Home</a>'
+    return HttpResponse(rep)
+
 ###############################################################################
 ###############################################################################
 
