@@ -164,8 +164,13 @@ class MatchToDbWrapper:
 
 class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__( self, replay, ladder_id ):
-		self.replay = replay
+	def __init__( self, output, ladder_id ):
+		log_start = '[f=0000000] recording demo: '
+		datapath = tasbot.config.Config().get('tasbot', "springdatapath")
+		for line in output.split('\n'):
+			if line.startswith(log_start):
+				self.replay = os.path.join(datapath, line[len(log_start):].split('\n')[0])
+				break
 		self.ladder_id		= ladder_id
 		self.game_started	= False
 		self.game_over		= -1
