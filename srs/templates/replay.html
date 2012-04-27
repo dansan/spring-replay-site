@@ -8,17 +8,10 @@
             <div class="lt"></div>
             <div class="lbox">
                 <p><big><b>{{ replay.title }}</big></b></p>
-                <p>Date: <a href="/match_date/{{ replay.unixTime|date:"Y-m-d" }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}<br/>
-                Game: <a href="/game/{{ replay.gametype }}/">{{ replay.gametype }}</a> (engine {{ replay.versionString }})<br/>
-                Map: <a href="/map/{{ replay.map_info.name }}/">{{ replay.map_info.name }}</a><br/>
-                Upload: <a href="/upload_date/{{ replay.upload_date|date:"Y-m-d" }}/">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> by <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a><br/>
-                File: <a href="/download/{{ replay.gameID }}/"><b>download</b></a><br/>
-                Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
-                Tags:{% for tag in replay.tags.all %} <a href="/tag/{{ tag }}/">{{ tag }}</a>{% endfor %}<br/>
-                Downloads / Comments: {{ dl }} / nyi (todo)</p>
+{% include "replay_box.html" %}
             </div>
         <div class="left" style="width: 340px;">
-	        <center><img src="{{ STATIC_URL }}maps/{{ replay.map_img.filename }}" alt="pic of map {{ replay.map_info.name }}" width="340"/></center>
+	        <center><img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/></center>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	        <p><br/></p>
@@ -28,7 +21,7 @@
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
 	            <ul>
-	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}><a href="/player/{{ t.teamleader.account.accountid }}/">{{ t.teamleader.name }}</a></font></li>{% endfor %}
+	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}><a href="{{ t.teamleader.get_absolute_url }}">{{ t.teamleader.name }}</a></font></li>{% endfor %}
 	            </ul>
 	            <li>&nbsp;</li>{% endfor %}
 	            <li><b>Spectators</b></li>
@@ -49,7 +42,7 @@
 			{% get_comment_form for replay as form %}
 
 			<form action="{% comment_form_target %}" method="post">{% csrf_token %}
-			  <div><input type="hidden" name="next" value="/replay/{{ replay.gameID }}/#afterlastcomment" /></div>
+			  <div><input type="hidden" name="next" value="{{ replay.get_absolute_url }}#afterlastcomment" /></div>
 			  {% for field in form %}
 			    {% if field.is_hidden %}
 			      <div>{{ field }}</div>

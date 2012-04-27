@@ -1,0 +1,8 @@
+                <p>Date: <a href="/match_date/{{ replay.unixTime|date:"Y-m-d" }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}<br/>
+                Game: <a href="/game/{{ replay.gametype }}/">{{ replay.gametype }}</a> (engine {{ replay.versionString }})<br/>
+                Map: <a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a><br/>
+                Upload: <a href="/upload_date/{{ replay.upload_date|date:"Y-m-d" }}/">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a><br/>
+                File: <a href="/download/{{ replay.gameID }}/">download</a><br/>
+                Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
+                Tags:{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}<br/>
+                Downloads / Comments: {{ dl }} / nyi (todo)</p>

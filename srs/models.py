@@ -7,12 +7,20 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
+from django.contrib.auth.models import User
+import settings
+
+User.get_absolute_url = lambda self: "/user/"+self.username+"/"
 
 class Tag(models.Model):
     name            = models.CharField(max_length=128, unique=True)
 
     def __unicode__(self):
         return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.tag', [self.name])
 
 class Map(models.Model):
     name            = models.CharField(max_length=128)
@@ -23,13 +31,20 @@ class Map(models.Model):
     def __unicode__(self):
         return self.name
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.rmap', [self.name])
+
 class MapImg(models.Model):
     filename        = models.CharField(max_length=128)
     startpostype    = models.IntegerField(blank=True, null = True, verbose_name='-1 means full image')
     map_info        = models.ForeignKey(Map)
 
     def __unicode__(self):
-        return self.map.name+" type:"+str(self.startpostype)
+        return self.map_info.name+" type:"+str(self.startpostype)
+
+    def get_absolute_url(self):
+        return (settings.STATIC_URL+"maps/"+self.filename)
 
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
@@ -46,11 +61,15 @@ class Replay(models.Model):
     map_info        = models.ForeignKey(Map, blank=True, null = True)
     map_img         = models.ForeignKey(MapImg, blank=True, null = True)
     tags            = models.ManyToManyField(Tag)
-    uploader        = models.IntegerField()
+    uploader        = models.ForeignKey(User)
     upload_date     = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.title+" "+self.unixTime.strftime("%Y-%m-%d")
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.replay', [str(self.gameID)])
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -80,6 +99,10 @@ class Player(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.player', [self.account.accountid])
 
 class Team(models.Model):
     allyteam        = models.ForeignKey(Allyteam)

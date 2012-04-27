@@ -63,9 +63,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         <div class="right">
             <div class="rt"></div>
             <div class="right_articles">
-                <p><b>Tags (<a href="/tags/">All</a>)</b><br /><a href="/tag/1v1/">1v1</a> <a href="/tag/2v2/">2v2</a> <a href="/tag/3v3/">3v3</a> <a href="/tag/6v6/">6v6</a> <a href="/tag/8v8/">8v8</a> <a href="/tag/Tourney/">Tourney</a><br />Top {{ top_tags.count }}: {% for tag in top_tags %}<a href="/tag/{{ tag.name }}/">{{ tag.name }}</a> {% endfor %}</p>
-                <p><b>Maps (<a href="/maps/">All</a>)</b><br />Top {{ top_maps.count }}: {% for map in top_maps %}<a href="/map/{{ map.name }}/">{{ map.name }}</a> {% endfor %}</p>
-                <p><b>Players (<a href="/players/">All</a>)</b><br />Top {{ top_players|length }}: {% for name,id in top_players %}<a href="/player/{{ id }}/">{{ name }}</a> {% endfor %}</p>
+                <p><b>Tags (<a href="/tags/">All</a>)</b><br /><a href="/tag/1v1/">1v1</a> <a href="/tag/2v2/">2v2</a> <a href="/tag/3v3/">3v3</a> <a href="/tag/6v6/">6v6</a> <a href="/tag/8v8/">8v8</a> <a href="/tag/Tourney/">Tourney</a><br />Top {{ top_tags.count }}: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
+                <p><b>Maps (<a href="/maps/">All</a>)</b><br />Top {{ top_maps.count }}: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
+                <p><b>Players (<a href="/players/">All</a>)</b><br />Top {{ top_players|length }}: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.name }}</a> {% endfor %}</p>
                 <p><b>Games (<a href="/games/">All</a>)</b></p>
                 <p><b>Uploaders (<a href="/users/">All</a>)</b></p>
             </div>

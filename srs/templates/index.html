@@ -17,18 +17,10 @@
 			<div class="lbox">
                 <p><big><b>{{ replay.title }}</big></b></p>
                 <div class="thumb">
-                    <a href="/replay/{{ replay.gameID }}/"><center><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></center>
+                    <a href="{{ replay.get_absolute_url }}"><center><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></center>
                     <img src="{{ STATIC_URL }}img/play.gif" alt="Details" /> click for details</a>
                 </div>
-                    
-                <p>Date: <a href="/match_date/{{ replay.unixTime|date:"Y-m-d" }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}<br/>
-                Game: <a href="/game/{{ replay.gametype }}/">{{ replay.gametype }}</a> (engine {{ replay.versionString }})<br/>
-                Map: <a href="/map/{{ replay.map_info.name }}/">{{ replay.map_info.name }}</a><br/>
-                Upload: <a href="/upload_date/{{ replay.upload_date|date:"Y-m-d" }}/">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> by <a href="/user/{{ replay.uploader.username }}/">{{ replay.uploader.username }}</a><br/>
-                File: <a href="/download/{{ replay.gameID }}/">download</a><br/>
-                Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
-                Tags:{% for tag in replay.tags.all %} <a href="/tag/{{ tag }}/">{{ tag }}</a>{% endfor %}<br/>
-                Downloads / Comments: {{ dl }} / nyi (todo)</p>
+{% include "replay_box.html" %}
             </div>
 {% endfor %}
             

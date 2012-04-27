@@ -11,10 +11,7 @@ from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
 from django.template import RequestContext
 from django.db.models import Count
-import django.contrib.auth
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
@@ -25,22 +22,20 @@ import sets
 import shutil
 import functools
 import locale
-import time
 import datetime
 
 import parse_demo_file
 import spring_maps
-import settings
 from models import *
 from forms import UploadFileForm
 
 def all_page_infos(request):
     c = {}
     c.update(csrf(request))
-    c["total_replays"] = Replay.objects.count()
-    c["top_tags"]       = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_maps"]       = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_players"] = [(Player.objects.filter(account=pa)[0], pa.accountid) for pa in PlayerAccount.objects.exclude(accountid=9999999999).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
+    c["total_replays"]   = Replay.objects.count()
+    c["top_tags"]        = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    c["top_maps"]        = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.exclude(accountid=9999999999).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
     c["latest_comments"] = Comment.objects.reverse()[:5]
     return c
 
@@ -48,7 +43,6 @@ def index(request):
     c = all_page_infos(request)
     c["newest_replays"] = []
     for replay in Replay.objects.all().order_by('-pk')[:10]:
-        replay.uploader = User.objects.get(pk=replay.uploader)
         c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
     c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
@@ -112,7 +106,6 @@ def replay(request, gameID):
         if teams:
             c["allyteams"].append((at, teams))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
-    c["replay"].uploader = User.objects.get(pk=c["replay"].uploader)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
@@ -229,7 +222,7 @@ def search(request):
     if request.method == 'POST':
         st = request.POST["search"].strip()
         if st:
-            users = User.objects.filter(username__icontains=st).values_list('id', flat=True).order_by('id')
+            users = User.objects.filter(username__icontains=st)
             replays = Replay.objects.filter(Q(gametype__icontains=st)|
                                             Q(title__icontains=st)|
                                             Q(short_text__icontains=st)|
@@ -264,12 +257,12 @@ def users(request):
 def see_user(request, username):
     # TODO:
     rep = "<b>TODO</b><br/><br/>"
-    user = User.objects.filter(username=username)
-    if user:
+    user = User.objects.get(username=username)
+    try:
         rep += "list of replays uploaded by %s:<br/>"%username
-        for replay in Replay.objects.filter(uploader=user[0].pk):
+        for replay in Replay.objects.filter(uploader=user):
             rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
-    else:
+    except:
         rep += "user %s unknown.<br/>"%username
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
@@ -321,7 +314,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     Store all data about this replay in the database
     """
     replay = Replay()
-    replay.uploader = user.pk
+    replay.uploader = user
 
     # copy match infos 
     for key in ["versionString", "gameID", "wallclockTime"]:
@@ -332,7 +325,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
     replay.save()
-    
+
     # save AllyTeams
     allyteams = {}
     for num,val in demofile.game_setup['allyteam'].items():
@@ -360,7 +353,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             startpos += "%f,%f|"%(coord["x"], coord["z"])
         startpos = startpos[:-1]
         replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
-        
+
         full_img = smap.fetch_img()
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         smap.make_home_thumb()
