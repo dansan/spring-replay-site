@@ -71,7 +71,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             </div>
             <div class="rt"></div>
             <div class="right_articles">
-                <p><b>Latest Comments (<a href="/all_comments/">All</a>)</b><br/>{% for comm in latest_comments %}<a href="{% get_comment_permalink comm %}">{{ comm.submit_date|date:"Y-m-d H:i" }} | {{ comm.user_name|truncatechars:12 }} | {{ comm.content_object.title|truncatechars:18 }}</a><br/>{% endfor %}</p>
+                <p><b>Latest Comments (<a href="/all_comments/">All</a>, <a href="/feeds/latest_comments/">RSS</a>)</b><br/>{% for comm in latest_comments %}<a href="{% get_comment_permalink comm %}">{{ comm.submit_date|date:"Y-m-d H:i" }} | {{ comm.user_name|truncatechars:12 }} | {{ comm.content_object.title|truncatechars:18 }}</a><br/>{% endfor %}</p>
             </div>
             <div class="rt"></div>
             <div class="right_articles">
