@@ -62,7 +62,10 @@ def parseSec( sec ):
 		dic[key] = val
 	return dic
 
-class MatchToDbWrapper:
+class MatchToDbWrapper(object):
+	
+	def __init__(self):
+		self.config = tasbot.config.Config()
 
 	def CheckOptionOk( self, db, keyname, value ):
 		if db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
@@ -97,7 +100,7 @@ class MatchToDbWrapper:
 		match.date 	= datetime.datetime.now()
 		match.modname  = ''
 		replayzip = os.path.basename(self.replay).replace(".sdf",".zip")
-		base = tasbot.config.Config().get('ladder','base_dir')
+		base = self.config.get('ladder','base_dir')
 		replayzip = os.path.join( base, 'demos', replayzip)
 		mkdir_p(replayzip)
 		with zipfile.ZipFile(replayzip, mode='w') as f_out:
@@ -164,9 +167,10 @@ class MatchToDbWrapper:
 
 class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__( self, output, ladder_id ):
+	def __init__(self, output, ladder_id, config):
+		self.config = config
 		log_start = '[f=0000000] recording demo: '
-		datapath = tasbot.config.Config().get('tasbot', "springdatapath")
+		datapath = config.get('tasbot', "springdatapath")
 		for line in output.split('\n'):
 			if line.startswith(log_start):
 				self.replay = os.path.join(datapath, line[len(log_start):].split('\n')[0])
