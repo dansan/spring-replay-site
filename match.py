@@ -175,6 +175,12 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			if line.startswith(log_start):
 				self.replay = os.path.join(datapath, line[len(log_start):].split('\n')[0])
 				break
+		try:
+			os.path.exists(self.replay)
+		except Exception,e:
+			Log.error('match has no replay')
+			Log.exception(e)
+			raise e
 		self.ladder_id		= ladder_id
 		self.game_started	= False
 		self.game_over		= -1
