@@ -65,43 +65,44 @@ def parseSec( sec ):
 
 class MatchToDbWrapper(object):
 	
-	def __init__(self):
+	def __init__(self, db):
 		self.config = tasbot.config.Config()
+		self.db = db
 
-	def CheckOptionOk( self, db, keyname, value ):
-		if db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
+	def CheckOptionOk( self, keyname, value ):
+		if self.db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
 			return 'Value %s for key %s is blacklisted'%(str(value), keyname)
-		if db.GetOptionKeyExists( self.ladder_id, True, keyname ): # whitelist not empty
-			if db.GetOptionKeyValueExists( self.ladder_id, True, keyname, value ):
+		if self.db.GetOptionKeyExists( self.ladder_id, True, keyname ): # whitelist not empty
+			if self.db.GetOptionKeyValueExists( self.ladder_id, True, keyname, value ):
 				return ''
 			else:
 				return 'value %s for key %s not whiltelisted/ok'%(str(value), keyname)
 		else:
 			return ''
 
-	def CheckValidOptionsSetup( self, db ):
-		laddername = db.GetLadderName( self.ladder_id )
+	def CheckValidOptionsSetup(self):
+		laddername = self.db.GetLadderName( self.ladder_id )
 		errors = []
 		for key in self.options:
 			value = self.options[key]
-			IsOk = self.CheckOptionOk( db, key, value )
+			IsOk = self.CheckOptionOk(key, value)
 			if IsOk != '':
 				errors.append(IsOk)
 		return errors
 
-	def CheckValidSetup( self, db ):
-		a = self.CheckvalidPlayerSetup(db)
-		b = self.CheckValidOptionsSetup(db)
+	def CheckValidSetup( self):
+		a = self.CheckvalidPlayerSetup()
+		b = self.CheckValidOptionsSetup()
 		return a + b
 
-	def CommitMatch(self,db, doValidation=True):
+	def CommitMatch(self,doValidation=True):
 		self.ParseSpringOutput()
-		ladder = db.GetLadder(self.ladder_id )
+		ladder = GetLadder(self.ladder_id )
 		gameid = self.gameid
-		validation_errors = self.CheckValidSetup( db )
+		validation_errors = self.CheckValidSetup()
 		if doValidation and len(validation_errors) > 0:
 			raise InvalidOptionSetup( gameid, self.ladder_id, validation_errors )
-		session = db.session()
+		session = self.db.session()
 		match = Match()
 		match.date 	= datetime.datetime.now()
 		match.modname  = ''
@@ -153,7 +154,7 @@ class MatchToDbWrapper(object):
 			session.commit()
 		self.CommitPlayerResults(session,match)
 		session.close()
-		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
+		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, self.db )
 		return matchid
 
 	def CommitPlayerResults(self,session,match):
@@ -173,7 +174,8 @@ class MatchToDbWrapper(object):
 
 class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__(self, output, ladder_id, config):
+	def __init__(self, output, ladder_id, config, db):
+		super(AutomaticMatchToDbWrapper, self).__init__(db)
 		self.config = config
 		log_start = '[f=0000000] recording demo: '
 		datapath = config.get('tasbot', "springdatapath")
@@ -191,15 +193,15 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		self.game_started	= False
 		self.game_over		= -1
 
-	def CheckvalidPlayerSetup( self, db ):
-		laddername = db.GetLadderName( self.ladder_id )
+	def CheckvalidPlayerSetup(self):
+		laddername = self.db.GetLadderName(self.ladder_id)
 		teamsdict = dict()
 		alliesdict = dict()
 		countedbots = []
 		bannedplayers = []
 		errors = []
 		for player in self.teams:
-			if not db.AccessCheck( self.ladder_id, player, Roles.User ):
+			if not self.db.AccessCheck( self.ladder_id, player, Roles.User ):
 				bannedplayers.append( player )
 				continue
 			team = self.teams[player]
@@ -223,8 +225,8 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 				alliesdict[ally] += 1
 
 		def _range_check(var, name):
-			upper = db.GetLadderOption( self.ladder_id, "max_%s"%name )
-			lower = db.GetLadderOption( self.ladder_id, "min_%s"%name )
+			upper = self.db.GetLadderOption( self.ladder_id, "max_%s"%name )
+			lower = self.db.GetLadderOption( self.ladder_id, "min_%s"%name )
 			if not(lower <= var <= upper):
 				errors.append('%s (%d) out of range: [%d,%d]'%(name, var, lower, upper))
 
@@ -328,7 +330,8 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 
 class ManualMatchToDbWrapper(MatchToDbWrapper):
 
-	def __init__( self, playerlist, playerscores, teams, ladder_id, options, restrictions, bots, allies, allies_map, teams_map ):
+	def __init__( self, playerlist, playerscores, teams, ladder_id, options, restrictions, bots, allies, allies_map, teams_map, db):
+		super(MatchToDbWrapper, self).__init__(db)
 		self.playerscores 	= playerscores
 		self.playerlist		= playerlist
 		self.ladder_id		= ladder_id
@@ -343,7 +346,7 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.teams_map		= teams_map
 		self.replay			= ""
 
-	def CheckvalidPlayerSetup( self, db ):
+	def CheckvalidPlayerSetup(self):
 		errors = []
 		for p in self.playerscores.keys():
 			if not p in self.playerlist:
