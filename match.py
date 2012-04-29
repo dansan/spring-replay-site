@@ -298,6 +298,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 						elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
 							self.game_started = True
 						elif messageData['cmd'] == 'gameover':
+							print ('GAMEOVER')
 							if not self.game_started:
 								Log.error( 'game not started on gameover found', 'Match.py' )
 							else:
@@ -330,8 +331,9 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 					raise e
 	
 			kop.close()
-			if self.game_over < 0 or len(self.teams) < 2: 
-				raise UnterminatedReplayException( self.gameid, self.ladder_id )
+			#if self.game_over < 0 or len(self.teams) < 2: 
+				#raise UnterminatedReplayException( self.gameid, self.ladder_id )
+			print('game over %d' % self.game_over) 
 			#replace ai name with lib name
 #			tempplayers = dict()
 #			for playername in self.players:
