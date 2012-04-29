@@ -97,7 +97,7 @@ class MatchToDbWrapper(object):
 
 	def CommitMatch(self,doValidation=True):
 		self.ParseSpringOutput()
-		ladder = GetLadder(self.ladder_id )
+		ladder = self.db.GetLadder(self.ladder_id )
 		gameid = self.gameid
 		validation_errors = self.CheckValidSetup()
 		if doValidation and len(validation_errors) > 0:
@@ -177,18 +177,21 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 	def __init__(self, output, ladder_id, config, db):
 		super(AutomaticMatchToDbWrapper, self).__init__(db)
 		self.config = config
-		log_start = '[f=0000000] recording demo: '
-		datapath = config.get('tasbot', "springdatapath")
-		for line in output.split('\n'):
-			if line.startswith(log_start):
-				self.replay = os.path.join(datapath, line[len(log_start):].split('\n')[0])
-				break
-		try:
-			os.path.exists(self.replay)
-		except Exception,e:
-			Log.error('match has no replay')
-			Log.exception(e)
-			raise e
+		if os.path.exists(output):
+			self.replay = output
+		else:
+			log_start = '[f=0000000] recording demo: '
+			datapath = config.get('tasbot', "springdatapath")
+			for line in output.split('\n'):
+				if line.startswith(log_start):
+					self.replay = os.path.join(datapath, line[len(log_start):].split('\n')[0])
+					break
+			try:
+				os.path.exists(self.replay)
+			except Exception,e:
+				Log.error('match has no replay')
+				Log.exception(e)
+				raise e
 		self.ladder_id		= ladder_id
 		self.game_started	= False
 		self.game_over		= -1
