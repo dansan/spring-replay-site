@@ -23,7 +23,7 @@ urlpatterns = patterns('',
     url(r'^tag/(?P<reqtag>[\w\ .]+)/$', 'srs.views.tag'),
 
     url(r'^maps/$', 'srs.views.maps'),
-    url(r'^map/(?P<mapname>[\w\ ]+)/$', 'srs.views.rmap'),
+    url(r'^map/(?P<mapname>[\w\ .-]+)/$', 'srs.views.rmap'),
 
     url(r'^players/$', 'srs.views.players'),
     url(r'^player/(?P<accountid>\d+)/$', 'srs.views.player'),

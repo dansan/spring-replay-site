@@ -43,9 +43,7 @@ def all_page_infos(request):
 
 def index(request):
     c = all_page_infos(request)
-    c["newest_replays"] = []
-    for replay in Replay.objects.all().order_by('-pk')[:10]:
-        c["newest_replays"].append((replay, ReplayFile.objects.get(replay=replay).download_count))
+    c["newest_replays"] = Replay.objects.all().reverse()[:10]
     c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
@@ -86,8 +84,8 @@ class ReplayTable(tables.Table):
     title          = tables.Column()
     upload_date    = tables.Column()
     uploader       = tables.Column()
-#    download_count = tables.Column()
-#    comment_count  = tables.Column()
+    download_count = tables.Column(accessor="replayfile.download_count")
+    comment_count  = tables.Column()
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-upload_date"
@@ -124,7 +122,7 @@ def download(request, gameID):
     # TODO
     c = all_page_infos(request)
     try:
-        rf = ReplayFile.objects.get(replay__gameID=gameID)
+        rf = Replay.objects.get(gameID=gameID).replayfile
     except:
         # TODO: nicer error handling
         raise Http404
@@ -334,6 +332,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
+    # the replay file
+    replay.replayfile = ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0)
+
     replay.save()
 
     # save AllyTeams
@@ -394,9 +395,6 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
             replay.tags.add(t_obj)
     replay.save()
-
-    # the replay file
-    ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0, replay=replay)
 
     # save map and mod options
     for k,v in demofile.game_setup['mapoptions'].items():

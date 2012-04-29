@@ -8,6 +8,8 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.comments import Comment
+from django.contrib.contenttypes.models import ContentType
 import settings
 
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
@@ -46,6 +48,15 @@ class MapImg(models.Model):
     def get_absolute_url(self):
         return (settings.STATIC_URL+"maps/"+self.filename)
 
+class ReplayFile(models.Model):
+    filename        = models.CharField(max_length=256)
+    path            = models.CharField(max_length=256)
+    ori_filename    = models.CharField(max_length=256)
+    download_count  = models.IntegerField()
+
+    def __unicode__(self):
+        return self.filename[:20]
+
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
     gameID          = models.CharField(max_length=32, unique=True)
@@ -63,13 +74,17 @@ class Replay(models.Model):
     tags            = models.ManyToManyField(Tag)
     uploader        = models.ForeignKey(User)
     upload_date     = models.DateTimeField(auto_now=True)
-
+    replayfile      = models.ForeignKey(ReplayFile)
     def __unicode__(self):
         return self.title+" "+self.unixTime.strftime("%Y-%m-%d")
 
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
+
+    def comment_count(self):
+        r_t = ContentType.objects.get_for_model(Replay)
+        return Comment.objects.filter(object_pk=str(self.pk), content_type=r_t.pk).count()
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -131,16 +146,6 @@ class MapOption(MapModOption):
 
 class ModOption(MapModOption):
     pass
-
-class ReplayFile(models.Model):
-    filename        = models.CharField(max_length=256)
-    path            = models.CharField(max_length=256)
-    ori_filename    = models.CharField(max_length=256)
-    download_count  = models.IntegerField()
-    replay          = models.ForeignKey(Replay)
-
-    def __unicode__(self):
-        return self.filename[:20]
 
 class NewsItem(models.Model):
     text            = models.CharField(max_length=256)

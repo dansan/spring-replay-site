@@ -12,7 +12,7 @@
                     {% for n in news %}<li>{{ n.text|safe }}</li>{% endfor %}
                 </ul>
             </div>
-{% for replay,dl in newest_replays %}
+{% for replay in newest_replays %}
 			<div class="lt"></div>
 			<div class="lbox">
                 <p><big><b>{{ replay.title }}</big></b></p>
