@@ -236,7 +236,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			_range_check(teamsize, 'team_size')
 		for ally in alliesdict:
 			allysize = alliesdict[ally]
-			_range_check(teamsize, 'ally_size')
+			_range_check(allysize, 'ally_size')
 		return errors
 
 	def ParseSpringOutput(self):
