@@ -6,10 +6,9 @@
                   <div>{{ field }}</div>
                 {% else %}
                   {% if field.errors %}{{ field.errors }}{% endif %}
-                  <p
-                    {% if field.errors %} class="error"{% endif %}
-                    {% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}>
-                    {{ field.label_tag }} {{ field }}
+                  <p{% if field.errors %} class="error"{% endif %}
+                    {% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}{% ifequal field.name "name" %} style="display:none;"{% endifequal %}{% ifequal field.name "email" %} style="display:none;"{% endifequal %}{% ifequal field.name "url" %} style="display:none;"{% endifequal %}>
+                    {{ field }}
                   </p>
                 {% endif %}
               {% endfor %}
@@ -17,4 +16,4 @@
                 <input type="submit" name="post" class="submit-post" value="Post" />
                 <input type="submit" name="preview" class="submit-preview" value="Preview" />
               </p>
-            </form>
+            </form></a>
