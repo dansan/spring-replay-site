@@ -16,12 +16,13 @@ from myutils import mkdir_p
 
 
 class InvalidOptionSetup( Exception ):
-	def __init__(self, gameid, ladderid):
+	def __init__(self, gameid, ladderid, errors):
 		self.gameid = gameid
 		self.ladderid = ladderid
+		self.errors = errors
 
 	def __str__(self):
-		return "Setup for game %s did not match ladder rules for ladder %d" %(self.gameid,self.ladderid)
+		return "Setup for game %s did not match ladder rules for ladder %d:\n%s" %(self.gameid,self.ladderid,'\n'.join(self.errors))
 
 class UnterminatedReplayException( Exception ):
 	def __init__(self, gameid, ladderid):
@@ -69,32 +70,37 @@ class MatchToDbWrapper(object):
 
 	def CheckOptionOk( self, db, keyname, value ):
 		if db.GetOptionKeyValueExists( self.ladder_id, False, keyname, value ): # option in the blacklist
-			return False
+			return 'Value %s for key %s is blacklisted'%(str(value), keyname)
 		if db.GetOptionKeyExists( self.ladder_id, True, keyname ): # whitelist not empty
-			return db.GetOptionKeyValueExists( self.ladder_id, True, keyname, value )
+			if db.GetOptionKeyValueExists( self.ladder_id, True, keyname, value ):
+				return ''
+			else:
+				return 'value %s for key %s not whiltelisted/ok'%(str(value), keyname)
 		else:
-			return True
+			return ''
 
 	def CheckValidOptionsSetup( self, db ):
 		laddername = db.GetLadderName( self.ladder_id )
+		errors = []
 		for key in self.options:
 			value = self.options[key]
 			IsOk = self.CheckOptionOk( db, key, value )
-			if not IsOk:
-				return False
-		return True
+			if IsOk != '':
+				errors.append(IsOk)
+		return errors
 
 	def CheckValidSetup( self, db ):
 		a = self.CheckvalidPlayerSetup(db)
 		b = self.CheckValidOptionsSetup(db)
-		return a and b
+		return a + b
 
 	def CommitMatch(self,db, doValidation=True):
 		self.ParseSpringOutput()
 		ladder = db.GetLadder(self.ladder_id )
 		gameid = self.gameid
-		if doValidation and not self.CheckValidSetup( db ):
-			raise InvalidOptionSetup( gameid, self.ladder_id )
+		validation_errors = self.CheckValidSetup( db )
+		if doValidation and len(validation_errors) > 0:
+			raise InvalidOptionSetup( gameid, self.ladder_id, validation_errors )
 		session = db.session()
 		match = Match()
 		match.date 	= datetime.datetime.now()
@@ -191,6 +197,7 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		alliesdict = dict()
 		countedbots = []
 		bannedplayers = []
+		errors = []
 		for player in self.teams:
 			if not db.AccessCheck( self.ladder_id, player, Roles.User ):
 				bannedplayers.append( player )
@@ -205,9 +212,9 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 				if not libname in countedbots: # don't allow more than 1 bot of the same type
 					countedbots.append(libname)
 				else:
-					return False
+					errors.append('duplicate AI %s'%libname)
 		if len(bannedplayers) != 0:
-			raise BannedPlayersDetectedException( bannedplayers )
+			errors.append('Banned players %s'%' '.join(bannedplayers))
 		for team in self.allies:
 			ally = self.allies[team]
 			if not ally in alliesdict:
@@ -215,46 +222,22 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 			else:
 				alliesdict[ally] += 1
 
-		teamcount = len(teamsdict)
-		allycount = len(alliesdict)
-		aicount = len(self.bots)
-		minaicount = db.GetLadderOption( self.ladder_id, "min_ai_count" )
-		maxaicount = db.GetLadderOption( self.ladder_id, "max_ai_count" )
-		minteamcount = db.GetLadderOption( self.ladder_id, "min_team_count" )
-		maxteamcount = db.GetLadderOption( self.ladder_id, "max_team_count" )
-		minallycount = db.GetLadderOption( self.ladder_id, "min_ally_count" )
-		maxallycount = db.GetLadderOption( self.ladder_id, "max_ally_count" )
-		if aicount < minaicount:
-			return False
-		if aicount > maxaicount:
-			return False
-		if teamcount < minteamcount:
-			return False
-		if teamcount > maxteamcount:
-			return False
-		if allycount < minallycount:
-			return False
-		if allycount > maxallycount:
-			return False
-		minteamsize = db.GetLadderOption( self.ladder_id, "min_team_size" )
-		maxteamsize = db.GetLadderOption( self.ladder_id, "max_team_size" )
-		minallysize = db.GetLadderOption( self.ladder_id, "min_ally_size" )
-		maxallysize = db.GetLadderOption( self.ladder_id, "max_ally_size" )
+		def _range_check(var, name):
+			upper = db.GetLadderOption( self.ladder_id, "max_%s"%name )
+			lower = db.GetLadderOption( self.ladder_id, "min_%s"%name )
+			if not(lower <= var <= upper):
+				errors.append('%s (%d) out of range: [%d,%d]'%(name, var, lower, upper))
+
+		_range_check(len(self.bots), 'ai_count')
+		_range_check(len(teamsdict), 'team_count')
+		_range_check(len(alliesdict), 'ally_count')
 		for team in teamsdict:
 			teamsize = teamsdict[team]
-			if teamsize < minteamsize:
-				return False
-			if teamsize > maxteamsize:
-				return False
-
+			_range_check(teamsize, 'team_size')
 		for ally in alliesdict:
 			allysize = alliesdict[ally]
-			if allysize < minallysize:
-				return False
-			if allysize > maxallysize:
-				return False
-
-		return True
+			_range_check(teamsize, 'ally_size')
+		return errors
 
 	def ParseSpringOutput(self):
 		with open(self.replay, 'rb') as demofile:
@@ -361,10 +344,14 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.replay			= ""
 
 	def CheckvalidPlayerSetup( self, db ):
+		errors = []
 		for p in self.playerscores.keys():
 			if not p in self.playerlist:
-				return False
-		return True#we require a score for all players
+				errors.append('score recorded for unknown player: %s'%p)
+		for p in self.playerlist:
+			if not p in self.playerscores.keys():
+				errors.append('no score recorded for players: %s'%p)
+		return errors
 
 	def ParseSpringOutput(self):
 		#here we fake a lot of stuff to fit missing, but required, data
