@@ -15,6 +15,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
+import django_tables2 as tables
+from django_tables2 import RequestConfig
 
 from tempfile import mkstemp
 import os
@@ -80,15 +82,23 @@ def upload(request):
     c['form'] = form
     return render_to_response('upload.html', c, context_instance=RequestContext(request))
 
+class ReplayTable(tables.Table):
+    title          = tables.Column()
+    upload_date    = tables.Column()
+    uploader       = tables.Column()
+#    download_count = tables.Column()
+#    comment_count  = tables.Column()
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-upload_date"
+
 def replays(request):
-    # TODO
     c = all_page_infos(request)
     all_replays = Replay.objects.all().order_by("unixTime")
-    rep = "<b>TODO</b><br/><br/>list of all %d replays:<br/>"%all_replays.count()
-    for replay in all_replays:
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    table = ReplayTable(all_replays)
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    return render_to_response('replays.html', c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
     # TODO

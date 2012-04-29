@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
+from django.conf import global_settings
 from os.path import realpath, dirname
+
 SRS_FILE_ROOT = realpath(dirname(__file__))
 IMG_PATH = SRS_FILE_ROOT+"/static/img/"
 MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
@@ -18,6 +19,7 @@ DATE_FORMAT = 'd.m.Y'
 DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATE_FORMAT = 'd.m.Y'
 SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -145,7 +147,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'srs',
     'registration',
-    'django.contrib.comments'
+    'django.contrib.comments',
+    'django_tables2'
 )
 
 # A sample logging configuration. The only tangible logging
