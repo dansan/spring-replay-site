@@ -15,7 +15,6 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
-import django_tables2 as tables
 from django_tables2 import RequestConfig
 
 from tempfile import mkstemp
@@ -30,6 +29,7 @@ import parse_demo_file
 import spring_maps
 from models import *
 from forms import UploadFileForm
+from tables import ReplayTable
 
 def all_page_infos(request):
     c = {}
@@ -43,7 +43,7 @@ def all_page_infos(request):
 
 def index(request):
     c = all_page_infos(request)
-    c["newest_replays"] = Replay.objects.all().reverse()[:10]
+    c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]
     c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
@@ -79,16 +79,6 @@ def upload(request):
         form = UploadFileForm()
     c['form'] = form
     return render_to_response('upload.html', c, context_instance=RequestContext(request))
-
-class ReplayTable(tables.Table):
-    title          = tables.Column()
-    upload_date    = tables.Column()
-    uploader       = tables.Column()
-    download_count = tables.Column(accessor="replayfile.download_count")
-    comment_count  = tables.Column()
-    class Meta:
-        attrs    = {'class': 'paleblue'}
-        order_by = "-upload_date"
 
 def replays(request):
     c = all_page_infos(request)

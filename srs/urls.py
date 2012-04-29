@@ -17,7 +17,7 @@ urlpatterns = patterns('',
     url(r'^feeds/latest_comments/$', LatestCommentFeed()),
 
     url(r'^replays/$', 'srs.views.replays'),
-    url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay'),
+    url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),
 
     url(r'^tags/$', 'srs.views.tags'),
     url(r'^tag/(?P<reqtag>[\w\ .]+)/$', 'srs.views.tag'),
