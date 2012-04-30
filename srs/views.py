@@ -374,7 +374,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
     else:
         #TODO:
-        raise Exception("not yet implemented")
+        raise Exception("startpostype not yet supported, pls report this to dansan at the forums and include replay file")
 
     replay.save()
 
