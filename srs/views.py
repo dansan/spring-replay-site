@@ -37,7 +37,7 @@ def all_page_infos(request):
     c["total_replays"]   = Replay.objects.count()
     c["top_tags"]        = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_maps"]        = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.exclude(accountid=9999999999).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
+    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.exclude(accountid=-1).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
     c["latest_comments"] = Comment.objects.reverse()[:5]
     return c
 
@@ -162,7 +162,7 @@ def players(request):
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of all %d players:<br/>"%Player.objects.count()
     names = []
-    for pa in PlayerAccount.objects.exclude(accountid=9999999999):
+    for pa in PlayerAccount.objects.exclude(accountid=-1):
         names.extend([(name, pa.accountid) for name in pa.names.split(";")])
     names.sort(cmp=lambda x,y: cmp(x[0], y[0]))
     for name, plid in names:
@@ -398,7 +398,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for k,v in demofile.game_setup['player'].items():
         if not v.has_key("accountid"):
             # single player
-            v["accountid"] = 9999999999
+            v["accountid"] = -1
         if v.has_key("lobbyid"):
             # game was on springie
             v["accountid"] = v["lobbyid"]
