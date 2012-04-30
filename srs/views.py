@@ -225,7 +225,7 @@ def search(request):
                                             Q(title__icontains=st)|
                                             Q(short_text__icontains=st)|
                                             Q(long_text__icontains=st)|
-                                            Q(rmap__name__icontains=st)|
+                                            Q(map_info__name__icontains=st)|
                                             Q(tags__name__icontains=st)|
                                             Q(uploader__in=users)|
                                             Q(player__account__names__icontains=st)).distinct()
