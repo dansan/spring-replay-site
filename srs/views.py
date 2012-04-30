@@ -16,6 +16,8 @@ from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
 from django_tables2 import RequestConfig
+from django.db.models import Min
+
 
 from tempfile import mkstemp
 import os
@@ -37,7 +39,7 @@ def all_page_infos(request):
     c["total_replays"]   = Replay.objects.count()
     c["top_tags"]        = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_maps"]        = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.exclude(accountid=-1).annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
+    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
     c["latest_comments"] = Comment.objects.reverse()[:5]
     return c
 
@@ -91,7 +93,6 @@ def replays(request):
 def replay(request, gameID):
     # TODO
     c = all_page_infos(request)
-#    return HttpResponse('<b>TODO</b><br/><br/>You are looking at replay %s:<br/>%s<br/><a href="/download/%s/">Download</a><br/><br/><a href="/">Home</a>' % (gameID, Replay.objects.get(gameID=gameID).__unicode__(), gameID))
     try:
         c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
     except:
@@ -162,7 +163,7 @@ def players(request):
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of all %d players:<br/>"%Player.objects.count()
     names = []
-    for pa in PlayerAccount.objects.exclude(accountid=-1):
+    for pa in PlayerAccount.objects.all():
         names.extend([(name, pa.accountid) for name in pa.names.split(";")])
     names.sort(cmp=lambda x,y: cmp(x[0], y[0]))
     for name, plid in names:
@@ -395,10 +396,19 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     # save players and their accounts
     players = {}
+    teams = {}
     for k,v in demofile.game_setup['player'].items():
-        if not v.has_key("accountid"):
-            # single player
-            v["accountid"] = -1
+        pac = Player.objects.none()
+        if v.has_key("accountid"):
+            # check if we have a Player that was missing an accountid previously
+            pac = Player.objects.filter(name=v["name"], account__accountid__lt=0)
+        else:
+            # single player - we still need a unique accountid. I make it
+            # negative, so if the same Player pops up in another replay, and has
+            # a proper accountid, it can be noticed and corrected
+            min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
+            if not min_acc_id or min_acc_id > 0: min_acc_id = 0
+            v["accountid"] = min_acc_id-1
         if v.has_key("lobbyid"):
             # game was on springie
             v["accountid"] = v["lobbyid"]
@@ -408,16 +418,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if v["name"] not in pa.names.split(";"):
                 pa.names += ";"+v["name"]
                 pa.save()
+        for player in pac:
+            old_ac = player.account
+            player.account = pa
+            player.save
+            old_ac.delete()
+        if v.has_key("team"):
+            teams[str(v["team"])] = players[k]
 
     # save teams
     for num,val in demofile.game_setup['team'].items():
         team = Team()
-        try:
-            players[num].team = team
-            players[num].save()
-        except KeyError:
-            # team has no player -> SP bot
-            pass
         for k,v in val.items():
             if k == "allyteam":
                 team.allyteam = allyteams[str(v)]
@@ -429,6 +440,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 team.__setattr__(k, v)
         team.replay = replay
         team.save()
+        teams[num].team = team
+        teams[num].save()
+
 
     # work around Zero-Ks usage of useless AllyTeams
     Allyteam.objects.filter(replay=replay, team__isnull=True).delete()
