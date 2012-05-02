@@ -5,4 +5,4 @@
                 File: <a href="/download/{{ replay.gameID }}/">download</a><br/>
                 Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}<br/>
                 Tags:{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}<br/>
-                Downloads / Comments: {{ replay.replayfile.download_count }} / {{ replay.comment_count }}</p>
+                Downloads / Comments: {{ replay.replayfile.download_count }} / {{ replay.comments }}</p>
