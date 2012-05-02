@@ -379,7 +379,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # save tags
     if tags:
         # strip comma separated tags and remove empty ones
-        tags_ = [t.strip() for t in tags.split(",") if t]
+        tags_ = [t.strip() for t in tags.split(",") if t.strip()]
         for tag in tags_:
             t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
             replay.tags.add(t_obj)
