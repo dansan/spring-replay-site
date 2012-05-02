@@ -1,10 +1,10 @@
 {% extends 'srs_base.html' %}
 {% load render_table from django_tables2 %}
 
-{% block pagetitle %}List of all replays{% endblock %}
+{% block pagetitle %}List of all {{ pagetitle }}{% endblock %}
 
 {% block maincontent%}
-        <div class="left" style="width: 760px;" >
+        <div class="left" {% if long_table %}style="width: 760px;" {% endif %}>
 {% render_table table %}
         </div>
 {% endblock %}

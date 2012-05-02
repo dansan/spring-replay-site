@@ -31,7 +31,7 @@ import parse_demo_file
 import spring_maps
 from models import *
 from forms import UploadFileForm
-from tables import ReplayTable
+from tables import *
 
 def all_page_infos(request):
     c = {}
@@ -84,11 +84,12 @@ def upload(request):
 
 def replays(request):
     c = all_page_infos(request)
-    all_replays = Replay.objects.all().order_by("unixTime")
-    table = ReplayTable(all_replays)
+    table = ReplayTable(Replay.objects.all())
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
-    return render_to_response('replays.html', c, context_instance=RequestContext(request))
+    c['pagetitle'] = "replays"
+    c['long_table'] = True
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
     # TODO
@@ -123,13 +124,12 @@ def download(request, gameID):
     return HttpResponseRedirect(settings.STATIC_URL+"replays/"+rf.filename)
 
 def tags(request):
-    # TODO
     c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of all %d tags:<br/>"%Tag.objects.count()
-    for tag in Tag.objects.all().order_by("name"):
-        rep += '* <a href="/tag/%s/">%s</a><br/>'%(tag.__unicode__(), tag.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    table = TagTable(Tag.objects.all())
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "tags"
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def tag(request, reqtag):
     # TODO
@@ -141,13 +141,12 @@ def tag(request, reqtag):
     return HttpResponse(rep)
 
 def maps(request):
-    # TODO
     c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of all %d maps:<br/>"%Map.objects.count()
-    for smap in Map.objects.all().order_by("name"):
-        rep += '* <a href="/map/%s/">%s</a><br/>'%(smap.__unicode__(), smap.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    table = MapTable(Map.objects.all())
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "maps"
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def rmap(request, mapname):
     # TODO
@@ -159,17 +158,19 @@ def rmap(request, mapname):
     return HttpResponse(rep)
 
 def players(request):
-    # TODO
     c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of all %d players:<br/>"%Player.objects.count()
-    names = []
+    players = []
     for pa in PlayerAccount.objects.all():
-        names.extend([(name, pa.accountid) for name in pa.names.split(";")])
-    names.sort(cmp=lambda x,y: cmp(x[0], y[0]))
-    for name, plid in names:
-        rep += '* <a href="/player/%s/">%s</a><br/>'%(plid, name)
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+        for name in pa.names.split(";"):
+            players.append({'name': name,
+                            'replay_count': pa.replay_count(),
+                            'spectator_count': pa.spectator_count(),
+                            'accid': pa.accountid})
+    table = PlayerTable(players)
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "players"
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def player(request, accountid):
     # TODO
@@ -195,16 +196,16 @@ def player(request, accountid):
     return HttpResponse(rep)
 
 def games(request):
-    # TODO
     c = all_page_infos(request)
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-    games = sorted(sets.Set([r.gametype for r in Replay.objects.all()]), key=functools.cmp_to_key(locale.strcoll))
-    rep = "<b>TODO</b><br/><br/>list of all %d games:<br/>"%len(games)
-    for game in games:
-        rep += '* <a href="/game/%s/">%s</a><br/>'%(game, game)
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
-
+    games = []
+    for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
+        games.append({'name': gt,
+                      'replay_count': Replay.objects.filter(gametype=gt).count()})
+    table = GameTable(games)
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "games"
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 def game(request, gametype):
     # TODO
     c = all_page_infos(request)
@@ -244,14 +245,12 @@ def user_settings(request):
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
-    # TODO:
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-    users = sorted(sets.Set([u.username for u in User.objects.all()]), key=functools.cmp_to_key(locale.strcoll))
-    rep = "<b>TODO</b><br/><br/>list of all %d users:<br/>"%len(users)
-    for user in users:
-        rep += '* <a href="/user/%s/">%s</a><br/>'%(user, user)
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    c = all_page_infos(request)
+    table = UserTable(User.objects.all())
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "users"
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def see_user(request, username):
     # TODO:
@@ -285,14 +284,13 @@ def upload_date(request, shortdate):
     return HttpResponse(rep)
 
 def all_comments(request):
-    # TODO:
-    all_c = Comment.objects.all()
-    rep = "<b>TODO</b><br/><br/>"
-    rep += "list of all %d comments:<br/>"%all_c.count()
-    for c in all_c:
-        rep += '* User <a href="/user/%s/">%s</a> commented on <a href="/replay/%s/">replay %s</a>: %s <a href="%s">more...</a><br/>'%(c.user_name, c.user_name, c.content_object.gameID, c.content_object.__unicode__(), c.comment[:20], c.get_absolute_url())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    c = all_page_infos(request)
+    table = CommentTable(Comment.objects.all())
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = "comments"
+    c['long_table'] = True
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 ###############################################################################
 ###############################################################################

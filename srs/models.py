@@ -12,8 +12,6 @@ from django.contrib.comments import Comment
 from django.contrib.contenttypes.models import ContentType
 import settings
 
-User.get_absolute_url = lambda self: "/user/"+self.username+"/"
-
 class Tag(models.Model):
     name            = models.CharField(max_length=128, unique=True)
 
@@ -23,6 +21,9 @@ class Tag(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.tag', [self.name])
+
+    def replay_count(self):
+        return Replay.objects.filter(tags__name__contains=self.name).count()
 
 class Map(models.Model):
     name            = models.CharField(max_length=128)
@@ -36,6 +37,9 @@ class Map(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.rmap', [self.name])
+
+    def replay_count(self):
+        return Replay.objects.filter(map_info__name=self.name).count()
 
 class MapImg(models.Model):
     filename        = models.CharField(max_length=128)
@@ -104,6 +108,12 @@ class PlayerAccount(models.Model):
     def __unicode__(self):
         return str(self.accountid)+u" "+self.names[:10]
 
+    def replay_count(self):
+        return Player.objects.filter(account=self).count()
+
+    def spectator_count(self):
+        return Player.objects.filter(account=self, spectator=True).count()
+
 class Player(models.Model):
     account         = models.ForeignKey(PlayerAccount, blank=True, null = True)
     name            = models.CharField(max_length=128)
@@ -153,3 +163,8 @@ class NewsItem(models.Model):
 
     def __unicode__(self):
         return self.text[:50]
+
+User.get_absolute_url = lambda self: "/user/"+self.username+"/"
+User.replay_count = lambda self: Replay.objects.filter(uploader=self).count()
+Comment.replay = lambda self: self.content_object.__unicode__()
+Comment.comment_short = lambda self: self.comment[:50]+"..."
