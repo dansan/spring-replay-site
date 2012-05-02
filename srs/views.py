@@ -200,7 +200,7 @@ def games(request):
     games = []
     for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
         games.append({'name': gt,
-                      'replay_count': Replay.objects.filter(gametype=gt).count()})
+                      'replays': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table

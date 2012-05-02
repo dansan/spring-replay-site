@@ -22,7 +22,7 @@ class Tag(models.Model):
     def get_absolute_url(self):
         return ('srs.views.tag', [self.name])
 
-    def replay_count(self):
+    def replays(self):
         return Replay.objects.filter(tags__name__contains=self.name).count()
 
 class Map(models.Model):
@@ -38,7 +38,7 @@ class Map(models.Model):
     def get_absolute_url(self):
         return ('srs.views.rmap', [self.name])
 
-    def replay_count(self):
+    def replays(self):
         return Replay.objects.filter(map_info__name=self.name).count()
 
 class MapImg(models.Model):
@@ -64,7 +64,7 @@ class ReplayFile(models.Model):
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
     gameID          = models.CharField(max_length=32, unique=True)
-    unixTime        = models.DateTimeField()
+    unixTime        = models.DateTimeField(verbose_name='date of match')
     wallclockTime   = models.CharField(max_length=32, verbose_name='length of match')
     autohostname    = models.CharField(max_length=128, blank=True, null = True)
     gametype        = models.CharField(max_length=256)
@@ -86,7 +86,7 @@ class Replay(models.Model):
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
 
-    def comment_count(self):
+    def comments(self):
         r_t = ContentType.objects.get_for_model(Replay)
         return Comment.objects.filter(object_pk=str(self.pk), content_type=r_t.pk).count()
 
@@ -165,6 +165,6 @@ class NewsItem(models.Model):
         return self.text[:50]
 
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
-User.replay_count = lambda self: Replay.objects.filter(uploader=self).count()
+User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
 Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50]+"..."
