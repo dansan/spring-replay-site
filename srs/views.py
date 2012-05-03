@@ -26,12 +26,15 @@ import shutil
 import functools
 import locale
 import datetime
+import logging
 
 import parse_demo_file
 import spring_maps
 from models import *
 from forms import UploadFileForm
 from tables import *
+
+logger = logging.getLogger(__package__)
 
 def all_page_infos(request):
     c = {}
@@ -60,6 +63,7 @@ def upload(request):
             long_text = request.POST['long_text']
             tags = request.POST['tags']
             (path, written_bytes) = save_uploaded_file(ufile)
+            logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
 #            try:
             if written_bytes != ufile.size:
                 return HttpResponse("Could not store the replay file. Please contact the administrator.")
@@ -70,10 +74,12 @@ def upload(request):
 
             try:
                 replay = Replay.objects.get(gameID=demofile.header["gameID"])
+                logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
                 return HttpResponse('Uploaded replay already exists: <a href="/replay/%s/">%s</a>'%(replay.gameID, replay.__unicode__()))
             except:
                 shutil.move(path, settings.MEDIA_ROOT)
                 replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
+                logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
             return HttpResponseRedirect("/replay/%s/"%replay.gameID)
 #            except Exception, e:
 #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
@@ -304,6 +310,7 @@ def save_uploaded_file(ufile):
     for chunk in ufile.chunks():
         written_bytes += os.write(fd, chunk)
     os.close(fd)
+    logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
     return (path, written_bytes)
 
 def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
@@ -326,6 +333,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     replay.save()
 
+    logger.debug("replay pk=%d gameID=%s unixTime=%s created", replay.pk, replay.gameID, replay.unixTime)
+
     # save AllyTeams
     allyteams = {}
     for num,val in demofile.game_setup['allyteam'].items():
@@ -337,12 +346,15 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         allyteam.winner = int(num) in demofile.winningAllyTeams
         allyteam.save()
 
+    logger.debug("replay pk=%d allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
+
     # winner known?
     replay.notcomplete = demofile.header['winningAllyTeamsSize'] == 0
 
     # get / create map infos
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
+        logger.debug("replay pk=%d using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
     except:
         # 1st time upload for this map: fetch info and full map, create thumb
         # for index page
@@ -357,21 +369,27 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         full_img = smap.fetch_img()
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         smap.make_home_thumb()
+        logger.debug("replay pk=%d created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
 
     # get / create map thumbs
+    logger.debug("replay pk=%d startpostype=%d", replay.pk, demofile.game_setup["host"]["startpostype"])
     if demofile.game_setup["host"]["startpostype"] == 1:
         # fixed start positions before game
         try:
             replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
+            logger.debug("replay pk=%d using existing map_img.pk=%d", replay.pk, replay.map_img.pk)
         except:
             mapfile = spring_maps.create_map_with_positions(replay.map_info)
             replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
+            logger.debug("replay pk=%d created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     elif demofile.game_setup["host"]["startpostype"] == 2:
         # start boxes
         mapfile = spring_maps.create_map_with_boxes(replay)
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
+        logger.debug("replay pk=%d created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     else:
         #TODO:
+        logger.debug("replay pk=%d startpostype not yet supported", replay.pk)
         raise Exception("startpostype not yet supported, pls report this to dansan at the forums and include replay file")
 
     replay.save()
@@ -392,6 +410,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for k,v in demofile.game_setup['modoptions'].items():
         ModOption.objects.create(name=k, value=v, replay=replay)
 
+    logger.debug("replay pk=%d added tags, mapoptions and modoptions", replay.pk)
+
     # save players and their accounts
     players = {}
     teams = {}
@@ -411,18 +431,28 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             # game was on springie
             v["accountid"] = v["lobbyid"]
         pa, created = PlayerAccount.objects.get_or_create(accountid=v["accountid"], defaults={'accountid': v["accountid"], 'countrycode': v["countrycode"], 'names': v["name"]})
+        logger.debug("replay pk=%d PlayerAccount: created=%s pa.pk=%d pa.accountid=%d pa.names=%s", replay.pk, created, pa.pk, pa.accountid, pa.names)
         players[k] = Player.objects.create(account=pa, name=v["name"], rank=v["rank"], spectator=bool(v["spectator"]), replay=replay)
+        logger.debug("replay pk=%d created Player: account=%d name=%s spectator=%s", replay.pk, pa.accountid, players[k].name, players[k].spectator)
         if not created:
+            # add players name to accounts aliases
             if v["name"] not in pa.names.split(";"):
                 pa.names += ";"+v["name"]
                 pa.save()
-        for player in pac:
-            old_ac = player.account
-            player.account = pa
-            player.save
-            old_ac.delete()
+        if pa.accountid > 0:
+            # if we found players w/o account, and now have a player with the
+            # same name, but with an account - unify them
+            if pac:
+                logger.info("replay pk=%d found matching name-account info for previously accountless player(s):", replay.pk)
+                logger.info("replay pk=%d PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
+            for player in pac:
+                old_ac = player.account
+                player.account = pa
+                player.save
+                old_ac.delete()
         if v.has_key("team"):
             teams[str(v["team"])] = players[k]
+    logger.debug("replay pk=%d saved Players and PlayerAccounts", replay.pk,)
 
     # save teams
     for num,val in demofile.game_setup['team'].items():
@@ -438,12 +468,15 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 team.__setattr__(k, v)
         team.replay = replay
         team.save()
-        teams[num].team = team
-        teams[num].save()
 
+        teams[num].team = team # Player.team
+        teams[num].save()
+    logger.debug("replay pk=%d saved Teams", replay.pk)
 
     # work around Zero-Ks usage of useless AllyTeams
-    Allyteam.objects.filter(replay=replay, team__isnull=True).delete()
+    ats = Allyteam.objects.filter(replay=replay, team__isnull=True)
+    logger.debug("replay pk=%d deleting useless AllyTeams:%s", replay.pk, ats)
+    ats.delete()
 
     # auto add tag 1v1 2v2 etc.
     autotag = ""
@@ -461,14 +494,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if not replay.tags.filter(name=autotag).exists():
             replay.tags.add(tag)
 
-
     # TODO: SP and bot detection
 
     # save descriptions
     replay.short_text = short
     replay.long_text = long_text
-    replay.title = autotag+" "+short
+    if autotag in short:
+        replay.title = short
+    else:
+        replay.title = autotag+" "+short
     replay.save()
+    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, tag, replay.title)
 
     return replay
 
