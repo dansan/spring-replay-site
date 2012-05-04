@@ -328,6 +328,39 @@ def logout(request):
     logger.info("Logged out user '%s'", username)
     return HttpResponseRedirect("/")
 
+def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags):
+    logger.info("username=%s password=xxxxxx filename=%s subject=%s comment=%s tags=%s", username, filename, subject, comment, tags)
+
+    user = django.contrib.auth.authenticate(username=username, password=password)
+    if user is not None and user.is_active:
+        logger.info("Authenticated user '%s'", user)
+    else:
+        logger.info("User unknown or inactive, abort.")
+        return "1 Unknown or inactive user."
+
+    # this is code double from upload() :(
+    (fd, path) = mkstemp(suffix=".sdf", prefix=filename[:-4]+"__")
+    bytes_written = os.write(fd, demofile.data)
+    logger.debug("wrote %d bytes to /tmp/%s", bytes_written, filename)
+
+    demofile = parse_demo_file.Parse_demo_file(path)
+    demofile.check_magic()
+    demofile.parse()
+
+    try:
+        replay = Replay.objects.get(gameID=demofile.header["gameID"])
+        logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+        return '2 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
+    except:
+        shutil.move(path, settings.MEDIA_ROOT)
+        try:
+            replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
+        except Exception, e:
+            logger.error("Error in store_demofile_data(): %s", e)
+            return "3 server error, please try again later, or contact admin"
+        logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+    return '0 received %d bytes, replay at "%s"'%(bytes_written, replay.get_absolute_url())
+
 
 ###############################################################################
 ###############################################################################

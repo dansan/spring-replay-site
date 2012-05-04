@@ -14,3 +14,5 @@ Needs
 * DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 * django_tables2: https://github.com/bradleyayers/django-tables2
 * suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
+  - I applied https://fedorahosted.org/suds/ticket/359 (1/2 hunks succeeded -> fixed) 
+* django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc

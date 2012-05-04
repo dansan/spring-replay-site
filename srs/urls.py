@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     url(r'^download/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.download'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^feeds/latest_comments/$', LatestCommentFeed()),
+    url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', name='xmlrpc'),
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),

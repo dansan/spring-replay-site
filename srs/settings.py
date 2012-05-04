@@ -21,6 +21,7 @@ SHORT_DATE_FORMAT = 'd.m.Y'
 SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
 AUTHENTICATION_BACKENDS = ('srs.auth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
+XMLRPC_METHODS = (('srs.views.xmlrpc_upload', 'xmlrpc_upload'),)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -148,7 +149,8 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'srs',
     'django.contrib.comments',
-    'django_tables2'
+    'django_tables2',
+    'django_xmlrpc'
 )
 
 # A sample logging configuration. The only tangible logging
