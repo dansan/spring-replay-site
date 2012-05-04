@@ -23,7 +23,7 @@ class LobbyBackend():
 
     def authenticate(self, username=None, password=None):
         logger.debug("username=%s password=xxxxxx", username)
-        if username == "admin":
+        if username == "admin" or username == "root":
             # we reserve this one for us (local django db auth)
             return None
         login_valid = self.soap_check(username, password)
