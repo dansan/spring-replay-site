@@ -8,8 +8,8 @@ MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
 REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
 FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
 thumbnail_sizes = {"home": (150, 100), "replay": (340,1000)}
-LOGIN_URL = "/accounts/login/"
-LOGOUT_URL = "/accounts/logout/"
+LOGIN_URL = "/login/"
+LOGOUT_URL = "/logout/"
 ACCOUNT_ACTIVATION_DAYS = 4
 REGISTRATION_OPEN = True
 EMAIL_HOST = 'localhost'
@@ -20,6 +20,7 @@ DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATE_FORMAT = 'd.m.Y'
 SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
+AUTHENTICATION_BACKENDS = ('srs.auth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -146,7 +147,6 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'srs',
-    'registration',
     'django.contrib.comments',
     'django_tables2'
 )

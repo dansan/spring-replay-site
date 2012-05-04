@@ -12,6 +12,8 @@ from django.core.context_processors import csrf
 from django.template import RequestContext
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
+import django.contrib.auth
+from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
@@ -297,6 +299,35 @@ def all_comments(request):
     c['pagetitle'] = "comments"
     c['long_table'] = True
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
+
+def login(request):
+    c = all_page_infos(request)
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = django.contrib.auth.authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
+            if user is not None:
+                if user.is_active:
+                    django.contrib.auth.login(request, user)
+                    logger.info("Logged in user '%s'", request.user)
+                    nexturl = request.GET.get('next')
+                    # TODO: "next" is never passed...
+                    if nexturl:
+                        dest = nexturl
+                    else:
+                        dest = "/"
+                    return HttpResponseRedirect(dest)
+    else:
+        form = AuthenticationForm()
+    c['form'] = form
+    return render_to_response('login.html', c, context_instance=RequestContext(request))
+
+def logout(request):
+    username = str(request.user)
+    django.contrib.auth.logout(request)
+    logger.info("Logged out user '%s'", username)
+    return HttpResponseRedirect("/")
+
 
 ###############################################################################
 ###############################################################################

@@ -9,4 +9,8 @@ Runs on Django / Python (https://www.djangoproject.com/).
 Development is done using Django 1.4 and Python 2.7, but it will probably run
 (with minor modifications?) with Django 1.2 and Python 2.6.
 
-Needs PIL, DB-support, django-registration, django_tables2.
+Needs
+* PIL: http://www.pythonware.com/products/pil/ (dev-python/imaging / python-imaging / etc)
+* DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
+* django_tables2: https://github.com/bradleyayers/django-tables2
+* suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
