@@ -29,6 +29,7 @@ import functools
 import locale
 import datetime
 import logging
+import operator
 
 import parse_demo_file
 import spring_maps
@@ -44,7 +45,11 @@ def all_page_infos(request):
     c["total_replays"]   = Replay.objects.count()
     c["top_tags"]        = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     c["top_maps"]        = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_players"]     = [Player.objects.filter(account=pa)[0] for pa in PlayerAccount.objects.annotate(num_replay=Count('player__replay')).order_by('-num_replay')[:20]]
+    tp = []
+    for pa in PlayerAccount.objects.all():
+        tp.append((Player.objects.filter(account=pa, spectator=False).count(), Player.objects.filter(account=pa)[0]))
+    tp.sort(key=operator.itemgetter(0), reverse=True)
+    c["top_players"] = [p[1] for p in tp[:20]]
     c["latest_comments"] = Comment.objects.reverse()[:5]
     return c
 
@@ -199,7 +204,10 @@ def player(request, accountid):
     players = Player.objects.select_related("replay").filter(account__in=accounts)
     rep += "<br/><br/>This player (with one of his accounts/aliases) has played in these games:<br/>"
     for player in players:
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(player.replay.gameID, player.replay.__unicode__())
+        rep += '* <a href="/replay/%s/">%s</a>'%(player.replay.gameID, player.replay.__unicode__())
+        if player.spectator:
+            rep += ' (spec)'
+        rep += '<br/>'
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
