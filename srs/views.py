@@ -87,7 +87,7 @@ def upload(request):
                 shutil.move(path, settings.MEDIA_ROOT)
                 replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
                 logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
-            return HttpResponseRedirect("/replay/%s/"%replay.gameID)
+            return HttpResponseRedirect(replay.get_absolute_url())
 #            except Exception, e:
 #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
     else:
@@ -149,7 +149,7 @@ def tag(request, reqtag):
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of games with tag '%s':<br/>"%reqtag
     for replay in Replay.objects.filter(tags__name=reqtag):
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
@@ -166,7 +166,7 @@ def rmap(request, mapname):
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of games on map '%s':<br/>"%mapname
     for replay in Replay.objects.filter(map_info__name=mapname):
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
@@ -204,7 +204,7 @@ def player(request, accountid):
     players = Player.objects.select_related("replay").filter(account__in=accounts)
     rep += "<br/><br/>This player (with one of his accounts/aliases) has played in these games:<br/>"
     for player in players:
-        rep += '* <a href="/replay/%s/">%s</a>'%(player.replay.gameID, player.replay.__unicode__())
+        rep += '* <a href="%s">%s</a>'%(player.replay.get_absolute_url(), player.replay.__unicode__())
         if player.spectator:
             rep += ' (spec)'
         rep += '<br/>'
@@ -227,7 +227,7 @@ def game(request, gametype):
     c = all_page_infos(request)
     rep = "<b>TODO</b><br/><br/>list of replays of game %s:<br/>"%gametype
     for replay in Replay.objects.filter(gametype=gametype):
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
@@ -250,7 +250,7 @@ def search(request):
 
             resp += 'Your search for "%s" yielded %d results:<br/><br/>'%(st, replays.count())
             for replay in replays:
-                resp += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+                resp += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
         else:
             HttpResponseRedirect("/search/")
     return HttpResponse(resp)
@@ -275,7 +275,7 @@ def see_user(request, username):
     try:
         rep += "list of replays uploaded by %s:<br/>"%username
         for replay in Replay.objects.filter(uploader=user):
-            rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+            rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     except:
         rep += "user %s unknown.<br/>"%username
     rep += '<br/><br/><a href="/">Home</a>'
@@ -286,7 +286,7 @@ def match_date(request, shortdate):
     rep = "<b>TODO</b><br/><br/>"
     rep += "list of replays played on %s:<br/>"%shortdate
     for replay in Replay.objects.filter(unixTime__startswith=shortdate):
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
@@ -295,7 +295,7 @@ def upload_date(request, shortdate):
     rep = "<b>TODO</b><br/><br/>"
     rep += "list of replays uploaded on %s:<br/>"%shortdate
     for replay in Replay.objects.filter(upload_date__startswith=shortdate):
-        rep += '* <a href="/replay/%s/">%s</a><br/>'%(replay.gameID, replay.__unicode__())
+        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
     rep += '<br/><br/><a href="/">Home</a>'
     return HttpResponse(rep)
 
