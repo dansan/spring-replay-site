@@ -44,7 +44,7 @@
             <h3>Post a comment:</h3>
 {% render_comment_form for replay %}
 			{% else %}
-			<h3>To post a comment you have to <a href="{% url auth_login %}">log in</a> (<a href="{% url registration_register %}">register</a>).</h3>
+			<h3>To post a comment you have to <a href="{% url srs.views.login %}">log in</a>.</h3>
             {% endif %}
         </div>
         </div>
