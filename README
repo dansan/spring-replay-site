@@ -8,6 +8,9 @@ Runs on Django / Python (https://www.djangoproject.com/).
 
 Development is done using Django 1.4 and Python 2.7, but it will probably run
 (with minor modifications?) with Django 1.2 and Python 2.6.
+Latest source code can be found here: https://github.com/dansan/spring-replay-site/
+
+The software is licensed as GPLv3, see COPYING.
 
 Needs
 * PIL: http://www.pythonware.com/products/pil/ (dev-python/imaging / python-imaging / etc)

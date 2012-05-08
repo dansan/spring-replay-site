@@ -20,8 +20,14 @@ DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATE_FORMAT = 'd.m.Y'
 SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
-AUTHENTICATION_BACKENDS = ('srs.auth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
 XMLRPC_METHODS = (('srs.views.xmlrpc_upload', 'xmlrpc_upload'),)
+AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
+
+LOG_PATH        = realpath(dirname(__file__))+'/log'
+DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
+INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -148,6 +154,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'srs',
+    'lobbyauth',
     'django.contrib.comments',
     'django_tables2',
     'django_xmlrpc'
