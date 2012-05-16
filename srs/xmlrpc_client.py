@@ -10,7 +10,7 @@
 
 #
 # example cmdline call:
-# XMLRPC_USER=Dansan XMLRPC_PASSWORD=SeCr3t ./xmlrpc_client.py 20130229_123456_RustyDelta_v2_88.sdf "awesome game" "checkout that dude in SE" tag1,tag2,tag3
+# XMLRPC_USER=spads1 XMLRPC_PASSWORD=SeCr3t ./xmlrpc_client.py "awesome game" "checkout that dude in SE" tag1,tag2,tag3 20130229_123456_RustyDelta_v2_88.sdf Danchan
 #
 
 import os
