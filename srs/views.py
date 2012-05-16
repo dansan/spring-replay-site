@@ -382,9 +382,8 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
 
     # find owner account
     try:
-        ac = max([pa.accountid for pa in PlayerAccount.objects.filter(player__name=owner)])
-        owner_pa = PlayerAccount.objects.get(accountid=ac)
-        logger.info("Owner is '%s'", owner_pa)
+        owner_ac = User.objects.get(username_iexact=owner)
+        logger.info("Owner is '%s'", owner_ac)
     except:
         logger.info("Owner unknown on replays site, abort.")
         return "2 Unknown or inactive owner account, please log in via web interface once."
@@ -408,7 +407,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     shutil.move(path, settings.MEDIA_ROOT)
     try:
         replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
-        replay.uploader = owner_pa
+        replay.uploader = owner_ac
         replay.save()
     except Exception, e:
         logger.error("Error in store_demofile_data(): %s", e)
