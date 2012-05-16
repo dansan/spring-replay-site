@@ -22,6 +22,7 @@ def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. In case it changes, XMLRPC_URL can also be set in your environment.")
+    parser.add_argument("--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")
@@ -41,15 +42,17 @@ def main(argv=None):
     if os.environ.has_key("XMLRPC_URL"):
         XMLRPC_URL = os.environ["XMLRPC_URL"]
 
-    print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s'."%(args.path, args.owner, args.title, args.comment, args.tags)
+    if args.verbose:
+        print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s'."%(args.path.name, args.owner, args.title, args.comment, args.tags)
 
     demofile = xmlrpclib.Binary(args.path.read())
 
     rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL)
     result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, args.path.name, demofile, args.title, args.comment, args.tags, args.owner)
-    print "%s" % result
+    if args.verbose:
+        print "%s" % result
 
-    return 0
+    return int(result[0])
 
 if __name__ == "__main__":
     sys.exit(main())
