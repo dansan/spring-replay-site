@@ -370,22 +370,22 @@ def logout(request):
     return HttpResponseRedirect("/")
 
 def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
-    logger.info("username=%s password=xxxxxx filename=%s subject=%s comment=%s tags=%s owner=%s", username, filename, subject, comment, tags, owner)
+    logger.info("username='%s' password=xxxxxx filename='%s' subject='%s' comment='%s' tags='%s' owner='%s'", username, filename, subject, comment, tags, owner)
 
     # authenticate uploader
     user = django.contrib.auth.authenticate(username=username, password=password)
     if user is not None and user.is_active:
         logger.info("Authenticated user '%s'", user)
     else:
-        logger.info("Uploader account unknown or inactive, abort.")
-        return "1 Unknown or inactive uploader account."
+        logger.info("Uploader woring password, account unknown or inactive, abort.")
+        return "1 Unknown or inactive uploader account or bad password."
 
     # find owner account
     try:
-        owner_ac = User.objects.get(username_iexact=owner)
+        owner_ac = User.objects.get(username__iexact=owner)
         logger.info("Owner is '%s'", owner_ac)
     except:
-        logger.info("Owner unknown on replays site, abort.")
+        logger.info("Owner '%s' unknown on replays site, abort.", owner)
         return "2 Unknown or inactive owner account, please log in via web interface once."
 
     # this is code double from upload() :(

@@ -48,7 +48,7 @@ def main(argv=None):
     demofile = xmlrpclib.Binary(args.path.read())
 
     rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL)
-    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, args.path.name, demofile, args.title, args.comment, args.tags, args.owner)
+    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path.name), demofile, args.title, args.comment, args.tags, args.owner)
     if args.verbose:
         print "%s" % result
 
