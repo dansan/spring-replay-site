@@ -34,7 +34,7 @@ import operator
 import parse_demo_file
 import spring_maps
 from models import *
-from forms import UploadFileForm
+from forms import UploadFileForm, EditReplayForm
 from tables import *
 
 logger = logging.getLogger(__package__)
@@ -105,7 +105,6 @@ def replays(request):
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
-    # TODO
     c = all_page_infos(request)
     try:
         c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
@@ -122,6 +121,39 @@ def replay(request, gameID):
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
+@login_required
+def edit_replay(request, gameID):
+    c = all_page_infos(request)
+    try:
+        replay = Replay.objects.prefetch_related().get(gameID=gameID)
+        c["replay"] = replay
+    except:
+        # TODO: nicer error handling
+        raise Http404
+
+    if request.user != replay.uploader:
+        return render_to_response('edit_replay_wrong_user.html', c, context_instance=RequestContext(request))
+
+    if request.method == 'POST':
+        form = EditReplayForm(request.POST)
+        if form.is_valid():
+            short = request.POST['short']
+            long_text = request.POST['long_text']
+            tags = request.POST['tags']
+
+            replay.tags.clear()
+            autotag = set_autotag(replay)
+            save_tags(replay, tags)
+            save_desc(replay, short, long_text, autotag)
+            replay.save()
+            logger.info("User '%s' modified replay '%s': short: '%s' title:'%s' long_text:'%s' tags:'%s'",
+                        request.user, replay.gameID, replay.short_text, replay.title, replay.long_text, reduce(lambda x,y: x+", "+y, [t.name for t in Tag.objects.filter(replay=replay)]))
+            return HttpResponseRedirect(replay.get_absolute_url())
+    else:
+        form = EditReplayForm({'short': replay.short_text, 'long_text': replay.long_text, 'tags': reduce(lambda x,y: x+", "+y, [t.name for t in Tag.objects.filter(replay=replay)])})
+    c['form'] = form
+
+    return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
 
 def download(request, gameID):
     # TODO
@@ -255,6 +287,7 @@ def search(request):
             HttpResponseRedirect("/search/")
     return HttpResponse(resp)
 
+@login_required
 def user_settings(request):
     # TODO:
     c = all_page_infos(request)
@@ -336,15 +369,25 @@ def logout(request):
     logger.info("Logged out user '%s'", username)
     return HttpResponseRedirect("/")
 
-def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags):
-    logger.info("username=%s password=xxxxxx filename=%s subject=%s comment=%s tags=%s", username, filename, subject, comment, tags)
+def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
+    logger.info("username=%s password=xxxxxx filename=%s subject=%s comment=%s tags=%s owner=%s", username, filename, subject, comment, tags, owner)
 
+    # authenticate uploader
     user = django.contrib.auth.authenticate(username=username, password=password)
     if user is not None and user.is_active:
         logger.info("Authenticated user '%s'", user)
     else:
-        logger.info("User unknown or inactive, abort.")
-        return "1 Unknown or inactive user."
+        logger.info("Uploader account unknown or inactive, abort.")
+        return "1 Unknown or inactive uploader account."
+
+    # find owner account
+    try:
+        ac = max([pa.accountid for pa in PlayerAccount.objects.filter(player__name=owner)])
+        owner_pa = PlayerAccount.objects.get(accountid=ac)
+        logger.info("Owner is '%s'", owner_pa)
+    except:
+        logger.info("Owner unknown on replays site, abort.")
+        return "2 Unknown or inactive owner account, please log in via web interface once."
 
     # this is code double from upload() :(
     (fd, path) = mkstemp(suffix=".sdf", prefix=filename[:-4]+"__")
@@ -358,17 +401,21 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-        return '2 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
+        return '3 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
     except:
-        shutil.move(path, settings.MEDIA_ROOT)
-        try:
-            replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
-        except Exception, e:
-            logger.error("Error in store_demofile_data(): %s", e)
-            return "3 server error, please try again later, or contact admin"
-        logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
-    return '0 received %d bytes, replay at "%s"'%(bytes_written, replay.get_absolute_url())
+        pass
 
+    shutil.move(path, settings.MEDIA_ROOT)
+    try:
+        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
+        replay.uploader = owner_pa
+        replay.save()
+    except Exception, e:
+        logger.error("Error in store_demofile_data(): %s", e)
+        return "4 server error, please try again later, or contact admin"
+
+    logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+    return '0 received %d bytes, replay at "%s"'%(bytes_written, replay.get_absolute_url())
 
 ###############################################################################
 ###############################################################################
@@ -467,12 +514,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.save()
 
     # save tags
-    if tags:
-        # strip comma separated tags and remove empty ones
-        tags_ = [t.strip() for t in tags.split(",") if t.strip()]
-        for tag in tags_:
-            t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
-            replay.tags.add(t_obj)
+    save_tags(replay, tags)
     replay.save()
 
     # save map and mod options
@@ -551,6 +593,27 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     ats.delete()
 
     # auto add tag 1v1 2v2 etc.
+    autotag = set_autotag(replay)
+
+    # TODO: SP and bot detection
+
+    # save descriptions
+    save_desc(replay, short, long_text, autotag)
+
+    replay.save()
+    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, tag, replay.title)
+
+    return replay
+
+def save_tags(replay, tags):
+    if tags:
+        # strip comma separated tags and remove empty ones
+        tags_ = [t.strip() for t in tags.split(",") if t.strip()]
+        for tag in tags_:
+            t_obj, _ = Tag.objects.get_or_create(name__iexact = tag, defaults={'name': tag})
+            replay.tags.add(t_obj)
+
+def set_autotag(replay):
     autotag = ""
     if Allyteam.objects.filter(replay=replay).count() > 3:
         autotag = "FFA"
@@ -565,20 +628,15 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     else:
         if not replay.tags.filter(name=autotag).exists():
             replay.tags.add(tag)
+    return autotag
 
-    # TODO: SP and bot detection
-
-    # save descriptions
+def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
     if autotag in short:
         replay.title = short
     else:
         replay.title = autotag+" "+short
-    replay.save()
-    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, tag, replay.title)
-
-    return replay
 
 def clamp(val, low, high):
     return min(high, max(low, val))

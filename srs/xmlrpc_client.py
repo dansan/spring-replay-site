@@ -16,22 +16,20 @@
 import os
 import sys
 import xmlrpclib
+import argparse
 
 def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
 
-    if argv is None:
-        argv = sys.argv
-    if len(argv) < 2 or len(argv) > 5:
-        print "Usage: %s <demofile> [subject] [comment] [tags (comma separated)]" % (argv[0])
-        print "(don't forget the XMLRPC_USER and XMLRPC_PASSWORD environment vars)"
-        return 1
-    elif len(argv) > 2 and len(argv[2]) > 50:
-        print "subject: 50 char max"
-        return 1
-    elif len(argv) > 3 and len(argv[3]) > 512:
-        print "comment: 512 char max"
-        return 1
+    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. In case it changes, XMLRPC_URL can also be set in your environment.")
+    parser.add_argument("title", help="short description (50 char max)")
+    parser.add_argument("comment", help="long description (512 char max)")
+    parser.add_argument("tags", help="tags (comma separated)")
+    parser.add_argument("path", type=argparse.FileType('rb'), help="path to .sdf")
+    parser.add_argument("owner", help="lobby account that will be saved as the uploader")
+    args = parser.parse_args()
+
+
     if not os.environ.has_key("XMLRPC_USER") or not os.environ.has_key("XMLRPC_PASSWORD"):
         print "Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby"
         print "accounts credentials."
@@ -39,20 +37,16 @@ def main(argv=None):
     else:
         XMLRPC_USER = os.environ["XMLRPC_USER"]
         XMLRPC_PASSWORD = os.environ["XMLRPC_PASSWORD"]
+
     if os.environ.has_key("XMLRPC_URL"):
         XMLRPC_URL = os.environ["XMLRPC_URL"]
 
-    for _ in range(len(argv), 5):
-        argv.append("")
-    
-    path, subject, comment, tags = argv[1], argv[2], argv[3], argv[4]
+    print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s'."%(args.path, args.owner, args.title, args.comment, args.tags)
 
-    print "Uploading file '%s' with subject '%s', comment '%s' and tags '%s'."%(path, subject, comment, tags)
-
-    demofile = xmlrpclib.Binary(open(path, "rb").read())
+    demofile = xmlrpclib.Binary(args.path.read())
 
     rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL)
-    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(path), demofile, subject, comment, tags)
+    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, args.path.name, demofile, args.title, args.comment, args.tags, args.owner)
     print "%s" % result
 
     return 0

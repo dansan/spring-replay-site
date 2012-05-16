@@ -11,6 +11,7 @@
 {% include "replay_box.html" %}
             </div>
         <div class="left" style="width: 340px;">
+            {% if user = replay.uploader %}<center><p><font color="red"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a></b>&nbsp;&nbsp;&laquo;&laquo;&laquo;</font></p><center/>{% endif %}
 	        <center><img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/></center>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>

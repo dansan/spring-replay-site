@@ -1,0 +1,9 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}Edit {{ replay.title }} wrong user{% endblock %}
+
+{% block maincontent%}
+
+<p>To edit this replay you must login as the uploader ({{ replay.uploader }}).</p>
+
+{% endblock %}

@@ -20,6 +20,7 @@ urlpatterns = patterns('',
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),
+    url(r'^edit_replay/(?P<gameID>\w+)/$', 'srs.views.edit_replay'),
 
     url(r'^tags/$', 'srs.views.tags'),
     url(r'^tag/(?P<reqtag>[\w\ .]+)/$', 'srs.views.tag', name="tag_detail"),

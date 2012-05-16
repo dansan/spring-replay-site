@@ -54,7 +54,7 @@ class LobbyBackend():
                 user.is_superuser = False
                 user.save()
 
-                userprofile = UserProfile.objects.create(accountid = accountinfo.LobbyID, timerank = accountinfo.LobbyTimeRank, aliases = "", country = accountinfo.Country, user = user)
+                userprofile = UserProfile.objects.create(accountid = accountinfo.LobbyID, timerank = accountinfo.LobbyTimeRank, aliases = accountinfo.Name, country = accountinfo.Country, user = user)
                 if hasattr(accountinfo, "Aliases"):
                     userprofile.aliases = accountinfo.Aliases
                 userprofile.save()
