@@ -22,7 +22,7 @@ def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. In case it changes, XMLRPC_URL can also be set in your environment.")
-    parser.add_argument("--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")

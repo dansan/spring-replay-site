@@ -400,6 +400,10 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+        try:
+            os.remove(path)
+        except:
+            logger.error("Could not remove file '%s'", path)
         return '3 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
     except:
         pass
@@ -600,7 +604,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     save_desc(replay, short, long_text, autotag)
 
     replay.save()
-    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, tag, replay.title)
+    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, autotag, replay.title)
 
     return replay
 
