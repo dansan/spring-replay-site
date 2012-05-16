@@ -6,7 +6,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
-    url(r'^upload/$', 'srs.views.upload'),
+    url(r'^upload/$', 'srs.upload.upload'),
     url(r'^search/$', 'srs.views.search'),
     url(r'^settings/$', 'srs.views.user_settings'),
     url(r'^login/$', 'srs.views.login'),
