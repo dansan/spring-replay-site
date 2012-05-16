@@ -27,7 +27,7 @@ AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
 LOG_PATH        = realpath(dirname(__file__))+'/log'
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
 INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
