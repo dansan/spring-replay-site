@@ -1,10 +1,11 @@
 {% extends 'srs_base.html' %}
 {% load render_table from django_tables2 %}
 
-{% block pagetitle %}List of all {{ pagetitle }}{% endblock %}
+{% block pagetitle %}List of {{ pagetitle }}{% endblock %}
 
 {% block maincontent%}
         <div class="left" {% if long_table %}style="width: 760px;" {% endif %}>
+        <h2>List of {{ pagetitle }}</h2>
 {% render_table table %}
         </div>
 {% endblock %}

@@ -44,11 +44,15 @@ def index(request):
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 def replays(request):
+    replays = Replay.objects.all()
+    return replay_table(request, replays, "all replays")
+
+def replay_table(request, replays, title):
     c = all_page_infos(request)
-    table = ReplayTable(Replay.objects.all())
+    table = ReplayTable(replays)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
-    c['pagetitle'] = "replays"
+    c['pagetitle'] = title
     c['long_table'] = True
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
@@ -57,7 +61,6 @@ def replay(request, gameID):
     try:
         c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
     except:
-        # TODO: nicer error handling
         raise Http404
 
     c["allyteams"] = []
@@ -76,7 +79,6 @@ def edit_replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except:
-        # TODO: nicer error handling
         raise Http404
 
     if request.user != replay.uploader:
@@ -104,12 +106,9 @@ def edit_replay(request, gameID):
     return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
 
 def download(request, gameID):
-    # TODO
-    c = all_page_infos(request)
     try:
         rf = Replay.objects.get(gameID=gameID).replayfile
     except:
-        # TODO: nicer error handling
         raise Http404
 
     rf.download_count += 1
@@ -125,13 +124,8 @@ def tags(request):
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def tag(request, reqtag):
-    # TODO
-    c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of games with tag '%s':<br/>"%reqtag
-    for replay in Replay.objects.filter(tags__name=reqtag):
-        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    replays = Replay.objects.filter(tags__name=reqtag)
+    return replay_table(request, replays, "replays with tag '%s'"%reqtag)
 
 def maps(request):
     c = all_page_infos(request)
@@ -142,13 +136,8 @@ def maps(request):
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def rmap(request, mapname):
-    # TODO
-    c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of games on map '%s':<br/>"%mapname
-    for replay in Replay.objects.filter(map_info__name=mapname):
-        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    replays = Replay.objects.filter(map_info__name=mapname)
+    return replay_table(request, replays, "replays on map '%s'"%mapname)
 
 def players(request):
     c = all_page_infos(request)
@@ -166,30 +155,22 @@ def players(request):
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def player(request, accountid):
-    # TODO
-    c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>This player is know as:<br/>"
+    rep = ""
     accounts = []
 
     try:
         accounts.append(PlayerAccount.objects.get(accountid=accountid))
     except:
-        # TODO: nicer error handling
         raise Http404
     accounts.extend(PlayerAccount.objects.filter(aka=accounts[0]))
+
     for account in accounts:
         for a in account.names.split(";"):
-            rep += '* %s<br/>'%a
+            rep += '%s '%a
 
-    players = Player.objects.select_related("replay").filter(account__in=accounts)
-    rep += "<br/><br/>This player (with one of his accounts/aliases) has played in these games:<br/>"
-    for player in players:
-        rep += '* <a href="%s">%s</a>'%(player.replay.get_absolute_url(), player.replay.__unicode__())
-        if player.spectator:
-            rep += ' (spec)'
-        rep += '<br/>'
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    players = Player.objects.select_related("replay").filter(account__in=accounts, spectator=False)
+    replays = [player.replay for player in players]
+    return replay_table(request, replays, "replays with player %s"%rep)
 
 def games(request):
     c = all_page_infos(request)
@@ -202,14 +183,10 @@ def games(request):
     c['table'] = table
     c['pagetitle'] = "games"
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
+
 def game(request, gametype):
-    # TODO
-    c = all_page_infos(request)
-    rep = "<b>TODO</b><br/><br/>list of replays of game %s:<br/>"%gametype
-    for replay in Replay.objects.filter(gametype=gametype):
-        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    replays = Replay.objects.filter(gametype=gametype)
+    return replay_table(request, replays, "replays of game '%s'"%gametype)
 
 def search(request):
     # TODO
@@ -250,35 +227,20 @@ def users(request):
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def see_user(request, username):
-    # TODO:
-    rep = "<b>TODO</b><br/><br/>"
-    user = User.objects.get(username=username)
     try:
-        rep += "list of replays uploaded by %s:<br/>"%username
-        for replay in Replay.objects.filter(uploader=user):
-            rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
+        user = User.objects.get(username=username)
     except:
-        rep += "user %s unknown.<br/>"%username
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+        raise Http404
+    replays = Replay.objects.filter(uploader=user)
+    return replay_table(request, replays, "replays uploaded by '%s'"%user)
 
 def match_date(request, shortdate):
-    # TODO:
-    rep = "<b>TODO</b><br/><br/>"
-    rep += "list of replays played on %s:<br/>"%shortdate
-    for replay in Replay.objects.filter(unixTime__startswith=shortdate):
-        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    replays = Replay.objects.filter(unixTime__startswith=shortdate)
+    return replay_table(request, replays, "replays played on '%s'"%shortdate)
 
 def upload_date(request, shortdate):
-    # TODO:
-    rep = "<b>TODO</b><br/><br/>"
-    rep += "list of replays uploaded on %s:<br/>"%shortdate
-    for replay in Replay.objects.filter(upload_date__startswith=shortdate):
-        rep += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
-    rep += '<br/><br/><a href="/">Home</a>'
-    return HttpResponse(rep)
+    replays = Replay.objects.filter(upload_date__startswith=shortdate)
+    return replay_table(request, replays, "replays uploaded on '%s'"%shortdate)
 
 def all_comments(request):
     c = all_page_infos(request)
