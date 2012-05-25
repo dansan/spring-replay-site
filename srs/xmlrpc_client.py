@@ -17,12 +17,15 @@ import os
 import sys
 import xmlrpclib
 import argparse
+import pyCURLTransport
+import pycurl
 
 def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. In case it changes, XMLRPC_URL can also be set in your environment.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")
@@ -43,12 +46,21 @@ def main(argv=None):
         XMLRPC_URL = os.environ["XMLRPC_URL"]
 
     if args.verbose:
-        print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s'."%(args.path.name, args.owner, args.title, args.comment, args.tags)
+        if args.throttle > 0:
+            sp = "at %.2f kb/s"%(args.throttle/1024.0)
+        else:
+            sp = "without upload throttling"
+        print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s' %s."%(args.path.name, args.owner, args.title, args.comment, args.tags, sp)
 
     demofile = xmlrpclib.Binary(args.path.read())
 
-    rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL)
+    curltrans = pyCURLTransport.PyCURLTransport()
+    if args.throttle > 0:
+        curltrans._curl.setopt(pycurl.MAX_SEND_SPEED_LARGE, args.throttle)
+
+    rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=curltrans)
     result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path.name), demofile, args.title, args.comment, args.tags, args.owner)
+
     if args.verbose:
         print "%s" % result
 
