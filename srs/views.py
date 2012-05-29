@@ -210,7 +210,7 @@ def search(request):
                 resp += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
         else:
             HttpResponseRedirect("/search/")
-    return HttpResponse(resp)
+    return replay_table(request, replays, 'Your search for "%s" yielded %d results:'%(st, replays.count()))
 
 @login_required
 def user_settings(request):
