@@ -1,7 +1,7 @@
                 <table border="0" cellpadding="0" cellspacing="0" rules="none" align="left">
                     <colgroup>
-                        <col width="48">
-                        <col width="235">
+                        <col width="48"/>
+                        <col width="235"/>
                     </colgroup>
                     <tr>
                         <td>Date</td><td><a href="{% url srs.views.match_date replay.unixTime|date:'Y-m-d' %}">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}</td>
@@ -18,6 +18,7 @@
                     <tr>
                         <td>Tags</td><td>{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}</td>
                     </tr>
+                    <tr>
                         <td>Upload<br/>&nbsp;</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a><br/>
                         Downloads: {{ replay.replayfile.download_count }}&nbsp;&nbsp;&nbsp;Comments: {{ replay.comments }}</td>
                     </tr>
@@ -25,3 +26,4 @@
                         <td>&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="{% url srs.views.download replay.gameID %}"><img alt="download" src="{{ STATIC_URL }}img/download.png"/></a></td>
                     </tr>
                 </table>
+
