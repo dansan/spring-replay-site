@@ -11,19 +11,17 @@
 {% include "replay_box.html" %}
             </div>
         <div class="left" style="width: 340px;">
-            {% if user = replay.uploader %}<center><p><font color="red"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a></b>&nbsp;&nbsp;&laquo;&laquo;&laquo;</font></p><center/>{% endif %}
-	        <center><img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/></center>
+            {% if user = replay.uploader %}<p style="text-align:center; color:red"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a></b>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
+	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	        <p><br/></p>
 	    </div>
 	    <div class="left" style="width: 130px; padding: 0 8px;">
-	        {% if replay.notcomplete %}<p><b><font color="maroon">Replay is incomplete, winner and match length are unknown. Please leave a comment.</font></b></p>{% endif %}
+	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
-	            <ul>
-	                {% for t in team %}<li><font color=#{{ t.rgbcolor }}><a href="{{ t.teamleader.get_absolute_url }}">{{ t.teamleader.name }}</a></font></li>{% endfor %}
-	            </ul>
+                {% for t in team %}<li style="color:#{{ t.rgbcolor }}"><a href="{{ t.teamleader.get_absolute_url }}">{{ t.teamleader.name }}</a></li>{% endfor %}
 	            <li>&nbsp;</li>{% endfor %}
 	            <li><b>Spectators</b></li>
 	            {% for s in specs %}<li>{{ s.name }}</li>{% endfor %}
