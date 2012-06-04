@@ -8,27 +8,27 @@ CREDITS FOR THE WEB DESIGN GO TO:
 /* project: internet music template
    author: luka cvrk (www.solucija.com) */
 
-   
+
 /* default styles
    -------------- */
-  
-body { 
-	padding: 0; 
-	margin: 0; 
-	font: 0.74em Arial, Helvetica, sans-serif; 
+
+body {
+	padding: 0;
+	margin: 0;
+	font: 0.74em Arial, Helvetica, sans-serif;
 	line-height: 1.5em;
-	background: #fff; 
-	color: #454545; 
+	background: #fff;
+	color: #454545;
 }
 
 a {
-	color: #4A8EBC; 
+	color: #4A8EBC;
 	background: inherit;
 }
 
 a:hover {
 	color: #C3593C;
-	background: inherit;	
+	background: inherit;
 }
 
 a.title {
@@ -38,7 +38,7 @@ a.title {
 
 h1 {
 	font: bold 2em "Trebuchet MS", Arial, Helvetica, sans-serif;
-	letter-spacing: -1px; 
+	letter-spacing: -1px;
 	padding: 2px 0 0 0px;
 	margin: 0;
 	color: #464548;
@@ -62,12 +62,12 @@ h1 .red{
 }
 
 
-h2 { 
-	margin: 0 0 5px 0; 
-	padding: 0; 
+h2 {
+	margin: 0 0 5px 0;
+	padding: 0;
 	font: bold 1.5em Arial, Helvetica, sans-serif;
 	letter-spacing: -1px;
-	color: #000; 
+	color: #000;
 	background: inherit;
 }
 
@@ -78,21 +78,21 @@ h2 .yellow{
 
 p {	margin: 0 0 5px 0; }
 
-ul { 
-	margin: 0; 
-	padding : 0; 
-	list-style : none; 
+ul {
+	margin: 0;
+	padding : 0;
+	list-style : none;
 }
 
-form { 
-	margin: 0; 
+form {
+	margin: 0;
 }
 
-input.search { 
-	width: 145px; 
+input.search {
+	width: 145px;
 	height: 22px;
 	border: none;
-	background: #fff url("/static/img/input.gif") no-repeat; 
+	background: #fff url("/static/img/input.gif") no-repeat;
 	padding: 5px 10px 0 25px;
 	color: #808080;
 }
@@ -106,19 +106,19 @@ input.button {
 	font: bold 1.1em Arial, Helvetica, Sans-Serif;
 }
 
-input.login { 
+input.login {
 	width: 150px;
-	border: none; 
-	background: url("/static/img/logininput.gif"); 
-	padding: 4px; 
+	border: none;
+	background: url("/static/img/logininput.gif");
+	padding: 4px;
 }
 
 /* layout
    ------ */
 
-.content { 
+.content {
 	margin: 10px auto;
-	width: 760px; 
+	width: 760px;
 }
 
 .logo {
@@ -149,7 +149,7 @@ input.login {
 	background: #FFF url("/static/img/dot.gif") repeat-x bottom;
 	color: #444;
 }
-	
+
 
 .slogan {
 	text-align: right;
@@ -157,39 +157,38 @@ input.login {
 }
 
 
-.bar { 
+.bar {
 	text-align: right;
 	font-size: 1.1em;
-	height: 30px; 
+	height: 30px;
 }
 
-	.bar li { 
-		
+	.bar li {
 		padding: 0px 10px 8px 10px;
 		color: #808080;
 		background: #FFF;
 		display: inline;
 	}
-	
-	.bar li.active { 
-		background: #FFF url("/static/img/bar.gif") no-repeat center bottom; 
+
+	.bar li.active {
+		background: #FFF url("/static/img/bar.gif") no-repeat center bottom;
 		color: #C3593C;
-		font-weight: bold; 
-		padding-bottom: 8px; 
+		font-weight: bold;
+		padding-bottom: 8px;
 	}
 
-	.bar a { 
+	.bar a {
 		font-weight: bold;
-		color: #4A8EBC; 
-		background: inherit;	
-	} 
+		color: #4A8EBC;
+		background: inherit;
+	}
 
-.search_field { 
+.search_field {
 	text-align: right;
 	float: right;
 	width: 540px;
 	height: 38px;
-	background: #464548 url("/static/img/searchbg.gif") no-repeat top right; 
+	background: #464548 url("/static/img/searchbg.gif") no-repeat top right;
 	color: #000;
 	clear: both;
 	padding: 10px 10px 0 0;
@@ -200,14 +199,13 @@ input.login {
 	font-weight: bold;
 	color: #ccc;
 	background: inherit;
-	
 }
 
 .search {
 	font-size: 1.2em;
 	font-weight: bold;
 	color: #FFF;
-	background: inherit;	
+	background: inherit;
 }
 
 .newsletter {
@@ -234,7 +232,7 @@ input.login {
 
 .left {
 	float: left;
- 	width: 490px;
+	width: 490px;
 	margin: 0 0 10px 0;
 }
 	.left_articles {
@@ -247,7 +245,7 @@ input.login {
 		background: #6E6E6E url("/static/img/lt.gif") no-repeat;
 		color: #FFF;
 	}
-	
+
 	.lbox {
 		color: #eee;
 		padding: 3px 12px;
@@ -262,18 +260,18 @@ input.login {
         background: #6E6E6E url("/static/img/lb.gif") no-repeat bottom left;
         height: 260px;
     }
-	
+
 	.lbox a {
 		color: #FFFCD1;
 		background: inherit;
 	}
-	
+
 	.lbox h2 {
 		color: #FFF;
 		background: #6E6E6E;
 	}
-	
-	
+
+
 .thumb {
 	float: left;
 	width: 150px;
@@ -283,13 +281,14 @@ input.login {
 	background: #6e6e6e;
 	margin: 0 15px 15px 0;
 	padding: 5px;
+	text-align: center;
 }
 
 .thumb p { margin: 0; padding: 3px; color: #FFF; background: #6e6e6e; }
-	
+
 /* right side
    ---------- */
-		
+
 .right {
 	float: right;
 	width: 245px;
@@ -301,22 +300,21 @@ input.login {
 	background: inherit;
 }
 
-		
 	.rt {
 		background: #C85E35 url("/static/img/rt.gif") no-repeat;
 		color: #FFF;
 		height: 7px;
 	}
-		
+
 	.right_articles {
 		font-size: 0.9em;
 		background: #C85E35 url("/static/img/rb.gif") no-repeat bottom;
 		color: #FEE1D5;
-		padding: 4px 8px;	
+		padding: 4px 8px;
 		margin: 0 0 10px 0;
 	}
-	
-			
+
+
 .image {
 	float: left;
 	margin: 0 9px 3px 0;
@@ -325,8 +323,8 @@ input.login {
 /* footer
    ------ */
 
-.footer { 
-	clear: both; 
+.footer {
+	clear: both;
 	text-align: center;
 	line-height: 1.8em;
 	color: #808080;
