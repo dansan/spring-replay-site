@@ -1,0 +1,14 @@
+{% extends 'lists.html' %}
+{% block pagetitle %}Search{% endblock %}
+
+{% block search %}
+<h2>Search</h2>
+	<form action="." method="post">{% csrf_token %}
+	   {{ form.as_p }}
+	   <input type="submit" value="Submit" />
+	</form>
+	<p>&nbsp;</p>
+{% endblock %}
+{% if table.data|length <= 0 %}
+{% block result_table %}{% endblock %}
+{% endif %}
