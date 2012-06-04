@@ -15,7 +15,7 @@
 {% for replay in newest_replays %}
 			<div class="lt"></div>
 			<div class="lbox">
-                <p><big><b>{{ replay.title }}</big></b></p>
+                <p><big><b>{{ replay.title }}</b></big></p>
                 <div class="thumb">
                     <a href="{{ replay.get_absolute_url }}"><center><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></center>
                     <img src="{{ STATIC_URL }}img/play.gif" alt="Details" /> click for details</a>
@@ -23,7 +23,8 @@
 {% include "replay_box.html" %}
             </div>
 {% endfor %}
-            
+
             <h2><a href="{% url srs.views.replays %}">more...</a></h2>
 		</div>
 {% endblock %}
+
