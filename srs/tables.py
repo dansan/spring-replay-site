@@ -12,11 +12,11 @@ from django_tables2 import A
 
 class ReplayTable(tables.Table):
     title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
-    unixTime       = tables.Column()
-    upload_date    = tables.Column()
+    unixTime       = tables.Column(verbose_name="Match")
+    upload_date    = tables.Column(verbose_name="Upload")
     uploader       = tables.Column()
-    downloads      = tables.Column(accessor="replayfile.download_count", orderable=False)
-    comments       = tables.Column(orderable=False)
+    downloads      = tables.Column(accessor="replayfile.download_count", orderable=False, verbose_name="DL")
+    comments       = tables.Column(orderable=False, verbose_name="C")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-upload_date"
