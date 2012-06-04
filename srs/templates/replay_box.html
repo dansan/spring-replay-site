@@ -22,7 +22,7 @@
                         <td>Upload<br/>&nbsp;</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a><br/>
                         Downloads: {{ replay.replayfile.download_count }}&nbsp;&nbsp;&nbsp;Comments: {{ replay.comments }}</td>
                     </tr>
-                    </tr>
+                    <tr>
                         <td>&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="{% url srs.views.download replay.gameID %}"><img alt="download" src="{{ STATIC_URL }}img/download.png"/></a></td>
                     </tr>
                 </table>
