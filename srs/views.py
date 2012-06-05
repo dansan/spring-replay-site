@@ -27,10 +27,12 @@ import functools
 import locale
 import logging
 import operator
+from types import StringTypes
+import datetime
 
 from models import *
 from common import all_page_infos
-from forms import EditReplayForm
+from forms import EditReplayForm, AdvSearchForm
 from tables import *
 from upload import save_tags, set_autotag, save_desc
 
@@ -47,14 +49,15 @@ def replays(request):
     replays = Replay.objects.all()
     return replay_table(request, replays, "all replays")
 
-def replay_table(request, replays, title):
+def replay_table(request, replays, title, template="lists.html", form=None):
     c = all_page_infos(request)
     table = ReplayTable(replays)
+    logger.debug("replays=%s",replays)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
     c['pagetitle'] = title
-    c['long_table'] = True
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    if form: c['form'] = form
+    return render_to_response(template, c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
     c = all_page_infos(request)
@@ -189,28 +192,92 @@ def game(request, gametype):
     return replay_table(request, replays, "replays of game '%s'"%gametype)
 
 def search(request):
-    # TODO
-    c = all_page_infos(request)
-    resp = "<b>TODO</b><br/><br/>"
-    if request.method == 'POST':
-        st = request.POST["search"].strip()
-        if st:
-            users = User.objects.filter(username__icontains=st)
-            replays = Replay.objects.filter(Q(gametype__icontains=st)|
-                                            Q(title__icontains=st)|
-                                            Q(short_text__icontains=st)|
-                                            Q(long_text__icontains=st)|
-                                            Q(map_info__name__icontains=st)|
-                                            Q(tags__name__icontains=st)|
-                                            Q(uploader__in=users)|
-                                            Q(player__account__names__icontains=st)).distinct()
+    form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader']
+    query = {}
 
-            resp += 'Your search for "%s" yielded %d results:<br/><br/>'%(st, replays.count())
-            for replay in replays:
-                resp += '* <a href="%s">%s</a><br/>'%(replay.get_absolute_url(), replay.__unicode__())
+    if request.method == 'POST':
+        # did we come from the adv search page, or from a search in the top menu?
+        if request.POST.has_key("search"):
+            # top menu -> search everywhere
+            st = request.POST["search"].strip()
+            if st:
+                for f in form_fields:
+                    if f not in ['spectator','matchdate', 'uploaddate']:
+                        query[f] = st
+                form = AdvSearchForm(query)
+            else:
+                # empty search field in top menu
+                query = None
+                form = AdvSearchForm()
         else:
-            HttpResponseRedirect("/search/")
-    return replay_table(request, replays, 'Your search for "%s" yielded %d results:'%(st, replays.count()))
+            # advSearch was used
+            form = AdvSearchForm(request.POST)
+            if form.is_valid():
+                for f in form_fields:
+                    if isinstance(form.cleaned_data[f], StringTypes):
+                        # strip() strings, use only non-empty ones
+                        if form.cleaned_data[f].strip():
+                            query[f] = form.cleaned_data[f].strip()
+                    elif form.cleaned_data[f]:
+                        query[f] = form.cleaned_data[f]
+            else:
+                query = None
+    else:
+        # request.method == GET (display advSearch)
+        query = None
+        form = AdvSearchForm()
+
+    replays = search_replays(query)
+
+    return replay_table(request, replays, "replays matching your search", "search.html", form)
+
+def search_replays(query):
+    """
+    I love django Q!!!
+    """
+    if query:
+        q = Q()
+
+        for key in query.keys():
+            if   key == 'text': q |= Q(title__icontains=query['text']) | Q(long_text__icontains=query['text'])
+            elif key == 'comment':
+                ct = ContentType.objects.get_for_model(Replay)
+                comments = Comment.objects.filter(content_type=ct, comment__icontains=query['comment'])
+                c_pks = [c.object_pk for c in comments]
+                q |= Q(pk__in=c_pks)
+            elif key == 'tag': q |= Q(tags__name__icontains=query['tag'])
+            elif key == 'player':
+                if query.has_key('spectator'):
+                    q |= Q(player__account__names__icontains=query['player'])
+                else:
+                    q |= Q(player__account__names__icontains=query['player'], player__spectator=False)
+            elif key == 'spectator': pass # used in key == 'player'
+            elif key == 'maps': q |= Q(map_info__name__icontains=query['maps'])
+            elif key == 'game': q |= Q(gametype__icontains=query['game'])
+            elif key == 'matchdate':
+                start_date = query['matchdate']-datetime.timedelta(1)
+                end_date   = query['matchdate']+datetime.timedelta(1)
+                q |= Q(unixTime__range=(start_date, end_date))
+            elif key == 'uploaddate':
+                start_date = query['uploaddate']-datetime.timedelta(1)
+                end_date   = query['uploaddate']+datetime.timedelta(1)
+                q |= Q(upload_date__range=(start_date, end_date))
+            elif key == 'uploader':
+                users = User.objects.filter(username__icontains=query['uploader'])
+                q |= Q(uploader__in=users)
+            else:
+                logger.error("Unknown query key: query[%s]=%s",key, query[key])
+                raise Exception("Unknown query key: query[%s]=%s"%(key, query[key]))
+
+        if len(q.children):
+            replays = Replay.objects.filter(q).distinct()
+        else:
+            replays = Replay.objects.none()
+    else:
+        # GET or empty/bad search query
+        replays = Replay.objects.none()
+
+    return replays
 
 @login_required
 def user_settings(request):

@@ -164,7 +164,10 @@ class NewsItem(models.Model):
     def __unicode__(self):
         return self.text[:50]
 
+# TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
+
+# TODO: use a proxy model for this
 Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50]+"..."

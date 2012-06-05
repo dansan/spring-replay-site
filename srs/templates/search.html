@@ -3,12 +3,43 @@
 
 {% block search %}
 <h2>Search</h2>
+<p><b>All search parameters are OR'd</b></p>
 	<form action="." method="post">{% csrf_token %}
-	   {{ form.as_p }}
-	   <input type="submit" value="Submit" />
+	    {{ form.non_field_errors }}
+	    {% for field in form %}
+	    {% if field.errors %}
+        <div class="fieldWrapper">
+            <p style="color: red">Error in "{{ field.label }}": {% for error in field.errors %} {{ error }} {% endfor %}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+		<table border="0" cellpadding="2" cellspacing="0" rules="none">
+	        <colgroup>
+	            <col width="60"/><col width="180"/><col width="60"/><col width="180"/>
+	        </colgroup>
+	        <tr>
+	           <td>{{ form.text.label_tag }}:</td><td>{{ form.text }}</td>
+               <td>{{ form.comment.label_tag }}:</td><td>{{ form.comment }}</td>
+            </tr>
+            <tr>
+               <td>{{ form.player.label_tag }}:</td><td>{{ form.player }}</td>
+               <td>{{ form.spectator.label_tag }}:</td><td>{{ form.spectator }}</td>
+            </tr>
+            <tr>
+               <td>{{ form.maps.label_tag }}:</td><td>{{ form.maps }}</td>
+               <td>{{ form.game.label_tag }}:</td><td>{{ form.game }}</td>
+            </tr>
+            <tr>
+               <td>{{ form.matchdate.label_tag }}:</td><td>{{ form.matchdate }}</td>
+               <td>{{ form.uploaddate.label_tag }}:</td><td>{{ form.uploaddate }}</td>
+            </tr>
+            <tr>
+               <td>{{ form.tag.label_tag }}:</td><td>{{ form.tag }}</td>
+               <td>{{ form.uploader.label_tag }}:</td><td>{{ form.uploader }}</td>
+            </tr>
+	    </table>
+	    <input type="submit" value="Submit" />
 	</form>
 	<p>&nbsp;</p>
+	<p style="color: maroon;">Sorting of search results does not work at the moment.</p>
 {% endblock %}
-{% if table.data|length <= 0 %}
-{% block result_table %}{% endblock %}
-{% endif %}
