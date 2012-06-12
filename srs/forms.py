@@ -28,6 +28,6 @@ class AdvSearchForm(forms.Form):
     spectator = forms.BooleanField(label="Include spectators?", required=False)
     maps      = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Map", required=False)
     game      = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Game", required=False)
-    matchdate = forms.DateField(widget=forms.TextInput(attrs={'title': 'Format: mm/dd/yyyy, searches the day before until the day after supplied date (72h)'}), label="Day of match", required=False)
-    uploaddate= forms.DateField(widget=forms.TextInput(attrs={'title': 'Format: mm/dd/yyyy, searches the day before until the day after supplied date (72h)'}), label="Day of upload", required=False)
+    matchdate = forms.DateField(widget=forms.DateInput(attrs={'class':'datePicker'}, format='%Y-%m-%d'), label="Day of match", required=False)
+    uploaddate= forms.DateField(widget=forms.DateInput(attrs={'class':'datePicker'}, format='%Y-%m-%d'), label="Day of upload", required=False)
     uploader  = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Uploader", required=False)

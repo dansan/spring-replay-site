@@ -1,5 +1,5 @@
 /*
-CREDITS FOR THE WEB DESIGN GO TO:
+WEB DESIGN BASED ON:
             Luka Cvrk (www.solucija.com)
             Open Source Web Design
             http://www.oswd.org/design/preview/id/3115
@@ -271,7 +271,6 @@ input.login {
 		background: #6E6E6E;
 	}
 
-
 .thumb {
 	float: left;
 	width: 150px;
@@ -286,6 +285,32 @@ input.login {
 
 .thumb p { margin: 0; padding: 3px; color: #FFF; background: #6e6e6e; }
 
+label {
+    font-weight: normal !important;
+    color: inherit;
+    font-size: 0.9em;
+}
+
+table {
+    border-collapse: collapse;
+    border-color: #ccc;
+}
+
+td, th {
+    font-size: 0.9em;
+    line-height: 1.2em;
+    border-bottom: 0px none #eee;
+    vertical-align: top;
+    padding: 1px;
+    font-family: "Arial, Helvetica, sans-serif;
+}
+
+th {
+    text-align: left;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
 /* right side
    ---------- */
 
@@ -299,6 +324,10 @@ input.login {
 	color: #FFFCD1;
 	background: inherit;
 }
+.right a:hover {
+    color: #003366;
+}
+
 
 	.rt {
 		background: #C85E35 url("/static/img/rt.gif") no-repeat;

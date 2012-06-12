@@ -1,3 +1,4 @@
+{% load adminmedia %}
 {% load comments %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -10,8 +11,21 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 -->
     <meta name="author" content="Dansan" />
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/css/base.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css" />
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.8.21.custom.css" />
+
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.21.custom.min.js"></script>
+
+    <script type="text/javascript">
+    $(document).ready(function() {
+    $(".datePicker").datepicker({ dateFormat: "yy-mm-dd" });
+    });
+    </script>
+
     <title>{%block pagetitle %}{% endblock %} | Spring Replay Site</title>
 </head>
 <body>

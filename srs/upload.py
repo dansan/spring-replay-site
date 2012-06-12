@@ -53,12 +53,12 @@ def upload(request):
             try:
                 replay = Replay.objects.get(gameID=demofile.header["gameID"])
                 logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-                return HttpResponse('Uploaded replay already exists: <a href="/replay/%s/">%s</a>'%(replay.gameID, replay.__unicode__()))
+                form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.__unicode__()]}
             except:
                 shutil.move(path, settings.MEDIA_ROOT)
                 replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
                 logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
-            return HttpResponseRedirect(replay.get_absolute_url())
+                return HttpResponseRedirect(replay.get_absolute_url())
 #            except Exception, e:
 #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
     else:
