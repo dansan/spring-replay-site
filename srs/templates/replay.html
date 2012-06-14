@@ -10,14 +10,14 @@
                 <p><big><b>{{ replay.title }}</b></big></p>
 {% include "replay_box.html" %}
             </div>
-        <div class="left" style="width: 340px;">
+        <div class="left" style="width: 350px;">
             {% if user = replay.uploader %}<p style="text-align:center; color:red"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a></b>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
 	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	        <p><br/></p>
 	    </div>
-	    <div class="left" style="width: 130px; padding: 0 8px;">
+	    <div class="left" style="width: 120px; padding: 0 8px;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
 	        <ul>
 	            {% for at,team in allyteams %}<li><b>Team {{ forloop.counter }}</b>{% if at.winner %}<br/><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/></li>
