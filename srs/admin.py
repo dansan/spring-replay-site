@@ -22,5 +22,6 @@ admin.site.register(MapOption)
 admin.site.register(ModOption)
 admin.site.register(ReplayFile)
 admin.site.register(NewsItem)
+admin.site.register(UploadTmp)
 
 admin.site.register(UserProfile)

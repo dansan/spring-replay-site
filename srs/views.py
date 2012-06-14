@@ -52,7 +52,6 @@ def replays(request):
 def replay_table(request, replays, title, template="lists.html", form=None):
     c = all_page_infos(request)
     table = ReplayTable(replays)
-    logger.debug("replays=%s",replays)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
     c['pagetitle'] = title
@@ -72,6 +71,7 @@ def replay(request, gameID):
         if teams:
             c["allyteams"].append((at, teams))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
+    c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 

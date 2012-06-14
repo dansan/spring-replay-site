@@ -6,11 +6,17 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.comments import Comment
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 import settings
+
+logger = logging.getLogger(__package__)
 
 class Tag(models.Model):
     name            = models.CharField(max_length=128, unique=True)
@@ -79,6 +85,7 @@ class Replay(models.Model):
     uploader        = models.ForeignKey(User)
     upload_date     = models.DateTimeField(auto_now=True)
     replayfile      = models.ForeignKey(ReplayFile)
+
     def __unicode__(self):
         return self.title+" "+self.unixTime.strftime("%Y-%m-%d")
 
@@ -89,6 +96,9 @@ class Replay(models.Model):
     def comments(self):
         r_t = ContentType.objects.get_for_model(Replay)
         return Comment.objects.filter(object_pk=str(self.pk), content_type=r_t.pk).count()
+
+    def was_succ_uploaded(self):
+        return not UploadTmp.objects.filter(replay=self).exists()
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -141,7 +151,7 @@ class Team(models.Model):
     replay          = models.ForeignKey(Replay)
 
     def __unicode__(self):
-        return unicode(self.allyteam)+u" "+self.side
+        return self.side
 
 class MapModOption(models.Model):
     name            = models.CharField(max_length=128)
@@ -164,6 +174,12 @@ class NewsItem(models.Model):
     def __unicode__(self):
         return self.text[:50]
 
+class UploadTmp(models.Model):
+    replay          = models.ForeignKey(Replay)
+
+    def __unicode__(self):
+        return self.replay.__unicode__()
+
 # TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
@@ -171,3 +187,8 @@ User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count(
 # TODO: use a proxy model for this
 Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50]+"..."
+
+# automatically log each DB object delete
+@receiver(post_delete)
+def obj_del_callback(sender, instance, using, **kwargs):
+    logger.debug("Deleted '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)

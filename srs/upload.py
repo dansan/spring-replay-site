@@ -52,8 +52,13 @@ def upload(request):
 
             try:
                 replay = Replay.objects.get(gameID=demofile.header["gameID"])
-                logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-                form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.__unicode__()]}
+                if replay.was_succ_uploaded():
+                    logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+                    form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.__unicode__()]}
+                else:
+                    logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
+                    del_replay(replay)
+                    raise Exception() # get into except-path below
             except:
                 shutil.move(path, settings.MEDIA_ROOT)
                 replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
@@ -74,7 +79,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     if user is not None and user.is_active:
         logger.info("Authenticated user '%s'", user)
     else:
-        logger.info("Uploader woring password, account unknown or inactive, abort.")
+        logger.info("Uploader wrong password, account unknown or inactive, abort.")
         return "1 Unknown or inactive uploader account or bad password."
 
     # find owner account
@@ -96,12 +101,16 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
 
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
-        logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-        try:
-            os.remove(path)
-        except:
-            logger.error("Could not remove file '%s'", path)
-        return '3 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
+        if replay.was_succ_uploaded():
+            logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+            try:
+                os.remove(path)
+            except:
+                logger.error("Could not remove file '%s'", path)
+            return '3 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
+        else:
+            logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
+            del_replay(replay)
     except:
         pass
 
@@ -148,6 +157,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.replayfile = ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0)
 
     replay.save()
+    uploadtmp = UploadTmp.objects.create(replay=replay)
 
     logger.debug("replay pk=%d gameID=%s unixTime=%s created", replay.pk, replay.gameID, replay.unixTime)
 
@@ -298,7 +308,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     save_desc(replay, short, long_text, autotag)
 
     replay.save()
-    logger.debug("replay pk=%d autotag='%s', title='%s'", replay.pk, autotag, replay.title)
+    uploadtmp.delete()
 
     return replay
 
@@ -343,3 +353,11 @@ def floats2rgbhex(floats):
     for color in floats.split():
         rgb += str(hex(clamp(int(float(color)*256), 0, 256))[2:])
     return rgb
+
+def del_replay(replay):
+    replay.map_img.delete()
+    for tag in replay.tags.all():
+        if tag.replays() == 1 and tag.pk > 10:
+            # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
+            tag.delete()
+    UploadTmp.objects.filter(replay=replay).delete()
