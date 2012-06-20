@@ -80,7 +80,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="right_articles">
                 <p><b>Tags (<a href="{% url srs.views.tags %}">All</a>)</b><br /><a href="{% url srs.views.tag '1v1' %}">1v1</a> <a href="{% url srs.views.tag '2v2' %}">2v2</a> <a href="{% url srs.views.tag '3v3' %}">3v3</a> <a href="{% url srs.views.tag '6v6' %}">6v6</a> <a href="{% url srs.views.tag '8v8' %}">8v8</a> <a href="{% url srs.views.tag 'Tourney' %}">Tourney</a><br />Top {{ top_tags.count }}: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
                 <p><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps.count }}: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
-                <p><b>Players (<a href="{% url srs.views.players %}">All</a>)</b><br />Top {{ top_players|length }}: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.name }}</a> {% endfor %}</p>
+                <p><b>Players (<a href="{% url srs.views.players %}">All</a>)</b><br />{{ top_players|length }} most active: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.name }}</a> {% endfor %}</p>
                 <p><b>Games (<a href="{% url srs.views.games %}">All</a>)</b></p>
                 <p><b>Uploaders (<a href="{% url srs.views.users %}">All</a>)</b></p>
                 <p><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>

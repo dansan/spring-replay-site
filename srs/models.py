@@ -7,13 +7,16 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import operator
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.comments import Comment
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django.db.models import Count
+
 import settings
 
 logger = logging.getLogger(__package__)
@@ -83,7 +86,7 @@ class Replay(models.Model):
     map_img         = models.ForeignKey(MapImg, blank=True, null = True)
     tags            = models.ManyToManyField(Tag)
     uploader        = models.ForeignKey(User)
-    upload_date     = models.DateTimeField(auto_now=True)
+    upload_date     = models.DateTimeField(auto_now_add=True)
     replayfile      = models.ForeignKey(ReplayFile)
 
     def __unicode__(self):
@@ -99,6 +102,10 @@ class Replay(models.Model):
 
     def was_succ_uploaded(self):
         return not UploadTmp.objects.filter(replay=self).exists()
+
+    class Meta:
+        get_latest_by = 'upload_date'
+        ordering = ['-upload_date']
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -180,6 +187,42 @@ class UploadTmp(models.Model):
     def __unicode__(self):
         return self.replay.__unicode__()
 
+# not the most beautiful model, but efficient
+class SiteStats(models.Model):
+    replays         = models.IntegerField()
+    tags            = models.CharField(max_length=1000)
+    maps            = models.CharField(max_length=1000)
+    players         = models.CharField(max_length=1000)
+    comments        = models.CharField(max_length=1000)
+    last_modified   = models.DateTimeField(auto_now=True)
+
+
+def update_stats():
+    replays  = Replay.objects.count()
+    tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    tp = []
+    for pa in PlayerAccount.objects.all():
+        tp.append((Player.objects.filter(account=pa, spectator=False).count(), Player.objects.filter(account=pa)[0]))
+    tp.sort(key=operator.itemgetter(0), reverse=True)
+    players  = [p[1] for p in tp[:20]]
+    comments = Comment.objects.reverse()[:5]
+
+    tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
+    maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
+    players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
+    comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
+
+    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays':replays, 'tags':tags_s, 'maps':maps_s, 'players':players_s, 'comments':comments_s})
+    if not created:
+        sist.replays = replays
+        sist.tags = tags_s
+        sist.maps = maps_s
+        sist.players = players_s
+        sist.comments = comments_s
+        sist.save()
+
+
 # TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
@@ -192,3 +235,15 @@ Comment.comment_short = lambda self: self.comment[:50]+"..."
 @receiver(post_delete)
 def obj_del_callback(sender, instance, using, **kwargs):
     logger.debug("Deleted '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+
+# automatically refresh statistics when a replay is created or modified
+@receiver(post_save, sender=Replay)
+def replay_save_callback(sender, instance, using, **kwargs):
+    logger.debug("Replay was created or modified '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+    update_stats()
+
+# automatically refresh statistics when a replay is deleted
+@receiver(post_delete, sender=Replay)
+def replay_del_callback(sender, instance, using, **kwargs):
+    logger.debug("Replay was deleted '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+    update_stats()

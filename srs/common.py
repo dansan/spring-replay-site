@@ -6,22 +6,22 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.core.context_processors import csrf
-from django.db.models import Count
 
-import operator
-
-from models import *
+from models import Tag, Map, Player, SiteStats, update_stats
+from django.contrib.comments import Comment
 
 def all_page_infos(request):
     c = {}
     c.update(csrf(request))
-    c["total_replays"]   = Replay.objects.count()
-    c["top_tags"]        = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    c["top_maps"]        = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    tp = []
-    for pa in PlayerAccount.objects.all():
-        tp.append((Player.objects.filter(account=pa, spectator=False).count(), Player.objects.filter(account=pa)[0]))
-    tp.sort(key=operator.itemgetter(0), reverse=True)
-    c["top_players"] = [p[1] for p in tp[:20]]
-    c["latest_comments"] = Comment.objects.reverse()[:5]
+    try:
+        sist = SiteStats.objects.get(id=1)
+    except:
+        update_stats()
+        sist = SiteStats.objects.get(id=1)
+
+    c["total_replays"]   = sist.replays
+    c["top_tags"]        = [Tag.objects.get(id=int(x)) for x in sist.tags.split('|')]
+    c["top_maps"]        = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]
+    c["top_players"]     = [Player.objects.get(id=int(x)) for x in sist.players.split('|')]
+    c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
     return c
