@@ -16,7 +16,13 @@
 import os
 import sys
 import xmlrpclib
-import argparse
+
+try:
+    import argparse
+except:
+    from os.path import realpath, dirname
+    sys.path.insert(1, realpath(dirname(__file__))+"/contrib")
+    import argparse
 
 def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
