@@ -17,13 +17,11 @@ import os
 import sys
 import xmlrpclib
 import argparse
-import pyCURLTransport
-import pycurl
 
 def main(argv=None):
     XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
 
-    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. In case it changes, XMLRPC_URL can also be set in your environment.")
+    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.admin-box.com/xmlrpc/\" for upload testing purposes.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
     parser.add_argument("title", help="short description (50 char max)")
@@ -54,11 +52,28 @@ def main(argv=None):
 
     demofile = xmlrpclib.Binary(args.path.read())
 
-    curltrans = pyCURLTransport.PyCURLTransport()
     if args.throttle > 0:
-        curltrans._curl.setopt(pycurl.MAX_SEND_SPEED_LARGE, args.throttle)
+        try:
+            import pycurl
+            import pyCURLTransport
+        except:
+            print """
+ERROR: Please install pycurl to use bandwidth throttling.
+  Homepage: http://pycurl.sourceforge.net/
+  Debian/Ubuntu/Fedora/Arch: python-pycurl
+  Gentoo: dev-python/pycurl
+  Windows: compile from source or search binary packages (watch out for OS version
+           and 32/64 bit). Success was reported with package from
+           http://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl"""
+            return 1
 
-    rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=curltrans)
+        curltrans = pyCURLTransport.PyCURLTransport()
+        curltrans._curl.setopt(pycurl.MAX_SEND_SPEED_LARGE, args.throttle)
+        trans = curltrans
+    else:
+        trans = None # use xmlrpclib internal HTTP transport
+
+    rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
     result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path.name), demofile, args.title, args.comment, args.tags, args.owner)
 
     if args.verbose:
