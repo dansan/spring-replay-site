@@ -31,6 +31,9 @@ DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  
 INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
 LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+import mycache # copy (and edit) mycache_.py to mycache.py
+CACHES = mycache.CACHES
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -51,7 +54,7 @@ MANAGERS = ADMINS
 #    }
 #}
 
-import mydb
+import mydb # copy (and edit) mydb_.py to mydb.py
 DATABASES = { 'default': mydb.my_con }
 
 # Local time zone for this installation. Choices can be found here:

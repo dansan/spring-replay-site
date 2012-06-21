@@ -1,6 +1,7 @@
 srs.db
 *.pyc
 *.pyo
+srs/mycache.py
 srs/mydb.py
 srs/static/maps/*.jpg
 srs/static/replays/*.sdf
