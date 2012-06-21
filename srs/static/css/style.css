@@ -254,14 +254,6 @@ input.login {
 		height: 150px;
 	}
 
-	.lbox_long {
-        color: #eee;
-        padding: 3px 12px;
-        margin: 0 0 15px 0;
-        background: #6E6E6E url("/static/img/lb.gif") no-repeat bottom left;
-        height: 200px;
-    }
-
 	.lbox a {
 		color: #FFFCD1;
 		background: inherit;
@@ -275,20 +267,6 @@ input.login {
 		color: #FFF;
 		background: #6E6E6E;
 	}
-
-    .lbox_long a {
-        color: #FFFCD1;
-        background: inherit;
-    }
-
-    .lbox_long a:hover {
-        color: #036;
-    }
-
-    .lbox_long h2 {
-        color: #FFF;
-        background: #6E6E6E;
-    }
 
 .thumb {
 	float: left;
