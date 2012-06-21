@@ -1,6 +1,8 @@
 {% extends 'srs_base.html' %}
 {% load render_table from django_tables2 %}
 
+{% block listheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />{% endblock %}
+
 {% block pagetitle %}List of {{ pagetitle }}{% endblock %}
 
 {% block maincontent %}
