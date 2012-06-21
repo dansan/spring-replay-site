@@ -20,8 +20,8 @@ def all_page_infos(request):
         sist = SiteStats.objects.get(id=1)
 
     c["total_replays"]   = sist.replays
-    c["top_tags"]        = [Tag.objects.get(id=int(x)) for x in sist.tags.split('|')]
-    c["top_maps"]        = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]
-    c["top_players"]     = [Player.objects.get(id=int(x)) for x in sist.players.split('|')]
-    c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
+    if sist.tags:     c["top_tags"]        = [Tag.objects.get(id=int(x)) for x in sist.tags.split('|')]
+    if sist.maps:     c["top_maps"]        = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]
+    if sist.players:  c["top_players"]     = [Player.objects.get(id=int(x)) for x in sist.players.split('|')]
+    if sist.comments: c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
     return c
