@@ -251,14 +251,15 @@ input.login {
 		padding: 3px 12px;
 		margin: 0 0 15px 0;
 		background: #6E6E6E url("/static/img/lb.gif") no-repeat bottom left;
-		height: 178px;
+		height: 150px;
 	}
+
 	.lbox_long {
         color: #eee;
         padding: 3px 12px;
         margin: 0 0 15px 0;
         background: #6E6E6E url("/static/img/lb.gif") no-repeat bottom left;
-        height: 260px;
+        height: 200px;
     }
 
 	.lbox a {
@@ -266,15 +267,33 @@ input.login {
 		background: inherit;
 	}
 
+	.lbox a:hover {
+        color: #036;
+    }
+
 	.lbox h2 {
 		color: #FFF;
 		background: #6E6E6E;
 	}
 
+    .lbox_long a {
+        color: #FFFCD1;
+        background: inherit;
+    }
+
+    .lbox_long a:hover {
+        color: #036;
+    }
+
+    .lbox_long h2 {
+        color: #FFF;
+        background: #6E6E6E;
+    }
+
 .thumb {
 	float: left;
 	width: 150px;
-	height: 125px;
+	height: 100px;
 	border: 1px solid #d4d4d4;
 	color: #fff;
 	background: #6e6e6e;
@@ -364,4 +383,8 @@ th {
 .footer a {
 	color: #C3593C;
 	background: inherit;
+}
+
+.footer a:hover {
+    color: #036;
 }
