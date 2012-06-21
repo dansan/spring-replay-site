@@ -208,10 +208,14 @@ def update_stats():
     players  = [p[1] for p in tp[:20]]
     comments = Comment.objects.reverse()[:5]
 
-    tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
-    maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
-    players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
-    comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
+    if tags.exists():     tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
+    else:                 tags_s     = ""
+    if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
+    else:                 maps_s     = ""
+    if players.exists():  players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
+    else:                 players_s  = ""
+    if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
+    else:                 comments_s = ""
 
     sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays':replays, 'tags':tags_s, 'maps':maps_s, 'players':players_s, 'comments':comments_s})
     if not created:
