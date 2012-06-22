@@ -18,8 +18,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.db.models import Min
 import django.contrib.auth
-
-from django_tables2 import RequestConfig
+from django.forms.formsets import formset_factory
 
 from models import *
 from common import all_page_infos
@@ -33,42 +32,67 @@ logger = logging.getLogger(__package__)
 @login_required
 def upload(request):
     c = all_page_infos(request)
+    UploadFormSet = formset_factory(UploadFileForm, extra=5)
     if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            ufile = request.FILES['file']
-            short = request.POST['short']
-            long_text = request.POST['long_text']
-            tags = request.POST['tags']
-            (path, written_bytes) = save_uploaded_file(ufile)
-            logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
-#            try:
-            if written_bytes != ufile.size:
-                return HttpResponse("Could not store the replay file. Please contact the administrator.")
+        #form = UploadFileForm(request.POST, request.FILES)
+        formset = UploadFormSet(request.POST, request.FILES)
+        replays = []
+        if formset.is_valid():
+            for form in formset:
+                if form.cleaned_data:
+                    logger.debug("form.cleaned_data=%s", form.cleaned_data)
+                    ufile = form.cleaned_data['file']
+                    short = form.cleaned_data['short']
+                    long_text = form.cleaned_data['long_text']
+                    tags = form.cleaned_data['tags']
+                    (path, written_bytes) = save_uploaded_file(ufile)
+                    logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
+        #            try:
+                    if written_bytes != ufile.size:
+                        return HttpResponse("Could not store the replay file. Please contact the administrator.")
 
-            demofile = parse_demo_file.Parse_demo_file(path)
-            demofile.check_magic()
-            demofile.parse()
+                    demofile = parse_demo_file.Parse_demo_file(path)
+                    try:
+                        demofile.check_magic()
+                    except:
+                        form._errors = {'file': [u'Not a spring demofile: %s.'%ufile.name]}
+                        replays.append((False, 'Not a spring demofile: %s.'%ufile.name))
+                        continue
+                    demofile.parse()
 
-            try:
-                replay = Replay.objects.get(gameID=demofile.header["gameID"])
-                if replay.was_succ_uploaded():
-                    logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-                    form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.__unicode__()]}
-                else:
-                    logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
-                    del_replay(replay)
-                    raise Exception() # get into except-path below
-            except:
-                shutil.move(path, settings.MEDIA_ROOT)
-                replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
-                logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
-                return HttpResponseRedirect(replay.get_absolute_url())
-#            except Exception, e:
-#                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
+                    try:
+                        replay = Replay.objects.get(gameID=demofile.header["gameID"])
+                        if replay.was_succ_uploaded():
+                            logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+                            form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.title]}
+                            replays.append((False, 'Uploaded replay already exists: <a href="%s">%s</a>.'%(replay.get_absolute_url(), replay.title)))
+                        else:
+                            logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
+                            del_replay(replay)
+                            replays.append((False, "Error while uploading."))
+                        continue
+                    except:
+                        shutil.move(path, settings.MEDIA_ROOT)
+                        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
+                        replays.append((True, replay))
+                        logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+        #            except Exception, e:
+        #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
+        if len(replays) == 0:
+            logger.error("no replay created, this shouldn't happen")
+        elif len(replays) == 1:
+            if replays[0][0]:
+                return HttpResponseRedirect(replays[0][1].get_absolute_url())
+            else:
+                # fall through to get back on page with error msg
+                pass
+        else:
+            c['replays'] = replays
+            return render_to_response('multi_upload_success.html', c, context_instance=RequestContext(request))
     else:
-        form = UploadFileForm()
-    c['form'] = form
+        #form = UploadFileForm()
+        formset = UploadFormSet()
+    c['formset'] = formset
     return render_to_response('upload.html', c, context_instance=RequestContext(request))
 
 def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
@@ -144,6 +168,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     """
     replay = Replay()
     replay.uploader = user
+    replay.title = short # temp
 
     # copy match infos 
     for key in ["versionString", "gameID", "wallclockTime"]:
@@ -249,20 +274,35 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     players = {}
     teams = {}
     for k,v in demofile.game_setup['player'].items():
-        pac = Player.objects.none()
-        if v.has_key("accountid"):
-            # check if we have a Player that was missing an accountid previously
-            pac = Player.objects.filter(name=v["name"], account__accountid__lt=0)
-        else:
-            # single player - we still need a unique accountid. I make it
-            # negative, so if the same Player pops up in another replay, and has
-            # a proper accountid, it can be noticed and corrected
-            min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
-            if not min_acc_id or min_acc_id > 0: min_acc_id = 0
-            v["accountid"] = min_acc_id-1
         if v.has_key("lobbyid"):
             # game was on springie
             v["accountid"] = v["lobbyid"]
+        pac = Player.objects.none()
+
+        if v.has_key("accountid"):
+            logger.debug("v.has_key(accountid)==True -> accountid=%d", v["accountid"])
+            # replay from online game
+            # check if we have a Player that was missing an accountid previously
+            pac = Player.objects.filter(name=v["name"], account__accountid__lt=0)
+        else:
+            logger.debug("v.has_key(accountid)==False")
+            # single player - we still need a unique accountid. Either we find an
+            # existing player/account, or we create a temporary account.
+            try:
+                v["accountid"] = PlayerAccount.objects.filter(player__name=v["name"], accountid__gt=0).aggregate(Min("accountid"))['accountid__min']
+                logger.debug("v.has_key(accountid)==False -> found Player with same name -> accountid=%d", v["accountid"])
+            except:
+                logger.debug("v.has_key(accountid)==False -> did NOT find Player with same name")
+                # didn't find an existing one, so make a temp one
+                #
+                # I make the accountid negative, so if the same Player pops up
+                # in another replay, and has a proper accountid, it can easily
+                # be noticed and corrected
+                min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
+                logger.debug("min_acc_id = %d", min_acc_id)
+                if not min_acc_id or min_acc_id > 0: min_acc_id = 0
+                v["accountid"] = min_acc_id-1
+                logger.debug("v[accountid] = %d", v["accountid"])
         pa, created = PlayerAccount.objects.get_or_create(accountid=v["accountid"], defaults={'accountid': v["accountid"], 'countrycode': v["countrycode"], 'names': v["name"]})
         logger.debug("replay(%d) added PlayerAccount(%d): created=%s accountid=%d names=%s", replay.pk, pa.pk, created, pa.accountid, pa.names)
         players[k] = Player.objects.create(account=pa, name=v["name"], rank=v["rank"], spectator=bool(v["spectator"]), replay=replay)
@@ -278,11 +318,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if pac:
                 logger.info("replay(%d) found matching name-account info for previously accountless player(s):", replay.pk)
                 logger.info("replay(%d) PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
-            for player in pac:
-                old_ac = player.account
-                player.account = pa
-                player.save
-                old_ac.delete()
+                for player in pac:
+                    player.account.delete()
+                    player.account = pa
+                    player.save()
         if v.has_key("team"):
             teams[str(v["team"])] = players[k]
     logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))

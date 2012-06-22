@@ -1,0 +1,28 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}Upload{% endblock %}
+
+{% block maincontent%}
+        <div class="left">
+<!--             <div class="left_articles">
+                <h2>Uploads successful</h2>
+                {% for replay in replays %}
+                
+	            {% endfor %}
+            </div> -->
+{% for success,replay in replays %}
+            <div class="lt"></div>
+            <div class="lbox">
+            {% if success %}
+                <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
+                <div class="thumb">
+                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
+                </div>
+{% include "replay_box.html" %}
+            {% else %}
+                <p style="color: red;"><big><b>{{ replay|safe }}</b></big></p>
+            {% endif %}
+            </div>
+{% endfor %}
+        </div>    
+{% endblock %}

@@ -11,13 +11,16 @@
                 Note that a tag for the team size (1v1, 2v2, 8v8) is added automatically if not present.
                 Please do not use <a href="{% url srs.views.maps %}">map names</a> or <a href="{% url srs.views.players %}">player names</a>, as they are categorized separately.</p>
             </div>
-            
-            <div class="lt"></div>
-            <div class="lbox" style="height:260px;">
-                <form action="." method="post" enctype="multipart/form-data">{% csrf_token %}
-                    {{ form.as_p }}
-                    <input type="submit" value="Submit" />
-                </form>
-            </div>
+            <form action="." method="post" enctype="multipart/form-data">
+            {{ formset.management_form }}
+			{% for form in formset %}
+	            <div class="lt"></div>
+	            <div class="lbox" style="height:260px;">
+	                    {% csrf_token %}
+	                    {{ form.as_p }}
+	                    <input type="submit" value="Submit" />
+	            </div>
+            {% endfor %}
+            </form>
         </div>    
 {% endblock %}
