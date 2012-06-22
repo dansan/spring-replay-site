@@ -1,5 +1,18 @@
 {% extends 'srs_base.html' %}
 
+{% block uploadheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.8.21.custom.css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.21.custom.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $(".clickme").click(function () {
+      $(".blind").show("blind", {}, 1000);
+    });
+  });
+</script>
+{% endblock %}
+
 {% block pagetitle %}Upload{% endblock %}
 
 {% block maincontent%}
@@ -20,7 +33,12 @@
 	                    {{ form.as_p }}
 	                    <input type="submit" value="Submit" />
 	            </div>
+	            {% if forloop.first %}
+	            <p class="clickme" style="color: #4A8EBC; text-align: center;"><big><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me for multi-upload.&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></big><br/>&nbsp;</p>
+                <div class="blind" style="display:none;">
+                {% endif %}
             {% endfor %}
+                </div>
             </form>
         </div>    
 {% endblock %}
