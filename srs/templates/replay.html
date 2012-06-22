@@ -26,7 +26,7 @@
         <div class="left" style="width: 350px;">
             {% if upload_broken %}<p style="text-align:center; color:red; font-weight:bold;">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
             {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
-            <p class="clickme" style="text-align: center;"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner (needs JS).&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></p>
+            <p class="clickme" style="color: #4A8EBC; text-align: center;"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner (needs JS).&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></p>
 	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
