@@ -17,8 +17,7 @@
 			<div class="lbox">
                 <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
                 <div class="thumb">
-                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a><!--<br/>
-                    {{ replay.map_info.name }}-->
+                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
                 </div>
 {% include "replay_box.html" %}
             </div>
