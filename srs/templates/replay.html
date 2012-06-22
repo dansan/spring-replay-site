@@ -1,6 +1,19 @@
 {% extends 'srs_base.html' %}
 {% load comments %}
 
+{% block replayheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.8.21.custom.css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.21.custom.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    $(".clickme").click(function () {
+      $(".blind").show("blind", {}, 1000);
+    });
+  });
+</script>
+{% endblock %}
+
 {% block pagetitle %}{{ replay.title }}{% endblock %}
 
 {% block maincontent%}
@@ -13,6 +26,7 @@
         <div class="left" style="width: 350px;">
             {% if upload_broken %}<p style="text-align:center; color:red; font-weight:bold;">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
             {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
+            <p class="clickme" style="text-align: center;"><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner (needs JS).&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></p>
 	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
 	        <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
@@ -20,7 +34,7 @@
 	    </div>
 	    <div class="left" style="width: 120px; padding: 0 8px;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
-	        {% for at,team in allyteams %}<b>Team {{ forloop.counter }}</b>{% if at.winner %}<img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}<br/>
+	        {% for at,team in allyteams %}<b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
 	        <ul>
                 {% for t in team %}<li style="color:#{{ t.rgbcolor }}"><a href="{{ t.teamleader.get_absolute_url }}">{{ t.teamleader.name }}</a></li>{% endfor %}
             </ul>
