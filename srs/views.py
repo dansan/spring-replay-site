@@ -73,6 +73,29 @@ def replay(request, gameID):
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
+def mapmodlinks(request, gameID):
+    c = all_page_infos(request)
+    try:
+        replay = Replay.objects.get(gameID=gameID)
+    except:
+        raise Http404
+
+    gamename = replay.gametype
+    mapname  = replay.map_info.name
+
+    from xmlrpclib import ServerProxy
+    proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
+
+    searchstring = {"springname" : gamename.replace(" ", "*"), "category" : "game",
+                    "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
+    c['game_info'] = proxy.springfiles.search(searchstring)
+
+    searchstring = {"springname" : mapname.replace(" ", "*"), "category" : "map",
+                    "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
+    c['map_info'] = proxy.springfiles.search(searchstring)
+
+    return render_to_response('mapmodlinks.html', c, context_instance=RequestContext(request))
+
 @login_required
 def edit_replay(request, gameID):
     from forms import EditReplayForm
@@ -94,6 +117,10 @@ def edit_replay(request, gameID):
             long_text = request.POST['long_text']
             tags = request.POST['tags']
 
+            for tag in replay.tags.all():
+                if tag.replays() == 1 and tag.pk > 10:
+                    # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
+                    tag.delete()
             replay.tags.clear()
             autotag = set_autotag(replay)
             save_tags(replay, tags)

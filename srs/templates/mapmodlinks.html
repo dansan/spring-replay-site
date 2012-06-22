@@ -1,0 +1,23 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}Download map and game{% endblock %}
+
+{% block maincontent%}
+<h2>Download map and game</h2>
+<br/>
+{% for game in game_info %}
+<p><b>{{ game.springname }}</b></p>
+{% for mirror in game.mirrors %}
+<p><a href="{{ mirror }}">{{ mirror }}</a></p>
+{% endfor %}
+{% endfor %}
+<br/><br/>
+
+{% for map in map_info %}
+<p><b>{{ map.springname }}</b></p>
+{% for mirror in map.mirrors %}
+<p><a href="{{ mirror }}">{{ mirror }}</a></p>
+{% endfor %}
+{% endfor %}
+
+{% endblock %}

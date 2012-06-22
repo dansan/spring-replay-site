@@ -20,16 +20,16 @@
                         <td>Tags</td><td>{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}</td>
                     </tr>
                     <tr>
-                        <td>Upload<br/>&nbsp;</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></td>
+                        <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></td>
                     </tr>
                     <tr>
                         <td>Downloads</td><td>{{ replay.replayfile.download_count }}</td>
                     </tr>
                     <tr>
-                        <td>Comments</td><td>{{ replay.comments }}</td>
+                        <td>Comments<br/>&nbsp;</td><td>{{ replay.comments }}</td>
                     </tr>
                     <tr>
-                        <td>&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="{% url srs.views.download replay.gameID %}"><img alt="download" src="{{ STATIC_URL }}img/download.png"/></a></td>
+                        <td>Download</td><td><a href="{% url srs.views.download replay.gameID %}">replay</a> | <a href="/mapmodlinks/{{ replay.gameID }}/">map and game</a></td>
                     </tr>
                 </table>
 {% else %}

@@ -159,7 +159,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.save()
     uploadtmp = UploadTmp.objects.create(replay=replay)
 
-    logger.debug("replay pk=%d gameID=%s unixTime=%s created", replay.pk, replay.gameID, replay.unixTime)
+    logger.debug("replay(%d) gameID=%s unixTime=%s created", replay.pk, replay.gameID, replay.unixTime)
 
     # save AllyTeams
     allyteams = {}
@@ -172,7 +172,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         allyteam.winner = int(num) in demofile.winningAllyTeams
         allyteam.save()
 
-    logger.debug("replay pk=%d allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
+    logger.debug("replay(%d) allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
 
     # winner known?
     replay.notcomplete = demofile.header['winningAllyTeamsSize'] == 0
@@ -180,7 +180,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # get / create map infos
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
-        logger.debug("replay pk=%d using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
+        logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
     except:
         # 1st time upload for this map: fetch info and full map, create thumb
         # for index page
@@ -195,28 +195,40 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         full_img = smap.fetch_img()
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         smap.make_home_thumb()
-        logger.debug("replay pk=%d created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
+        logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
+
+    #
+    # startpostype = 0: Fixed            |
+    # startpostype = 1: Random           |
+    # startpostype = 2: ChooseInGame     | allyteam { .. startrectbottom, ... }
+    # startpostype = 3: ChooseBeforeGame | team { startposx, startposz } ...
+    #
+    # relayhoststartpostype = 0 --> startpostype = 3
+    # relayhoststartpostype = 1 --> startpostype = 3
+    # relayhoststartpostype = 2 --> startpostype = 2
+    # relayhoststartpostype = 3 --> startpostype = 3
+    #
 
     # get / create map thumbs
-    logger.debug("replay pk=%d startpostype=%d", replay.pk, demofile.game_setup["host"]["startpostype"])
-    if demofile.game_setup["host"]["startpostype"] == 1:
-        # fixed start positions before game
+    startpos = demofile.game_setup["host"]["startpostype"]
+    logger.debug("replay(%d) startpostype=%d", replay.pk, startpos)
+    if startpos == 0 or startpos == 1 or startpos == 3:
+        # fixed start positions
         try:
             replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
-            logger.debug("replay pk=%d using existing map_img.pk=%d", replay.pk, replay.map_img.pk)
+            logger.debug("replay(%d) using existing map_img.pk=%d", replay.pk, replay.map_img.pk)
         except:
             mapfile = spring_maps.create_map_with_positions(replay.map_info)
             replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
-            logger.debug("replay pk=%d created new map_img.pk=%d", replay.pk, replay.map_img.pk)
-    elif demofile.game_setup["host"]["startpostype"] == 2:
+            logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
+    elif startpos == 2:
         # start boxes
         mapfile = spring_maps.create_map_with_boxes(replay)
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
-        logger.debug("replay pk=%d created new map_img.pk=%d", replay.pk, replay.map_img.pk)
+        logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     else:
-        #TODO:
-        logger.debug("replay pk=%d startpostype not yet supported", replay.pk)
-        raise Exception("startpostype not yet supported, pls report this to dansan at the forums and include replay file")
+        logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
+        raise Exception("startpostype '%d' not supported"%startpos)
 
     replay.save()
 
@@ -231,7 +243,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for k,v in demofile.game_setup['modoptions'].items():
         ModOption.objects.create(name=k, value=v, replay=replay)
 
-    logger.debug("replay pk=%d added tags, mapoptions and modoptions", replay.pk)
+    logger.debug("replay(%d) added tags (%s), mapoptions and modoptions", replay.pk, replay.tags.all().values_list("name"))
 
     # save players and their accounts
     players = {}
@@ -252,9 +264,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             # game was on springie
             v["accountid"] = v["lobbyid"]
         pa, created = PlayerAccount.objects.get_or_create(accountid=v["accountid"], defaults={'accountid': v["accountid"], 'countrycode': v["countrycode"], 'names': v["name"]})
-        logger.debug("replay pk=%d PlayerAccount: created=%s pa.pk=%d pa.accountid=%d pa.names=%s", replay.pk, created, pa.pk, pa.accountid, pa.names)
+        logger.debug("replay(%d) added PlayerAccount(%d): created=%s accountid=%d names=%s", replay.pk, pa.pk, created, pa.accountid, pa.names)
         players[k] = Player.objects.create(account=pa, name=v["name"], rank=v["rank"], spectator=bool(v["spectator"]), replay=replay)
-        logger.debug("replay pk=%d created Player: account=%d name=%s spectator=%s", replay.pk, pa.accountid, players[k].name, players[k].spectator)
+        logger.debug("replay(%d) added Player(%d): account=%d name=%s spectator=%s", replay.pk, players[k].pk, pa.accountid, players[k].name, players[k].spectator)
         if not created:
             # add players name to accounts aliases
             if v["name"] not in pa.names.split(";"):
@@ -264,8 +276,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
             if pac:
-                logger.info("replay pk=%d found matching name-account info for previously accountless player(s):", replay.pk)
-                logger.info("replay pk=%d PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
+                logger.info("replay(%d) found matching name-account info for previously accountless player(s):", replay.pk)
+                logger.info("replay(%d) PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
             for player in pac:
                 old_ac = player.account
                 player.account = pa
@@ -273,7 +285,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 old_ac.delete()
         if v.has_key("team"):
             teams[str(v["team"])] = players[k]
-    logger.debug("replay pk=%d saved Players and PlayerAccounts", replay.pk,)
+    logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
 
     # save teams
     for num,val in demofile.game_setup['team'].items():
@@ -290,13 +302,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         team.replay = replay
         team.save()
 
-        teams[num].team = team # Player.team
-        teams[num].save()
-    logger.debug("replay pk=%d saved Teams", replay.pk)
+        try:
+            teams[num].team = team # Player.team
+            teams[num].save()
+        except KeyError:
+            # inconsistency in single player: Player has no Team, but a Team has a Player
+            pass
+    logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
 
     # work around Zero-Ks usage of useless AllyTeams
     ats = Allyteam.objects.filter(replay=replay, team__isnull=True)
-    logger.debug("replay pk=%d deleting useless AllyTeams:%s", replay.pk, ats)
+    logger.debug("replay(%d) deleting useless AllyTeams:%s", replay.pk, ats)
     ats.delete()
 
     # auto add tag 1v1 2v2 etc.

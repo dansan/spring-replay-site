@@ -203,7 +203,9 @@ def update_stats():
     maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     tp = []
     for pa in PlayerAccount.objects.all():
-        tp.append((Player.objects.filter(account=pa, spectator=False).count(), Player.objects.filter(account=pa)[0]))
+        p = Player.objects.filter(account=pa)
+        if p.exists():   # p can be empty, because when a replay is deleted the Players are deleted, but the PlayerAccounts not   
+            tp.append((Player.objects.filter(account=pa, spectator=False).count(), p[0]))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
     comments = Comment.objects.reverse()[:5]
@@ -238,16 +240,16 @@ Comment.comment_short = lambda self: self.comment[:50]+"..."
 # automatically log each DB object delete
 @receiver(post_delete)
 def obj_del_callback(sender, instance, using, **kwargs):
-    logger.debug("Deleted '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+    logger.debug("%s.delete(%d) : '%s'", instance.__class__.__name__, instance.pk, instance)
 
 # automatically refresh statistics when a replay is created or modified
 @receiver(post_save, sender=Replay)
 def replay_save_callback(sender, instance, using, **kwargs):
-    logger.debug("Replay was created or modified '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+    logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
     update_stats()
 
 # automatically refresh statistics when a replay is deleted
 @receiver(post_delete, sender=Replay)
 def replay_del_callback(sender, instance, using, **kwargs):
-    logger.debug("Replay was deleted '%s': %d: '%s'", instance.__class__.__name__, instance.pk, instance)
+    logger.debug("Replay.delete(%d) : '%s'", instance.pk, instance)
     update_stats()
