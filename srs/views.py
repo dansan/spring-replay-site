@@ -6,33 +6,19 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
-from django.core.context_processors import csrf
 from django.template import RequestContext
-from django.db.models import Count
 from django.contrib.auth.decorators import login_required
-import django.contrib.auth
-from django.contrib.auth.forms import AuthenticationForm
-from django.db.models import Q
 from django.http import Http404
 from django.contrib.comments import Comment
-from django_tables2 import RequestConfig
 
-from tempfile import mkstemp
-import os
-import sets
-import shutil
-import functools
-import locale
 import logging
-import operator
 from types import StringTypes
 import datetime
 
 from models import *
 from common import all_page_infos
-from forms import EditReplayForm, AdvSearchForm
 from tables import *
 from upload import save_tags, set_autotag, save_desc
 
@@ -50,6 +36,8 @@ def replays(request):
     return replay_table(request, replays, "all replays")
 
 def replay_table(request, replays, title, template="lists.html", form=None):
+    from django_tables2 import RequestConfig
+
     c = all_page_infos(request)
     table = ReplayTable(replays)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
@@ -57,6 +45,15 @@ def replay_table(request, replays, title, template="lists.html", form=None):
     c['pagetitle'] = title
     if form: c['form'] = form
     return render_to_response(template, c, context_instance=RequestContext(request))
+
+def all_of_a_kind_table(request, table, title):
+    from django_tables2 import RequestConfig
+
+    c = all_page_infos(request)
+    RequestConfig(request, paginate={"per_page": 50}).configure(table)
+    c['table'] = table
+    c['pagetitle'] = title
+    return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
     c = all_page_infos(request)
@@ -78,6 +75,8 @@ def replay(request, gameID):
 
 @login_required
 def edit_replay(request, gameID):
+    from forms import EditReplayForm
+
     c = all_page_infos(request)
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
@@ -120,31 +119,22 @@ def download(request, gameID):
     return HttpResponseRedirect(settings.STATIC_URL+"replays/"+rf.filename)
 
 def tags(request):
-    c = all_page_infos(request)
     table = TagTable(Tag.objects.all())
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "tags"
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "tags")
 
 def tag(request, reqtag):
     replays = Replay.objects.filter(tags__name=reqtag)
     return replay_table(request, replays, "replays with tag '%s'"%reqtag)
 
 def maps(request):
-    c = all_page_infos(request)
     table = MapTable(Map.objects.all())
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "maps"
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "maps")
 
 def rmap(request, mapname):
     replays = Replay.objects.filter(map_info__name=mapname)
     return replay_table(request, replays, "replays on map '%s'"%mapname)
 
 def players(request):
-    c = all_page_infos(request)
     players = []
     for pa in PlayerAccount.objects.all():
         for name in pa.names.split(";"):
@@ -153,10 +143,7 @@ def players(request):
                             'spectator_count': pa.spectator_count(),
                             'accid': pa.accountid})
     table = PlayerTable(players)
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "players"
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "players")
 
 def player(request, accountid):
     rep = ""
@@ -177,22 +164,20 @@ def player(request, accountid):
     return replay_table(request, replays, "replays with player %s"%rep)
 
 def games(request):
-    c = all_page_infos(request)
     games = []
     for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
         games.append({'name': gt,
                       'replays': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "games"
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "games")
 
 def game(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
     return replay_table(request, replays, "replays of game '%s'"%gametype)
 
 def search(request):
+    from forms import AdvSearchForm
+
     form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader']
     query = {}
 
@@ -236,6 +221,8 @@ def search_replays(query):
     """
     I love django Q!!!
     """
+    from django.db.models import Q
+
     if query:
         q = Q()
 
@@ -287,12 +274,8 @@ def user_settings(request):
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
-    c = all_page_infos(request)
     table = UserTable(User.objects.all())
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "users"
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "users")
 
 def see_user(request, username):
     try:
@@ -311,15 +294,13 @@ def upload_date(request, shortdate):
     return replay_table(request, replays, "replays uploaded on '%s'"%shortdate)
 
 def all_comments(request):
-    c = all_page_infos(request)
     table = CommentTable(Comment.objects.all())
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = "comments"
-    c['long_table'] = True
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    return all_of_a_kind_table(request, table, "comments")
 
 def login(request):
+    import django.contrib.auth
+    from django.contrib.auth.forms import AuthenticationForm
+
     c = all_page_infos(request)
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -342,6 +323,8 @@ def login(request):
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
 def logout(request):
+    import django.contrib.auth
+
     username = str(request.user)
     django.contrib.auth.logout(request)
     logger.info("Logged out user '%s'", username)
