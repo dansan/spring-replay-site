@@ -88,7 +88,12 @@ def create_map_with_boxes(replay):
     create a map picture with start boxes
     """
     img  = Image.open(settings.MAPS_PATH+replay.map_info.name+".jpg")
-    colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # works only for up to 6 AllyTeams...
+    colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # 6 defined colors
+    if len(Allyteam.objects.filter(replay=replay)) > 6:
+        # colors for up to 32 AllyTeams
+        import random
+        for _ in range(0, 26):
+            colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     c_count  = 0
     team_layer = Image.new('RGB', img.size, (256,256,256))
     x,y = img.size
