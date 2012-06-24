@@ -1,5 +1,9 @@
 # Author: Steven J. Bethard <steven.bethard@gmail.com>.
 
+# file source: http://pypi.python.org/pypi/argparse
+# this file is licensed under the "Python Software Foundation License"
+# see http://docs.python.org/license.html
+
 """Command-line parsing library
 
 This module is an optparse-inspired command-line parsing library that:

@@ -6,7 +6,7 @@ website using an external Python script.
 
 Software requirements:
 ----------------------
-* SPADS version >= 
+* SPADS version >= 0.10
 * Spring engine version >= 89.0
 * Python >= 2.6
 * optional: PycURL (for bandwidth throttling)
@@ -26,12 +26,17 @@ PycURL can be obtained from: http://pycurl.sourceforge.net/
 
 short version:
 --------------
-* log in once with a Spring account: http://replays.admin-box.com/login/
-* configure in spads.conf - use quotation marks on all arguments!
- endGameCommand:replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "Dansan"
- endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword"
-* replace "Dansan" in endGameCommand with the Spring account you logged in before
-* if you wish to use bandwidth throttling read the section "Bandwidth throttling"
+* log in once with a Spring account which will be the "owner" of the uploaded
+  replays: http://replays.admin-box.com/login/
+* update endGameCommand and endGameCommandEnv settings in spads.conf as follows
+  (replace <owner> by the actual Spring account used in previous step):
+    endGameCommand:replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
+    endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword"
+* WARNING: this configuration will send your autohost password to the replay
+  site for authentication. If you don't want this to happen, you can create a
+  new Spring account just to upload the replays (replace %ahName and %ahPassword
+  by this account name and password in previous step)
+* if you wish to use bandwidth throttling, read the section "Bandwidth throttling"
 * restart SPADS
 
 
