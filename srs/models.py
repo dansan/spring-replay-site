@@ -253,3 +253,15 @@ def replay_save_callback(sender, instance, using, **kwargs):
 def replay_del_callback(sender, instance, using, **kwargs):
     logger.debug("Replay.delete(%d) : '%s'", instance.pk, instance)
     update_stats()
+
+# automatically refresh statistics when a replay is created or modified
+@receiver(post_save, sender=Comment)
+def comment_save_callback(sender, instance, using, **kwargs):
+    logger.debug("Comment.save(%d) : '%s'", instance.pk, instance)
+    update_stats()
+
+# automatically refresh statistics when a replay is deleted
+@receiver(post_delete, sender=Comment)
+def comment_del_callback(sender, instance, using, **kwargs):
+    logger.debug("Comment.delete(%d) : '%s'", instance.pk, instance)
+    update_stats()
