@@ -32,7 +32,7 @@ short version:
 * update endGameCommand and endGameCommandEnv settings in spads.conf as follows
   (replace <owner> by the actual Spring account used in previous step):
     endGameCommand:python replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
-    endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword"
+    endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
   new Spring account just to upload the replays (replace %ahName and %ahPassword
@@ -47,7 +47,7 @@ Configure endGameCommand and endGameCommandEnv in spads.conf. Use quotation
 marks on all arguments! 
 
 endGameCommand:python replay_upload.py "title" "comment" "tags" "%demoFile" "owner"
-endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword"
+endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
 add a tag "tags" and make it owned by the Spring user "owner".
@@ -75,14 +75,14 @@ expected, make them permanent in the configuration file.
 Please run "python replay_upload.py -h" now, to see a help screen.
 
 Set authentication parameters:
-# export XMLRPC_USER=Dansan
-# export XMLRPC_PASSWORD=sEcReT
+# export XMLRPC_USER="Dansan"
+# export XMLRPC_PASSWORD="sEcReT"
 
 Optionally use the testing site for upload (owner must login there first!):
 # export XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/
 
 Run the upload:
-# python replay_upload.py -v "awesome game" "checkout that dude in SE" tag1,tag2,tag3 /tmp/20130229_123456_RustyDelta_v2_88.sdf Danchan
+# python replay_upload.py -v "awesome game" "checkout that dude in SE" "tag1,tag2,tag3" "/tmp/20130229_123456_RustyDelta_v2_88.sdf" "Danchan"
 
 The game will be uploaded to the testing site: http://replays-test.admin-box.com/
 or an error message will be shown. The "-v" makes it display information, don't
@@ -93,12 +93,12 @@ http://planetspads.free.fr/spads/doc/spadsDoc_All.html#set:endGameCommand
 
 Example:
  endGameCommand:python replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
- endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword"
+ endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 
 Again, if you wish to test your settings before uploading to the replays site,
 just use testing site by appending ";XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/"
 to endGameCommandEnv (mind the ";"):
- endGameCommandEnv:"XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword;XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/"
+ endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword";XMLRPC_URL="http://replays-test.admin-box.com/xmlrpc/"
 
 Restart SPADS.
 
@@ -107,6 +107,6 @@ Bandwidth throttling
 --------------------
 * install PycURL (see section "Software requirements" for download/package)
 * add "-t num" to endGameCommand between "replay_upload.py" and "title":
-   endGameCommand:python replay_upload.py -t 204800 title comment tags "%demoFile" owner
+   endGameCommand:python replay_upload.py -t 204800 title comment tags "%demoFile" "owner"
 * the number is bytes per second. To upload with 200 KB/s use "204800".
 * restart SPADS
