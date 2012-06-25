@@ -56,7 +56,7 @@ def main(argv=None):
             sp = "at %.2f kb/s"%(args.throttle/1024.0)
         else:
             sp = "without upload throttling"
-        print "Uploading file '%s' for owner '%s' with subject '%s', comment '%s' and tags '%s' %s."%(args.path.name, args.owner, args.title, args.comment, args.tags, sp)
+        print "Uploading file '%s'\n  authenticating as '%s'\n  to '%s'\n  for owner '%s'\n  with subject '%s'\n  comment '%s'\n  and tags '%s'\n  %s."%(args.path.name, XMLRPC_USER, XMLRPC_URL, args.owner, args.title, args.comment, args.tags, sp)
 
     demofile = xmlrpclib.Binary(args.path.read())
 

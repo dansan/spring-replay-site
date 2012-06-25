@@ -32,7 +32,7 @@ short version:
 * update endGameCommand and endGameCommandEnv settings in spads.conf as follows
   (replace <owner> by the actual Spring account used in previous step):
     endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
-    endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
+    endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
   new Spring account just to upload the replays (replace %ahName and %ahPassword
@@ -43,11 +43,10 @@ short version:
 
 Usage (long version):
 ---------------------
-Configure endGameCommand and endGameCommandEnv in spads.conf. Use quotation
-marks on all arguments! 
+Configure endGameCommand and endGameCommandEnv in spads.conf.
 
 endGameCommand:python replay_upload.py -v "title" "comment" "tags" "%demoFile" "owner"
-endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
+endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
 add a tag "tags" and make it owned by the Spring user "owner".
@@ -94,12 +93,12 @@ http://planetspads.free.fr/spads/doc/spadsDoc_All.html#set:endGameCommand
 
 Example:
  endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
- endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
+ endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
 
 Again, if you wish to test your settings before uploading to the replays site,
 just use testing site by appending ";XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/"
 to endGameCommandEnv (mind the ";"):
- endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword";XMLRPC_URL="http://replays-test.admin-box.com/xmlrpc/"
+ endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword;XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/
 
 Restart SPADS.
 
