@@ -33,7 +33,11 @@ def main(argv=None):
     parser.add_argument("tags", help="tags (comma separated)")
     parser.add_argument("path", type=argparse.FileType('rb'), help="path to .sdf")
     parser.add_argument("owner", help="lobby account that will be saved as the uploader")
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except IOError, ioe:
+        print "WARNING: Replay upload failed (did the game not start?). Error: could not open spring demo file: %s."%ioe
+        return 1
 
 
     if not os.environ.has_key("XMLRPC_USER") or not os.environ.has_key("XMLRPC_PASSWORD"):

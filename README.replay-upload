@@ -31,7 +31,7 @@ short version:
   replays: http://replays.admin-box.com/login/
 * update endGameCommand and endGameCommandEnv settings in spads.conf as follows
   (replace <owner> by the actual Spring account used in previous step):
-    endGameCommand:python replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
+    endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
     endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
@@ -46,7 +46,7 @@ Usage (long version):
 Configure endGameCommand and endGameCommandEnv in spads.conf. Use quotation
 marks on all arguments! 
 
-endGameCommand:python replay_upload.py "title" "comment" "tags" "%demoFile" "owner"
+endGameCommand:python replay_upload.py -v "title" "comment" "tags" "%demoFile" "owner"
 endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
@@ -85,14 +85,15 @@ Run the upload:
 # python replay_upload.py -v "awesome game" "checkout that dude in SE" "tag1,tag2,tag3" "/tmp/20130229_123456_RustyDelta_v2_88.sdf" "Danchan"
 
 The game will be uploaded to the testing site: http://replays-test.admin-box.com/
-or an error message will be shown. The "-v" makes it display information, don't
-use it the configuration file!
+or an error message will be shown. The "-v" makes it display information and
+errors. It doesn't matter if you use "-v". In any case it will not be logged by
+SPADS, but it will be shown on stdout.
 
 In the configuration file you can use variables to describe the game better:
 http://planetspads.free.fr/spads/doc/spadsDoc_All.html#set:endGameCommand
 
 Example:
- endGameCommand:python replay_upload.py "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
+ endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
  endGameCommandEnv:XMLRPC_USER="%ahName";XMLRPC_PASSWORD="%ahPassword"
 
 Again, if you wish to test your settings before uploading to the replays site,
@@ -106,7 +107,7 @@ Restart SPADS.
 Bandwidth throttling
 --------------------
 * install PycURL (see section "Software requirements" for download/package)
-* add "-t num" to endGameCommand between "replay_upload.py" and "title":
+* add "-t num" to endGameCommand between "replay_upload.py -v" and "title":
    endGameCommand:python replay_upload.py -t 204800 title comment tags "%demoFile" "owner"
 * the number is bytes per second. To upload with 200 KB/s use "204800".
 * restart SPADS
