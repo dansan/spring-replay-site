@@ -105,7 +105,11 @@ Restart SPADS.
 
 Bandwidth throttling
 --------------------
+The cURL library is used for bandwidth throttling the transfer. You must install
+its Python binding and a Python-module to use it as a replay-transpor:
 * install PycURL (see section "Software requirements" for download/package)
+* download pyCURLTransport.py, and put it into the same directory as replay_upload.py:
+  # wget https://raw.github.com/dansan/spring-replay-site/master/srs/contrib/pyCURLTransport.py
 * add "-t num" to endGameCommand between "replay_upload.py -v" and "title":
    endGameCommand:python replay_upload.py -t 204800 title comment tags "%demoFile" "owner"
 * the number is bytes per second. To upload with 200 KB/s use "204800".
