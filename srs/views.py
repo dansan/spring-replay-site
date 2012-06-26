@@ -69,6 +69,8 @@ def replay(request, gameID):
             c["allyteams"].append((at, teams))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
     c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
+    c["mapoptions"] = MapOption.objects.filter(replay=c["replay"])
+    c["modoptions"] = ModOption.objects.filter(replay=c["replay"])
     c["replay_details"] = True
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
