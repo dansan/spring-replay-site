@@ -9,6 +9,7 @@
 import logging
 import os
 import shutil
+import stat
 from tempfile import mkstemp
 import datetime
 
@@ -73,6 +74,7 @@ def upload(request):
                         continue
                     except:
                         shutil.move(path, settings.MEDIA_ROOT)
+                        os.chmod(settings.MEDIA_ROOT+os.path.basename(path), stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
                         replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
