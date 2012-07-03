@@ -5,7 +5,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.21.custom.min.js"></script>
 
-<script>
+<script type="text/javascript">
   $(document).ready(function() {
     $(".clickme_winner").click(function () {
       $(".blind_winner").show("blind", {}, 1000);
@@ -29,7 +29,7 @@
 {% block maincontent%}
         <div class="left">
             <div class="lt"></div>
-            <div class=lbox style="height:200px;">
+            <div class="lbox" style="height:200px;">
                 <p><big><b>{{ replay.title }}</b></big></p>
 {% include "replay_box.html" %}
             </div>
