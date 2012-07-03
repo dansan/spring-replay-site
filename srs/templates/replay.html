@@ -81,15 +81,19 @@
 	    </div>
 	    <div class="left" style="width: 120px; padding: 0 8px;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
-	        {% for at,team in allyteams %}<b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
+	        {% for at,players in allyteams %}<b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
 	        <ul>
-                {% for t in team %}<li style="color:#{{ t.rgbcolor }}"><a href="{{ t.teamleader.get_absolute_url }}">{{ t.teamleader.name }}</a></li>{% endfor %}
+                {% for p in players %}<li style="color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</li>{% endfor %}
             </ul>
 	        <p>&nbsp;</p>{% endfor %}
 	        <b>Spectators</b>
+	        {% if specs|length > 0 %}
 	        <ul>
 	            {% for s in specs %}<li>{{ s.name }}</li>{% endfor %}
 	        </ul>
+	        {% else %}
+	        <p>None.</p>
+	        {% endif %}
 	   </div>
 	   <div class="left">
        <div class="footer"></div>

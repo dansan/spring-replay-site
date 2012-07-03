@@ -64,9 +64,10 @@ def replay(request, gameID):
 
     c["allyteams"] = []
     for at in Allyteam.objects.filter(replay=c["replay"]):
-        teams = Team.objects.prefetch_related("teamleader").filter(allyteam=at, replay=c["replay"])
+        teams = Team.objects.filter(allyteam=at, replay=c["replay"])
+        players = Player.objects.filter(team__in=teams)
         if teams:
-            c["allyteams"].append((at, teams))
+            c["allyteams"].append((at, players))
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
     c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=c["replay"])

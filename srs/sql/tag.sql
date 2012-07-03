@@ -8,3 +8,5 @@ INSERT INTO srs_tag (name) VALUES ('7v7');
 INSERT INTO srs_tag (name) VALUES ('8v8');
 INSERT INTO srs_tag (name) VALUES ('FFA');
 INSERT INTO srs_tag (name) VALUES ('Tourney');
+INSERT INTO srs_tag (name) VALUES ('Bot');
+INSERT INTO srs_tag (name) VALUES ('Single Player');

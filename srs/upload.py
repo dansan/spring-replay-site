@@ -186,7 +186,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.save()
     uploadtmp = UploadTmp.objects.create(replay=replay)
 
-    logger.debug("replay(%d) gameID=%s unixTime=%s created", replay.pk, replay.gameID, replay.unixTime)
+    logger.debug("replay(%d) gameID='%s' unixTime='%s' created", replay.pk, replay.gameID, replay.unixTime)
 
     # save AllyTeams
     allyteams = {}
@@ -274,62 +274,41 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     # save players and their accounts
     players = {}
-    teams = {}
-    for k,v in demofile.game_setup['player'].items():
-        if v.has_key("lobbyid"):
-            # game was on springie
-            v["accountid"] = v["lobbyid"]
-        pac = Player.objects.none()
-
-        if v.has_key("accountid"):
-            logger.debug("v.has_key(accountid)==True -> accountid=%d", v["accountid"])
-            # replay from online game
-            # check if we have a Player that was missing an accountid previously
-            pac = Player.objects.filter(name=v["name"], account__accountid__lt=0)
-        else:
-            logger.debug("v.has_key(accountid)==False")
-            # single player - we still need a unique accountid. Either we find an
-            # existing player/account, or we create a temporary account.
-            try:
-                v["accountid"] = PlayerAccount.objects.filter(player__name=v["name"], accountid__gt=0).aggregate(Min("accountid"))['accountid__min']
-                logger.debug("v.has_key(accountid)==False -> found Player with same name -> accountid=%d", v["accountid"])
-            except:
-                logger.debug("v.has_key(accountid)==False -> did NOT find Player with same name")
-                # didn't find an existing one, so make a temp one
-                #
-                # I make the accountid negative, so if the same Player pops up
-                # in another replay, and has a proper accountid, it can easily
-                # be noticed and corrected
-                min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
-                logger.debug("min_acc_id = %d", min_acc_id)
-                if not min_acc_id or min_acc_id > 0: min_acc_id = 0
-                v["accountid"] = min_acc_id-1
-                logger.debug("v[accountid] = %d", v["accountid"])
-        pa, created = PlayerAccount.objects.get_or_create(accountid=v["accountid"], defaults={'accountid': v["accountid"], 'countrycode': v["countrycode"], 'names': v["name"]})
-        logger.debug("replay(%d) added PlayerAccount(%d): created=%s accountid=%d names=%s", replay.pk, pa.pk, created, pa.accountid, pa.names)
-        players[k] = Player.objects.create(account=pa, name=v["name"], rank=v["rank"], spectator=bool(v["spectator"]), replay=replay)
-        logger.debug("replay(%d) added Player(%d): account=%d name=%s spectator=%s", replay.pk, players[k].pk, pa.accountid, players[k].name, players[k].spectator)
+    teams = []
+    for pnum,player in demofile.game_setup['player'].items():
+        set_accountid(player)
+        pa, created = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'names': player["name"]})
+        players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], spectator=bool(player["spectator"]), replay=replay)
         if not created:
             # add players name to accounts aliases
-            if v["name"] not in pa.names.split(";"):
-                pa.names += ";"+v["name"]
+            if player["name"] not in pa.names.split(";"):
+                pa.names += ";"+player["name"]
                 pa.save()
         if pa.accountid > 0:
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
-            if pac:
+            pac = Player.objects.filter(name=player["name"], account__accountid__lt=0)
+            if pac.exists():
                 logger.info("replay(%d) found matching name-account info for previously accountless player(s):", replay.pk)
                 logger.info("replay(%d) PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
-                for player in pac:
-                    player.account.delete()
-                    player.account = pa
-                    player.save()
-        if v.has_key("team"):
-            teams[str(v["team"])] = players[k]
+                for pplayer in pac:
+                    pplayer.account.delete()
+                    pplayer.account = pa
+                    pplayer.save()
+
+        if player.has_key("team"):
+            teams.append((players[pnum], str(player["team"]))) # [(Player, "2"), ...]
+        else:
+            # this must be a spectator
+            if not player["spectator"] == 1:
+                logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
+
+        logger.debug("replay(%d) teams=%s", replay.pk, teams)
+
     logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
 
     # save teams
-    for num,val in demofile.game_setup['team'].items():
+    for tnum,val in demofile.game_setup['team'].items():
         team = Team()
         for k,v in val.items():
             if k == "allyteam":
@@ -343,23 +322,38 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         team.replay = replay
         team.save()
 
-        try:
-            teams[num].team = team # Player.team
-            teams[num].save()
-        except KeyError:
-            # inconsistency in single player: Player has no Team, but a Team has a Player
-            pass
+        # find Players for this Team
+        teamplayers = [t[0] for t in teams if t[1] == tnum]
+        if teamplayers:
+            logger.debug("replay(%d) team[%s] (Team(%d)) has teamplayers=%s", replay.pk, tnum, team.pk, teamplayers)
+            for player in teamplayers:
+                player.team = team
+                player.save()
+        else:
+            # team without player: this is a bot - create a Player for it
+            logger.debug("replay(%d) team[%s] (Team(%d)) has no teamplayers, must be a bot", replay.pk, tnum, team.pk)
+            bot_pa = PlayerAccount.objects.get(accountid=0)
+            Player.objects.create(account=bot_pa, name="Bot (of "+team.teamleader.name+")", rank=1, spectator=False, team=team, replay=replay)
+
+            # add a "Bot" tag
+            bottag, _ = Tag.objects.get_or_create(name = "Bot", defaults={'name': "Bot"})
+            replay.tags.add(bottag)
+
+            # detect single player and add tag
+            if demofile.game_setup["host"].has_key("hostip") and demofile.game_setup["host"]["hostip"] == "" and demofile.game_setup["host"]["ishost"] == 1:
+                sptag, _ = Tag.objects.get_or_create(name = "Single Player", defaults={'name': "Single Player"})
+                replay.tags.add(sptag)
+
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
 
     # work around Zero-Ks usage of useless AllyTeams
     ats = Allyteam.objects.filter(replay=replay, team__isnull=True)
-    logger.debug("replay(%d) deleting useless AllyTeams:%s", replay.pk, ats)
-    ats.delete()
+    if ats.exists():
+        logger.debug("replay(%d) deleting useless AllyTeams:%s", replay.pk, ats)
+        ats.delete()
 
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
-
-    # TODO: SP and bot detection
 
     # save descriptions
     save_desc(replay, short, long_text, autotag)
@@ -368,6 +362,32 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     uploadtmp.delete()
 
     return replay
+
+
+def set_accountid(player):
+    if player.has_key("lobbyid"):
+        # game was on springie
+        player["accountid"] = player["lobbyid"]
+
+    if not player.has_key("accountid"):
+        logger.debug("v.has_key(accountid)==False")
+        # single player - we still need a unique accountid. Either we find an
+        # existing player/account, or we create a temporary account.
+        player["accountid"] = PlayerAccount.objects.filter(player__name=player["name"], accountid__gt=0).aggregate(Min("accountid"))['accountid__min']
+        if player["accountid"]:
+            logger.debug("v.has_key(accountid)==False -> found Player with same name -> accountid=%d", player["accountid"])
+        else:
+            logger.debug("v.has_key(accountid)==False -> did NOT find Player with same name")
+            # didn't find an existing one, so make a temp one
+            #
+            # I make the accountid negative, so if the same Player pops up
+            # in another replay, and has a proper accountid, it can easily
+            # be noticed and corrected
+            min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
+            logger.debug("min_acc_id = %d", min_acc_id)
+            if not min_acc_id or min_acc_id > 0: min_acc_id = 0
+            player["accountid"] = min_acc_id-1
+            logger.debug("v[accountid] = %d", player["accountid"])
 
 def save_tags(replay, tags):
     if tags:
