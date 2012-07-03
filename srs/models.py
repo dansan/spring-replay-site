@@ -252,7 +252,6 @@ def replay_save_callback(sender, instance, using, **kwargs):
 # automatically refresh statistics when a replay is deleted
 @receiver(post_delete, sender=Replay)
 def replay_del_callback(sender, instance, using, **kwargs):
-    logger.debug("Replay.delete(%d) : '%s'", instance.pk, instance)
     update_stats()
 
 # automatically refresh statistics when a replay is created or modified
@@ -264,5 +263,14 @@ def comment_save_callback(sender, instance, using, **kwargs):
 # automatically refresh statistics when a replay is deleted
 @receiver(post_delete, sender=Comment)
 def comment_del_callback(sender, instance, using, **kwargs):
-    logger.debug("Comment.delete(%d) : '%s'", instance.pk, instance)
     update_stats()
+
+# automatically log creation of PlayerAccounts
+@receiver(post_save, sender=PlayerAccount)
+def playerAccount_save_callback(sender, instance, using, **kwargs):
+    logger.debug("PlayerAccount.save(%d): accountid=%d names=%s", instance.pk, instance.accountid, instance.names)
+
+# automatically log creation of Players
+@receiver(post_save, sender=Player)
+def player_save_callback(sender, instance, using, **kwargs):
+    logger.debug("Player.save(%d): account=%d name=%s spectator=%s", instance.pk, instance.account.accountid, instance.name, instance.spectator)
