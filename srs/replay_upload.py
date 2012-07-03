@@ -23,7 +23,7 @@ sys.path.append(realpath(dirname(__file__))+"/contrib")
 import argparse
 
 def main(argv=None):
-    XMLRPC_URL = "http://replays.admin-box.com/xmlrpc/"
+    XMLRPC_URL = "http://replays.springrts.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.admin-box.com/xmlrpc/\" for upload testing purposes.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")

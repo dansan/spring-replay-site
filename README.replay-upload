@@ -1,4 +1,4 @@
-HOWTO make SPADS upload replays of games to replays.admin-box.com
+HOWTO make SPADS upload replays of games to replays.springrts.com
 =================================================================
 
 SPADS supports automatic uploading of "Spring Demo Files" (*.sdf) to the replays
@@ -28,7 +28,7 @@ PycURL can be obtained from: http://pycurl.sourceforge.net/
 short version:
 --------------
 * log in once with a Spring account which will be the "owner" of the uploaded
-  replays: http://replays.admin-box.com/login/
+  replays: http://replays.springrts.com/login/
 * update endGameCommand and endGameCommandEnv settings in spads.conf as follows
   (replace <owner> by the actual Spring account used in previous step):
     endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
@@ -56,7 +56,7 @@ to use the autohosts credentials, create a Spring account and use its username
 and password instead.
 
 The "owner" must have logged in at least once to the replays site, or the upload
-will fail! http://replays.admin-box.com/login/
+will fail! http://replays.springrts.com/login/
 
 The replays website saves a title, a comment, tags and an owner for each
 uploaded replay. The owner can login to the site and edit the replays title,

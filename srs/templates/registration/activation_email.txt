@@ -1,5 +1,5 @@
-Activate account at replays.admin-box.com:
+Activate account at replays.springrts.com:
 
-http://replays.admin-box.com/{% url registration_activate activation_key %}
+http://replays.springrts.com/{% url registration_activate activation_key %}
 
 Link is valid for {{ expiration_days }} days.
