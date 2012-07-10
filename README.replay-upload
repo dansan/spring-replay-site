@@ -29,10 +29,12 @@ short version:
 --------------
 * log in once with a Spring account which will be the "owner" of the uploaded
   replays: http://replays.springrts.com/login/
-* update endGameCommand and endGameCommandEnv settings in spads.conf as follows
-  (replace <owner> by the actual Spring account used in previous step):
-    endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
+* update endGameCommand, endGameCommandEnv and endGameCommandMsgsettings in
+   spads.conf as follows (replace <owner> by the actual Spring account used in
+    previous step):
+    endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "%type on %map" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
     endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
+    endGameCommandMsg:(0)Last game demo file uploaded to http://replays.springrts.com/replay/%gameId|(1)Failed to upload demo file: Unknown, inactive or invalid *uploader* account.|(2)Failed to upload demo file: Unknown or inactive *owner* account, please log in via web interface once.|(3)Failed to upload demo file: Replay already exists.|(4)Failed to upload demo file: Server error, please try again later, or contact admin.|(5)Game did not start or shorter than 3 min. - replay was not uploaded.|(6)Failed to upload demo file: could not read spring demo file from disk.|(7-9)Failed to upload demo file: unknown reason.
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
   new Spring account just to upload the replays (replace %ahName and %ahPassword
@@ -43,17 +45,20 @@ short version:
 
 Usage (long version):
 ---------------------
-Configure endGameCommand and endGameCommandEnv in spads.conf.
+Configure endGameCommand, endGameCommandEnv and endGameCommandMsgsettings in
+spads.conf.
 
-endGameCommand:python replay_upload.py -v "title" "comment" "tags" "%demoFile" "owner"
+endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "title" "comment" "tag1,tag2" "%demoFile" "owner"
 endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
+endGameCommandMsg:(0)Last game demo file uploaded to http://replays.springrts.com/replay/%gameId|(1)Failed to upload demo file: Unknown, inactive or invalid *uploader* account.|(2)Failed to upload demo file: Unknown or inactive *owner* account, please log in via web interface once.|(3)Failed to upload demo file: Replay already exists.|(4)Failed to upload demo file: Server error, please try again later, or contact admin.|(5)Game did not start or shorter than 3 min. - replay was not uploaded.|(6)Failed to upload demo file: could not read spring demo file from disk.|(7-9)Failed to upload demo file: unknown reason.
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
-add a tag "tags" and make it owned by the Spring user "owner".
+add the tags "tag1" and "tag2" and make it owned by the Spring user "owner".
 
 For authentication the autohosts account data would be used. If you do not wish
 to use the autohosts credentials, create a Spring account and use its username
-and password instead.
+and password instead. Username and password are passed to the Python script as
+environment variable, to hide them from the eyes of other users of the system.
 
 The "owner" must have logged in at least once to the replays site, or the upload
 will fail! http://replays.springrts.com/login/
@@ -62,11 +67,6 @@ The replays website saves a title, a comment, tags and an owner for each
 uploaded replay. The owner can login to the site and edit the replays title,
 comment and tags. Owner accounts are Spring accounts. Title, comment, tags and
 owner name are passed to the Python script on the command line.
-
-To upload to the site it is necessary to login first. That can be done with the
-owners account, or a separate Spring account. Username and password are passed
-to the Python script as environment variable, to hide them the eyes of other
-users of the system. 
 
 I suggest to test settings first on the command line, and if everything works as
 expected, make them permanent in the configuration file.
@@ -85,20 +85,26 @@ Run the upload:
 
 The game will be uploaded to the testing site: http://replays-test.admin-box.com/
 or an error message will be shown. The "-v" makes it display information and
-errors. It doesn't matter if you use "-v". In any case it will not be logged by
-SPADS, but it will be shown on stdout.
+errors. SPADS will not log any output of the upload script (only the exit code),
+but textual output will be shown on stdout in a terminal.
 
 In the configuration file you can use variables to describe the game better:
 http://planetspads.free.fr/spads/doc/spadsDoc_All.html#set:endGameCommand
 
 Example:
- endGameCommand:python replay_upload.py -v "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
+ endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
  endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
 
 Again, if you wish to test your settings before uploading to the replays site,
 just use testing site by appending ";XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/"
 to endGameCommandEnv (mind the ";"):
  endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword;XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/
+
+If you wish for games NOT to be uploaded that
+* never started or
+* were shorter than 3 minutes or
+* !stop AND shorter than 6 minutes
+you must use "-r %result -d %gameDuration" in endGameCommand as written above.
 
 Restart SPADS.
 

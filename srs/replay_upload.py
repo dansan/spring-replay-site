@@ -26,23 +26,30 @@ def main(argv=None):
     XMLRPC_URL = "http://replays.springrts.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.admin-box.com/xmlrpc/\" for upload testing purposes.")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %gameDuration)", type=int, default=9999)
+    parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %result)", default="")
     parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")
-    parser.add_argument("path", type=argparse.FileType('rb'), help="path to .sdf")
+    parser.add_argument("path", help="path of .sdf")
     parser.add_argument("owner", help="lobby account that will be saved as the uploader")
-    try:
-        args = parser.parse_args()
-    except IOError, ioe:
-        print "WARNING: Replay upload failed (did the game not start?). Error: could not open spring demo file: %s."%ioe
-        return 1
+    args = parser.parse_args()
 
+    if (args.result == "undecided" and args.duration < 360) or args.duration < 180:
+        print "[Replay Upload] Game did not start or very short - not uploading."
+        return 5
+
+    try:
+        sdf = open(args.path, "rb")
+    except IOError, ioe:
+        print "[Replay Upload] ERROR: could not open spring demo file: %s."%ioe
+        return 6
 
     if not os.environ.has_key("XMLRPC_USER") or not os.environ.has_key("XMLRPC_PASSWORD"):
-        print "Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby"
-        print "accounts credentials."
+        print "[Replay Upload] Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS"
+        print "environment to a lobby accounts credentials."
         return 1
     else:
         XMLRPC_USER = os.environ["XMLRPC_USER"]
@@ -56,9 +63,9 @@ def main(argv=None):
             sp = "at %.2f kb/s"%(args.throttle/1024.0)
         else:
             sp = "without upload throttling"
-        print "Uploading file '%s'\n  authenticating as '%s'\n  to '%s'\n  for owner '%s'\n  with subject '%s'\n  comment '%s'\n  and tags '%s'\n  %s."%(args.path.name, XMLRPC_USER, XMLRPC_URL, args.owner, args.title, args.comment, args.tags, sp)
+        print "[Replay Upload] Uploading file '%s'\n  authenticating as '%s'\n  to '%s'\n  for owner '%s'\n  with subject '%s'\n  comment '%s'\n  and tags '%s'\n  %s."%(args.path, XMLRPC_USER, XMLRPC_URL, args.owner, args.title, args.comment, args.tags, sp)
 
-    demofile = xmlrpclib.Binary(args.path.read())
+    demofile = xmlrpclib.Binary(sdf.read())
 
     if args.throttle > 0:
         try:
@@ -66,7 +73,7 @@ def main(argv=None):
             import pyCURLTransport
         except:
             print """
-ERROR: Please install pycurl to use bandwidth throttling.
+[Replay Upload] ERROR: Please install pycurl to use bandwidth throttling.
   Homepage: http://pycurl.sourceforge.net/
   Debian/Ubuntu/Fedora/Arch: python-pycurl
   Gentoo: dev-python/pycurl
@@ -82,10 +89,10 @@ ERROR: Please install pycurl to use bandwidth throttling.
         trans = None # use xmlrpclib internal HTTP transport
 
     rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
-    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path.name), demofile, args.title, args.comment, args.tags, args.owner)
+    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title, args.comment, args.tags, args.owner)
 
     if args.verbose:
-        print "%s" % result
+        print "[Replay Upload] %s" % result
 
     return int(result[0])
 
