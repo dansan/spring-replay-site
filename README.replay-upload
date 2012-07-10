@@ -34,7 +34,7 @@ short version:
     previous step):
     endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "%type on %map" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
     endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
-    endGameCommandMsg:(0)Last game demo file uploaded to http://replays.springrts.com/replay/%gameId|(1)Failed to upload demo file: Unknown, inactive or invalid *uploader* account.|(2)Failed to upload demo file: Unknown or inactive *owner* account, please log in via web interface once.|(3)Failed to upload demo file: Replay already exists.|(4)Failed to upload demo file: Server error, please try again later, or contact admin.|(5)Game did not start or shorter than 3 min. - replay was not uploaded.|(6)Failed to upload demo file: could not read spring demo file from disk.|(7-9)Failed to upload demo file: unknown reason.
+    endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId|(1-9)Failed to upload demo file!
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
   new Spring account just to upload the replays (replace %ahName and %ahPassword
@@ -50,7 +50,7 @@ spads.conf.
 
 endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "title" "comment" "tag1,tag2" "%demoFile" "owner"
 endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
-endGameCommandMsg:(0)Last game demo file uploaded to http://replays.springrts.com/replay/%gameId|(1)Failed to upload demo file: Unknown, inactive or invalid *uploader* account.|(2)Failed to upload demo file: Unknown or inactive *owner* account, please log in via web interface once.|(3)Failed to upload demo file: Replay already exists.|(4)Failed to upload demo file: Server error, please try again later, or contact admin.|(5)Game did not start or shorter than 3 min. - replay was not uploaded.|(6)Failed to upload demo file: could not read spring demo file from disk.|(7-9)Failed to upload demo file: unknown reason.
+endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId|(1-9)Failed to upload demo file!
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
 add the tags "tag1" and "tag2" and make it owned by the Spring user "owner".
@@ -67,6 +67,10 @@ The replays website saves a title, a comment, tags and an owner for each
 uploaded replay. The owner can login to the site and edit the replays title,
 comment and tags. Owner accounts are Spring accounts. Title, comment, tags and
 owner name are passed to the Python script on the command line.
+
+endGameCommandMsg prints different messages, depending on the exit code of the
+upload script. SPADS logs the exit code. See section "Error codes" below for the
+interpretation of the codes.
 
 I suggest to test settings first on the command line, and if everything works as
 expected, make them permanent in the configuration file.
@@ -120,3 +124,14 @@ its Python binding and a Python-module to use it as a replay-transpor:
    endGameCommand:python replay_upload.py -t 204800 title comment tags "%demoFile" "owner"
 * the number is bytes per second. To upload with 200 KB/s use "204800".
 * restart SPADS
+
+
+Error codes
+-----------
+0 no error, upload was a success
+1 unknown, inactive or invalid *uploader* account
+2 unknown or inactive *owner* account (remember to log in via web interface once)
+3 replay already exists (same gameID)
+4 server or network error
+5 no error, but the match did not start or was shorter than 3 min. and thus the replay was not uploaded
+6 could not read spring demo file from disk
