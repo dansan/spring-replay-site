@@ -33,7 +33,7 @@ def index(request):
 
 def replays(request):
     replays = Replay.objects.all()
-    return replay_table(request, replays, "all replays")
+    return replay_table(request, replays, "all %d replays"%replays.count())
 
 def replay_table(request, replays, title, template="lists.html", form=None):
     from django_tables2 import RequestConfig
@@ -150,7 +150,7 @@ def download(request, gameID):
 
 def tags(request):
     table = TagTable(Tag.objects.all())
-    return all_of_a_kind_table(request, table, "tags")
+    return all_of_a_kind_table(request, table, "all tags")
 
 def tag(request, reqtag):
     replays = Replay.objects.filter(tags__name=reqtag)
@@ -158,7 +158,7 @@ def tag(request, reqtag):
 
 def maps(request):
     table = MapTable(Map.objects.all())
-    return all_of_a_kind_table(request, table, "maps")
+    return all_of_a_kind_table(request, table, "all maps")
 
 def rmap(request, mapname):
     replays = Replay.objects.filter(map_info__name=mapname)
@@ -173,7 +173,7 @@ def players(request):
                             'spectator_count': pa.spectator_count(),
                             'accid': pa.accountid})
     table = PlayerTable(players)
-    return all_of_a_kind_table(request, table, "players")
+    return all_of_a_kind_table(request, table, "all players")
 
 def player(request, accountid):
     rep = ""
@@ -199,7 +199,7 @@ def games(request):
         games.append({'name': gt,
                       'replays': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
-    return all_of_a_kind_table(request, table, "games")
+    return all_of_a_kind_table(request, table, "all games")
 
 def game(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
@@ -305,7 +305,7 @@ def user_settings(request):
 
 def users(request):
     table = UserTable(User.objects.all())
-    return all_of_a_kind_table(request, table, "users")
+    return all_of_a_kind_table(request, table, "all uploaders")
 
 def see_user(request, username):
     try:
