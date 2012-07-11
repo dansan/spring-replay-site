@@ -32,7 +32,7 @@ class Tag(models.Model):
         return ('srs.views.tag', [self.name])
 
     def replays(self):
-        return Replay.objects.filter(tags__name__contains=self.name).count()
+        return Replay.objects.filter(tags__name=self.name).count()
 
 class Map(models.Model):
     name            = models.CharField(max_length=128)

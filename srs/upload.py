@@ -176,7 +176,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for key in ["versionString", "gameID", "wallclockTime"]:
         replay.__setattr__(key, demofile.header[key])
     replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S")
-    for key in ["mapname", "autohostname", "gametype", "startpostype"]:
+    for key in ["autohostname", "gametype", "startpostype"]:
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
