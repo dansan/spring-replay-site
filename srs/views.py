@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.contrib.comments import Comment
+from django.views.decorators.cache import cache_page
 
 import logging
 from types import StringTypes
@@ -55,6 +56,7 @@ def all_of_a_kind_table(request, table, title):
     c['pagetitle'] = title
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
+@cache_page(3600 * 24)
 def replay(request, gameID):
     c = all_page_infos(request)
     try:
