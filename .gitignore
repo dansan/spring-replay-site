@@ -1,8 +1,7 @@
 srs.db
 *.pyc
 *.pyo
-srs/mycache.py
-srs/mydb.py
+srs/local_settings.py
 srs/static/maps/*.jpg
 srs/static/replays/*.sdf
 srs/map_info_no_deps.py
