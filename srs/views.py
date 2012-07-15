@@ -31,6 +31,7 @@ def index(request):
     c = all_page_infos(request)
     c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]
     c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
+    c["replay_details"] = False
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 def replays(request):
@@ -139,6 +140,7 @@ def edit_replay(request, gameID):
     else:
         form = EditReplayForm({'short': replay.short_text, 'long_text': replay.long_text, 'tags': reduce(lambda x,y: x+", "+y, [t.name for t in Tag.objects.filter(replay=replay)])})
     c['form'] = form
+    c["replay_details"] = True
 
     return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
 

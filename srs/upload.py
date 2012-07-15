@@ -90,6 +90,7 @@ def upload(request):
                 pass
         else:
             c['replays'] = replays
+            c["replay_details"] = True
             return render_to_response('multi_upload_success.html', c, context_instance=RequestContext(request))
     else:
         #form = UploadFileForm()
