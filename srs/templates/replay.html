@@ -25,7 +25,7 @@
 </script>
 {% endblock %}
 
-{% cache 600 replay replay request.user.pk %}
+{% cache 600 replay replay.pk request.user.pk comment_count %}
 {% block pagetitle %}{{ replay.title }}{% endblock %}
 
 {% block maincontent%}
@@ -97,7 +97,6 @@
 	        <p>None.</p>
 	        {% endif %}
 	   </div>
-{% endcache %}
 	   <div class="left">
        <div class="footer"></div>
             {% get_comment_count for replay as comment_count %}
@@ -119,4 +118,4 @@
         </div>
         </div>
 {% endblock %}
-
+{% endcache %}

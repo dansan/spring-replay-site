@@ -1,5 +1,7 @@
 {% extends 'srs_base.html' %}
+{% load cache %}
 
+{% cache 600 index pageunique %}
 {% block pagetitle %}Home{% endblock %}
 
 {% block maincontent%}
@@ -26,4 +28,4 @@
             <h2><a href="{% url srs.views.replays %}">more...</a></h2>
 		</div>
 {% endblock %}
-
+{% endcache %}

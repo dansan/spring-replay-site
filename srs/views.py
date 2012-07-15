@@ -32,6 +32,7 @@ def index(request):
     c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]
     c["news"] = NewsItem.objects.all().order_by('-pk')[:10]
     c["replay_details"] = False
+    c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["newest_replays"]])
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 def replays(request):
