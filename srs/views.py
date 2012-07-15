@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.http import Http404
 from django.contrib.comments import Comment
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_control
 
 import logging
 from types import StringTypes
@@ -26,7 +26,7 @@ from upload import save_tags, set_autotag, save_desc
 
 logger = logging.getLogger(__package__)
 
-
+@cache_control(must_revalidate=True, max_age=300)
 def index(request):
     c = all_page_infos(request)
     c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]
