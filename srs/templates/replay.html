@@ -1,5 +1,6 @@
 {% extends 'srs_base.html' %}
 {% load comments %}
+{% load cache %}
 
 {% block replayheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.8.21.custom.css" />
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
@@ -24,6 +25,7 @@
 </script>
 {% endblock %}
 
+{% cache 600 replay replay request.user.pk %}
 {% block pagetitle %}{{ replay.title }}{% endblock %}
 
 {% block maincontent%}
@@ -95,6 +97,7 @@
 	        <p>None.</p>
 	        {% endif %}
 	   </div>
+{% endcache %}
 	   <div class="left">
        <div class="footer"></div>
             {% get_comment_count for replay as comment_count %}

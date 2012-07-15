@@ -1,3 +1,4 @@
+{% cache 600 replaybox replay.pk replay_details %}
 {% if replay_details %}
                 <table border="0" cellpadding="0" cellspacing="0" rules="none">
                     <colgroup>
@@ -39,3 +40,4 @@
                 <p>Uploaded by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
                 <p><a href="{% url srs.views.download replay.gameID %}">Download</a>s: {{ replay.replayfile.download_count }} Comments: {{ replay.comments }}</p>
 {% endif %}
+{% endcache %}

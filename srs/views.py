@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.http import Http404
 from django.contrib.comments import Comment
 from django.views.decorators.cache import cache_page
@@ -56,7 +57,7 @@ def all_of_a_kind_table(request, table, title):
     c['pagetitle'] = title
     return render_to_response('lists.html', c, context_instance=RequestContext(request))
 
-@cache_page(3600 * 24)
+#@cache_page(3600 * 24)
 def replay(request, gameID):
     c = all_page_infos(request)
     try:
@@ -102,6 +103,7 @@ def mapmodlinks(request, gameID):
     return render_to_response('mapmodlinks.html', c, context_instance=RequestContext(request))
 
 @login_required
+@never_cache
 def edit_replay(request, gameID):
     from forms import EditReplayForm
 
@@ -207,6 +209,7 @@ def game(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
     return replay_table(request, replays, "replays of game '%s'"%gametype)
 
+@never_cache
 def search(request):
     from forms import AdvSearchForm
 
@@ -249,6 +252,7 @@ def search(request):
 
     return replay_table(request, replays, "replays matching your search", "search.html", form)
 
+@never_cache
 def search_replays(query):
     """
     I love django Q!!!
@@ -300,6 +304,7 @@ def search_replays(query):
     return replays
 
 @login_required
+@never_cache
 def user_settings(request):
     # TODO:
     c = all_page_infos(request)
@@ -329,6 +334,7 @@ def all_comments(request):
     table = CommentTable(Comment.objects.all())
     return all_of_a_kind_table(request, table, "comments")
 
+@never_cache
 def login(request):
     import django.contrib.auth
     from django.contrib.auth.forms import AuthenticationForm
@@ -354,6 +360,7 @@ def login(request):
     c['form'] = form
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
+@never_cache
 def logout(request):
     import django.contrib.auth
 
