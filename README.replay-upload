@@ -82,12 +82,12 @@ Set authentication parameters:
 # export XMLRPC_PASSWORD="sEcReT"
 
 Optionally use the testing site for upload (owner must login there first!):
-# export XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/
+# export XMLRPC_URL=http://replays-test.springrts.com/xmlrpc/
 
 Run the upload:
 # python replay_upload.py -v "awesome game" "checkout that dude in SE" "tag1,tag2,tag3" "/tmp/20130229_123456_RustyDelta_v2_88.sdf" "Danchan"
 
-The game will be uploaded to the testing site: http://replays-test.admin-box.com/
+The game will be uploaded to the testing site: http://replays-test.springrts.com/
 or an error message will be shown. The "-v" makes it display information and
 errors. SPADS will not log any output of the upload script (only the exit code),
 but textual output will be shown on stdout in a terminal.
@@ -100,9 +100,9 @@ Example:
  endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
 
 Again, if you wish to test your settings before uploading to the replays site,
-just use testing site by appending ";XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/"
+just use testing site by appending ";XMLRPC_URL=http://replays-test.springrts.com/xmlrpc/"
 to endGameCommandEnv (mind the ";"):
- endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword;XMLRPC_URL=http://replays-test.admin-box.com/xmlrpc/
+ endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword;XMLRPC_URL=http://replays-test.springrts.com/xmlrpc/
 
 If you wish for games NOT to be uploaded that
 * never started or

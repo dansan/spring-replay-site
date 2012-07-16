@@ -25,7 +25,7 @@ import argparse
 def main(argv=None):
     XMLRPC_URL = "http://replays.springrts.com/xmlrpc/"
 
-    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.admin-box.com/xmlrpc/\" for upload testing purposes.")
+    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.springrts.com/xmlrpc/\" for upload testing purposes.")
     parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %gameDuration)", type=int, default=9999)
     parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %result)", default="")
     parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
