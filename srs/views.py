@@ -255,7 +255,6 @@ def search(request):
 
     return replay_table(request, replays, "replays matching your search", "search.html", form)
 
-@never_cache
 def search_replays(query):
     """
     I love django Q!!!
