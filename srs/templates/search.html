@@ -6,7 +6,12 @@
 
     <script type="text/javascript">
     $(document).ready(function() {
-    $(".datePicker").datepicker({ dateFormat: "yy-mm-dd" });
+    	$(".datePicker").datepicker({ dateFormat: "yy-mm-dd" });
+    });
+    $(document).ready(function() {
+    	$(".clickme_advsearch").click(function () {
+    		$(".blind_advsearch").show("blind", {}, 1000);
+    	});
     });
     </script>
 {% endblock %}
@@ -14,6 +19,10 @@
 {% block pagetitle %}Search{% endblock %}
 
 {% block search %}
+{% if not showadvsearch %}
+<p class="clickme_advsearch" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show advanced search options.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
+<div class="blind_advsearch" style="display:none;">
+{% endif %}
 <h2>Search</h2>
 <p><b>All search parameters are OR'd</b></p>
 	<form action="." method="post">{% csrf_token %}
@@ -54,4 +63,7 @@
 	</form>
 	<p>&nbsp;</p>
 	<p style="color: maroon;">Sorting of search results does not work at the moment.</p>
+	{% if not showadvsearch %}
+	</div>
+	{% endif %}
 {% endblock %}

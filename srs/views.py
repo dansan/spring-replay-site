@@ -39,10 +39,13 @@ def replays(request):
     replays = Replay.objects.all()
     return replay_table(request, replays, "all %d replays"%replays.count())
 
-def replay_table(request, replays, title, template="lists.html", form=None):
+def replay_table(request, replays, title, template="lists.html", form=None, ext=None):
     from django_tables2 import RequestConfig
 
     c = all_page_infos(request)
+    if ext:
+        for k,v in ext.items():
+            c[k] = v
     table = ReplayTable(replays)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
@@ -218,11 +221,14 @@ def search(request):
 
     form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader']
     query = {}
+    ext = {}
 
     if request.method == 'POST':
         # did we come from the adv search page, or from a search in the top menu?
         if request.POST.has_key("search"):
             # top menu -> search everywhere
+            ext["showadvsearch"] = False
+
             st = request.POST["search"].strip()
             if st:
                 for f in form_fields:
@@ -231,10 +237,14 @@ def search(request):
                 form = AdvSearchForm(query)
             else:
                 # empty search field in top menu
+                ext["showadvsearch"] = True
+
                 query = None
                 form = AdvSearchForm()
         else:
             # advSearch was used
+            ext["showadvsearch"] = True
+
             form = AdvSearchForm(request.POST)
             if form.is_valid():
                 for f in form_fields:
@@ -248,12 +258,14 @@ def search(request):
                 query = None
     else:
         # request.method == GET (display advSearch)
+        ext["showadvsearch"] = True
+
         query = None
         form = AdvSearchForm()
 
     replays = search_replays(query)
 
-    return replay_table(request, replays, "replays matching your search", "search.html", form)
+    return replay_table(request, replays, "replays matching your search", "search.html", form, ext)
 
 def search_replays(query):
     """
