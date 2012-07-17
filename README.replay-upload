@@ -50,7 +50,7 @@ spads.conf.
 
 endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "title" "comment" "tag1,tag2" "%demoFile" "owner"
 endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
-endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId|(1-9)Failed to upload demo file!
+endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId/|(1-9)Failed to upload demo file!
 
 This would upload the Spring Demo File with a title "title", a comment "comment",
 add the tags "tag1" and "tag2" and make it owned by the Spring user "owner".
@@ -98,6 +98,7 @@ http://planetspads.free.fr/spads/doc/spadsDoc_All.html#set:endGameCommand
 Example:
  endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "%type on %ahName" "autouploaded" "%type,%structure" "%demoFile" "[Your]Account"
  endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
+ endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId/|(1-9)Failed to upload demo file!
 
 Again, if you wish to test your settings before uploading to the replays site,
 just use testing site by appending ";XMLRPC_URL=http://replays-test.springrts.com/xmlrpc/"

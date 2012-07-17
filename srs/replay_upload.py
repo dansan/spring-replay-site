@@ -37,7 +37,7 @@ def main(argv=None):
     parser.add_argument("owner", help="lobby account that will be saved as the uploader")
     args = parser.parse_args()
 
-    if (args.result == "undecided" and args.duration < 360) or args.duration < 180:
+    if (args.result == "undecided" and args.duration < 180) or args.duration < 180:
         print "[Replay Upload] Game did not start or very short - not uploading."
         return 5
 
