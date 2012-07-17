@@ -98,7 +98,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <!-- Piwik -->
     <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
 	<script type="text/javascript">
-		var pkBaseURL = (("https:" == document.location.protocol) ? "https://replays.springrts.com/piwik/" : "http://replays.springrts.com/piwik/");
+		var pkBaseURL = (("https:" == document.location.protocol) ? "https://{{ site.name }}/piwik/" : "http://{{ site.name }}/piwik/");
 		document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
 	</script>
 	<script type="text/javascript">
@@ -109,7 +109,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 		} catch( err ) {}
 	</script>
 	<noscript>
-	   <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p>
+	   <p><img src="http://{{ site.name }}/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p>
 	</noscript>
 	<!-- End Piwik Tracking Code -->
 </body>

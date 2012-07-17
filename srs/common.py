@@ -9,6 +9,7 @@ from django.core.context_processors import csrf
 
 from models import Tag, Map, Player, SiteStats, update_stats
 from django.contrib.comments import Comment
+from django.contrib.sites.models import Site
 
 def all_page_infos(request):
     c = {}
@@ -24,4 +25,5 @@ def all_page_infos(request):
     if sist.maps:     c["top_maps"]        = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]
     if sist.players:  c["top_players"]     = [Player.objects.get(id=int(x)) for x in sist.players.split('|')]
     if sist.comments: c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
+    c["site"] = Site.objects.all()[0]
     return c
