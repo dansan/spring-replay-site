@@ -26,7 +26,7 @@ from upload import save_tags, set_autotag, save_desc
 
 logger = logging.getLogger(__package__)
 
-@cache_control(must_revalidate=True, max_age=120)
+@cache_control(must_revalidate=True, max_age=60)
 def index(request):
     c = all_page_infos(request)
     c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]

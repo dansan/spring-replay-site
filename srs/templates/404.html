@@ -1,0 +1,14 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}404 Page not found{% endblock %}
+
+{% block maincontent%}
+
+{% if "/feeds/uploader/" in request_path %}
+<p style="font-weight:bold;">The username you used for the custom RSS feed is not known.</p>
+<p>Please use one of the usernames listed on the <a href="/users/">uploaders page</a></p>.
+{% else %}
+<p style="font-weight:bold;">The page you requested could not be found.</p>
+{% endif %}
+
+{% endblock %}

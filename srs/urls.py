@@ -1,7 +1,9 @@
 from django.conf.urls import patterns, include, url
 from django.contrib.comments.feeds import LatestCommentFeed
-
 from django.contrib import admin
+
+from feeds import LatestUploadsFeed, UploaderFeed
+
 admin.autodiscover()
 
 urlpatterns = patterns('',
@@ -15,9 +17,11 @@ urlpatterns = patterns('',
     url(r'^comments/', include('django.contrib.comments.urls')),
     url(r'^download/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.download'),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^feeds/latest_comments/$', LatestCommentFeed()),
     url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', name='xmlrpc'),
     url(r'^mapmodlinks/(?P<gameID>\w+)/$', 'srs.views.mapmodlinks'),
+    url(r'^feeds/latest_comments/$', LatestCommentFeed()),
+    url(r'^feeds/latest/$', LatestUploadsFeed()),
+    url(r'^feeds/uploader/(?P<username>[\w\ .()\[\]-]+)/$', UploaderFeed()),
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),

@@ -12,6 +12,10 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <meta name="author" content="Dansan" />
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 
+    <link rel="alternate" type="application/rss+xml" title="RSS latest uploads" href="/feeds/latest/" />
+    {% if user.is_authenticated %}
+    <link rel="alternate" type="application/rss+xml" title="RSS latest uploads of {{ user }}" href="/feeds/uploader/{{ user }}/" />
+    {% endif %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/css/base.css"/>
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css" />
 {% block listheader %}{% endblock %}
@@ -59,7 +63,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         </div>
 
         <div class="newsletter">
-            <p>RSS feed some day <a href="https://docs.djangoproject.com/en/dev/ref/contrib/syndication/">(todo)</a></p>
+            <p><span class="grey">RSS feed: <a href="/feeds/latest/">all</a>{% if user.is_authenticated %} | <a href="/feeds/uploader/{{ user }}/" />only {{ user|slice:":11" }}s</a>{% endif %}</span></p>
         </div>
 
         <div class="subheader">
