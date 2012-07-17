@@ -106,7 +106,7 @@ class Parse_demo_file():
 
         self.header['magic']         = str(self.header['magic']).partition("\x00")[0]
         self.header['versionString'] = str(self.header['versionString']).partition("\x00")[0]
-        self.header['gameID']        = "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x" % unpack("BBBBBBBBBBBBBBBB", self.header['gameID'])
+        self.header['gameID']        = "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x" % unpack("16B", self.header['gameID'])
         self.header['unixTime']      = "%s" % strftime("%Y-%m-%d %H:%M:%S", localtime(unpack("Q", self.header['unixTime'])[0]))
         self.header['gameTime']      = "%s" % str(timedelta(seconds=self.header['gameTime']))
         self.header['wallclockTime'] = "%s" % str(timedelta(seconds=self.header['wallclockTime']))
