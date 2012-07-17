@@ -63,7 +63,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         </div>
 
         <div class="newsletter">
-            <p><span class="grey">RSS feed: <a href="/feeds/latest/">all</a>{% if user.is_authenticated %} | <a href="/feeds/uploader/{{ user }}/" />only {{ user|slice:":11" }}s</a>{% endif %}</span></p>
+            <p><span class="grey">RSS feed: <a href="/feeds/latest/">all</a>{% if user.is_authenticated %} | <a href="/feeds/uploader/{{ user }}/" /> {{ user|slice:":10" }}s</a>{% endif %}</span></p>
         </div>
 
         <div class="subheader">
