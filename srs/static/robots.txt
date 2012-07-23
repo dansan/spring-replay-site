@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /download/
+Disallow: /game/
+Disallow: /map/
+Disallow: /mapmodlinks/
+Disallow: /match_date/
+Disallow: /player/
+Disallow: /tag/
+Disallow: /upload_date/
+Disallow: /user/
+Disallow: /xmlrpc/
+
