@@ -5,6 +5,10 @@
 {% block maincontent%}
 <h2>Download map and game</h2>
 <br/>
+{% if con_error %}
+<p><b>Error retrieving information</b></p>
+<p>{{ con_error|safe }}</p>
+{% else %}
 {% for game in game_info %}
 <p><b>{{ game.springname }}</b></p>
 {% for mirror in game.mirrors %}
@@ -19,5 +23,6 @@
 <p><a href="{{ mirror }}">{{ mirror }}</a></p>
 {% endfor %}
 {% endfor %}
+{% endif %}
 
 {% endblock %}

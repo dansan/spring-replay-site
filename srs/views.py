@@ -73,13 +73,13 @@ def replay(request, gameID):
     c["allyteams"] = []
     for at in Allyteam.objects.filter(replay=c["replay"]):
         teams = Team.objects.filter(allyteam=at, replay=c["replay"])
-        players = Player.objects.filter(team__in=teams)
+        players = Player.objects.filter(team__in=teams).order_by("name")
         if teams:
             c["allyteams"].append((at, players))
-    c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True)
+    c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True).order_by("name")
     c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
-    c["mapoptions"] = MapOption.objects.filter(replay=c["replay"])
-    c["modoptions"] = ModOption.objects.filter(replay=c["replay"])
+    c["mapoptions"] = MapOption.objects.filter(replay=c["replay"]).order_by("name")
+    c["modoptions"] = ModOption.objects.filter(replay=c["replay"]).order_by("name")
     c["replay_details"] = True
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
@@ -95,15 +95,18 @@ def mapmodlinks(request, gameID):
     mapname  = replay.map_info.name
 
     from xmlrpclib import ServerProxy
-    proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
+    try:
+        proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
 
-    searchstring = {"springname" : gamename.replace(" ", "*"), "category" : "game",
-                    "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
-    c['game_info'] = proxy.springfiles.search(searchstring)
+        searchstring = {"springname" : gamename.replace(" ", "*"), "category" : "game",
+                        "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
+        c['game_info'] = proxy.springfiles.search(searchstring)
 
-    searchstring = {"springname" : mapname.replace(" ", "*"), "category" : "map",
-                    "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
-    c['map_info'] = proxy.springfiles.search(searchstring)
+        searchstring = {"springname" : mapname.replace(" ", "*"), "category" : "map",
+                        "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
+        c['map_info'] = proxy.springfiles.search(searchstring)
+    except:
+        c['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: <a href=\"http://springfiles.com/finder/1/%s\">game</a>  <a href=\"http://springfiles.com/finder/1/%s\">map</a>."%(gamename, mapname)
 
     return render_to_response('mapmodlinks.html', c, context_instance=RequestContext(request))
 
