@@ -28,7 +28,7 @@ urlpatterns = patterns('',
     url(r'^edit_replay/(?P<gameID>\w+)/$', 'srs.views.edit_replay'),
 
     url(r'^tags/$', 'srs.views.tags'),
-    url(r'^tag/(?P<reqtag>[\w\ .]+)/$', 'srs.views.tag', name="tag_detail"),
+    url(r'^tag/(?P<reqtag>[\w\ .-\d]+)/$', 'srs.views.tag', name="tag_detail"),
 
     url(r'^maps/$', 'srs.views.maps'),
     url(r'^map/(?P<mapname>[\w\ .-]+)/$', 'srs.views.rmap', name="map_detail"),
