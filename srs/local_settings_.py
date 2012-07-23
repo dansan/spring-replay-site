@@ -29,3 +29,6 @@ CACHES = {
         'KEY_PREFIX': CACHE_MIDDLEWARE_KEY_PREFIX,
     }
 }
+
+DEFAULT_FROM_EMAIL = 'webmaster@replays.springrts.com'
+SERVER_EMAIL       = 'webmaster@replays.springrts.com'
