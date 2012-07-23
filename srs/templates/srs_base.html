@@ -18,7 +18,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     {% if user.is_authenticated %}
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads of {{ user }}" href="/feeds/uploader/{{ user }}/" />
     {% endif %}
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" href="{{ STATIC_URL }}img/favicon.png" />
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/css/base.css"/>
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css" />
 {% block listheader %}{% endblock %}
