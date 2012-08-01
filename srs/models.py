@@ -123,13 +123,17 @@ class PlayerAccount(models.Model):
     aka             = models.ForeignKey("self", blank=True, null = True, verbose_name="other accounts")
 
     def __unicode__(self):
-        return str(self.accountid)+u" "+self.names[:10]
+        return str(self.accountid)+u" "+self.names[:15]
 
     def replay_count(self):
         return Player.objects.filter(account=self).count()
 
     def spectator_count(self):
         return Player.objects.filter(account=self, spectator=True).count()
+
+    class Meta:
+        ordering = ['accountid']
+
 
 class Player(models.Model):
     account         = models.ForeignKey(PlayerAccount, blank=True, null = True)
@@ -145,6 +149,9 @@ class Player(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.player', [self.account.accountid])
+
+    class Meta:
+        ordering = ['name']
 
 class Team(models.Model):
     allyteam        = models.ForeignKey(Allyteam)
