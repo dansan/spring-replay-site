@@ -221,7 +221,7 @@ def update_stats():
     else:                 tags_s     = ""
     if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
     else:                 maps_s     = ""
-    if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
+    if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players if p.account.accountid > 0])
     else:                 players_s  = ""
     if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
     else:                 comments_s = ""
