@@ -167,7 +167,7 @@ def tags(request):
 
 def tag(request, reqtag):
     replays = Replay.objects.filter(tags__name=reqtag)
-    return replay_table(request, replays, "replays with tag '%s'"%reqtag)
+    return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag))
 
 def maps(request):
     table = MapTable(Map.objects.all())
@@ -175,7 +175,7 @@ def maps(request):
 
 def rmap(request, mapname):
     replays = Replay.objects.filter(map_info__name=mapname)
-    return replay_table(request, replays, "replays on map '%s'"%mapname)
+    return replay_table(request, replays, "%d replays on map '%s'"%(replays.count(), mapname))
 
 def players(request):
     players = []
@@ -204,7 +204,7 @@ def player(request, accountid):
 
     players = Player.objects.select_related("replay").filter(account__in=accounts, spectator=False)
     replays = [player.replay for player in players]
-    return replay_table(request, replays, "replays with player %s"%rep)
+    return replay_table(request, replays, "%d replays with player %s"%(len(replays), rep))
 
 def games(request):
     games = []
@@ -216,7 +216,7 @@ def games(request):
 
 def game(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
-    return replay_table(request, replays, "replays of game '%s'"%gametype)
+    return replay_table(request, replays, "%d replays of game '%s'"%(replays.count(), gametype))
 
 @never_cache
 def search(request):
@@ -337,15 +337,15 @@ def see_user(request, username):
     except:
         raise Http404
     replays = Replay.objects.filter(uploader=user)
-    return replay_table(request, replays, "replays uploaded by '%s'"%user)
+    return replay_table(request, replays, "%d replays uploaded by '%s'"%(replays.count(), user))
 
 def match_date(request, shortdate):
     replays = Replay.objects.filter(unixTime__startswith=shortdate)
-    return replay_table(request, replays, "replays played on '%s'"%shortdate)
+    return replay_table(request, replays, "%d replays played on '%s'"%(replays.count(), shortdate))
 
 def upload_date(request, shortdate):
     replays = Replay.objects.filter(upload_date__startswith=shortdate)
-    return replay_table(request, replays, "replays uploaded on '%s'"%shortdate)
+    return replay_table(request, replays, "replays uploaded on '%s'"%(replays.count(), shortdate))
 
 def all_comments(request):
     table = CommentTable(Comment.objects.all())
