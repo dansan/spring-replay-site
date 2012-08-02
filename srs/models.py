@@ -209,10 +209,19 @@ def update_stats():
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     tp = []
+    incpl = []
     for pa in PlayerAccount.objects.all():
+        if pa in incpl: continue # jump over already counted accounts
         p = Player.objects.filter(account=pa)
-        if p.exists():   # p can be empty, because when a replay is deleted the Players are deleted, but the PlayerAccounts not   
-            tp.append((Player.objects.filter(account=pa, spectator=False).count(), p[0]))
+        if p.exists(): # p can be empty, because when a replay is deleted the Players are deleted, but the PlayerAccounts not
+            # sum up all accounts of a player, list only oldest account (PA.all() is sorted by accountid)
+            nummatches = Player.objects.filter(account=pa, spectator=False).count()
+            incpl.append(pa)
+            if pa.aka:
+                for otheraccount in pa.aka:
+                    nummatches += Player.objects.filter(account=otheraccount, spectator=False).count()
+                    incpl.append(otheraccount)
+            tp.append((nummatches, p[0]))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
     comments = Comment.objects.reverse()[:5]
