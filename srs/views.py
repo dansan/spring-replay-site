@@ -163,7 +163,7 @@ def download(request, gameID):
 
 def tags(request):
     table = TagTable(Tag.objects.all())
-    return all_of_a_kind_table(request, table, "all tags")
+    return all_of_a_kind_table(request, table, "all %d tags"%Tag.objects.count())
 
 def tag(request, reqtag):
     replays = Replay.objects.filter(tags__name=reqtag)
@@ -171,7 +171,7 @@ def tag(request, reqtag):
 
 def maps(request):
     table = MapTable(Map.objects.all())
-    return all_of_a_kind_table(request, table, "all maps")
+    return all_of_a_kind_table(request, table, "all %d maps"%Map.objects.count())
 
 def rmap(request, mapname):
     replays = Replay.objects.filter(map_info__name=mapname)
@@ -186,7 +186,7 @@ def players(request):
                             'spectator_count': pa.spectator_count(),
                             'accid': pa.accountid})
     table = PlayerTable(players)
-    return all_of_a_kind_table(request, table, "all players")
+    return all_of_a_kind_table(request, table, "all %d players"%len(players))
 
 def player(request, accountid):
     rep = ""
@@ -212,7 +212,7 @@ def games(request):
         games.append({'name': gt,
                       'replays': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
-    return all_of_a_kind_table(request, table, "all games")
+    return all_of_a_kind_table(request, table, "all %d games"%len(games))
 
 def game(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
@@ -268,7 +268,7 @@ def search(request):
 
     replays = search_replays(query)
 
-    return replay_table(request, replays, "replays matching your search", "search.html", form, ext)
+    return replay_table(request, replays, "%d replays matching your search"%replays.count(), "search.html", form, ext)
 
 def search_replays(query):
     """
@@ -329,7 +329,7 @@ def user_settings(request):
 
 def users(request):
     table = UserTable(User.objects.all())
-    return all_of_a_kind_table(request, table, "all uploaders")
+    return all_of_a_kind_table(request, table, "all %d uploaders"%User.objects.count())
 
 def see_user(request, username):
     try:
@@ -349,7 +349,7 @@ def upload_date(request, shortdate):
 
 def all_comments(request):
     table = CommentTable(Comment.objects.all())
-    return all_of_a_kind_table(request, table, "comments")
+    return all_of_a_kind_table(request, table, "all %d comments"%Comment.objects.count())
 
 @never_cache
 def login(request):
