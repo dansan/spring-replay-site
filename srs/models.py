@@ -209,7 +209,7 @@ def update_stats():
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     tp = []
-    incpl = []
+    incpl = [PlayerAccount.objects.get(accountid=0),] # exclude bots
     for pa in PlayerAccount.objects.all():
         if pa in incpl: continue # jump over already counted accounts
         p = Player.objects.filter(account=pa)
