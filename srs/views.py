@@ -345,7 +345,7 @@ def match_date(request, shortdate):
 
 def upload_date(request, shortdate):
     replays = Replay.objects.filter(upload_date__startswith=shortdate)
-    return replay_table(request, replays, "replays uploaded on '%s'"%(replays.count(), shortdate))
+    return replay_table(request, replays, "%d replays uploaded on '%s'"%(replays.count(), shortdate))
 
 def all_comments(request):
     table = CommentTable(Comment.objects.all())
