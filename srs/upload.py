@@ -142,6 +142,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         pass
 
     shutil.move(path, settings.MEDIA_ROOT)
+    os.chmod(settings.MEDIA_ROOT+os.path.basename(path), stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
         replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
         replay.uploader = owner_ac
