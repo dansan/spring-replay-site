@@ -16,6 +16,9 @@ class LatestUploadsFeed(Feed):
     def item_title(self, replay):
         return replay.title
 
+    def item_pubdate(self, item):
+        return item.unixTime
+
 class UploaderFeed(Feed):
     description_template = 'feeds_replay_description.html'
 
@@ -37,3 +40,6 @@ class UploaderFeed(Feed):
 
     def item_title(self, replay):
         return replay.title
+
+    def item_pubdate(self, item):
+        return item.unixTime
