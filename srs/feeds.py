@@ -19,6 +19,12 @@ class LatestUploadsFeed(Feed):
     def item_pubdate(self, item):
         return item.unixTime
 
+    def item_author_name(self, item):
+        if item.autohostname:
+            return item.autohostname
+        else:
+            return str()
+
 class UploaderFeed(Feed):
     description_template = 'feeds_replay_description.html'
 
@@ -35,7 +41,6 @@ class UploaderFeed(Feed):
         return "Newest replays uploaded by %s" % user.username
 
     def items(self, user):
-        print "username: %s"%user.username
         return Replay.objects.filter(uploader=user).order_by('-upload_date')[:20]
 
     def item_title(self, replay):
@@ -43,3 +48,9 @@ class UploaderFeed(Feed):
 
     def item_pubdate(self, item):
         return item.unixTime
+
+    def item_author_name(self, item):
+        if item.autohostname:
+            return item.autohostname
+        else:
+            return str()
