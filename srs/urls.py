@@ -1,8 +1,7 @@
 from django.conf.urls import patterns, include, url
-from django.contrib.comments.feeds import LatestCommentFeed
 from django.contrib import admin
 
-from feeds import LatestUploadsFeed, UploaderFeed
+from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
 
 admin.autodiscover()
 
@@ -19,7 +18,7 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^xmlrpc/$', 'django_xmlrpc.views.handle_xmlrpc', name='xmlrpc'),
     url(r'^mapmodlinks/(?P<gameID>\w+)/$', 'srs.views.mapmodlinks'),
-    url(r'^feeds/latest_comments/$', LatestCommentFeed()),
+    url(r'^feeds/latest_comments/$', SRSLatestCommentFeed()),
     url(r'^feeds/latest/$', LatestUploadsFeed()),
     url(r'^feeds/uploader/(?P<username>[\w\ .:()\[\]-]+)/$', UploaderFeed()),
 

@@ -1,6 +1,7 @@
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
+from django.contrib.comments.feeds import LatestCommentFeed
 
 from models import Replay
 
@@ -52,5 +53,12 @@ class UploaderFeed(Feed):
     def item_author_name(self, item):
         if item.autohostname:
             return item.autohostname
+        else:
+            return str()
+
+class SRSLatestCommentFeed(LatestCommentFeed):
+    def item_author_name(self, item):
+        if item.user_name:
+            return item.user_name
         else:
             return str()
