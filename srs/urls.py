@@ -43,4 +43,6 @@ urlpatterns = patterns('',
 
     url(r'^match_date/(?P<shortdate>[\d-]+)/$', 'srs.views.match_date'),
     url(r'^upload_date/(?P<shortdate>[\d-]+)/$', 'srs.views.upload_date'),
+
+    url(r'^win_loss/(?P<accountid>[\d-]+)/$', 'srs.views.win_loss', name="win_loss"),
 )

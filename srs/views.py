@@ -7,7 +7,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
@@ -319,6 +319,22 @@ def search_replays(query):
         replays = Replay.objects.none()
 
     return replays
+
+def win_loss(request, accountid):
+    c = all_page_infos(request)
+
+    pa = get_object_or_404(PlayerAccount, accountid=accountid)
+    players = Player.objects.filter(account=pa, spectator=False)
+    ats = Allyteam.objects.filter(team__player__in=players)
+    at_1v1 = ats.filter(replay__tags__name="1v1")
+    at_2v2 = ats.filter(replay__tags__name="2v2")
+    at_team = ats.exclude(replay__tags__name__in=["1v1", "2v2"])
+
+    c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count(), "ratio": "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())}
+    c["at_2v2"] = {"all": at_2v2.count(), "win": at_2v2.filter(winner=True).count(), "loss": at_2v2.filter(winner=False).count(), "ratio": "%.02f"%(float(at_2v2.filter(winner=True).count())/at_2v2.filter(winner=False).count())}
+    c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count(), "ratio": "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())}
+    c["playeraccount"] = pa
+    return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
 
 @login_required
 @never_cache
