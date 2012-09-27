@@ -327,25 +327,36 @@ def win_loss(request, accountid):
     players = Player.objects.filter(account=pa, spectator=False)
     ats = Allyteam.objects.filter(team__player__in=players)
     at_1v1 = ats.filter(replay__tags__name="1v1")
-    at_2v2 = ats.filter(replay__tags__name="2v2")
-    at_team = ats.exclude(replay__tags__name__in=["1v1", "2v2", "FFA"])
+    at_team = ats.filter(replay__tags__name="Team")
     at_ffa = ats.filter(replay__tags__name="FFA")
 
     c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
-    if at_1v1.filter(winner=False).count(): c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
-    else: c["at_1v1"]["ratio"] = "1.00"
-
-    c["at_2v2"] = {"all": at_2v2.count(), "win": at_2v2.filter(winner=True).count(), "loss": at_2v2.filter(winner=False).count()}
-    if at_2v2.filter(winner=False).count(): c["at_2v2"]["ratio"] = "%.02f"%(float(at_2v2.filter(winner=True).count())/at_2v2.filter(winner=False).count())
-    else: c["at_2v2"]["ratio"] = "1.00"
+    try:
+        c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
+    except ZeroDivisionError:
+        if at_1v1.count() == 0: c["at_1v1"]["ratio"] = "0.00"
+        else: c["at_1v1"]["ratio"] = "1.00"
 
     c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count()}
-    if at_team.filter(winner=False).count(): c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
-    else: c["at_team"]["ratio"] = "1.00"
+    try:
+        c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
+    except ZeroDivisionError:
+        if at_team.count() == 0: c["at_team"]["ratio"] = "0.00"
+        else: c["at_team"]["ratio"] = "1.00"
 
     c["at_ffa"] = {"all": at_ffa.count(), "win": at_ffa.filter(winner=True).count(), "loss": at_ffa.filter(winner=False).count()}
-    if at_ffa.filter(winner=False).count(): c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
-    else: c["at_ffa"]["ratio"] = "1.00"
+    try:
+        c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
+    except ZeroDivisionError:
+        if at_ffa.count() == 0: c["at_ffa"]["ratio"] = "0.00"
+        else: c["at_ffa"]["ratio"] = "1.00"
+
+    c["at_all"] = {"all": ats.count(), "win": ats.filter(winner=True).count(), "loss": ats.filter(winner=False).count()}
+    try:
+        c["at_all"]["ratio"] = "%.02f"%(float(ats.filter(winner=True).count())/ats.filter(winner=False).count())
+    except ZeroDivisionError:
+        if ats.count() == 0: c["at_all"]["ratio"] = "0.00"
+        else: c["at_all"]["ratio"] = "1.00"
 
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
