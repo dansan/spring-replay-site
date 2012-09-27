@@ -329,6 +329,7 @@ def win_loss(request, accountid):
     at_1v1 = ats.filter(replay__tags__name="1v1")
     at_2v2 = ats.filter(replay__tags__name="2v2")
     at_team = ats.exclude(replay__tags__name__in=["1v1", "2v2"])
+    at_ffa = ats.filter(replay__tags__name="ffa")
 
     c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
     if at_1v1.filter(winner=False).count(): c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
@@ -341,6 +342,10 @@ def win_loss(request, accountid):
     c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count()}
     if at_team.filter(winner=False).count(): c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
     else: c["at_team"]["ratio"] = "1.00"
+
+    c["at_ffa"] = {"all": at_ffa.count(), "win": at_ffa.filter(winner=True).count(), "loss": at_ffa.filter(winner=False).count()}
+    if at_ffa.filter(winner=False).count(): c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
+    else: c["at_ffa"]["ratio"] = "1.00"
 
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
