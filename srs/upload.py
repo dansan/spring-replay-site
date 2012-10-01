@@ -26,6 +26,7 @@ from common import all_page_infos
 from forms import UploadFileForm
 import parse_demo_file
 import spring_maps
+from rating import rate_match
 
 
 logger = logging.getLogger(__package__)
@@ -78,6 +79,7 @@ def upload(request):
                         replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+                        rate_match(replay)
         #            except Exception, e:
         #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
         if len(replays) == 0:
@@ -152,6 +154,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         return "4 server error, please try again later, or contact admin"
 
     logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+    rate_match(replay)
     return '0 received %d bytes, replay at "%s"'%(bytes_written, replay.get_absolute_url())
 
 def save_uploaded_file(ufile):
