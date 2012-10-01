@@ -44,7 +44,7 @@ class PlayerTable(tables.Table):
         order_by = "name"
 
 class GameTable(tables.Table):
-    name           = tables.LinkColumn('game_detail', args=[A('name')])
+    name           = tables.LinkColumn('gamerelease_detail', args=[A('name')])
     replays        = tables.Column(orderable=False)
     class Meta:
         attrs    = {'class': 'paleblue'}

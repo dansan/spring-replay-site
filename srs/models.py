@@ -107,6 +107,32 @@ class Replay(models.Model):
         get_latest_by = 'upload_date'
         ordering = ['-upload_date']
 
+    def game_release(self):
+        gr_name = self.gametype
+        try:
+            return GameRelease.objects.get(name=gr_name)
+        except:
+            game_name = str()
+            version = str()
+            in_version = False
+            for gr_name_part in gr_name.split():
+                if gr_name_part.isalpha() and not in_version:
+                    game_name += gr_name_part+" "
+                else:
+                    in_version = True
+                    version += gr_name_part+" "
+
+            game_name = game_name.rstrip()
+            version = version.rstrip()
+            if version[0].upper() == "V":
+                version = version[1:]
+            if version[0] == ".":
+                version = version[1:]
+
+            game, _ = Game.objects.get_or_create(name__startswith=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
+            return GameRelease.objects.create(name=gr_name, game=game, version=version)
+
+
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
     startrectbottom = models.FloatField(blank=True, null = True)
@@ -204,6 +230,72 @@ class SiteStats(models.Model):
     last_modified   = models.DateTimeField(auto_now=True)
 
 
+class Game(models.Model):
+    name         = models.CharField(max_length=256)
+    abbreviation = models.CharField(max_length=64)
+
+    def __unicode__(self):
+        return self.name[:70]+" ("+self.abbreviation+")"
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.game', [self.name])
+
+    class Meta:
+        ordering = ['name']
+
+
+class GameRelease(models.Model):
+    name    = models.CharField(max_length=256)
+    version = models.CharField(max_length=64)
+    game    = models.ForeignKey(Game)
+
+    def __unicode__(self):
+        return self.name[:70]+" | version: "+self.version+" | Game("+str(self.game.pk)+"): "+self.game.abbreviation
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.gamerelease', [self.name])
+
+    class Meta:
+        ordering = ['name', 'version']
+
+
+class Rating(models.Model):
+    playeraccount      = models.OneToOneField(PlayerAccount, unique=True, related_name='rating')
+    game               = models.ForeignKey(Game)
+
+    elo                = models.FloatField(default=1500.0)
+    elo_k              = models.FloatField(default=24.0)
+    glicko             = models.FloatField(default=1500.0)
+    glicko_rd          = models.FloatField(default=350.0)
+    glicko_last_period = models.DateTimeField(auto_now=True)
+    trueskill_mu       = models.FloatField(default=25.0)
+    trueskill_sigma    = models.FloatField(default=8.333)
+
+    def set_elo(self, elo_rating):
+        logger.debug("elo=%s", elo_rating.mean)
+        logger.debug("k=%s", elo_rating.k_factor)
+        self.elo = elo_rating.mean
+        self.elo_k = elo_rating.k_factor
+        self.save()
+
+    def set_glicko(self, glicko_rating):
+        self.glicko = glicko_rating.mean
+        self.glicko_rd = glicko_rating.stdev
+        self.glicko_last_period = glicko_rating.last_rating_period
+        self.save()
+
+    def set_trueskill(self, trueskill_rating):
+        self.trueskill_mu = trueskill_rating.mean
+        self.trueskill_sigma = trueskill_rating.stdev
+        self.save()
+
+    def __unicode__(self):
+        return "elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
+
+
+
 def update_stats():
     replays  = Replay.objects.count()
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
@@ -244,7 +336,6 @@ def update_stats():
         sist.comments = comments_s
         sist.save()
 
-
 # TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/user/"+self.username+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
@@ -263,6 +354,8 @@ def obj_del_callback(sender, instance, using, **kwargs):
 @receiver(post_save, sender=Replay)
 def replay_save_callback(sender, instance, using, **kwargs):
     logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
+    # check for new new Game[Release] object
+    instance.game_release()
     update_stats()
 
 # automatically refresh statistics when a replay is deleted

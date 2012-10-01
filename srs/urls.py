@@ -35,8 +35,10 @@ urlpatterns = patterns('',
     url(r'^players/$', 'srs.views.players'),
     url(r'^player/(?P<accountid>[\d-]+)/$', 'srs.views.player', name="player_detail"),
 
+    url(r'^game/(?P<name>[\w\ .:()\[\]-]+)/$', 'srs.views.game', name="game_detail"),
+
     url(r'^games/$', 'srs.views.games'),
-    url(r'^game/(?P<gametype>[\w\ .:()\[\]-]+)/$', 'srs.views.game', name="game_detail"),
+    url(r'^gamerelease/(?P<gametype>[\w\ .:()\[\]-]+)/$', 'srs.views.gamerelease', name="gamerelease_detail"),
 
     url(r'^users/$', 'srs.views.users'),
     url(r'^user/(?P<username>[\w\ .:()\[\]-]+)/$', 'srs.views.see_user', name="user_detail"),
@@ -45,4 +47,5 @@ urlpatterns = patterns('',
     url(r'^upload_date/(?P<shortdate>[\d-]+)/$', 'srs.views.upload_date'),
 
     url(r'^win_loss/(?P<accountid>[\d-]+)/$', 'srs.views.win_loss', name="win_loss"),
+    url(r'^initial_elo_rating/$', 'srs.rating.initial_elo_rating', name="initial_elo_rating"),
 )

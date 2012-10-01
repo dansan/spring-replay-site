@@ -23,5 +23,8 @@ admin.site.register(ModOption)
 admin.site.register(ReplayFile)
 admin.site.register(NewsItem)
 admin.site.register(UploadTmp)
+admin.site.register(Rating)
+admin.site.register(Game)
+admin.site.register(GameRelease)
 
 admin.site.register(UserProfile)

@@ -7,7 +7,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from django.core.context_processors import csrf
 
-from models import Tag, Map, Player, SiteStats, update_stats
+from models import Tag, Map, Player, SiteStats, update_stats, Game
 from django.contrib.comments import Comment
 
 def all_page_infos(request):
@@ -24,4 +24,5 @@ def all_page_infos(request):
     if sist.maps:     c["top_maps"]        = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]
     if sist.players:  c["top_players"]     = [Player.objects.get(id=int(x)) for x in sist.players.split('|')]
     if sist.comments: c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
+    c["all_games"] = Game.objects.all()
     return c

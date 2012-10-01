@@ -1,0 +1,34 @@
+{% extends 'srs_base.html' %}
+
+{% block pagetitle %}Initial ELO rating{% endblock %}
+
+{% block maincontent%}
+    <h1>Initial ELO rating</h1>
+    <p style="font-weight:bold;">Everyone starts with elo=1500 and k-factor=24</p>
+    <table border="1" cellpadding="5" cellspacing="5" rules="all">
+           <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+           </colgroup>
+           <th>Game</th>
+           <th>Replay</th>
+           <th>Player 1</th>
+           <th>ELO after match</th>
+           <th>Player 2</th>
+           <th>ELO after match</th>
+    {% for game, replay, rating_change in rating_changes %}
+           <tr>
+              <td><a href="{{ game.get_absolute_url }}">{{ game.name }}</a></td>
+              <td><a href="{{ replay.get_absolute_url }}">{{ replay.unixTime|date:'Y-m-d H:i:s' }}</a></td>
+              {% for pa, elo_rating in rating_change %}
+              <td>{{ pa.names }}</td>
+              <td>{{ elo_rating.mean|floatformat:3 }}</td>
+              {% endfor %}
+           </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

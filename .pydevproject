@@ -10,4 +10,7 @@
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/spring-replay-site</path>
 </pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>/usr/lib64/python2.7/site-packages/skills-0.1.0-py2.7.egg</path>
+</pydev_pathproperty>
 </pydev_project>

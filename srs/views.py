@@ -206,6 +206,12 @@ def player(request, accountid):
     replays = [player.replay for player in players]
     return replay_table(request, replays, "%d replays with player %s"%(len(replays), rep))
 
+def game(request, name):
+    game = get_object_or_404(Game, name=name)
+    gr_list = [{'name': gr.name, 'replays': Replay.objects.filter(gametype=gr.name).count()} for gr in GameRelease.objects.filter(game=game)]
+    table = GameTable(gr_list)
+    return all_of_a_kind_table(request, table, "all %d versions of game %s"%(len(gr_list), game.name))
+
 def games(request):
     games = []
     for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
@@ -214,7 +220,7 @@ def games(request):
     table = GameTable(games)
     return all_of_a_kind_table(request, table, "all %d games"%len(games))
 
-def game(request, gametype):
+def gamerelease(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
     return replay_table(request, replays, "%d replays of game '%s'"%(replays.count(), gametype))
 
