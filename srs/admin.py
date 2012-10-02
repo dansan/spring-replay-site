@@ -24,6 +24,7 @@ admin.site.register(ReplayFile)
 admin.site.register(NewsItem)
 admin.site.register(UploadTmp)
 admin.site.register(Rating)
+admin.site.register(RatingHistory)
 admin.site.register(Game)
 admin.site.register(GameRelease)
 
