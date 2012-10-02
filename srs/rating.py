@@ -13,10 +13,11 @@ from django.contrib.admin.views.decorators import staff_member_required
 from models import *
 from common import all_page_infos
 
-from skills import GameInfo, Match
+from skills import GameInfo, Match, Matches, RatingFactory
 from skills import Player as SkillsPlayer
 from skills import Team as SkillsTeam
 from skills.elo import EloCalculator, EloRating
+from skills.glicko import GlickoCalculator, GlickoRating
 
 
 import logging
@@ -24,7 +25,7 @@ logger = logging.getLogger(__package__)
 
 
 @staff_member_required
-def initial_elo_rating(request):
+def initial_rating(request):
     c = all_page_infos(request)
 
     c["rating_changes"] = list()
@@ -34,8 +35,7 @@ def initial_elo_rating(request):
             rating_change = rate_match(replay)
             c["rating_changes"].append((game, replay, rating_change))
 
-    logger.debug("rating_changes = %s", c["rating_changes"])
-    return render_to_response('initial_elo_rating.html', c, context_instance=RequestContext(request))
+    return render_to_response('initial_rating.html', c, context_instance=RequestContext(request))
 
 
 def rate_match(replay):
@@ -64,26 +64,36 @@ def rate_match(replay):
 
     # calculate ELO only for 1v1 (and exclude bots)
     if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
+        RatingFactory.rating_class = EloRating
         elo_teams = [SkillsTeam([(pa, EloRating(pa.rating.elo, pa.rating.elo_k)) for pa in team]) for team in teams]
-        match = Match(elo_teams, winner)
-        logger.debug("match = %s", match)
+        elo_match = Match(elo_teams, winner)
         # use lowest k-factor
         k_factor = reduce(min, [pa.rating.elo_k for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)])
 
+        RatingFactory.rating_class = GlickoRating
+        glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.rating.glicko, pa.rating.glicko_rd)) for pa in team]) for team in teams]
+        glicko_matches = Matches([Match(glicko_teams, winner)])
+        logger.debug("elo_match      = %s", elo_match)
+        logger.debug("glicko_matches = %s", glicko_matches)
+
         game_info = GameInfo()
         elo_calculator = EloCalculator(k_factor=k_factor)
-        elo_ratings = elo_calculator.new_ratings(game_info, match)
+        elo_ratings = elo_calculator.new_ratings(game_info, elo_match)
+        glicko_calculator = GlickoCalculator()
+        glicko_ratings = glicko_calculator.new_ratings(game_info, glicko_matches)
 
-        logger.debug("PlayerAccount = %s", PlayerAccount.objects.filter(player__replay=replay, player__spectator=False))
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             pa.rating.set_elo(elo_ratings.rating_by_id(pa))
-            rating_changes.append((pa, elo_ratings.rating_by_id(pa)))
+            pa.rating.set_glicko(glicko_ratings.rating_by_id(pa))
+            rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa)))
             rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game)
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
+            rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
+            rating_history.algo_change="B"
+            rating_history.save()
 
 
-#TODO: glicko
+#TODO: glicko period
 #TODO: trueskill
 
-    logger.debug("rating_changes = %s", rating_changes)
     return rating_changes

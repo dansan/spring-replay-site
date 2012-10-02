@@ -48,7 +48,7 @@ urlpatterns = patterns('',
 
     url(r'^win_loss/$', 'srs.views.win_loss_overview', name="win_loss_overview"),
     url(r'^win_loss/(?P<accountid>[\d-]+)/$', 'srs.views.win_loss', name="win_loss"),
-    url(r'^initial_elo_rating/$', 'srs.rating.initial_elo_rating', name="initial_elo_rating"),
+    url(r'^initial_rating/$', 'srs.rating.initial_rating', name="initial_rating"),
     url(r'^rating_history/$', 'srs.views.rating_history', name="rating_history"),
     url(r'^hall_of_fame/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
 )

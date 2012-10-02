@@ -291,7 +291,7 @@ class RatingBase(models.Model):
     elo_k              = models.FloatField(default=24.0)
     glicko             = models.FloatField(default=1500.0)
     glicko_rd          = models.FloatField(default=350.0)
-    glicko_last_period = models.DateTimeField(auto_now_add=True)
+    glicko_last_period = models.DateTimeField(auto_now_add=True, blank=True, null = True)
     trueskill_mu       = models.FloatField(default=25.0)
     trueskill_sigma    = models.FloatField(default=8.333)
 
@@ -302,7 +302,7 @@ class RatingBase(models.Model):
 
     def set_glicko(self, glicko_rating):
         self.glicko = glicko_rating.mean
-        self.glicko_rd = glicko_rating.stdev
+        self.glicko_rd = min(glicko_rating.stdev, 50) # never drop RD < 50, to allow for improvements for regular players
         self.glicko_last_period = glicko_rating.last_rating_period
         self.save()
 
@@ -337,7 +337,9 @@ class RatingHistory(RatingBase):
     match_date    = models.DateTimeField(blank=True, null=True)
     ALGO_CHOICES  = (('E', u'ELO'),
                      ('G', u'Glicko'),
+                     ('B', u'ELO & Glicko'),
                      ('T', u'Trueskill'),
+                     ('A', u'ELO, Glicko & Trueskill'),
                      ('C', u'Creation'),
                      )
     algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="C")
@@ -467,9 +469,7 @@ def ratinghistory_save_callback(sender, instance, **kwargs):
 # set sorting info when a RatingHistory is saved
 @receiver(post_save, sender=Rating)
 def rating_save_callback(sender, instance, **kwargs):
-    logger.debug("instance=%s", instance)
     # check for new new Game[Release] object
     if kwargs["created"]:
         instance.playername = Player.objects.filter(account=instance.playeraccount).values_list("name")[0][0]
         instance.save()
-        logger.debug("created=True, instance.playername =%s", instance.playername )

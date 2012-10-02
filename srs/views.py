@@ -386,13 +386,13 @@ def win_loss(request, accountid):
 @never_cache
 def hall_of_fame(request):
     table = RatingTable(Rating.objects.all())
-    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ATM only ELO is implemented, and that only for 1v1!"
+    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ELO and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm (I know that' a problem)."
     return all_of_a_kind_table(request, table, "Hall Of Fame", intro_text=intro_text)
 
 @never_cache
 def rating_history(request):
     table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ATM only ELO is implemented, and that only for 1v1!"
+    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ELO and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm (I know that' a problem)."
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
 @login_required

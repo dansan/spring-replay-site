@@ -75,6 +75,7 @@ class RatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     elo             = tables.Column()
     glicko          = tables.Column()
+    glicko_rd       = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
@@ -85,6 +86,8 @@ class RatingHistoryTable(tables.Table):
         return '%.3f' % value
     def render_glicko(self, value):
         return '%.3f' % value
+    def render_glicko_rd(self, value):
+        return '%.1f' % value
     def render_trueskill_mu(self, value):
         return '%.3f' % value
 
@@ -93,18 +96,21 @@ class RatingTable(tables.Table):
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     elo             = tables.Column()
     glicko          = tables.Column()
+    glicko_rd       = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "elo", "glicko", "trueskill_mu")
+        fields = ("playername", "game", "elo", "glicko", "glicko_rd", "trueskill_mu")
         attrs    = {'class': 'paleblue'}
-        order_by = "-elo"
+        order_by = ("-elo", "-glicko", "-trueskill_mu")
 
     def render_elo(self, value):
         return '%.3f' % value
     def render_glicko(self, value):
         return '%.3f' % value
+    def render_glicko_rd(self, value):
+        return '%.1f' % value
     def render_trueskill_mu(self, value):
         return '%.3f' % value
 
