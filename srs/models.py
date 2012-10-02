@@ -132,6 +132,25 @@ class Replay(models.Model):
             game, _ = Game.objects.get_or_create(name__startswith=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
+    def match_type(self):
+        """ 1v1 / 6v6 / FFA / ..."""
+        try:
+            tags = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')
+            if tags.exists():
+                if tags[0].name == "1v1":
+                    return tags[0].name
+                else:
+                    return "Team ("+tags[0].name+")"
+            tags = self.tags.filter(name__regex=r'^TeamFFA$')
+            if tags.exists():
+                return tags[0].name
+            tags = self.tags.filter(name__regex=r'^FFA$')
+            if tags.exists():
+                return tags[0].name
+        except:
+            pass
+        return self.title
+
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -150,6 +169,10 @@ class PlayerAccount(models.Model):
 
     def __unicode__(self):
         return str(self.accountid)+u" "+self.names[:15]
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.player', [self.accountid])
 
     def replay_count(self):
         return Player.objects.filter(account=self).count()
@@ -261,21 +284,18 @@ class GameRelease(models.Model):
         ordering = ['name', 'version']
 
 
-class Rating(models.Model):
-    playeraccount      = models.OneToOneField(PlayerAccount, unique=True, related_name='rating')
+class RatingBase(models.Model):
     game               = models.ForeignKey(Game)
 
     elo                = models.FloatField(default=1500.0)
     elo_k              = models.FloatField(default=24.0)
     glicko             = models.FloatField(default=1500.0)
     glicko_rd          = models.FloatField(default=350.0)
-    glicko_last_period = models.DateTimeField(auto_now=True)
+    glicko_last_period = models.DateTimeField(auto_now_add=True)
     trueskill_mu       = models.FloatField(default=25.0)
     trueskill_sigma    = models.FloatField(default=8.333)
 
     def set_elo(self, elo_rating):
-        logger.debug("elo=%s", elo_rating.mean)
-        logger.debug("k=%s", elo_rating.k_factor)
         self.elo = elo_rating.mean
         self.elo_k = elo_rating.k_factor
         self.save()
@@ -294,6 +314,60 @@ class Rating(models.Model):
     def __unicode__(self):
         return "elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
 
+
+class Rating(RatingBase):
+    playeraccount = models.OneToOneField(PlayerAccount, unique=True, related_name='rating')
+
+    # this fields is really redundant, but neccessary for db-side ordering of tables
+    playername    = models.CharField(max_length=128, blank=True, null=True)
+
+    def __unicode__(self):
+        return str(self.playername)+" | "+super(Rating, self).__unicode__()
+
+    class Meta:
+        ordering = ['-elo', '-glicko', '-trueskill_mu']
+
+
+class RatingHistory(RatingBase):
+    playeraccount = models.ForeignKey(PlayerAccount)
+    match         = models.ForeignKey(Replay)
+
+    # these fields are really redundant, but neccessary for db-side ordering of tables
+    playername    = models.CharField(max_length=128, blank=True, null=True)
+    match_date    = models.DateTimeField(blank=True, null=True)
+    ALGO_CHOICES  = (('E', u'ELO'),
+                     ('G', u'Glicko'),
+                     ('T', u'Trueskill'),
+                     ('C', u'Creation'),
+                     )
+    algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="C")
+
+    def set_elo(self, elo_rating):
+        super(RatingHistory, self).set_elo(elo_rating)
+        self.algo_change = "E"
+        self.save()
+
+    def set_glicko(self, glicko_rating):
+        super(RatingHistory, self).set_glicko(glicko_rating)
+        self.algo_change = "G"
+        self.save()
+
+    def set_trueskill(self, trueskill_rating):
+        super(RatingHistory, self).set_trueskill(trueskill_rating)
+        self.algo_change = "T"
+        self.save()
+
+
+    def __unicode__(self):
+        return self.algo_change+" | "+self.playername+" | "+str(self.match_date)+" | "+super(RatingHistory, self).__unicode__()
+
+    def set_sorting_data(self):
+        self.playername = Player.objects.filter(account=self.playeraccount).values_list("name")[0][0]
+        self.match_date = self.match.unixTime
+        self.save()
+
+    class Meta:
+        ordering = ['-match_date', 'playername']
 
 
 def update_stats():
@@ -346,40 +420,56 @@ Comment.comment_short = lambda self: self.comment[:50]+"..."
 
 # automatically log each DB object delete
 @receiver(post_delete)
-def obj_del_callback(sender, instance, using, **kwargs):
+def obj_del_callback(sender, instance, **kwargs):
     # Session obj has u'str encoded hex key as pk
     logger.debug("%s.delete(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
 
 # automatically refresh statistics when a replay is created or modified
 @receiver(post_save, sender=Replay)
-def replay_save_callback(sender, instance, using, **kwargs):
+def replay_save_callback(sender, instance, **kwargs):
     logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
     # check for new new Game[Release] object
-    instance.game_release()
+    if kwargs["created"]: instance.game_release()
     update_stats()
 
 # automatically refresh statistics when a replay is deleted
 @receiver(post_delete, sender=Replay)
-def replay_del_callback(sender, instance, using, **kwargs):
+def replay_del_callback(sender, instance, **kwargs):
     update_stats()
 
 # automatically refresh statistics when a replay is created or modified
 @receiver(post_save, sender=Comment)
-def comment_save_callback(sender, instance, using, **kwargs):
+def comment_save_callback(sender, instance, **kwargs):
     logger.debug("Comment.save(%d) : '%s'", instance.pk, instance)
     update_stats()
 
 # automatically refresh statistics when a replay is deleted
 @receiver(post_delete, sender=Comment)
-def comment_del_callback(sender, instance, using, **kwargs):
+def comment_del_callback(sender, instance, **kwargs):
     update_stats()
 
 # automatically log creation of PlayerAccounts
 @receiver(post_save, sender=PlayerAccount)
-def playerAccount_save_callback(sender, instance, using, **kwargs):
+def playerAccount_save_callback(sender, instance, **kwargs):
     logger.debug("PlayerAccount.save(%d): accountid=%d names=%s", instance.pk, instance.accountid, instance.names)
 
 # automatically log creation of Players
 @receiver(post_save, sender=Player)
-def player_save_callback(sender, instance, using, **kwargs):
+def player_save_callback(sender, instance, **kwargs):
     logger.debug("Player.save(%d): account=%d name=%s spectator=%s", instance.pk, instance.account.accountid, instance.name, instance.spectator)
+
+# set sorting info when a RatingHistory is saved
+@receiver(post_save, sender=RatingHistory)
+def ratinghistory_save_callback(sender, instance, **kwargs):
+    # check for new new Game[Release] object
+    if kwargs["created"]: instance.set_sorting_data()
+
+# set sorting info when a RatingHistory is saved
+@receiver(post_save, sender=Rating)
+def rating_save_callback(sender, instance, **kwargs):
+    logger.debug("instance=%s", instance)
+    # check for new new Game[Release] object
+    if kwargs["created"]:
+        instance.playername = Player.objects.filter(account=instance.playeraccount).values_list("name")[0][0]
+        instance.save()
+        logger.debug("created=True, instance.playername =%s", instance.playername )

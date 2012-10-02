@@ -62,8 +62,8 @@ def rate_match(replay):
         except:
             Rating.objects.create(playeraccount=pa, game=game)
 
-    if allyteams.count() == 2 and len(teams) == 2:
-        # calculate ELO only for 1v1
+    # calculate ELO only for 1v1 (and exclude bots)
+    if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
         elo_teams = [SkillsTeam([(pa, EloRating(pa.rating.elo, pa.rating.elo_k)) for pa in team]) for team in teams]
         match = Match(elo_teams, winner)
         logger.debug("match = %s", match)
@@ -78,6 +78,9 @@ def rate_match(replay):
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             pa.rating.set_elo(elo_ratings.rating_by_id(pa))
             rating_changes.append((pa, elo_ratings.rating_by_id(pa)))
+            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game)
+            rating_history.set_elo(elo_ratings.rating_by_id(pa))
+
 
 #TODO: glicko
 #TODO: trueskill

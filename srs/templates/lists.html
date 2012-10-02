@@ -3,14 +3,15 @@
 
 {% block listheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />{% endblock %}
 
-{% block pagetitle %}List of {{ pagetitle }}{% endblock %}
+{% block pagetitle %}{{ pagetitle }}{% endblock %}
 
 {% block maincontent %}
         <div class="left">
 {% block search %}{% endblock %}
 
 {% block result_table %}
-            <h2>List of {{ pagetitle }}</h2>
+            <h2>{{ pagetitle }}</h2>
+            {% if intro_text %}<p>{{ intro_text }}</p>{% endif %}
 {% if table.data|length == 0 %}
             <p><br/><b>No result.</b><br/></p>
 {% else %}

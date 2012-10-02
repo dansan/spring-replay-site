@@ -53,14 +53,15 @@ def replay_table(request, replays, title, template="lists.html", form=None, ext=
     if form: c['form'] = form
     return render_to_response(template, c, context_instance=RequestContext(request))
 
-def all_of_a_kind_table(request, table, title):
+def all_of_a_kind_table(request, table, title, template="lists.html", intro_text=""):
     from django_tables2 import RequestConfig
 
     c = all_page_infos(request)
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
     c['pagetitle'] = title
-    return render_to_response('lists.html', c, context_instance=RequestContext(request))
+    c['intro_text'] = intro_text
+    return render_to_response(template, c, context_instance=RequestContext(request))
 
 #@cache_page(3600 * 24)
 def replay(request, gameID):
@@ -163,7 +164,7 @@ def download(request, gameID):
 
 def tags(request):
     table = TagTable(Tag.objects.all())
-    return all_of_a_kind_table(request, table, "all %d tags"%Tag.objects.count())
+    return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count())
 
 def tag(request, reqtag):
     replays = Replay.objects.filter(tags__name=reqtag)
@@ -171,7 +172,7 @@ def tag(request, reqtag):
 
 def maps(request):
     table = MapTable(Map.objects.all())
-    return all_of_a_kind_table(request, table, "all %d maps"%Map.objects.count())
+    return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count())
 
 def rmap(request, mapname):
     replays = Replay.objects.filter(map_info__name=mapname)
@@ -186,7 +187,7 @@ def players(request):
                             'spectator_count': pa.spectator_count(),
                             'accid': pa.accountid})
     table = PlayerTable(players)
-    return all_of_a_kind_table(request, table, "all %d players"%len(players))
+    return all_of_a_kind_table(request, table, "List of all %d players"%len(players))
 
 def player(request, accountid):
     rep = ""
@@ -210,7 +211,7 @@ def game(request, name):
     game = get_object_or_404(Game, name=name)
     gr_list = [{'name': gr.name, 'replays': Replay.objects.filter(gametype=gr.name).count()} for gr in GameRelease.objects.filter(game=game)]
     table = GameTable(gr_list)
-    return all_of_a_kind_table(request, table, "all %d versions of game %s"%(len(gr_list), game.name))
+    return all_of_a_kind_table(request, table, "List of all %d versions of game %s"%(len(gr_list), game.name))
 
 def games(request):
     games = []
@@ -218,7 +219,7 @@ def games(request):
         games.append({'name': gt,
                       'replays': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
-    return all_of_a_kind_table(request, table, "all %d games"%len(games))
+    return all_of_a_kind_table(request, table, "List of all %d games"%len(games))
 
 def gamerelease(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
@@ -326,6 +327,21 @@ def search_replays(query):
 
     return replays
 
+def win_loss_overview(request):
+    c = all_page_infos(request)
+
+    playerlist = list()
+    for pa in PlayerAccount.objects.all():
+        try:
+            name = Player.objects.filter(account=pa).values_list("name")[0][0]
+            playerlist.append((pa.accountid, name))
+        except:
+            pass
+    playerlist.sort(key=operator.itemgetter(1))
+    c["playerlist"] = playerlist
+    return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
+
+@never_cache
 def win_loss(request, accountid):
     c = all_page_infos(request)
 
@@ -367,6 +383,18 @@ def win_loss(request, accountid):
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
 
+@never_cache
+def hall_of_fame(request):
+    table = RatingTable(Rating.objects.all())
+    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ATM only ELO is implemented, and that only for 1v1!"
+    return all_of_a_kind_table(request, table, "Hall Of Fame", intro_text=intro_text)
+
+@never_cache
+def rating_history(request):
+    table = RatingHistoryTable(RatingHistory.objects.all())
+    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ATM only ELO is implemented, and that only for 1v1!"
+    return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
+
 @login_required
 @never_cache
 def user_settings(request):
@@ -376,7 +404,7 @@ def user_settings(request):
 
 def users(request):
     table = UserTable(User.objects.all())
-    return all_of_a_kind_table(request, table, "all %d uploaders"%User.objects.count())
+    return all_of_a_kind_table(request, table, "List of all %d uploaders"%User.objects.count())
 
 def see_user(request, username):
     try:
@@ -396,7 +424,7 @@ def upload_date(request, shortdate):
 
 def all_comments(request):
     table = CommentTable(Comment.objects.all())
-    return all_of_a_kind_table(request, table, "all %d comments"%Comment.objects.count())
+    return all_of_a_kind_table(request, table, "List of all %d comments"%Comment.objects.count())
 
 @never_cache
 def login(request):

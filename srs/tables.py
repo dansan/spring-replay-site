@@ -8,6 +8,7 @@
 
 import django_tables2 as tables
 from django_tables2 import A
+from models import Rating
 
 
 class ReplayTable(tables.Table):
@@ -60,8 +61,58 @@ class UserTable(tables.Table):
 class CommentTable(tables.Table):
     submit_date     = tables.Column()
     user_name       = tables.LinkColumn('user_detail', args=[A('user_name')])
-    replay          = tables.LinkColumn('replay_detail', args=[A('content_object.gameID')], orderable=False)
+    replay          = tables.LinkColumn('replay_detail', args=[A('replay.gameID')], orderable=False)
     comment_short   = tables.Column(orderable=False)
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-submit_date"
+
+class RatingHistoryTable(tables.Table):
+    match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
+    algo_change     = tables.Column(verbose_name="Algo")
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    match           = tables.LinkColumn('replay_detail', args=[A('match.gameID')], orderable=False, accessor=A("match.match_type"))
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "match_date"
+
+    def render_elo(self, value):
+        return '%.3f' % value
+    def render_glicko(self, value):
+        return '%.3f' % value
+    def render_trueskill_mu(self, value):
+        return '%.3f' % value
+
+class RatingTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        model = Rating
+        fields = ("playername", "game", "elo", "glicko", "trueskill_mu")
+        attrs    = {'class': 'paleblue'}
+        order_by = "-elo"
+
+    def render_elo(self, value):
+        return '%.3f' % value
+    def render_glicko(self, value):
+        return '%.3f' % value
+    def render_trueskill_mu(self, value):
+        return '%.3f' % value
+
+#    game               = models.ForeignKey(Game)
+#
+#    elo                = models.FloatField(default=1500.0)
+#    elo_k              = models.FloatField(default=24.0)
+#    glicko             = models.FloatField(default=1500.0)
+#    glicko_rd          = models.FloatField(default=350.0)
+#    glicko_last_period = models.DateTimeField(auto_now_add=True)
+#    trueskill_mu
