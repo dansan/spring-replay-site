@@ -4,35 +4,37 @@
 
 {% block maincontent%}
     <h1>Initial ELO rating</h1>
-    <p style="font-weight:bold;">Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).</p>
+    <p><br/></p>
+    <p style="font-weight:bold;">Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).</p>
+    <p style="font-weight:bold;">Elo and Glicko are only calculated for 1v1.</p>
+    <p><br/></p>
     <table border="1" cellpadding="5" cellspacing="5" rules="all">
-           <colgroup>
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-              <col />
-           </colgroup>
            <th>Game</th>
            <th>Replay</th>
-           <th>Player 1</th>
+           <th>Type</th>
+{% for num in sixteen %}
+           <th>Player {{num }}</th>
+    {% if forloop.counter <= 2 %}
            <th>ELO after match</th>
            <th>Glicko after match</th>
-           <th>Player 2</th>
-           <th>ELO after match</th>
-           <th>Glicko after match</th>
-    {% for game, replay, rating_change in rating_changes %}
+    {% endif %}
+           <th>TrueSkill after match</th>
+{% endfor %}
+{% for game, replay, rating_change in rating_changes %}
            <tr>
-              <td><a href="{{ game.get_absolute_url }}">{{ game.name }}</a></td>
+              <td><a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a></td>
               <td><a href="{{ replay.get_absolute_url }}">{{ replay.unixTime|date:'Y-m-d H:i:s' }}</a></td>
-              {% for pa, elo_rating, glicko_rating in rating_change %}
+              <td>{{ replay.match_type }}</td>
+    {% for pa, elo_rating, glicko_rating, ts_rating in rating_change %}
               <td>{{ pa.names }}</td>
-              <td>{{ elo_rating.mean|floatformat:3 }}</td>
-              <td>{{ glicko_rating.mean|floatformat:3 }} ({{ glicko_rating.stdev|floatformat:1 }})</td>
-              {% endfor %}
-           </tr>
+        {% if forloop.counter <= 2 %}
+              <td>{% if elo_rating %}{{ elo_rating.mean|floatformat:3 }}{% endif %}</td>
+              <td>{% if glicko_rating %}{{ glicko_rating.mean|floatformat:3 }} ({{ glicko_rating.stdev|floatformat:1 }}){% endif %}</td>
+        {% endif %}
+              <td>{% if ts_rating %}{{ ts_rating.mean|floatformat:3 }} ({{ ts_rating.stdev|floatformat:1 }}){% endif %}</td>
     {% endfor %}
+           </tr>
+{% endfor %}
     </table>
     <p><br/></p>
 {% endblock %}

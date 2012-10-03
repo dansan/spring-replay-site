@@ -314,7 +314,7 @@ class RatingBase(models.Model):
     glicko_rd          = models.FloatField(default=350.0)
     glicko_last_period = models.DateTimeField(auto_now_add=True, blank=True, null = True)
     trueskill_mu       = models.FloatField(default=25.0)
-    trueskill_sigma    = models.FloatField(default=8.333)
+    trueskill_sigma    = models.FloatField(default=25.0/3)
 
     def set_elo(self, elo_rating):
         self.elo = elo_rating.mean
