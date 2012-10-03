@@ -81,7 +81,7 @@
 	       <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	       <p><br/></p>
 	    </div>
-	    <div class="left" style="width: 120px; padding: 0 8px;">
+	    <div class="left" style="width: 220px; padding: 0 8px;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
 	        {% for at,players in allyteams %}<b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
 	        <ul>

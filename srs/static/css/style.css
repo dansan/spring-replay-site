@@ -118,7 +118,7 @@ input.login {
 
 .content {
 	margin: 10px auto;
-	width: 760px;
+	width: 860px;
 }
 
 .logo {
@@ -186,7 +186,7 @@ input.login {
 .search_field {
 	text-align: right;
 	float: right;
-	width: 540px;
+	width: 590px;
 	height: 38px;
 	background: #464548 url("/static/img/searchbg.gif") no-repeat top right;
 	color: #000;
@@ -212,7 +212,7 @@ input.login {
 	float: left;
 	height: 33px;
 	padding: 15px 0 0 15px;
-	width: 192px;
+	width: 242px;
 	background: #6E6E6E url("/static/img/newsletterbg.gif") no-repeat;
 	color: #FFF;
 	margin: 0 0 3px 0;
@@ -232,7 +232,7 @@ input.login {
 
 .left {
 	float: left;
-	width: 490px;
+	width: 590px;
 	margin: 0 0 10px 0;
 }
 	.left_articles {
