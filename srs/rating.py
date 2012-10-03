@@ -81,7 +81,7 @@ def initial_rating(request):
         replays = Replay.objects.filter(gametype__in=gamereleases, tags__name__regex=r'^([0-9]v[0-9]|FFA|TeamFFA)$').exclude(tags__name__in=["Bot", "SP"]).distinct().order_by("unixTime")
         logger.info("Game = %s, number of replays = %d", game, replays.count())
         for replay in replays:
-            rating_change = rate_match(replay)
+            rating_change = rate_match(replay, from_initial_rating=True)
             count = 1
             csv_row = [game.abbreviation, replay.unixTime.strftime("%Y-%m-%d %H:%M:%S"), replay.match_type()]
             for pa, elo_rating, glicko_rating, ts_rating in rating_change:
@@ -113,9 +113,16 @@ def initial_rating(request):
     return render_to_response('initial_rating.html', c, context_instance=RequestContext(request))
 
 
-def rate_match(replay):
+def rate_match(replay, from_initial_rating=False):
     if replay.notcomplete:
         logger.error("Replay %s is not complete, cannot compute.", replay.gameID)
+        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
+
+    if settings.INITIAL_RATING and not from_initial_rating:
+        # queue match to be rated after initial_rating() has run
+        RatingQueue.objects.create(replay=replay)
+        logger.info("initial_rating() is running, queued replay %s", replay.gameID)
+        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
 
     game = Game.objects.get(gamerelease__name=replay.gametype)
 
@@ -123,7 +130,8 @@ def rate_match(replay):
 
     # do not allow bots
     if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams, accountid=0).exists():
-        return [(PlayerAccount.objects.get(0), None, None, GaussianRating(0, 0))]
+        logger.info("Replay %s has a bot as player, not rating.", replay.gameID)
+        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
 
     rating_changes = list()
 

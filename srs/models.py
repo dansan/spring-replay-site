@@ -390,6 +390,11 @@ class RatingHistory(RatingBase):
         ordering = ['-match_date', 'playername']
 
 
+class RatingQueue(models.Model):
+    """used during long running initial_rating()"""
+    replay = models.ForeignKey(Replay)
+
+
 def update_stats():
     replays  = Replay.objects.count()
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
