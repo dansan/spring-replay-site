@@ -12,10 +12,30 @@
 {% block result_table %}
             <h2>{{ pagetitle }}</h2>
             {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
-{% if table.data|length == 0 %}
+
+            <h3>Ranking 1v1</h3>
+{% if table_1v1.data|length == 0 %}
             <p><br/><b>No result.</b><br/></p>
 {% else %}
-{% render_table table %}
+{% render_table table_1v1 %}
+{% endif %}
+            <h3>Ranking Team</h3>
+{% if table_team.data|length == 0 %}
+            <p><br/><b>No result.</b><br/></p>
+{% else %}
+{% render_table table_team %}
+{% endif %}
+            <h3>Ranking FFA</h3>
+{% if table_ffa.data|length == 0 %}
+            <p><br/><b>No result.</b><br/></p>
+{% else %}
+{% render_table table_ffa %}
+{% endif %}
+            <h3>Ranking TeamFFA</h3>
+{% if table_teamffa.data|length == 0 %}
+            <p><br/><b>No result.</b><br/></p>
+{% else %}
+{% render_table table_teamffa %}
 {% endif %}
 {% endblock %}
         </div>

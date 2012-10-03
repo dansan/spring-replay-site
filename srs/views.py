@@ -53,7 +53,7 @@ def replay_table(request, replays, title, template="lists.html", form=None, ext=
     if form: c['form'] = form
     return render_to_response(template, c, context_instance=RequestContext(request))
 
-def all_of_a_kind_table(request, table, title, template="lists.html", intro_text=""):
+def all_of_a_kind_table(request, table, title, template="lists.html", intro_text=None):
     from django_tables2 import RequestConfig
 
     c = all_page_infos(request)
@@ -385,14 +385,29 @@ def win_loss(request, accountid):
 
 @never_cache
 def hall_of_fame(request):
-    table = RatingTable(Rating.objects.all())
-    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ELO and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm (I know that' a problem)."
-    return all_of_a_kind_table(request, table, "Hall Of Fame", intro_text=intro_text)
+    from django_tables2 import RequestConfig
+
+    c = all_page_infos(request)
+
+    c["table_1v1"]     = RatingTable(Rating.objects.filter(match_type="1"), prefix="1-")
+    c["table_team"]    = RatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
+    c["table_ffa"]     = RatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
+    c["table_teamffa"] = RatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
+    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1.", "Glickos rating period is not used atm (I know that' a problem)."]
+    c['pagetitle'] = "Hall Of Fame"
+
+    rc = RequestConfig(request, paginate={"per_page": 50})
+    rc.configure(c["table_1v1"])
+    rc.configure(c["table_team"])
+    rc.configure(c["table_ffa"])
+    rc.configure(c["table_teamffa"])
+
+    return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
 @never_cache
 def rating_history(request):
     table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = "Everyone starts with elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3). ELO and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm (I know that' a problem)."
+    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1.", "Glickos rating period is not used atm (I know that' a problem)."]
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
 @login_required

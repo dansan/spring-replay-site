@@ -105,6 +105,9 @@ def initial_rating(request):
             if len(c["rating_changes"])%50 == 0:
                 logger.info("... %d replays done", len(c["rating_changes"]))
 
+    logger.info("rote csv to %s", csvfile.name)
+    csvfile.close()
+
     # this is stupid, but I don't know how to do it better :)
     c["sixteen"] = range(1,17)
     return render_to_response('initial_rating.html', c, context_instance=RequestContext(request))
