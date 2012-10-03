@@ -390,13 +390,13 @@ def hall_of_fame(request):
     c = all_page_infos(request)
 
     c["table_1v1"]     = RatingTable(Rating.objects.filter(match_type="1"), prefix="1-")
-    c["table_team"]    = RatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
-    c["table_ffa"]     = RatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
-    c["table_teamffa"] = RatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
+    c["table_team"]    = TSRatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
+    c["table_ffa"]     = TSRatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
+    c["table_teamffa"] = TSRatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
     c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1.", "Glickos rating period is not used atm (I know that' a problem)."]
     c['pagetitle'] = "Hall Of Fame"
 
-    rc = RequestConfig(request, paginate={"per_page": 50})
+    rc = RequestConfig(request, paginate={"per_page": 20})
     rc.configure(c["table_1v1"])
     rc.configure(c["table_team"])
     rc.configure(c["table_ffa"])

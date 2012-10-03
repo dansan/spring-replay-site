@@ -135,25 +135,26 @@ class Replay(models.Model):
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA"""
         try:
-            tags = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')
-            if tags.exists():
-                if tags[0].name == "1v1":
-                    return tags[0].name
-                else:
-                    return "Team"
-            tags = self.tags.filter(name__regex=r'^TeamFFA$')
-            if tags.exists():
-                return tags[0].name
-            tags = self.tags.filter(name__regex=r'^FFA$')
-            if tags.exists():
-                return tags[0].name
-        except:
-            pass
+            tag = self.tags.get(name__regex=r'^[0-9]v[0-9]$')
+            if tag.name == "1v1":
+                return tag.name
+            else:
+                return "Team"
+        except: pass
+        try:
+            tag = self.tags.get(name__regex=r'^TeamFFA$')
+            return tag.name
+        except: pass
+        try:
+            tag = self.tags.get(name__regex=r'^FFA$')
+            return tag.name
+        except: pass
+
         return self.title
 
     def match_type_short(self):
         """returns string (from match_type()): 1 / T / F / G"""
-        if self.match_type()[0] == "TeamFFA": return "G"
+        if self.match_type() == "TeamFFA": return "G"
         else: return self.match_type()[0]
 
     def num_players(self):
@@ -194,6 +195,10 @@ class PlayerAccount(models.Model):
 
     def spectator_count(self):
         return Player.objects.filter(account=self, spectator=True).count()
+
+    def get_rating(self, game, match_type):
+        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={"playeraccount": self, "game": game, "match_type": match_type})
+        return rating
 
     class Meta:
         ordering = ['accountid']
@@ -298,7 +303,6 @@ class GameRelease(models.Model):
     class Meta:
         ordering = ['name', 'version']
 
-
 class RatingBase(models.Model):
     game               = models.ForeignKey(Game)
     MATCH_TYPE_CHOICES = (('1', u'1v1'),
@@ -307,6 +311,9 @@ class RatingBase(models.Model):
                            ('G', u'TeamFFA'),
                            )
     match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES)
+    playeraccount = models.ForeignKey(PlayerAccount)
+    # this fields is really redundant, but neccessary for db-side ordering of tables
+    playername    = models.CharField(max_length=128, blank=True, null=True)
 
     elo                = models.FloatField(default=1500.0)
     elo_k              = models.FloatField(default=24.0)
@@ -333,28 +340,18 @@ class RatingBase(models.Model):
         self.save()
 
     def __unicode__(self):
-        return "elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
-
-
-class Rating(RatingBase):
-    playeraccount = models.OneToOneField(PlayerAccount, unique=True, related_name='rating')
-
-    # this fields is really redundant, but neccessary for db-side ordering of tables
-    playername    = models.CharField(max_length=128, blank=True, null=True)
-
-    def __unicode__(self):
-        return str(self.playername)+" | "+super(Rating, self).__unicode__()
+        return str(self.playername)+" | "+self.match_type+" | "+"elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
 
     class Meta:
         ordering = ['-elo', '-glicko', '-trueskill_mu']
 
+class Rating(RatingBase):
+    pass
 
 class RatingHistory(RatingBase):
-    playeraccount = models.ForeignKey(PlayerAccount)
     match         = models.ForeignKey(Replay)
 
-    # these fields are really redundant, but neccessary for db-side ordering of tables
-    playername    = models.CharField(max_length=128, blank=True, null=True)
+    # this fields is really redundant, but neccessary for db-side ordering of tables
     match_date    = models.DateTimeField(blank=True, null=True)
     ALGO_CHOICES  = (('E', u'ELO'),
                      ('G', u'Glicko'),
@@ -382,7 +379,7 @@ class RatingHistory(RatingBase):
 
 
     def __unicode__(self):
-        return self.algo_change+" | "+self.playername+" | "+str(self.match_date)+" | "+super(RatingHistory, self).__unicode__()
+        return str(self.playername)+" | "+str(self.match_date)+" | "+self.algo_change+" | "+super(RatingHistory, self).__unicode__()
 
     def set_sorting_data(self):
         self.playername = Player.objects.filter(account=self.playeraccount).values_list("name")[0][0]
@@ -441,6 +438,13 @@ User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count(
 Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50]+"..."
 
+# HEAVY DEBUG
+# automatically log each DB object save
+#@receiver(post_save)
+#def obj_save_callback(sender, instance, **kwargs):
+#    # Session obj has u'str encoded hex key as pk
+#    logger.debug("%s.save(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
+
 # automatically log each DB object delete
 @receiver(post_delete)
 def obj_del_callback(sender, instance, **kwargs):
@@ -475,11 +479,6 @@ def comment_del_callback(sender, instance, **kwargs):
 @receiver(post_save, sender=PlayerAccount)
 def playerAccount_save_callback(sender, instance, **kwargs):
     logger.debug("PlayerAccount.save(%d): accountid=%d names=%s", instance.pk, instance.accountid, instance.names)
-
-# automatically log creation of Players
-@receiver(post_save, sender=Player)
-def player_save_callback(sender, instance, **kwargs):
-    logger.debug("Player.save(%d): account=%d name=%s spectator=%s", instance.pk, instance.account.accountid, instance.name, instance.spectator)
 
 # set sorting info when a RatingHistory is saved
 @receiver(post_save, sender=RatingHistory)

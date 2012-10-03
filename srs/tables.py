@@ -89,17 +89,30 @@ class RatingHistoryTable(tables.Table):
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
+class TSRatingTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        model = Rating
+        fields = ("playername", "game", "trueskill_mu")
+        attrs    = {'class': 'paleblue'}
+        order_by = "-trueskill_mu"
+
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+
 class RatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
-    match_type      = tables.Column()
     elo             = tables.Column()
     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "match_type", "elo", "glicko", "trueskill_mu")
+        fields = ("playername", "game", "elo", "glicko", "trueskill_mu")
         attrs    = {'class': 'paleblue'}
         order_by = "-elo"
 
