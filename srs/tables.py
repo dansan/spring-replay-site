@@ -71,7 +71,8 @@ class RatingHistoryTable(tables.Table):
     match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
     algo_change     = tables.Column(verbose_name="Algo")
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
-    match           = tables.LinkColumn('replay_detail', args=[A('match.gameID')], orderable=False, accessor=A("match.match_type"))
+    match_type      = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
+    num             = tables.Column(accessor=A("match.num_players"), orderable=False)
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     elo             = tables.Column()
     glicko          = tables.Column()
@@ -83,17 +84,18 @@ class RatingHistoryTable(tables.Table):
         order_by = "match_date"
 
     def render_elo(self, value):
-        return '%.3f' % value
+        return '%.2f' % value
     def render_glicko(self, value):
-        return '%.3f' % value
+        return '%.2f' % value
     def render_glicko_rd(self, value):
-        return '%.1f' % value
+        return '%.2f' % value
     def render_trueskill_mu(self, value):
-        return '%.3f' % value
+        return '%.2f' % value
 
 class RatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    match_type      = tables.Column()
     elo             = tables.Column()
     glicko          = tables.Column()
     glicko_rd       = tables.Column()
@@ -101,24 +103,15 @@ class RatingTable(tables.Table):
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "elo", "glicko", "glicko_rd", "trueskill_mu")
+        fields = ("playername", "game", "match_type", "elo", "glicko", "glicko_rd", "trueskill_mu")
         attrs    = {'class': 'paleblue'}
-        order_by = ("-elo", "-glicko", "-trueskill_mu")
+        order_by = ("-elo")
 
     def render_elo(self, value):
-        return '%.3f' % value
+        return '%.2f' % value
     def render_glicko(self, value):
-        return '%.3f' % value
+        return '%.2f' % value
     def render_glicko_rd(self, value):
         return '%.1f' % value
     def render_trueskill_mu(self, value):
-        return '%.3f' % value
-
-#    game               = models.ForeignKey(Game)
-#
-#    elo                = models.FloatField(default=1500.0)
-#    elo_k              = models.FloatField(default=24.0)
-#    glicko             = models.FloatField(default=1500.0)
-#    glicko_rd          = models.FloatField(default=350.0)
-#    glicko_last_period = models.DateTimeField(auto_now_add=True)
-#    trueskill_mu
+        return '%.2f' % value

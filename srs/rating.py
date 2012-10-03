@@ -60,7 +60,7 @@ def rate_match(replay):
         try:
             pa.rating
         except:
-            Rating.objects.create(playeraccount=pa, game=game)
+            Rating.objects.create(playeraccount=pa, game=game, match_type=replay.match_type_short())
 
     # calculate ELO only for 1v1 (and exclude bots)
     if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
@@ -86,7 +86,7 @@ def rate_match(replay):
             pa.rating.set_elo(elo_ratings.rating_by_id(pa))
             pa.rating.set_glicko(glicko_ratings.rating_by_id(pa))
             rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa)))
-            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game)
+            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short())
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
             rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
             rating_history.algo_change="B"

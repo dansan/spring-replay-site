@@ -133,14 +133,14 @@ class Replay(models.Model):
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
     def match_type(self):
-        """ 1v1 / 6v6 / FFA / ..."""
+        """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA"""
         try:
             tags = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')
             if tags.exists():
                 if tags[0].name == "1v1":
                     return tags[0].name
                 else:
-                    return "Team ("+tags[0].name+")"
+                    return "Team"
             tags = self.tags.filter(name__regex=r'^TeamFFA$')
             if tags.exists():
                 return tags[0].name
@@ -151,6 +151,21 @@ class Replay(models.Model):
             pass
         return self.title
 
+    def match_type_short(self):
+        """returns string (from match_type()): 1 / T / F / G"""
+        if self.match_type()[0] == "TeamFFA": return "G"
+        else: return self.match_type()[0]
+
+    def num_players(self):
+        """returns string (from counting players): 1v1 / 1v5 / 6v6 / 2v2v2v2 / ..."""
+        try:
+            result = ""
+            allyteams = Allyteam.objects.filter(replay=self)
+            for at in allyteams:
+                result += str(PlayerAccount.objects.filter(player__team__allyteam=at).count())+"v"
+            return result[:-1]
+        except:
+            return "?v?"
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
@@ -286,6 +301,12 @@ class GameRelease(models.Model):
 
 class RatingBase(models.Model):
     game               = models.ForeignKey(Game)
+    MATCH_TYPE_CHOICES = (('1', u'1v1'),
+                           ('T', u'Team'),
+                           ('F', u'FFA'),
+                           ('G', u'TeamFFA'),
+                           )
+    match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES)
 
     elo                = models.FloatField(default=1500.0)
     elo_k              = models.FloatField(default=24.0)
