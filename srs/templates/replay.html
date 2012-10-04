@@ -1,7 +1,9 @@
 {% extends 'srs_base.html' %}
+{% load render_table from django_tables2 %}
 {% load comments %}
 {% load cache %}
 
+{% block listheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />{% endblock %}
 {% block replayheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.8.21.custom.css" />
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.21.custom.min.js"></script>
@@ -77,6 +79,14 @@
 	                <p>None.</p>
 	           {% endif %}
            </div>
+           <div class="footer"></div>
+           <h3>Players ratings after this match</h3>
+           {% if table.data|length == 0 %}
+            <p style="font-weight:bold;"><br/>This match has not been rated (yet).</p>
+			{% else %}
+			{% render_table table %}
+			{% endif %}
+			<p><br/></p>
            <div class="footer"></div>
 	       <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	       <p><br/></p>

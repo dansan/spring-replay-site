@@ -39,14 +39,17 @@ def replays(request):
     replays = Replay.objects.all()
     return replay_table(request, replays, "all %d replays"%replays.count())
 
-def replay_table(request, replays, title, template="lists.html", form=None, ext=None):
+def replay_table(request, replays, title, template="lists.html", form=None, ext=None, order_by=None):
     from django_tables2 import RequestConfig
 
     c = all_page_infos(request)
     if ext:
         for k,v in ext.items():
             c[k] = v
-    table = ReplayTable(replays)
+    if order_by:
+        table = ReplayTable(replays, prefix="r-", order_by=order_by)
+    else:
+        table = ReplayTable(replays, prefix="r-")
     RequestConfig(request, paginate={"per_page": 50}).configure(table)
     c['table'] = table
     c['pagetitle'] = title
@@ -77,6 +80,12 @@ def replay(request, gameID):
         players = Player.objects.filter(team__in=teams).order_by("name")
         if teams:
             c["allyteams"].append((at, players))
+    if c["replay"].match_type() == "1v1":
+        c["table"] = MatchRatingHistoryTable(RatingHistory.objects.filter(match=c["replay"]))
+    else:
+        c["table"] = TSMatchRatingHistoryTable(RatingHistory.objects.filter(match=c["replay"]))
+#    from django_tables2 import RequestConfig
+#    RequestConfig(request, paginate={"per_page": 50}).configure(c["table"])
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True).order_by("name")
     c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=c["replay"]).order_by("name")
@@ -190,8 +199,10 @@ def players(request):
     return all_of_a_kind_table(request, table, "List of all %d players"%len(players))
 
 def player(request, accountid):
+    from django_tables2 import RequestConfig
     rep = ""
     accounts = []
+    ext = dict()
 
     try:
         accounts.append(PlayerAccount.objects.get(accountid=accountid))
@@ -202,10 +213,24 @@ def player(request, accountid):
     for account in accounts:
         for a in account.names.split(";"):
             rep += '%s '%a
+    ext["playernames"] = rep
+
+    wl = win_loss_calc(account)
+    table_data = list()
+    for t in ["1v1", "Team", "FFA", "TeamFFA"]:
+        wl["at_"+t.lower()]["tag"] = t
+        table_data.append(wl["at_"+t.lower()])
+    wl["at_all"]["tag"] = "Total"
+    table_data.append(wl["at_all"])
+    ext["winlosstable"] = WinLossTable(table_data, prefix="w-")
+
+    ext["playerratingtable"] = PlayerRatingTable(Rating.objects.filter(playeraccount__in=accounts), prefix="p-")
+    ext["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
+    RequestConfig(request, paginate={"per_page": 20}).configure(ext["playerratinghistorytable"])
 
     players = Player.objects.select_related("replay").filter(account__in=accounts, spectator=False)
-    replays = [player.replay for player in players]
-    return replay_table(request, replays, "%d replays with player %s"%(len(replays), rep))
+    replays = Replay.objects.filter(player__in=players).order_by("unixTime")
+    return replay_table(request, replays, "Player "+rep, template="player.html", ext=ext, order_by="-unixTime")
 
 def game(request, name):
     game = get_object_or_404(Game, name=name)
@@ -341,16 +366,18 @@ def win_loss_overview(request):
     c["playerlist"] = playerlist
     return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
 
-@never_cache
-def win_loss(request, accountid):
-    c = all_page_infos(request)
+def win_loss_calc(playeraccount):
+    c = dict()
 
-    pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    players = Player.objects.filter(account=pa, spectator=False)
+    if playeraccount.aka:
+        players = Player.objects.filter(account__in=[playeraccount, playeraccount.aka], spectator=False)
+    else:
+        players = Player.objects.filter(account=playeraccount, spectator=False)
     ats = Allyteam.objects.filter(team__player__in=players)
     at_1v1 = ats.filter(replay__tags__name="1v1")
     at_team = ats.filter(replay__tags__name="Team")
     at_ffa = ats.filter(replay__tags__name="FFA")
+    at_teamffa = ats.filter(replay__tags__name="TeamFFA")
 
     c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
     try:
@@ -373,12 +400,28 @@ def win_loss(request, accountid):
         if at_ffa.count() == 0: c["at_ffa"]["ratio"] = "0.00"
         else: c["at_ffa"]["ratio"] = "1.00"
 
+    c["at_teamffa"] = {"all": at_teamffa.count(), "win": at_teamffa.filter(winner=True).count(), "loss": at_teamffa.filter(winner=False).count()}
+    try:
+        c["at_teamffa"]["ratio"] = "%.02f"%(float(at_teamffa.filter(winner=True).count())/at_teamffa.filter(winner=False).count())
+    except ZeroDivisionError:
+        if at_teamffa.count() == 0: c["at_teamffa"]["ratio"] = "0.00"
+        else: c["at_teamffa"]["ratio"] = "1.00"
+
     c["at_all"] = {"all": ats.count(), "win": ats.filter(winner=True).count(), "loss": ats.filter(winner=False).count()}
     try:
         c["at_all"]["ratio"] = "%.02f"%(float(ats.filter(winner=True).count())/ats.filter(winner=False).count())
     except ZeroDivisionError:
         if ats.count() == 0: c["at_all"]["ratio"] = "0.00"
         else: c["at_all"]["ratio"] = "1.00"
+
+    return c
+
+@never_cache
+def win_loss(request, accountid):
+    c = all_page_infos(request)
+
+    pa = get_object_or_404(PlayerAccount, accountid=accountid)
+    c.update(win_loss_calc(pa))
 
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
@@ -393,7 +436,7 @@ def hall_of_fame(request):
     c["table_team"]    = TSRatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
     c["table_ffa"]     = TSRatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
     c["table_teamffa"] = TSRatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
-    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1.", "Glickos rating period is not used atm (I know that' a problem)."]
+    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     c['pagetitle'] = "Hall Of Fame"
 
     rc = RequestConfig(request, paginate={"per_page": 20})
@@ -407,7 +450,7 @@ def hall_of_fame(request):
 @never_cache
 def rating_history(request):
     table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1.", "Glickos rating period is not used atm (I know that' a problem)."]
+    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
 @login_required

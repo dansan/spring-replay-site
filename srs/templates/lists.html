@@ -7,16 +7,18 @@
 
 {% block maincontent %}
         <div class="left">
-{% block search %}{% endblock %}
+        <h1>{{ pagetitle }}</h1>
+        <p><br/></p>
+  {% block search %}{% endblock %}
+  {% block rating %}{% endblock %}
 
-{% block result_table %}
-            <h2>{{ pagetitle }}</h2>
-            {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
-{% if table.data|length == 0 %}
+  {% block result_table %}
+    {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
+    {% if table.data|length == 0 %}
             <p><br/><b>No result.</b><br/></p>
-{% else %}
-{% render_table table %}
-{% endif %}
-{% endblock %}
+    {% else %}
+      {% render_table table %}
+    {% endif %}
+  {% endblock %}
         </div>
 {% endblock %}

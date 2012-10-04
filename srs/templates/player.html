@@ -1,0 +1,26 @@
+{% extends 'lists.html' %}
+{% load render_table from django_tables2 %}
+
+{% block rating %}
+            <h2>Rating</h2>
+		    {% if playerratingtable.data|length == 0 %}
+		    <p><br/><b>No result.</b><br/></p>
+		    {% else %}
+		      {% render_table playerratingtable %}
+		    {% endif %}
+		    <p><br/></p>
+
+			<h2>Win/loss</h2>
+			{% render_table winlosstable %}
+			<p><br/></p>
+
+            <h2>Rating history</h2>
+            {% if playerratinghistorytable.data|length == 0 %}
+            <p><br/><b>No result.</b><br/></p>
+            {% else %}
+              {% render_table playerratinghistorytable %}
+            {% endif %}
+            <p><br/></p>
+
+			<h2>All Replays</h2>
+{% endblock %}

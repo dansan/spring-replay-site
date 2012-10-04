@@ -67,6 +67,27 @@ class CommentTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "-submit_date"
 
+class PlayerRatingHistoryTable(tables.Table):
+    match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Date")
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    match_type      = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "match_date"
+
+    def render_elo(self, value, record):
+        if record.match_type != "1": return ""
+        else: return '%.2f' % value
+    def render_glicko(self, value, record):
+        if record.match_type != "1": return ""
+        else: return '%.2f' % value
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+
 class RatingHistoryTable(tables.Table):
     match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
     algo_change     = tables.Column(verbose_name="Algo")
@@ -86,6 +107,55 @@ class RatingHistoryTable(tables.Table):
         return '%.2f' % value
     def render_glicko(self, value):
         return '%.2f' % value
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+
+class TSMatchRatingHistoryTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-trueskill_mu"
+
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+
+class MatchRatingHistoryTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-elo"
+
+    def render_elo(self, value):
+        return '%.2f' % value
+    def render_glicko(self, value):
+        return '%.2f' % value
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+
+class PlayerRatingTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    match_type      = tables.Column()
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "game"
+
+    def render_elo(self, value, record):
+        if record.match_type != "1": return ""
+        else: return '%.2f' % value
+    def render_glicko(self, value, record):
+        if record.match_type != "1": return ""
+        else: return '%.2f' % value
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
@@ -122,3 +192,13 @@ class RatingTable(tables.Table):
         return '%.2f' % value
     def render_trueskill_mu(self, value):
         return '%.2f' % value
+
+class WinLossTable(tables.Table):
+    tag   = tables.Column(orderable=False)
+    all = tables.Column(orderable=False, verbose_name="Total")
+    win   = tables.Column(orderable=False)
+    loss  = tables.Column(orderable=False)
+    ratio = tables.Column(orderable=False)
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
