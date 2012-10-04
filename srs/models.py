@@ -90,7 +90,7 @@ class Replay(models.Model):
     replayfile      = models.ForeignKey(ReplayFile)
 
     def __unicode__(self):
-        return self.title+" "+self.unixTime.strftime("%Y-%m-%d")
+        return "("+str(self.pk)+") "+self.title+" "+self.unixTime.strftime("%Y-%m-%d")
 
     @models.permalink
     def get_absolute_url(self):

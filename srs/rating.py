@@ -80,6 +80,7 @@ def initial_rating(request):
         gamereleases = [gr.name for gr in GameRelease.objects.filter(game=game)]
         replays = Replay.objects.filter(gametype__in=gamereleases, tags__name__regex=r'^([0-9]v[0-9]|FFA|TeamFFA)$').exclude(tags__name__in=["Bot", "SP"]).distinct().order_by("unixTime")
         logger.info("Game = %s, number of replays = %d", game, replays.count())
+        replays_count = 1
         for replay in replays:
             rating_change = rate_match(replay, from_initial_rating=True)
             count = 1
@@ -102,8 +103,9 @@ def initial_rating(request):
             csv_row.append("http://replays.admin-box.com"+replay.get_absolute_url())
             csvwriter.writerow(csv_row)
 
-            if len(c["rating_changes"])%50 == 0:
+            if replays_count%50 == 0:
                 logger.info("... %d replays done", len(c["rating_changes"]))
+            replays_count += 1
 
     logger.info("wrote csv to %s", csvfile.name)
     csvfile.close()
@@ -138,7 +140,7 @@ def rate_match(replay, from_initial_rating=False):
     teams = list()
     winner = list()
     for at in allyteams:
-        teams.append([t.teamleader.account for t in Team.objects.filter(allyteam=at)])
+        teams.append([Player.objects.get(team=t).account for t in Team.objects.filter(allyteam=at)])
         if at.winner: winner.append(1)
         else: winner.append(2)
 
