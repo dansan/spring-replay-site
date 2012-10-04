@@ -451,10 +451,10 @@ Comment.comment_short = lambda self: self.comment[:50]+"..."
 #    logger.debug("%s.save(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
 
 # automatically log each DB object delete
-@receiver(post_delete)
-def obj_del_callback(sender, instance, **kwargs):
-    # Session obj has u'str encoded hex key as pk
-    logger.debug("%s.delete(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
+#@receiver(post_delete)
+#def obj_del_callback(sender, instance, **kwargs):
+#    # Session obj has u'str encoded hex key as pk
+#    logger.debug("%s.delete(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
 
 # automatically refresh statistics when a replay is created or modified
 @receiver(post_save, sender=Replay)
