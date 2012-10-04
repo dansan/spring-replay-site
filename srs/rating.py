@@ -80,7 +80,7 @@ def initial_rating(request):
         gamereleases = [gr.name for gr in GameRelease.objects.filter(game=game)]
         # copy QuerySet into list, so it doesn't change while running
         replays = list(Replay.objects.filter(gametype__in=gamereleases, tags__name__regex=r'^([0-9]v[0-9]|FFA|TeamFFA)$').exclude(tags__name__in=["Bot", "SP"]).distinct().order_by("unixTime"))
-        logger.info("Game = %s, number of replays = %d", game, replays.count())
+        logger.info("Game = %s, number of replays = %d", game, len(replays))
         replays_count = 1
         for replay in replays:
             try:
