@@ -138,7 +138,7 @@ def rate_match(replay, from_initial_rating=False):
     teams = list()
     winner = list()
     for at in allyteams:
-        teams.append(PlayerAccount.objects.filter(player__team__allyteam=at))
+        teams.append([t.teamleader.account for t in Team.objects.filter(allyteam=at)])
         if at.winner: winner.append(1)
         else: winner.append(2)
 

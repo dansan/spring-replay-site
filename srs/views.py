@@ -352,6 +352,7 @@ def search_replays(query):
 
     return replays
 
+#@cache_page(3600 * 24)
 def win_loss_overview(request):
     c = all_page_infos(request)
 
