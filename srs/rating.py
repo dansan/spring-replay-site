@@ -212,4 +212,5 @@ def rate_match(replay, from_initial_rating=False):
             rating_history.algo_change="T"
             rating_history.save()
 
+    logger.info("rated replay(%d | %s): %s", replay.pk, replay.gameID, replay)
     return rating_changes
