@@ -34,3 +34,4 @@ DEFAULT_FROM_EMAIL = 'webmaster@replays.springrts.com'
 SERVER_EMAIL       = 'webmaster@replays.springrts.com'
 
 INITIAL_RATING = False
+ELO_ONLY = False

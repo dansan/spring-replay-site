@@ -161,34 +161,42 @@ def rate_match(replay, from_initial_rating=False):
         # use lowest k-factor
         k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short()).elo_k for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)])
 
-        RatingFactory.rating_class = GlickoRating
-        glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.get_rating(game, replay.match_type_short()).glicko, pa.get_rating(game, replay.match_type_short()).glicko_rd)) for pa in team]) for team in teams]
-        glicko_matches = Matches([Match(glicko_teams, winner)])
+        if not settings.ELO_ONLY:
+            RatingFactory.rating_class = GlickoRating
+            glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.get_rating(game, replay.match_type_short()).glicko, pa.get_rating(game, replay.match_type_short()).glicko_rd)) for pa in team]) for team in teams]
+            glicko_matches = Matches([Match(glicko_teams, winner)])
 
-        RatingFactory.rating_class = GaussianRating
-        ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
-        ts_match = Match(ts_teams, winner)
+            RatingFactory.rating_class = GaussianRating
+            ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
+            ts_match = Match(ts_teams, winner)
 
         game_info = GameInfo()
         elo_calculator = EloCalculator(k_factor=k_factor)
         elo_ratings = elo_calculator.new_ratings(game_info, elo_match)
-        glicko_calculator = GlickoCalculator()
-        glicko_ratings = glicko_calculator.new_ratings(game_info, glicko_matches)
-        #TODO: use glicko rating period
-        ts_calculator = TwoPlayerTrueSkillCalculator()
-        ts_ratings = ts_calculator.new_ratings(game_info, ts_match)
+        if not settings.ELO_ONLY:
+            glicko_calculator = GlickoCalculator()
+            glicko_ratings = glicko_calculator.new_ratings(game_info, glicko_matches)
+            #TODO: use glicko rating period
+            ts_calculator = TwoPlayerTrueSkillCalculator()
+            ts_ratings = ts_calculator.new_ratings(game_info, ts_match)
 
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             rating = pa.get_rating(game, replay.match_type_short())
             rating.set_elo(elo_ratings.rating_by_id(pa))
-            rating.set_glicko(glicko_ratings.rating_by_id(pa))
-            rating.set_trueskill(ts_ratings.rating_by_id(pa))
-            rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa), ts_ratings.rating_by_id(pa)))
+            if not settings.ELO_ONLY:
+                rating.set_glicko(glicko_ratings.rating_by_id(pa))
+                rating.set_trueskill(ts_ratings.rating_by_id(pa))
+                rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa), ts_ratings.rating_by_id(pa)))
+            else:
+                rating_changes.append((pa, elo_ratings.rating_by_id(pa), None, None))
             rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short())
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
-            rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
-            rating_history.set_trueskill(ts_ratings.rating_by_id(pa))
-            rating_history.algo_change="A"
+            if not settings.ELO_ONLY:
+                rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
+                rating_history.set_trueskill(ts_ratings.rating_by_id(pa))
+                rating_history.algo_change="A"
+            else:
+                rating_history.algo_change="E"
             rating_history.save()
     else:
         # use TrueSkill for Team and FFA matches
