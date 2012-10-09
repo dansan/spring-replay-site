@@ -442,10 +442,11 @@ def update_stats():
             # sum up all accounts of a player, list only oldest account (PA.all() is sorted by accountid)
             nummatches = Player.objects.filter(account=pa, spectator=False).count()
             incpl.append(pa)
-            if pa.aka:
+#TODO: smurfs
+#            if pa.aka:
 #                for otheraccount in pa.aka:
-                nummatches += Player.objects.filter(account=pa.aka, spectator=False).count()
-                incpl.append(pa.aka)
+#                nummatches += Player.objects.filter(account=pa.aka, spectator=False).count()
+#                incpl.append(pa.aka)
             tp.append((nummatches, p[0]))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
