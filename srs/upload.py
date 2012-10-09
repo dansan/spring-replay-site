@@ -284,9 +284,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         set_accountid(player)
         pa, created = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
         players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], spectator=bool(player["spectator"]), replay=replay)
-        if not created:
+#        if not created:
 #TODO: fix alias
-            # add players name to accounts aliases
+#            # add players name to accounts aliases
 #            if player["name"] not in pa.names.split(";"):
 #                pa.names += ";"+player["name"]
 #                pa.save()
