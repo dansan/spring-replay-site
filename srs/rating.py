@@ -92,7 +92,7 @@ def initial_rating(request):
             count = 1
             csv_row = [game.abbreviation, replay.unixTime.strftime("%Y-%m-%d %H:%M:%S"), replay.match_type()]
             for pa, elo_rating, glicko_rating, ts_rating in rating_change:
-                csv_row.append(pa.names[:20])
+                csv_row.append(pa.get_names()[0])
                 if count <= 2:
                     if elo_rating: csv_row.append("%.3f"%elo_rating.mean)
                     else: csv_row.append("")

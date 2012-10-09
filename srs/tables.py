@@ -179,10 +179,11 @@ class RatingTable(tables.Table):
     elo             = tables.Column()
     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
+    matches         = tables.Column(accessor=A("playeraccount.replay_count"), orderable=False, verbose_name="# Matches")
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "elo", "glicko", "trueskill_mu")
+        fields = ("playername", "game", "elo", "glicko", "trueskill_mu", "matches")
         attrs    = {'class': 'paleblue'}
         order_by = "-elo"
 

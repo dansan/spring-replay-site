@@ -200,20 +200,19 @@ def players(request):
 
 def player(request, accountid):
     from django_tables2 import RequestConfig
-    rep = ""
-    accounts = []
     ext = dict()
+    pl_names = list()
 
     try:
-        accounts.append(PlayerAccount.objects.get(accountid=accountid))
+        pa = PlayerAccount.objects.get(accountid=accountid)
+        accounts = pa.get_all_accounts()
     except:
         raise Http404
-    accounts.extend(PlayerAccount.objects.filter(aka=accounts[0]))
 
     for account in accounts:
-        for a in account.names.split(";"):
-            rep += '%s '%a
-    ext["playernames"] = rep
+        pl_names.extend(reduce(lambda x, y: x+"|"+y, [pa.get_names() for pa in accounts]))
+    print pl_names
+    print str(accounts)
 
     wl = win_loss_calc(account)
     table_data = list()
@@ -230,7 +229,7 @@ def player(request, accountid):
 
     players = Player.objects.select_related("replay").filter(account__in=accounts, spectator=False)
     replays = Replay.objects.filter(player__in=players).order_by("unixTime")
-    return replay_table(request, replays, "Player "+rep, template="player.html", ext=ext, order_by="-unixTime")
+    return replay_table(request, replays, "Player "+pa.get_all_names(), template="player.html", ext=ext, order_by="-unixTime")
 
 def game(request, name):
     game = get_object_or_404(Game, name=name)
@@ -370,10 +369,8 @@ def win_loss_overview(request):
 def win_loss_calc(playeraccount):
     c = dict()
 
-    if playeraccount.aka:
-        players = Player.objects.filter(account__in=[playeraccount, playeraccount.aka], spectator=False)
-    else:
-        players = Player.objects.filter(account=playeraccount, spectator=False)
+    players = Player.objects.filter(account__in=playeraccount.get_all_accounts(), spectator=False)
+
     ats = Allyteam.objects.filter(team__player__in=players)
     at_1v1 = ats.filter(replay__tags__name="1v1")
     at_team = ats.filter(replay__tags__name="Team")
@@ -433,11 +430,13 @@ def hall_of_fame(request):
 
     c = all_page_infos(request)
 
-    c["table_1v1"]     = RatingTable(Rating.objects.filter(match_type="1"), prefix="1-")
+    # get ratings only for players that had more than 30 matches
+    pas = [pa for pa in PlayerAccount.objects.all() if pa.replay_count() >= 30]
+    c["table_1v1"]     = RatingTable(Rating.objects.filter(match_type="1", playeraccount__in=pas), prefix="1-")
     c["table_team"]    = TSRatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
     c["table_ffa"]     = TSRatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
     c["table_teamffa"] = TSRatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
-    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     c['pagetitle'] = "Hall Of Fame"
 
     rc = RequestConfig(request, paginate={"per_page": 20})
@@ -451,7 +450,7 @@ def hall_of_fame(request):
 @never_cache
 def rating_history(request):
     table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=24), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
 @login_required
