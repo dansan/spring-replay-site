@@ -170,15 +170,18 @@ def rate_match(replay, from_initial_rating=False):
             ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
             ts_match = Match(ts_teams, winner)
 
-        game_info = GameInfo()
+        elo_game_info = GameInfo(initial_mean=1500, stdev=1500/3, beta=1500/6, dynamics_factor=1500/300, draw_probability=0.04)
+        glicko_game_info = GameInfo(initial_mean=1500, stdev=1500/3, beta=1500/6, dynamics_factor=1500/300, draw_probability=0.04)
+        ts_game_info = GameInfo()
+
         elo_calculator = EloCalculator(k_factor=k_factor)
-        elo_ratings = elo_calculator.new_ratings(game_info, elo_match)
+        elo_ratings = elo_calculator.new_ratings(elo_game_info, elo_match)
         if not settings.ELO_ONLY:
             glicko_calculator = GlickoCalculator()
-            glicko_ratings = glicko_calculator.new_ratings(game_info, glicko_matches)
+            glicko_ratings = glicko_calculator.new_ratings(glicko_game_info, glicko_matches)
             #TODO: use glicko rating period
             ts_calculator = TwoPlayerTrueSkillCalculator()
-            ts_ratings = ts_calculator.new_ratings(game_info, ts_match)
+            ts_ratings = ts_calculator.new_ratings(ts_game_info, ts_match)
 
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             rating = pa.get_rating(game, replay.match_type_short())
@@ -220,5 +223,5 @@ def rate_match(replay, from_initial_rating=False):
             rating_history.algo_change="T"
             rating_history.save()
 
-    logger.info("rated replay(%d | %s): %s", replay.pk, replay.gameID, replay)
+    logger.debug("rated replay(%d | %s): %s", replay.pk, replay.gameID, replay)
     return rating_changes
