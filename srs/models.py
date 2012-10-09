@@ -21,6 +21,19 @@ import settings
 
 logger = logging.getLogger(__package__)
 
+def uniqify_list(seq, idfun=None): # from http://www.peterbe.com/plog/uniqifiers-benchmark
+    if idfun is None:
+        def idfun(x): return x
+    seen = {}
+    result = []
+    for item in seq:
+        marker = idfun(item)
+        if marker in seen: continue
+        seen[marker] = 1
+        result.append(item)
+    return result
+
+
 class Tag(models.Model):
     name            = models.CharField(max_length=128, unique=True)
 
@@ -180,11 +193,11 @@ class Allyteam(models.Model):
 class PlayerAccount(models.Model):
     accountid       = models.IntegerField(unique=True)
     countrycode     = models.CharField(max_length=2)
-    names           = models.CharField(max_length=2048, verbose_name="(re)names")
-    aka             = models.ForeignKey("self", blank=True, null = True, verbose_name="other accounts")
+    preffered_name  = models.CharField(max_length=128)
+    primary_account = models.ForeignKey("self", blank=True, null = True)
 
     def __unicode__(self):
-        return str(self.accountid)+u" "+self.names[:15]
+        return str(self.accountid)+u" "+reduce(lambda x, y: x+"|"+y, self.get_names())[:40]
 
     @models.permalink
     def get_absolute_url(self):
@@ -199,6 +212,27 @@ class PlayerAccount(models.Model):
     def get_rating(self, game, match_type):
         rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={"playeraccount": self, "game": game, "match_type": match_type})
         return rating
+
+    def get_all_accounts(self):
+        if self.primary_account:
+            return PlayerAccount.objects.filter(primary_account=self.primary_account)
+        else:
+            pas = PlayerAccount.objects.filter(primary_account=self)
+            if pas.exists(): return pas
+            else: return [self]
+
+    def get_names(self):
+        pls = [p[0] for p in Player.objects.filter(account=self).values_list("name")]
+        if pls:
+            return uniqify_list(pls)
+        else:
+            return ["NoName"]
+
+    def get_all_names(self):
+        names = str()
+        for pa in self.get_all_accounts():
+            names += reduce(lambda x, y: x+" "+y+" ", pa.get_names())
+        return names
 
     class Meta:
         ordering = ['accountid']
@@ -316,7 +350,7 @@ class RatingBase(models.Model):
     playername    = models.CharField(max_length=128, blank=True, null=True)
 
     elo                = models.FloatField(default=1500.0)
-    elo_k              = models.FloatField(default=24.0)
+    elo_k              = models.FloatField(default=30.0)
     glicko             = models.FloatField(default=1500.0)
     glicko_rd          = models.FloatField(default=350.0)
     glicko_last_period = models.DateTimeField(auto_now_add=True, blank=True, null = True)
@@ -483,7 +517,7 @@ def comment_del_callback(sender, instance, **kwargs):
 # automatically log creation of PlayerAccounts
 @receiver(post_save, sender=PlayerAccount)
 def playerAccount_save_callback(sender, instance, **kwargs):
-    logger.debug("PlayerAccount.save(%d): accountid=%d names=%s", instance.pk, instance.accountid, instance.names)
+    logger.debug("PlayerAccount.save(%d): accountid=%d preffered_name=%s", instance.pk, instance.accountid, instance.preffered_name)
 
 # set sorting info when a RatingHistory is saved
 @receiver(post_save, sender=RatingHistory)
