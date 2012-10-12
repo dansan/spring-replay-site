@@ -50,5 +50,5 @@ urlpatterns = patterns('',
     url(r'^win_loss/(?P<accountid>[\d-]+)/$', 'srs.views.win_loss', name="win_loss"),
     url(r'^initial_rating/$', 'srs.rating.initial_rating', name="initial_rating"),
     url(r'^rating_history/$', 'srs.views.rating_history', name="rating_history"),
-    url(r'^hall_of_fame/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
+    url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
 )

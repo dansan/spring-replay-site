@@ -161,12 +161,12 @@ class PlayerRatingTable(tables.Table):
 
 class TSRatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
+    num_matches     = tables.Column(verbose_name="# Matches")
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "trueskill_mu")
+        fields = ("playername", "trueskill_mu", "num_matches")
         attrs    = {'class': 'paleblue'}
         order_by = "-trueskill_mu"
 
@@ -175,15 +175,14 @@ class TSRatingTable(tables.Table):
 
 class RatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     elo             = tables.Column()
     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
-    matches         = tables.Column(accessor=A("playeraccount.replay_count"), orderable=False, verbose_name="# Matches")
+    num_matches     = tables.Column(verbose_name="# Matches")
 
     class Meta:
         model = Rating
-        fields = ("playername", "game", "elo", "glicko", "trueskill_mu", "matches")
+        fields = ("playername", "elo", "glicko", "trueskill_mu", "num_matches")
         attrs    = {'class': 'paleblue'}
         order_by = "-elo"
 

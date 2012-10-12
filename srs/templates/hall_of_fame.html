@@ -7,11 +7,21 @@
 
 {% block maincontent %}
         <div class="left">
-{% block search %}{% endblock %}
+  {% block search %}{% endblock %}
 
-{% block result_table %}
+  {% block result_table %}
             <h2>{{ pagetitle }}</h2>
+            <p><br/></p>
+            <div class="bar">
+	            <ul>
+	              {% for game in games %}
+	                <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url srs.views.hall_of_fame game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
+	              {% endfor %}
+	            </ul>
+	        </div>
+            <p><br/></p>
             {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
+            <p><br/></p>
 
             <h3>Ranking 1v1</h3>
 {% if table_1v1.data|length == 0 %}
@@ -37,6 +47,6 @@
 {% else %}
 {% render_table table_teamffa %}
 {% endif %}
-{% endblock %}
+  {% endblock %}
         </div>
 {% endblock %}

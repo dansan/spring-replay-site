@@ -10,10 +10,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import never_cache, cache_page
 from django.http import Http404
 from django.contrib.comments import Comment
 from django.views.decorators.cache import cache_control
+from django.db.models import Max
 
 import logging
 from types import StringTypes
@@ -66,7 +67,7 @@ def all_of_a_kind_table(request, table, title, template="lists.html", intro_text
     c['intro_text'] = intro_text
     return render_to_response(template, c, context_instance=RequestContext(request))
 
-#@cache_page(3600 * 24)
+@cache_page(3600 * 1)
 def replay(request, gameID):
     c = all_page_infos(request)
     try:
@@ -351,7 +352,7 @@ def search_replays(query):
 
     return replays
 
-#@cache_page(3600 * 24)
+@cache_page(3600 * 24)
 def win_loss_overview(request):
     c = all_page_infos(request)
 
@@ -424,20 +425,36 @@ def win_loss(request, accountid):
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
 
-@never_cache
-def hall_of_fame(request):
+@cache_page(3600 / 2)
+def hall_of_fame(request, abbreviation):
     from django_tables2 import RequestConfig
 
     c = all_page_infos(request)
 
-    # get ratings only for players that had more than 30 matches
-    pas = [pa for pa in PlayerAccount.objects.all() if pa.replay_count() >= 30]
-    c["table_1v1"]     = RatingTable(Rating.objects.filter(match_type="1", playeraccount__in=pas), prefix="1-")
-    c["table_team"]    = TSRatingTable(Rating.objects.filter(match_type="T"), prefix="t-")
-    c["table_ffa"]     = TSRatingTable(Rating.objects.filter(match_type="F"), prefix="f-")
-    c["table_teamffa"] = TSRatingTable(Rating.objects.filter(match_type="G"), prefix="g-")
-    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
-    c['pagetitle'] = "Hall Of Fame"
+    game = get_object_or_404(Game, abbreviation=abbreviation)
+
+    # get ratings for top 20 players for each algorithm
+    r1v1 = list(Rating.objects.filter(game=game, match_type="1", elo__gt=1500).order_by('-elo')[:20].values())
+    r1v1.extend(Rating.objects.filter(game=game, match_type="1", glicko__gt=1500).order_by('-glicko')[:20].values())
+    r1v1.extend(Rating.objects.filter(game=game, match_type="1", trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
+    # thow out duplicates and players with less than 20 matches in this game and category
+    r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > 20}.values()
+    # add data needed for the table
+    for r1 in r1v1:
+        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=r1["playeraccount_id"]).count()
+        r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+    c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
+
+    for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
+        # get ratings for top 20 players
+        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values()
+        # thow players with less than 20 matches in this game and category
+        rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__id=rt["playeraccount_id"]).count() > 20]
+        # add data needed for the table
+        for rt in rtype:
+            rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__id=rt["playeraccount_id"]).count()
+            rt["playeraccount"] = PlayerAccount.objects.get(id=rt["playeraccount_id"])
+        c[mtl] = TSRatingTable(rtype, prefix=prefix)
 
     rc = RequestConfig(request, paginate={"per_page": 20})
     rc.configure(c["table_1v1"])
@@ -445,12 +462,17 @@ def hall_of_fame(request):
     rc.configure(c["table_ffa"])
     rc.configure(c["table_teamffa"])
 
+    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    c['pagetitle'] = "Hall Of Fame ("+game.name+")"
+    c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
+    c["thisgame"] = game
+
     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
 @never_cache
 def rating_history(request):
     table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each games.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
 @login_required
