@@ -35,3 +35,4 @@ SERVER_EMAIL       = 'webmaster@replays.springrts.com'
 
 INITIAL_RATING = False
 ELO_ONLY = False
+HALL_OF_FAME_MIN_MATCHES = 20
