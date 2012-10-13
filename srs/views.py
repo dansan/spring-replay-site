@@ -81,12 +81,17 @@ def replay(request, gameID):
         players = Player.objects.filter(team__in=teams).order_by("name")
         if teams:
             c["allyteams"].append((at, players))
+
+    rh = list(RatingHistory.objects.filter(match=c["replay"]).values())
+    for r in rh:
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__id=r["playeraccount_id"]).count()
+        r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
+
     if c["replay"].match_type() == "1v1":
-        c["table"] = MatchRatingHistoryTable(RatingHistory.objects.filter(match=c["replay"]))
+        c["table"] = MatchRatingHistoryTable(rh)
     else:
-        c["table"] = TSMatchRatingHistoryTable(RatingHistory.objects.filter(match=c["replay"]))
-#    from django_tables2 import RequestConfig
-#    RequestConfig(request, paginate={"per_page": 50}).configure(c["table"])
+        c["table"] = TSMatchRatingHistoryTable(rh)
+
     c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True).order_by("name")
     c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=c["replay"]).order_by("name")

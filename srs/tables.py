@@ -113,6 +113,7 @@ class RatingHistoryTable(tables.Table):
 class TSMatchRatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
+    num_matches     = tables.Column(verbose_name="# Matches")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
@@ -126,6 +127,7 @@ class MatchRatingHistoryTable(tables.Table):
     elo             = tables.Column()
     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
+    num_matches     = tables.Column(verbose_name="# Matches")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
