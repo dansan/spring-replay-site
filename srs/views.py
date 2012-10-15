@@ -219,6 +219,7 @@ def player(request, accountid):
         raise Http404
 
     c["accounts"] = accounts
+    c["all_names"] = accounts[0].get_all_names()
     wl = win_loss_calc(accounts)
     table_data = list()
     for t in ["1v1", "Team", "FFA", "TeamFFA"]:
@@ -263,7 +264,7 @@ def player(request, accountid):
     c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime")
     RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
 
-    c['pagetitle'] = "Player "+pa.get_all_names()
+    c['pagetitle'] = "Player "+pa.preffered_name
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
 #class PlayersReplayTable(tables.Table):

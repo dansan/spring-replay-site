@@ -3,14 +3,16 @@
 
 {% block rating %}
     {% if accounts|length > 1 %}
-    <div>
             <p>Showing accumulated data for players:</p>
        {% for acc in accounts %}
-            <p><a href="{{ acc.get_absolute_url }}">{{ acc.preffered_name }}</a>{% if acc.get_names|length > 1 %}{% for name in acc.get_names %} ({{ name }}){% endfor %}{% endif %}</p>
+            <p><a href="{{ acc.get_absolute_url }}">{{ acc.preffered_name }}</a>{% if acc.get_names|length > 1 %} (names used: {% for name in acc.get_names %}{{ name }} {% endfor %}){% endif %}</p>
        {% endfor %}
-            <p><br/></p>
-            </div>
+    {% else %}
+	   {% if all_names|length > 1 %}
+	        <p>Names used: {{ all_names }}</p>
+	   {% endif %}
     {% endif %}
+                <p> </p>
     {% block adminlink %}{% endblock %}
     {% if user.is_staff %}
       {% for acc in accounts %}

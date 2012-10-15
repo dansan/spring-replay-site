@@ -115,7 +115,7 @@ class RatingHistoryTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "match_date"
+        order_by = "-match_date"
 
     def render_elo(self, value):
         return '%.2f' % value
