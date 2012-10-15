@@ -10,6 +10,11 @@
 				<h2>Latest {{ newest_replays|length }} uploads (<a href="{% url srs.views.replays %}">of {{ total_replays }} total</a>)</h2>
 				<p>The web site owner is not responsible for the foul language of some players in the offered game replays.</p>
                 <h3>News</h3>
+                {% block adminlink %}
+                    {% if user.is_staff %}
+                <p><a href="/admin/srs/newsitem/">edit news @admin site</a></p>
+                    {% endif %}
+                {% endblock %}
                 <ul style="list-style:circle;" >
                     {% for n in news %}<li>{{ n.text|safe }}</li>{% endfor %}
                 </ul>

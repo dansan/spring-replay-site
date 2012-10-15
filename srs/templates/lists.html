@@ -9,6 +9,11 @@
         <div class="left">
         <h1>{{ pagetitle }}</h1>
         <p><br/></p>
+  {% block adminlink %}
+      {% if user.is_staff and adminurl %}
+        <p><a href="/admin/srs/{{ adminurl }}/{{ obj.pk }}/">{{ adminurl }} {{ obj }} @admin site</a></p>
+    {% endif %}
+  {% endblock %}
   {% block search %}{% endblock %}
   {% block rating %}{% endblock %}
 

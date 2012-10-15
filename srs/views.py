@@ -182,16 +182,21 @@ def tags(request):
     return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count())
 
 def tag(request, reqtag):
+    tag = get_object_or_404(Tag, name=reqtag)
+    ext = {"adminurl": "tag", "obj": tag}
+
     replays = Replay.objects.filter(tags__name=reqtag)
-    return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag))
+    return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag), ext=ext)
 
 def maps(request):
     table = MapTable(Map.objects.all())
     return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count())
 
 def rmap(request, mapname):
-    replays = Replay.objects.filter(map_info__name=mapname)
-    return replay_table(request, replays, "%d replays on map '%s'"%(replays.count(), mapname))
+    rmap = get_object_or_404(Map, name=mapname)
+    ext = {"adminurl": "map", "obj": rmap}
+    replays = Replay.objects.filter(map_info=rmap)
+    return replay_table(request, replays, "%d replays on map '%s'"%(replays.count(), mapname), ext=ext)
 
 def players(request):
     players = []

@@ -11,7 +11,12 @@
             <p><br/></p>
             </div>
     {% endif %}
-
+    {% block adminlink %}{% endblock %}
+    {% if user.is_staff %}
+      {% for acc in accounts %}
+      <p><a href="/admin/srs/playeraccount/{{ acc.pk }}/">{{ acc.preffered_name }} @admin site</a></p>
+      {% endfor %}
+    {% endif %}
             <h2>Rating</h2>
 		    {% if playerratingtable.data|length == 0 %}
 		    <p><br/><b>No result.</b><br/></p>
