@@ -204,22 +204,26 @@ class PlayerAccount(models.Model):
         return ('srs.views.player', [self.accountid])
 
     def replay_count(self):
-        return Player.objects.filter(account=self).count()
-
+        return Player.objects.filter(account__in=self.get_all_accounts()).count()
     def spectator_count(self):
-        return Player.objects.filter(account=self, spectator=True).count()
+        return Player.objects.filter(account__in=self.get_all_accounts(), spectator=True).count()
 
     def get_rating(self, game, match_type):
-        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={"playeraccount": self, "game": game, "match_type": match_type})
+        if self.primary_account: acc = self.primary_account
+        else:                    acc = self
+        rating, _ = Rating.objects.get_or_create(playeraccount=acc, game=game, match_type=match_type, defaults={"playeraccount": acc, "game": game, "match_type": match_type})
         return rating
 
     def get_all_accounts(self):
-        if self.primary_account:
-            return PlayerAccount.objects.filter(primary_account=self.primary_account)
-        else:
-            pas = PlayerAccount.objects.filter(primary_account=self)
-            if pas.exists(): return pas
-            else: return [self]
+        accounts = list()
+
+        if self.primary_account: prim_acc = self.primary_account
+        else: prim_acc = self
+
+        accounts.append(prim_acc)
+        accounts.extend(PlayerAccount.objects.filter(primary_account=prim_acc))
+
+        return accounts
 
     def get_names(self):
         pls = [p[0] for p in Player.objects.filter(account=self).values_list("name")]
@@ -229,10 +233,17 @@ class PlayerAccount(models.Model):
             return ["NoName"]
 
     def get_all_names(self):
+        pref_name = self.get_all_accounts()[0].preffered_name
         names = str()
+        namelist = list()
+
         for pa in self.get_all_accounts():
-            names += reduce(lambda x, y: x+" "+y+" ", pa.get_names())
-        return names
+            namelist.extend(pa.get_names())
+        uniqify_list(namelist)
+        namelist.remove(pref_name)
+        namelist.insert(0, pref_name)
+        names += reduce(lambda x, y: x+" "+y+" ", namelist)
+        return names.rstrip()
 
     class Meta:
         ordering = ['accountid']
@@ -433,21 +444,12 @@ def update_stats():
     replays  = Replay.objects.count()
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    tp = []
-    incpl = [PlayerAccount.objects.get(accountid=0),] # exclude bots
-    for pa in PlayerAccount.objects.all():
-        if pa in incpl: continue # jump over already counted accounts
-        p = Player.objects.filter(account=pa)
-        if p.exists(): # p can be empty, because when a replay is deleted the Players are deleted, but the PlayerAccounts not
-            # sum up all accounts of a player, list only oldest account (PA.all() is sorted by accountid)
-            nummatches = Player.objects.filter(account=pa, spectator=False).count()
-            incpl.append(pa)
-#TODO: smurfs
-#            if pa.aka:
-#                for otheraccount in pa.aka:
-#                nummatches += Player.objects.filter(account=pa.aka, spectator=False).count()
-#                incpl.append(pa.aka)
-            tp.append((nummatches, p[0]))
+    tp = list()
+
+    for pa in PlayerAccount.objects.filter(primary_account__isnull=True).exclude(accountid=0).order_by("accountid"): # exclude bots
+        nummatches =  Player.objects.filter(account=pa, spectator=False).count()
+        nummatches += Player.objects.filter(account__primary_account=pa, spectator=False).count()
+        tp.append((nummatches, pa))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
     comments = Comment.objects.reverse()[:5]
@@ -456,7 +458,7 @@ def update_stats():
     else:                 tags_s     = ""
     if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
     else:                 maps_s     = ""
-    if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players if p.account.accountid > 0])
+    if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
     else:                 players_s  = ""
     if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
     else:                 comments_s = ""

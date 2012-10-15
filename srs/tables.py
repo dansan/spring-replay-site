@@ -22,6 +22,19 @@ class ReplayTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "-upload_date"
 
+class PlayersReplayTable(tables.Table):
+    title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
+    unixTime       = tables.Column(verbose_name="Date")
+    playername     = tables.LinkColumn('player_detail', args=[A('accountid')])
+    game           = tables.Column()
+    match_type     = tables.Column()
+    result         = tables.Column()
+    side           = tables.Column()
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-match_date"
+
 class TagTable(tables.Table):
     name           = tables.LinkColumn('tag_detail', args=[A('name')])
     replays        = tables.Column(orderable=False)
@@ -69,6 +82,7 @@ class CommentTable(tables.Table):
 
 class PlayerRatingHistoryTable(tables.Table):
     match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Date")
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
     elo             = tables.Column()
@@ -141,7 +155,6 @@ class MatchRatingHistoryTable(tables.Table):
         return '%.2f' % value
 
 class PlayerRatingTable(tables.Table):
-    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.Column()
     elo             = tables.Column()
@@ -150,7 +163,7 @@ class PlayerRatingTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "game"
+        order_by = "game, match_type"
 
     def render_elo(self, value, record):
         if record.match_type != "1": return ""

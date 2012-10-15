@@ -196,18 +196,16 @@ def rmap(request, mapname):
 def players(request):
     players = []
     for pa in PlayerAccount.objects.all():
-        for name in pa.names.split(";"):
-            players.append({'name': name,
-                            'replay_count': pa.replay_count(),
-                            'spectator_count': pa.spectator_count(),
-                            'accid': pa.accountid})
+        players.append({'name': pa.preffered_name,
+                        'replay_count': pa.replay_count(),
+                        'spectator_count': pa.spectator_count(),
+                        'accid': pa.accountid})
     table = PlayerTable(players)
     return all_of_a_kind_table(request, table, "List of all %d players"%len(players))
 
 def player(request, accountid):
     from django_tables2 import RequestConfig
-    ext = dict()
-    pl_names = list()
+    c = all_page_infos(request)
 
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
@@ -215,27 +213,62 @@ def player(request, accountid):
     except:
         raise Http404
 
-    for account in accounts:
-        pl_names.extend(reduce(lambda x, y: x+"|"+y, [pa.get_names() for pa in accounts]))
-    print pl_names
-    print str(accounts)
-
-    wl = win_loss_calc(account)
+    c["accounts"] = accounts
+    wl = win_loss_calc(accounts)
     table_data = list()
     for t in ["1v1", "Team", "FFA", "TeamFFA"]:
         wl["at_"+t.lower()]["tag"] = t
         table_data.append(wl["at_"+t.lower()])
     wl["at_all"]["tag"] = "Total"
     table_data.append(wl["at_all"])
-    ext["winlosstable"] = WinLossTable(table_data, prefix="w-")
+    c["winlosstable"] = WinLossTable(table_data, prefix="w-")
 
-    ext["playerratingtable"] = PlayerRatingTable(Rating.objects.filter(playeraccount__in=accounts), prefix="p-")
-    ext["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
-    RequestConfig(request, paginate={"per_page": 20}).configure(ext["playerratinghistorytable"])
+    c["playerratingtable"] = PlayerRatingTable(Rating.objects.filter(playeraccount__in=accounts), prefix="p-")
+    c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
+    RequestConfig(request, paginate={"per_page": 20}).configure(c["playerratinghistorytable"])
 
-    players = Player.objects.select_related("replay").filter(account__in=accounts, spectator=False)
-    replays = Replay.objects.filter(player__in=players).order_by("unixTime")
-    return replay_table(request, replays, "Player "+pa.get_all_names(), template="player.html", ext=ext, order_by="-unixTime")
+    replay_table_data = list()
+    replays = Replay.objects.filter(player__account__in=accounts).order_by("unixTime")
+    for replay in replays:
+        replay_dict = dict()
+        replay_table_data.append(replay_dict)
+
+        replay_dict["title"] = replay.title
+        replay_dict["unixTime"] = replay.unixTime
+        player = Player.objects.filter(replay=replay, account__in=accounts)[0] # not using get() for the case of a spec-cheater
+        replay_dict["playername"] = player.name
+        try:
+            replay_dict["game"] = replay.game_release().game.abbreviation
+        except:
+            replay_dict["game"] = replay.game_release()[:12]
+        replay_dict["match_type"] = replay.match_type()
+        try:
+            team = Team.objects.get(replay=replay, teamleader=player)
+            if team.allyteam.winner:
+                replay_dict["result"] = "won"
+            else:
+                replay_dict["result"] = "lost"
+            replay_dict["side"] = team.side
+        except:
+            replay_dict["result"] = "spec"
+            replay_dict["side"] = "spec"
+        replay_dict["gameID"] = replay.gameID
+        replay_dict["accountid"] = PlayerAccount.objects.get(player=player).accountid
+
+    c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime")
+    RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
+
+    c['pagetitle'] = "Player "+pa.get_all_names()
+    return render_to_response("player.html", c, context_instance=RequestContext(request))
+
+#class PlayersReplayTable(tables.Table):
+#    title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
+#    unixTime       = tables.Column(verbose_name="Date")
+#    playername     = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+#    game           = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+#    match_type     = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
+#    result         = tables.Column()
+#    side           = tables.Column()
 
 def game(request, name):
     game = get_object_or_404(Game, name=name)
@@ -326,9 +359,9 @@ def search_replays(query):
             elif key == 'tag': q |= Q(tags__name__icontains=query['tag'])
             elif key == 'player':
                 if query.has_key('spectator'):
-                    q |= Q(player__account__names__icontains=query['player'])
+                    q |= Q(player__account__preffered_name__icontains=query['player'])
                 else:
-                    q |= Q(player__account__names__icontains=query['player'], player__spectator=False)
+                    q |= Q(player__account__preffered_name__icontains=query['player'], player__spectator=False)
             elif key == 'spectator': pass # used in key == 'player'
             elif key == 'maps': q |= Q(map_info__name__icontains=query['maps'])
             elif key == 'game': q |= Q(gametype__icontains=query['game'])
@@ -372,10 +405,10 @@ def win_loss_overview(request):
     c["playerlist"] = playerlist
     return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
 
-def win_loss_calc(playeraccount):
+def win_loss_calc(playeraccounts):
     c = dict()
 
-    players = Player.objects.filter(account__in=playeraccount.get_all_accounts(), spectator=False)
+    players = Player.objects.filter(account__in=playeraccounts, spectator=False)
 
     ats = Allyteam.objects.filter(team__player__in=players)
     at_1v1 = ats.filter(replay__tags__name="1v1")

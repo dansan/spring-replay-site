@@ -2,6 +2,16 @@
 {% load render_table from django_tables2 %}
 
 {% block rating %}
+    {% if accounts|length > 1 %}
+    <div>
+            <p>Showing accumulated data for players:</p>
+       {% for acc in accounts %}
+            <p><a href="{{ acc.get_absolute_url }}">{{ acc.preffered_name }}</a>{% if acc.get_names|length > 1 %}{% for name in acc.get_names %} ({{ name }}){% endfor %}{% endif %}</p>
+       {% endfor %}
+            <p><br/></p>
+            </div>
+    {% endif %}
+
             <h2>Rating</h2>
 		    {% if playerratingtable.data|length == 0 %}
 		    <p><br/><b>No result.</b><br/></p>

@@ -255,7 +255,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     elif startpos == 2:
         # start boxes
-        mapfile = spring_maps.create_map_with_boxes(replay)
+        try:
+            mapfile = spring_maps.create_map_with_boxes(replay)
+        except Exception, e:
+            logger.error("error creating map img: %s", e)
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     else:
@@ -282,14 +285,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     teams = []
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
-        pa, created = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
+        pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
         players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], spectator=bool(player["spectator"]), replay=replay)
-#        if not created:
-#TODO: fix alias
-#            # add players name to accounts aliases
-#            if player["name"] not in pa.names.split(";"):
-#                pa.names += ";"+player["name"]
-#                pa.save()
         if pa.accountid > 0:
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them

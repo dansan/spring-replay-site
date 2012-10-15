@@ -26,7 +26,7 @@
               <td><a href="{{ replay.get_absolute_url }}">{{ replay.unixTime|date:'Y-m-d H:i:s' }}</a></td>
               <td>{{ replay.match_type }}</td>
     {% for pa, elo_rating, glicko_rating, ts_rating in rating_change %}
-              <td>{{ pa.names }}</td>
+              <td>{{ pa.preffered_name }}</td>
         {% if forloop.counter <= 2 %}
               <td>{% if elo_rating %}{{ elo_rating.mean|floatformat:3 }}{% endif %}</td>
               <td>{% if glicko_rating %}{{ glicko_rating.mean|floatformat:3 }} ({{ glicko_rating.stdev|floatformat:1 }}){% endif %}</td>
