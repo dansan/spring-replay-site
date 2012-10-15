@@ -230,7 +230,7 @@ class PlayerAccount(models.Model):
         if pls:
             return uniqify_list(pls)
         else:
-            return ["NoName"]
+            return [self.preffered_name]
 
     def get_all_names(self):
         pref_name = self.get_all_accounts()[0].preffered_name
