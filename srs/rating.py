@@ -85,8 +85,8 @@ def initial_rating(request):
         for replay in replays:
             try:
                 rating_change = rate_match(replay, from_initial_rating=True)
-            except:
-                logger.error("Problem rating Replay(%d) '%s'", replay.pk, replay)
+            except Exception, e:
+                logger.error("Problem rating Replay(%d, '%s'): %s", replay.pk, replay, e)
                 replays_count += 1
                 continue
             count = 1
@@ -123,14 +123,12 @@ def initial_rating(request):
 
 def rate_match(replay, from_initial_rating=False):
     if replay.notcomplete:
-        logger.error("Replay %s is not complete, cannot compute.", replay.gameID)
-        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
+        raise Exception("Replay(%d) %s is not complete, cannot compute.", replay.pk, replay.gameID)
 
     if settings.INITIAL_RATING and not from_initial_rating:
         # queue match to be rated after initial_rating() has run
         RatingQueue.objects.create(replay=replay)
-        logger.info("initial_rating() is running, queued replay %s", replay.gameID)
-        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
+        raise Exception("initial_rating() is running, queued replay(%d) %s", replay.pk, replay.gameID)
 
     game = Game.objects.get(gamerelease__name=replay.gametype)
 
@@ -138,8 +136,7 @@ def rate_match(replay, from_initial_rating=False):
 
     # do not allow bots
     if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams, accountid=0).exists():
-        logger.info("Replay %s has a bot as player, not rating.", replay.gameID)
-        return [(PlayerAccount.objects.get(accountid=0), None, None, None)]
+        raise Exception("Replay(%d) %s has a bot as player, not rating.", replay.pk, replay.gameID)
 
     rating_changes = list()
 
@@ -175,13 +172,13 @@ def rate_match(replay, from_initial_rating=False):
         ts_game_info = TrueSkillGameInfo()
 
         elo_calculator = EloCalculator(k_factor=k_factor)
-        elo_ratings = elo_calculator.new_ratings(elo_match, elo_game_info)
+        elo_ratings = elo_calculator.new_ratings(elo_match, game_info=elo_game_info)
         if not settings.ELO_ONLY:
             glicko_calculator = GlickoCalculator()
-            glicko_ratings = glicko_calculator.new_ratings(glicko_matches, glicko_game_info)
+            glicko_ratings = glicko_calculator.new_ratings(glicko_matches, game_info=glicko_game_info)
             #TODO: use glicko rating period
             ts_calculator = TwoPlayerTrueSkillCalculator()
-            ts_ratings = ts_calculator.new_ratings(ts_match, ts_game_info)
+            ts_ratings = ts_calculator.new_ratings(ts_match, game_info=ts_game_info)
 
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             rating = pa.get_rating(game, replay.match_type_short())
