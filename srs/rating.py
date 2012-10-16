@@ -14,12 +14,12 @@ from django.views.decorators.cache import never_cache
 from models import *
 from common import all_page_infos
 
-from skills import GameInfo, Match, Matches, RatingFactory
+from skills import Match, Matches, RatingFactory
 from skills import Player as SkillsPlayer
 from skills import Team as SkillsTeam
-from skills.elo import EloCalculator, EloRating
-from skills.glicko import GlickoCalculator, GlickoRating
-from skills.trueskill import TwoPlayerTrueSkillCalculator, TwoTeamTrueSkillCalculator, FactorGraphTrueSkillCalculator, GaussianRating
+from skills.elo import EloCalculator, EloRating, EloGameInfo
+from skills.glicko import GlickoCalculator, GlickoRating, GlickoGameInfo
+from skills.trueskill import TwoPlayerTrueSkillCalculator, TwoTeamTrueSkillCalculator, FactorGraphTrueSkillCalculator, GaussianRating, TrueSkillGameInfo
 
 import csv, codecs, cStringIO, datetime
 
@@ -170,18 +170,18 @@ def rate_match(replay, from_initial_rating=False):
             ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
             ts_match = Match(ts_teams, winner)
 
-        elo_game_info = GameInfo(initial_mean=1500, stdev=1500/3, beta=1500/6, dynamics_factor=1500/300, draw_probability=0.04)
-        glicko_game_info = GameInfo(initial_mean=1500, stdev=1500/3, beta=1500/6, dynamics_factor=1500/300, draw_probability=0.04)
-        ts_game_info = GameInfo()
+        elo_game_info = EloGameInfo(initial_mean=1500, beta=1500/6)
+        glicko_game_info = GlickoGameInfo(initial_mean=1500, beta=1500/6)
+        ts_game_info = TrueSkillGameInfo()
 
         elo_calculator = EloCalculator(k_factor=k_factor)
-        elo_ratings = elo_calculator.new_ratings(elo_game_info, elo_match)
+        elo_ratings = elo_calculator.new_ratings(elo_match, elo_game_info)
         if not settings.ELO_ONLY:
             glicko_calculator = GlickoCalculator()
-            glicko_ratings = glicko_calculator.new_ratings(glicko_game_info, glicko_matches)
+            glicko_ratings = glicko_calculator.new_ratings(glicko_matches, glicko_game_info)
             #TODO: use glicko rating period
             ts_calculator = TwoPlayerTrueSkillCalculator()
-            ts_ratings = ts_calculator.new_ratings(ts_game_info, ts_match)
+            ts_ratings = ts_calculator.new_ratings(ts_match, ts_game_info)
 
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             rating = pa.get_rating(game, replay.match_type_short())
@@ -207,13 +207,13 @@ def rate_match(replay, from_initial_rating=False):
         ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
         ts_match = Match(ts_teams, winner)
 
-        game_info = GameInfo()
+        game_info = TrueSkillGameInfo()
         if allyteams.count() == 2 and Team.objects.filter(allyteam=allyteams[0]).count() == Team.objects.filter(allyteam=allyteams[1]).count():
             ts_calculator = TwoTeamTrueSkillCalculator()
         else:
             # FactorGraphTrueSkillCalculator works for 1v1, Team and FFA games
             ts_calculator = FactorGraphTrueSkillCalculator()
-        ts_ratings = ts_calculator.new_ratings(game_info, ts_match)
+        ts_ratings = ts_calculator.new_ratings(ts_match, game_info)
 
         for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
             pa.get_rating(game, replay.match_type_short()).set_trueskill(ts_ratings.rating_by_id(pa))
