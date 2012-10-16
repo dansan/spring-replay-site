@@ -491,13 +491,14 @@ def hall_of_fame(request, abbreviation):
 
     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
         # get ratings for top 20 players
-        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values()
-        # thow players with less than x matches in this game and category
-        rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__id=rt["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES]
+        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
+        # thow out players with less than x matches in this game and category
+        rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES]
         # add data needed for the table
-        for rt in rtype:
-            rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__id=rt["playeraccount_id"]).count()
-            rt["playeraccount"] = PlayerAccount.objects.get(id=rt["playeraccount_id"])
+        for rt in rtype[:20]:
+            playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
+            rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
+            rt["playeraccount"] = playeraccount
         c[mtl] = TSRatingTable(rtype, prefix=prefix)
 
     rc = RequestConfig(request, paginate={"per_page": 20})
