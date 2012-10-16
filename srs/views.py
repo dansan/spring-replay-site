@@ -464,7 +464,7 @@ def win_loss(request, accountid):
     c = all_page_infos(request)
 
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    c.update(win_loss_calc(pa))
+    c.update(win_loss_calc(pa.get_all_accounts()))
 
     c["playeraccount"] = pa
     return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
