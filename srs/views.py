@@ -491,10 +491,10 @@ def hall_of_fame(request, abbreviation):
 
     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
         # get ratings for top 100 players
-        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu')[:100].values()
-        if game.name == "BA": # only for BA, because ATM the other games do not have enough matches
+        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
+        if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
             # thow out players with less than x matches in this game and category
-            rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES]
+            rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
         else:
             rtype = list(rtype)
         # add data needed for the table
@@ -510,7 +510,9 @@ def hall_of_fame(request, abbreviation):
     rc.configure(c["table_ffa"])
     rc.configure(c["table_teamffa"])
 
-    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game. Change the diplayed game by clicking the link above this text.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+    if game.abbreviation == "BA":
+        c["intro_text"].append("Only players with at least %d matches will be listed here."%settings.HALL_OF_FAME_MIN_MATCHES)
     c['pagetitle'] = "Hall Of Fame ("+game.name+")"
     c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
     c["thisgame"] = game
