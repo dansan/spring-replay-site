@@ -490,12 +490,15 @@ def hall_of_fame(request, abbreviation):
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
 
     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
-        # get ratings for top 20 players
-        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
-        # thow out players with less than x matches in this game and category
-        rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES]
+        # get ratings for top 100 players
+        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu')[:100].values()
+        if game.name == "BA": # only for BA, because ATM the other games do not have enough matches
+            # thow out players with less than x matches in this game and category
+            rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES]
+        else:
+            rtype = list(rtype)
         # add data needed for the table
-        for rt in rtype[:20]:
+        for rt in rtype:
             playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
             rt["playeraccount"] = playeraccount
