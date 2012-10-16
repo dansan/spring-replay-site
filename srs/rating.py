@@ -123,12 +123,12 @@ def initial_rating(request):
 
 def rate_match(replay, from_initial_rating=False):
     if replay.notcomplete:
-        raise Exception("Replay(%d) %s is not complete, cannot compute.", replay.pk, replay.gameID)
+        raise Exception("Replay(%d) %s is not complete, cannot compute."%(replay.pk, replay.gameID))
 
     if settings.INITIAL_RATING and not from_initial_rating:
         # queue match to be rated after initial_rating() has run
         RatingQueue.objects.create(replay=replay)
-        raise Exception("initial_rating() is running, queued replay(%d) %s", replay.pk, replay.gameID)
+        raise Exception("initial_rating() is running, queued replay(%d) %s"%(replay.pk, replay.gameID))
 
     game = Game.objects.get(gamerelease__name=replay.gametype)
 
@@ -136,7 +136,7 @@ def rate_match(replay, from_initial_rating=False):
 
     # do not allow bots
     if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams, accountid=0).exists():
-        raise Exception("Replay(%d) %s has a bot as player, not rating.", replay.pk, replay.gameID)
+        raise Exception("Replay(%d) %s has a bot as player, not rating."%(replay.pk, replay.gameID))
 
     rating_changes = list()
 
