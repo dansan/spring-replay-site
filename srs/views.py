@@ -482,7 +482,10 @@ def hall_of_fame(request, abbreviation):
     r1v1.extend(Rating.objects.filter(game=game, match_type="1", glicko__gt=1500).order_by('-glicko')[:20].values())
     r1v1.extend(Rating.objects.filter(game=game, match_type="1", trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
     # thow out duplicates and players with less than x matches in this game and category
-    r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+    if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+    else:
+        r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
     # add data needed for the table
     for r1 in r1v1:
         r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=r1["playeraccount_id"]).count()
