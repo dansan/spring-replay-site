@@ -34,12 +34,13 @@ def xmlrpc_rate_single_user(accountid, game, match_type):
     except Exception, e:
         return error_log_return("Bad game name: %s"%str(e))
 
-    if match_type not in ["1", "T", "F", "G"]:
+    mt = str(match_type).upper()
+    if mt not in ["1", "T", "F", "G"]:
         return error_log_return("Bad match_type (must be one of 1/T/F/G)")
 
     rating = pa.get_rating(ga, match_type)
 
-    if match_type == "1":
+    if mt == "1":
         logger.debug("return %f", rating.elo)
         return rating.elo
     else:
