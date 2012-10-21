@@ -23,7 +23,7 @@ SHORT_DATE_FORMAT = 'd.m.Y'
 SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
 AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
-XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
+XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'), ('srs.xmlrating.xmlrpc_rate_single_user', 'xmlrpc_rate_single_user'))
 AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
 
 LOG_PATH        = realpath(dirname(__file__))+'/log'
