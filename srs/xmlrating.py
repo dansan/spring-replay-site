@@ -18,7 +18,7 @@ def error_log_return(msg):
 
 
 def xmlrpc_rate_single_user(accountid, game, match_type):
-    logger.info("accountid=%s game=%s match_type=%s", accountid, game, match_type)
+    logger.debug("accountid=%s game=%s match_type=%s", accountid, game, match_type)
     try:
         aid =  int(accountid)
     except ValueError, e:
