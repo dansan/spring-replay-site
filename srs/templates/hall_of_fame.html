@@ -9,6 +9,9 @@
         <div class="left">
   {% block search %}{% endblock %}
 
+{% if INITIAL_RATING %}
+            <h1>ATM the server is computing all ratings. Please come back in ~30 minutes.</h1>
+{% else %}
   {% block result_table %}
             <h2>{{ pagetitle }}</h2>
             <p><br/></p>
@@ -48,5 +51,6 @@
 {% render_table table_teamffa %}
 {% endif %}
   {% endblock %}
+{% endif %}
         </div>
 {% endblock %}

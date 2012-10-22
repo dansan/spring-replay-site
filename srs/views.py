@@ -519,6 +519,7 @@ def hall_of_fame(request, abbreviation):
     c['pagetitle'] = "Hall Of Fame ("+game.name+")"
     c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
     c["thisgame"] = game
+    c["INITIAL_RATING"] = settings.INITIAL_RATING
 
     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
