@@ -91,7 +91,7 @@ class PlayerRatingHistoryTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "match_date"
+        order_by = "-match_date"
 
     def render_elo(self, value, record):
         if record.match_type != "1": return ""
