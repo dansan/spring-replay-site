@@ -185,7 +185,7 @@ def rate_match(replay, from_initial_rating=False):
         for pa in pas_in_match:
             if pas_in_match.filter(id__in=[p.id for p in pa.get_all_accounts()]).count() > 1:
                 # two accounts of the same player are in this match, none of them will get any rating
-                logger.info("found 2nd account of PA(%d) '%s', not receiving rating", pa.pk, pa)
+                logger.info("found 2nd account of PA(%d) '%s'in replay(%d) '%s', not receiving rating", pa.pk, pa, replay.id, replay)
                 continue
             rating = pa.get_rating(game, replay.match_type_short())
             rating.set_elo(elo_ratings.rating_by_id(pa))
@@ -219,9 +219,9 @@ def rate_match(replay, from_initial_rating=False):
         ts_ratings = ts_calculator.new_ratings(ts_match, game_info)
 
         for pa in pas_in_match:
-            if pas_in_match.filter(id__in=[p.id for p in pa.get_all_accounts()]) > 1:
+            if pas_in_match.filter(id__in=[p.id for p in pa.get_all_accounts()]).count() > 1:
                 # two accounts of the same player are in this match, none of them will get any rating
-                logger.info("found 2nd account of PA(%d) '%s', not receiving rating", pa.pk, pa)
+                logger.info("found 2nd account of PA(%d) '%s'in replay(%d) '%s', not receiving rating", pa.pk, pa, replay.id, replay)
                 continue
             pa.get_rating(game, replay.match_type_short()).set_trueskill(ts_ratings.rating_by_id(pa))
             rating_changes.append((pa, None, None, ts_ratings.rating_by_id(pa)))
