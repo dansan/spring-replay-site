@@ -150,13 +150,15 @@ def rate_match(replay, from_initial_rating=False):
         if at.winner: winner.append(1)
         else: winner.append(2)
 
+    pas_in_match = PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)
+
     # calculate ELO and Glicko only for 1v1 and no bots
     if allyteams.count() == 2 and PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
         RatingFactory.rating_class = EloRating
         elo_teams = [SkillsTeam([(pa, EloRating(pa.get_rating(game, replay.match_type_short()).elo, pa.get_rating(game, replay.match_type_short()).elo_k)) for pa in team]) for team in teams]
         elo_match = Match(elo_teams, winner)
         # use lowest k-factor
-        k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short()).elo_k for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)])
+        k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short()).elo_k for pa in pas_in_match])
 
         if not settings.ELO_ONLY:
             RatingFactory.rating_class = GlickoRating
@@ -180,7 +182,11 @@ def rate_match(replay, from_initial_rating=False):
             ts_calculator = TwoPlayerTrueSkillCalculator()
             ts_ratings = ts_calculator.new_ratings(ts_match, game_info=ts_game_info)
 
-        for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
+        for pa in pas_in_match:
+            if pas_in_match.filter(id__in=[p.id for p in pa.get_all_accounts()]).count() > 1:
+                # two accounts of the same player are in this match, none of them will get any rating
+                logger.info("found 2nd account of PA(%d) '%s', not receiving rating", pa.pk, pa)
+                continue
             rating = pa.get_rating(game, replay.match_type_short())
             rating.set_elo(elo_ratings.rating_by_id(pa))
             if not settings.ELO_ONLY:
@@ -212,7 +218,11 @@ def rate_match(replay, from_initial_rating=False):
             ts_calculator = FactorGraphTrueSkillCalculator()
         ts_ratings = ts_calculator.new_ratings(ts_match, game_info)
 
-        for pa in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False):
+        for pa in pas_in_match:
+            if pas_in_match.filter(id__in=[p.id for p in pa.get_all_accounts()]) > 1:
+                # two accounts of the same player are in this match, none of them will get any rating
+                logger.info("found 2nd account of PA(%d) '%s', not receiving rating", pa.pk, pa)
+                continue
             pa.get_rating(game, replay.match_type_short()).set_trueskill(ts_ratings.rating_by_id(pa))
             rating_changes.append((pa, None, None, ts_ratings.rating_by_id(pa)))
             rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short())
