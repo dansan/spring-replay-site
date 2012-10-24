@@ -441,6 +441,7 @@ def floats2rgbhex(floats):
     return rgb
 
 def del_replay(replay):
+    replay.replayfile.delete()
     replay.map_img.delete()
     for tag in replay.tags.all():
         if tag.replays() == 1 and tag.pk > 10:
