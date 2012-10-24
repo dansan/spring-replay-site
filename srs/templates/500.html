@@ -1,8 +1,104 @@
-{% extends 'srs_base.html' %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<!--
+CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
+            Luka Cvrk (www.solucija.com)
+            Open Source Web Design
+            http://www.oswd.org/design/preview/id/3115
+-->
+    <meta name="author" content="Dansan" />
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <meta name="Description" content="Replay upload site for matches on the SPringRTS game engine."/>
+    <meta name="Keywords" content="replay, demo, sdf, spring, springrts, game"/>
 
-{% block pagetitle %}Internal Server Error{% endblock %}
+    <link rel="icon" type="image/png" href="/static/img/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/base.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
 
-{% block maincontent%}
-<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>
-<p>Please contact the server administrator, daniel@admin-box.com and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
-{% endblock %}
+    <title>Internal Server Error (500) | Spring Replay Site</title>
+</head>
+<body>
+
+    <div class="content">
+        <div class="header_right">
+            <div class="top_info">
+                <div class="top_info_right">
+                    <p><a href="/">Home</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="logo">
+            <h1><a href="/">Spring <span class="red">Replays</span></a></h1>
+            <p>Who needs a VCR?</p>
+        </div>
+
+        <div class="search_field">
+            <form method="post" action="/search/"><div style='display:none'><input type='hidden' name='csrfmiddlewaretoken' value='Va7zDf7K3nU7EYCQcCIQI5yibpBu7Hxh' /></div>
+                <p><span class="grey">Search Replays (<a href="/search/">Advanced</a>):</span> &nbsp;&nbsp; <input type="text" name="search" class="search" /> <input type="submit" value="Search" class="button" /></p>
+            </form>
+        </div>
+
+        <div class="newsletter">
+            <p><span class="grey">RSS feed: <a href="/feeds/latest/">all</a></span></p>
+        </div>
+
+        <div class="subheader">
+            <p>SpringRTS is a Open Source versatile 3D RTS game engine. For more information go to <a href="http://springrts.com/">springrts.com</a>.</p>
+        </div>
+
+        <div class="left">
+            <div class="left_articles">
+                <h2>Internal Server Error (500)</h2>
+                <p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>
+                <p>Please contact the server administrator, daniel@admin-box.com and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
+        </div>
+    </div>
+    <div class="right">
+            <div class="rt"></div>
+            <div class="right_articles">
+                <p><b>Latest Comments (<a href="/all_comments/">All</a>, <a href="/feeds/latest_comments/">RSS</a>)</b></p>
+            </div>
+            <div class="rt"></div>
+            <div class="right_articles">
+                <p><b>Rating: <a href="/hall_of_fame/BA/">Hall of fame</a></b> <a href="/rating_history/">history</a> <a href="/win_loss/">win/loss</a></p>
+                <p><b>Tags (<a href="/tags/">All</a>)</b><br /><a href="/tag/1v1/">1v1</a> <a href="/tag/2v2/">2v2</a> <a href="/tag/3v3/">3v3</a> <a href="/tag/6v6/">6v6</a> <a href="/tag/8v8/">8v8</a> <a href="/tag/Tourney/">Tourney</a><br />Top 20: <a href="/tag/Team/">Team</a> <a href="/tag/1v1/">1v1</a> <a href="/tag/Duel/">Duel</a> <a href="/tag/Bot/">Bot</a> <a href="/tag/FFA/">FFA</a> <a href="/tag/2v2/">2v2</a> <a href="/tag/3v3/">3v3</a> <a href="/tag/TeamFFA/">TeamFFA</a> <a href="/tag/6v6/">6v6</a> <a href="/tag/5v5/">5v5</a> <a href="/tag/2v1/">2v1</a> <a href="/tag/4v4/">4v4</a> <a href="/tag/1v2/">1v2</a> <a href="/tag/8v8/">8v8</a> <a href="/tag/1v3/">1v3</a> <a href="/tag/3v1/">3v1</a> <a href="/tag/7v7/">7v7</a> <a href="/tag/4-way/">4-way</a> <a href="/tag/2v2v2v2v2/">2v2v2v2v2</a> <a href="/tag/1v1v1/">1v1v1</a> </p>
+                <p><b>Maps (<a href="/maps/">All</a>)</b><br />Top 20: <a href="/map/Comet%20Catcher%20Redux/">Comet Catcher Redux</a> <a href="/map/Mini_SuperSpeedMetal/">Mini_SuperSpeedMetal</a> <a href="/map/Greener_Fields%20no%20wind/">Greener_Fields no wind</a> <a href="/map/Throne%20v1/">Throne v1</a> <a href="/map/DeltaSiegeDry/">DeltaSiegeDry</a> <a href="/map/Dworld_V1/">Dworld_V1</a> <a href="/map/Red%20Comet/">Red Comet</a> <a href="/map/Geyser_Plains_TNM04-V3/">Geyser_Plains_TNM04-V3</a> <a href="/map/BlueBend-v01/">BlueBend-v01</a> <a href="/map/Small%20Supreme%20Battlefield%20V2/">Small Supreme Battlefield V2</a> <a href="/map/Mearth_v4/">Mearth_v4</a> <a href="/map/SuperSpeedMetal/">SuperSpeedMetal</a> <a href="/map/Chicken_Nuggets_v4/">Chicken_Nuggets_v4</a> <a href="/map/DesertCliffsV1/">DesertCliffsV1</a> <a href="/map/Tabula-v4/">Tabula-v4</a> <a href="/map/Nuclear_Winter_v1/">Nuclear_Winter_v1</a> <a href="/map/FolsomDamDeluxeV4/">FolsomDamDeluxeV4</a> <a href="/map/neurope_a7/">neurope_a7</a> <a href="/map/Altair_Crossing-V1/">Altair_Crossing-V1</a> <a href="/map/Small_Divide-Remake-v04/">Small_Divide-Remake-v04</a> </p>
+                <p><b>Players (<a href="/players/">All</a>)</b><br />20 most active: <a href="/player/194470/">[Bro]GG</a> <a href="/player/65787/">[teh]Setti</a> <a href="/player/123951/">[PeaceData]Rick</a> <a href="/player/190671/">ScroogeMcDuck</a> <a href="/player/227403/">[Bro]Test</a> <a href="/player/163676/">[ACE]Gasmask</a> <a href="/player/72351/">[PinK]Flash</a> <a href="/player/234362/">[PinK]flo156</a> <a href="/player/168247/">[Bro]dude</a> <a href="/player/221024/">Starfox</a> <a href="/player/164486/">[ACE]Ascun</a> <a href="/player/102095/">[ACE]FabriceFABS</a> <a href="/player/234508/">Vandervar</a> <a href="/player/219172/">Jeenode</a> <a href="/player/34117/">[Bro]tzaeru</a> <a href="/player/215703/">[XHC]Distributor</a> <a href="/player/17034/">[teh]Teddy</a> <a href="/player/183341/">Hakora</a> <a href="/player/194380/">DeathStar</a> <a href="/player/188023/">integral</a> </p>
+                <p><b>Games (<a href="/games/">All</a>)</b><br /><a href="/game/Balanced%20Annihilation/">BA</a> <a href="/game/Chicken%20Defense%20(BA)/">CD</a> <a href="/game/NOTA/">NOTA</a> <a href="/game/Robot%20Defense/">RD</a> <a href="/game/Spring:%201944/">S1944</a> <a href="/game/Tech%20Annihilation/">TA</a> <a href="/game/XTA/">XTA</a> <a href="/game/Zero-K/">ZK</a> </p>
+                <p><b>Uploaders (<a href="/users/">All</a>)</b></p>
+                <p><b><a href="/replays/">All 5879 Replays</a></b></p>
+            </div>
+            <div class="rt"></div>
+            <div class="right_articles">
+                <p><b>Links</b><br /><a href="http://springrts.com/">SpringRTS</a><br />
+                <a href="http://springfiles.com/">SpringFiles</a><br />
+                <a href="http://quotes.springlobby.info/">Spring quotes</a><br />
+                <a href="http://replays.springrts.com/piwik/index.php?module=CoreAdminHome&action=optOut&language=en">Privacy | Tracking opt out</a></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>If you have requests, complaints, praise or want to contribute code please contact Dansan in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/">GitHub</a>.</p>
+        </div>
+    </div>
+    <!-- Piwik -->
+    <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
+    <script type="text/javascript">
+        var pkBaseURL = (("https:" == document.location.protocol) ? "https://replays.springrts.com/piwik/" : "http://replays.springrts.com/piwik/");
+        document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+    <script type="text/javascript">
+        try {
+            var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 1);
+            piwikTracker.trackPageView();
+            piwikTracker.enableLinkTracking();
+        } catch( err ) {}
+    </script>
+    <noscript>
+       <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p>
+    </noscript>
+    <!-- End Piwik Tracking Code -->
+</body>
+</html>
