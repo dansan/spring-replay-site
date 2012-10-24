@@ -224,24 +224,27 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # for index page
         smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
         smap.fetch_info()
-        if not smap.map_info:
-            # no result - most likely api.springfiles.com is down or didn't find the map
-            err = "Error fetching map info from api.springfiles.com, result set is empty for map '%s'."%demofile.game_setup["host"]["mapname"]
-            logger.error(err)
-            raise Exception(err)
-        startpos = ""
-        try:
+        if smap.map_info:
+            startpos = str()
             for coord in smap.map_info[0]["metadata"]["StartPos"]:
                 startpos += "%f,%f|"%(coord["x"], coord["z"])
             startpos = startpos[:-1]
-            replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
-        except Exception, e:
-            logger.error("fetching map_info, smap: %s, smap.map_info: %s, Exception: %s", smap, smap.map_info, e)
-            raise e
+            height   = smap.map_info[0]["metadata"]["Height"]
+            width    = smap.map_info[0]["metadata"]["Width"]
+            full_img = smap.fetch_img()
+        else:
+            # no result - either api.springfiles.com is down or it didn't find the map
+            err = "No map info from api.springfiles.com, using empty img for map '%s'."%demofile.game_setup["host"]["mapname"]
+            logger.error(err)
+            startpos = ""
+            height   = 170
+            width    = 340
+            shutil.copy(settings.MAPS_PATH+"__no_map_img.jpg", settings.MAPS_PATH+smap.mapname+".jpg")
+            full_img = settings.MAPS_PATH+smap.mapname+".jpg"
 
-        full_img = smap.fetch_img()
-        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         smap.make_home_thumb()
+        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width)
+        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
 
     #
@@ -274,6 +277,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             mapfile = spring_maps.create_map_with_boxes(replay)
         except Exception, e:
             logger.error("error creating map img: %s", e)
+
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     else:
@@ -321,7 +325,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
 
-        logger.debug("replay(%d) teams=%s", replay.pk, teams)
+    logger.debug("replay(%d) teams=%s", replay.pk, teams)
 
     logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
 
@@ -343,7 +347,6 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # find Players for this Team
         teamplayers = [t[0] for t in teams if t[1] == tnum]
         if teamplayers:
-            logger.debug("replay(%d) team[%s] (Team(%d)) has teamplayers=%s", replay.pk, tnum, team.pk, teamplayers)
             for player in teamplayers:
                 player.team = team
                 player.save()
