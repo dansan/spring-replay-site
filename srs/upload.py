@@ -224,6 +224,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # for index page
         smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
         smap.fetch_info()
+        if not smap.map_info:
+            # no result - most likely api.springfiles.com is down or didn't find the map
+            err = "Error fetching map info from api.springfiles.com, result set is empty for map '%s'."%demofile.game_setup["host"]["mapname"]
+            logger.error(err)
+            raise Exception(err)
         startpos = ""
         try:
             for coord in smap.map_info[0]["metadata"]["StartPos"]:
@@ -231,7 +236,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             startpos = startpos[:-1]
             replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
         except Exception, e:
-            logger.error("fetching map_info, smap: %s, Exception: %s", smap, e)
+            logger.error("fetching map_info, smap: %s, smap.map_info: %s, Exception: %s", smap, smap.map_info, e)
             raise e
 
         full_img = smap.fetch_img()
