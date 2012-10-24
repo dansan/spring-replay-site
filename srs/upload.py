@@ -76,7 +76,7 @@ def upload(request):
                     except:
                         shutil.move(path, settings.MEDIA_ROOT)
                         os.chmod(settings.MEDIA_ROOT+os.path.basename(path), stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
-                        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), file.name, short, long_text, request.user)
+                        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), ufile.name, short, long_text, request.user)
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
                         try:
@@ -225,10 +225,14 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
         smap.fetch_info()
         startpos = ""
-        for coord in smap.map_info[0]["metadata"]["StartPos"]:
-            startpos += "%f,%f|"%(coord["x"], coord["z"])
-        startpos = startpos[:-1]
-        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
+        try:
+            for coord in smap.map_info[0]["metadata"]["StartPos"]:
+                startpos += "%f,%f|"%(coord["x"], coord["z"])
+            startpos = startpos[:-1]
+            replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=smap.map_info[0]["metadata"]["Height"], width=smap.map_info[0]["metadata"]["Width"])
+        except Exception, e:
+            logger.error("fetching map_info, smap: %s, Exception: %s", smap, e)
+            raise e
 
         full_img = smap.fetch_img()
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
