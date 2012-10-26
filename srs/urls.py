@@ -30,15 +30,15 @@ urlpatterns = patterns('',
     url(r'^tag/(?P<reqtag>[\w\ .:()\[\]-]+)/$', 'srs.views.tag', name="tag_detail"),
 
     url(r'^maps/$', 'srs.views.maps'),
-    url(r'^map/(?P<mapname>[\w\ .-]+)/$', 'srs.views.rmap', name="map_detail"),
+    url(r'^map/(?P<mapname>.+)/$', 'srs.views.rmap', name="map_detail"),
 
     url(r'^players/$', 'srs.views.players'),
     url(r'^player/(?P<accountid>[\d-]+)/$', 'srs.views.player', name="player_detail"),
 
-    url(r'^game/(?P<name>[\w\ .:()\[\]-]+)/$', 'srs.views.game', name="game_detail"),
+    url(r'^game/(?P<name>.+)/$', 'srs.views.game', name="game_detail"),
 
     url(r'^games/$', 'srs.views.games'),
-    url(r'^gamerelease/(?P<gametype>[\w\ .:()\[\]-]+)/$', 'srs.views.gamerelease', name="gamerelease_detail"),
+    url(r'^gamerelease/(?P<gametype>.+)/$', 'srs.views.gamerelease', name="gamerelease_detail"),
 
     url(r'^users/$', 'srs.views.users'),
     url(r'^user/(?P<username>[\w\ .:()\[\]-]+)/$', 'srs.views.see_user', name="user_detail"),
