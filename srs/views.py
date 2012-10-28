@@ -462,15 +462,21 @@ def win_loss_calc(playeraccounts):
 
     return c
 
-def collect1v1ratings(game, match_type, limitbaresults=False):
-    # get ratings for top 20 players for each algorithm
-    r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
-    r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
-    r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
-    # thow out duplicates and players with less than x matches in this game and category
-    if limitbaresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+def collect1v1ratings(game, match_type, limitresults):
+    if limitresults:
+        # get ratings for top 20 players for each algorithm
+        r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
+        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
+        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
+    else:
+        r1v1 = list(Rating.objects.filter(game=game, match_type=match_type).order_by('-elo').values())
+        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-glicko').values())
+        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
+    if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+        # thow out duplicates and players with less than x matches in this game and category
         r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
     else:
+        # thow out duplicates
         r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
     # add data needed for the table
     for r1 in r1v1:
@@ -484,7 +490,7 @@ def ba1v1tourney(request):
     c = all_page_infos(request)
 
     game = get_object_or_404(Game, abbreviation="BA")
-    r1v1 = collect1v1ratings(game, "O", limitbaresults=False)
+    r1v1 = collect1v1ratings(game, "O", limitresults=False)
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
     c["intro_text"]    = ["TEST TEST TEST", "The ratings here are done parallel to those done my Griffith in the forum. Values are seeded from his numbers.", "EXPERIMENTAL EXPERIMENTAL EXPERIMENTAL", "Please refer to Griffith numbers, and ignore this for now!!"]
 
@@ -498,7 +504,7 @@ def hall_of_fame(request, abbreviation):
 
     game = get_object_or_404(Game, abbreviation=abbreviation)
 
-    r1v1 = collect1v1ratings(game, "1", limitbaresults=True)
+    r1v1 = collect1v1ratings(game, "1", limitresults=True)
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
 
     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
