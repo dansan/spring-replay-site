@@ -432,7 +432,7 @@ class RatingHistory(RatingBase):
         return str(self.playername)+" | "+str(self.match_date)+" | "+self.algo_change+" | "+super(RatingHistory, self).__unicode__()
 
     def set_sorting_data(self):
-        self.playername = Player.objects.filter(account=self.playeraccount).values_list("name")[0][0]
+        self.playername = self.playeraccount.preffered_name
         self.match_date = self.match.unixTime
         self.save()
 
@@ -538,5 +538,5 @@ def ratinghistory_save_callback(sender, instance, **kwargs):
 def rating_save_callback(sender, instance, **kwargs):
     # check for new new Game[Release] object
     if kwargs["created"]:
-        instance.playername = Player.objects.filter(account=instance.playeraccount).values_list("name")[0][0]
+        instance.playername = instance.playeraccount.preffered_name
         instance.save()

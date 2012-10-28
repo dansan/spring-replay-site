@@ -514,6 +514,7 @@ def hall_of_fame(request, abbreviation):
             playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
             rt["playeraccount"] = playeraccount
+            rt["playername"] = playeraccount.preffered_name
         c[mtl] = TSRatingTable(rtype, prefix=prefix)
 
     rc = RequestConfig(request, paginate={"per_page": 20})
