@@ -86,9 +86,12 @@ def replay(request, gameID):
     for r in rh:
         r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__id=r["playeraccount_id"]).count()
         r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
+        if c["replay"].match_type() == "1v1 BA Tourney": r["tourney"] = True
 
     if c["replay"].match_type() == "1v1":
         c["table"] = MatchRatingHistoryTable(rh)
+    elif c["replay"].match_type() == "1v1 BA Tourney":
+        c["table"] = TourneyMatchRatingHistoryTable(rh)
     else:
         c["table"] = TSMatchRatingHistoryTable(rh)
 
@@ -396,20 +399,20 @@ def search_replays(query):
 
     return replays
 
-@cache_page(3600 * 24)
-def win_loss_overview(request):
-    c = all_page_infos(request)
-
-    playerlist = list()
-    for pa in PlayerAccount.objects.all():
-        try:
-            name = Player.objects.filter(account=pa).values_list("name")[0][0]
-            playerlist.append((pa.accountid, name))
-        except:
-            pass
-    playerlist.sort(key=operator.itemgetter(1))
-    c["playerlist"] = playerlist
-    return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
+#@cache_page(3600 * 24)
+#def win_loss_overview(request):
+#    c = all_page_infos(request)
+#
+#    playerlist = list()
+#    for pa in PlayerAccount.objects.all():
+#        try:
+#            name = Player.objects.filter(account=pa).values_list("name")[0][0]
+#            playerlist.append((pa.accountid, name))
+#        except:
+#            pass
+#    playerlist.sort(key=operator.itemgetter(1))
+#    c["playerlist"] = playerlist
+#    return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
 
 def win_loss_calc(playeraccounts):
     c = dict()
@@ -459,15 +462,33 @@ def win_loss_calc(playeraccounts):
 
     return c
 
+def collect1v1ratings(game, match_type, limitbaresults=False):
+    # get ratings for top 20 players for each algorithm
+    r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
+    r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
+    r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
+    # thow out duplicates and players with less than x matches in this game and category
+    if limitbaresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+    else:
+        r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
+    # add data needed for the table
+    for r1 in r1v1:
+        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=r1["playeraccount_id"]).count()
+        r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+
+    return r1v1
+
 @never_cache
-def win_loss(request, accountid):
+def ba1v1tourney(request):
     c = all_page_infos(request)
 
-    pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    c.update(win_loss_calc(pa.get_all_accounts()))
+    game = get_object_or_404(Game, abbreviation="BA")
+    r1v1 = collect1v1ratings(game, "O", limitbaresults=False)
+    c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
+    c["intro_text"]    = ["TEST TEST TEST", "The ratings here are done parallel to those done my Griffith in the forum. Values are seeded from his numbers.", "EXPERIMENTAL EXPERIMENTAL EXPERIMENTAL", "Please refer to Griffith numbers, and ignore this for now!!"]
 
-    c["playeraccount"] = pa
-    return render_to_response('win_loss.html', c, context_instance=RequestContext(request))
+    return render_to_response('ba1v1tourney.html', c, context_instance=RequestContext(request))
 
 @cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):
@@ -477,19 +498,7 @@ def hall_of_fame(request, abbreviation):
 
     game = get_object_or_404(Game, abbreviation=abbreviation)
 
-    # get ratings for top 20 players for each algorithm
-    r1v1 = list(Rating.objects.filter(game=game, match_type="1", elo__gt=1500).order_by('-elo')[:20].values())
-    r1v1.extend(Rating.objects.filter(game=game, match_type="1", glicko__gt=1500).order_by('-glicko')[:20].values())
-    r1v1.extend(Rating.objects.filter(game=game, match_type="1", trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
-    # thow out duplicates and players with less than x matches in this game and category
-    if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
-        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
-    else:
-        r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
-    # add data needed for the table
-    for r1 in r1v1:
-        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type="1", playeraccount__id=r1["playeraccount_id"]).count()
-        r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+    r1v1 = collect1v1ratings(game, "1", limitbaresults=True)
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
 
     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:

@@ -277,6 +277,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             mapfile = spring_maps.create_map_with_boxes(replay)
         except Exception, e:
             logger.error("error creating map img: %s", e)
+            mapfile = "error creating map img"
 
         replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)

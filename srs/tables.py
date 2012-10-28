@@ -94,11 +94,11 @@ class PlayerRatingHistoryTable(tables.Table):
         order_by = "-match_date"
 
     def render_elo(self, value, record):
-        if record.match_type != "1": return ""
-        else: return '%.2f' % value
+        if record.match_type in ["1", "O"]: return '%.2f' % value
+        else: return ""
     def render_glicko(self, value, record):
-        if record.match_type != "1": return ""
-        else: return '%.2f' % value
+        if record.match_type in ["1", "O"]: return '%.2f' % value
+        else: return ""
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
@@ -154,6 +154,29 @@ class MatchRatingHistoryTable(tables.Table):
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
+class TourneyMatchRatingHistoryTable(tables.Table):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    elo             = tables.Column()
+    glicko          = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+    num_matches     = tables.Column(verbose_name="# Matches")
+    match_type      = tables.Column(verbose_name="Tourney")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-match_type"
+
+    def render_elo(self, value):
+        return '%.2f' % value
+    def render_glicko(self, value):
+        return '%.2f' % value
+    def render_trueskill_mu(self, value):
+        return '%.2f' % value
+    def render_match_type(self, value):
+        print value
+        if value == "O": return "yes"
+        else           : return "no"
+
 class PlayerRatingTable(tables.Table):
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.Column()
@@ -166,11 +189,11 @@ class PlayerRatingTable(tables.Table):
         order_by = "game, match_type"
 
     def render_elo(self, value, record):
-        if record.match_type != "1": return ""
-        else: return '%.2f' % value
+        if record.match_type in ["1", "O"]: return '%.2f' % value
+        else: return ""
     def render_glicko(self, value, record):
-        if record.match_type != "1": return ""
-        else: return '%.2f' % value
+        if record.match_type in ["1", "O"]: return '%.2f' % value
+        else: return ""
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 

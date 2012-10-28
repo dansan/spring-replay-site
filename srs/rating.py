@@ -121,7 +121,7 @@ def initial_rating(request):
     return render_to_response('initial_rating.html', c, context_instance=RequestContext(request))
 
 
-def rate_match(replay, from_initial_rating=False):
+def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
     if replay.notcomplete:
         raise Exception("Replay(%d) %s is not complete, cannot compute."%(replay.pk, replay.gameID))
 
@@ -155,10 +155,10 @@ def rate_match(replay, from_initial_rating=False):
     # calculate ELO and Glicko only for 1v1 and no bots
     if allyteams.count() == 2 and PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
         RatingFactory.rating_class = EloRating
-        elo_teams = [SkillsTeam([(pa, EloRating(pa.get_rating(game, replay.match_type_short()).elo, pa.get_rating(game, replay.match_type_short()).elo_k)) for pa in team]) for team in teams]
+        elo_teams = [SkillsTeam([(pa, EloRating(pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo, pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo_k)) for pa in team]) for team in teams]
         elo_match = Match(elo_teams, winner)
         # use lowest k-factor
-        k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short()).elo_k for pa in pas_in_match])
+        k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo_k for pa in pas_in_match])
 
         if not settings.ELO_ONLY:
             RatingFactory.rating_class = GlickoRating
@@ -187,7 +187,7 @@ def rate_match(replay, from_initial_rating=False):
                 # two accounts of the same player are in this match, none of them will get any rating
                 logger.info("found 2nd account of PA(%d) '%s'in replay(%d) '%s', not receiving rating", pa.pk, pa, replay.id, replay)
                 continue
-            rating = pa.get_rating(game, replay.match_type_short())
+            rating = pa.get_rating(game, replay.match_type_short(ba1v1tourney))
             rating.set_elo(elo_ratings.rating_by_id(pa))
             if not settings.ELO_ONLY:
                 rating.set_glicko(glicko_ratings.rating_by_id(pa))
@@ -195,7 +195,7 @@ def rate_match(replay, from_initial_rating=False):
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa), ts_ratings.rating_by_id(pa)))
             else:
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), None, None))
-            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short())
+            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short(ba1v1tourney))
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
             if not settings.ELO_ONLY:
                 rating_history.set_glicko(glicko_ratings.rating_by_id(pa))

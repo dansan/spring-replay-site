@@ -146,11 +146,14 @@ class Replay(models.Model):
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
     def match_type(self):
-        """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA"""
+        """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA / '1v1 BA Tourney'"""
         try:
             tag = self.tags.get(name__regex=r'^[0-9]v[0-9]$')
             if tag.name == "1v1":
-                return tag.name
+                if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
+                    return "1v1 BA Tourney"
+                else:
+                    return tag.name # "1v1"
             else:
                 return "Team"
         except: pass
@@ -165,9 +168,10 @@ class Replay(models.Model):
 
         return self.title
 
-    def match_type_short(self):
-        """returns string (from match_type()): 1 / T / F / G"""
+    def match_type_short(self, ba1v1tourney=False):
+        """returns string (from match_type()): 1 / T / F / G / O"""
         if self.match_type() == "TeamFFA": return "G"
+        elif ba1v1tourney and self.match_type() == "1v1 BA Tourney": return "O" # return "O" only if a manual rating.rate_match() is run with ba1v1tourney=True
         else: return self.match_type()[0]
 
     def num_players(self):
@@ -354,6 +358,7 @@ class RatingBase(models.Model):
                            ('T', u'Team'),
                            ('F', u'FFA'),
                            ('G', u'TeamFFA'),
+                           ('O', u'BA 1v1 Tourney'),
                            )
     match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES)
     playeraccount = models.ForeignKey(PlayerAccount)
