@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache, cache_page
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.contrib.comments import Comment
 from django.views.decorators.cache import cache_control
 from django.db.models import Max
@@ -19,6 +19,8 @@ from django.db.models import Max
 import logging
 from types import StringTypes
 import datetime
+import gzip
+import magic
 
 from models import *
 from common import all_page_infos
@@ -178,7 +180,21 @@ def download(request, gameID):
 
     rf.download_count += 1
     rf.save()
-    return HttpResponseRedirect(settings.STATIC_URL+"replays/"+rf.filename)
+
+    path = rf.path+"/"+rf.filename
+    filemagic = magic.from_file(path, mime=True)
+    if filemagic.endswith("gzip"):
+        demofile = gzip.open(path, 'rb')
+    else:
+        demofile = open(path, "rb")
+    if rf.filename.endswith(".gz"):
+        filename = rf.filename[:-3]
+    else:
+        filename = rf.filename
+
+    response = HttpResponse(demofile.read(), content_type='application/x-spring-demo')
+    response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+    return response
 
 def tags(request):
     table = TagTable(Tag.objects.all())

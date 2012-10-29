@@ -14,6 +14,8 @@ from struct import unpack
 from time import localtime, strftime
 from datetime import timedelta
 import pprint
+import magic
+import gzip
 
 
 class Parse_demo_file():
@@ -33,7 +35,7 @@ class Parse_demo_file():
         else:
             try:
                 return float(val)
-            except ValueError, TypeError:
+            except Exception:
                 pass
         return val
 
@@ -41,11 +43,15 @@ class Parse_demo_file():
         """
         - may raise IOError when opening a file to read
         """
-        with open(self.filename, "rb") as self.demofile:
-            self.header = {}
-            self.header['magic'] = self.read_blob(0, 16)
-            if not self.header['magic'].startswith("spring demofile"):
-                raise Exception("Not a spring demofile.")
+        filemagic = magic.from_file(self.filename, mime=True)
+        if filemagic.endswith("gzip"):
+            self.demofile = gzip.open(self.filename, 'rb')
+        else:
+            self.demofile = open(self.filename, "rb")
+        self.header = {}
+        self.header['magic'] = self.read_blob(0, 16)
+        if not self.header['magic'].startswith("spring demofile"):
+            raise Exception("Not a spring demofile.")
 
     def parse(self):
         """
@@ -53,7 +59,11 @@ class Parse_demo_file():
         - may raise IOError when opening a file to read or write
         - may raise Exception when file is not a spring demofile
         """
-        self.demofile = open(self.filename, "rb")
+        filemagic = magic.from_file(self.filename, mime=True)
+        if filemagic.endswith("gzip"):
+            self.demofile = gzip.open(self.filename, 'rb')
+        else:
+            self.demofile = open(self.filename, "rb")
 
         #
         # struct DemoFileHeader from rts/System/LoadSave/demofile.h

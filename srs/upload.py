@@ -12,6 +12,7 @@ import shutil
 import stat
 from tempfile import mkstemp
 import datetime
+import gzip
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -168,9 +169,10 @@ def save_uploaded_file(ufile, filename):
     may raise an exception from os.open/write/close()
     """
     suff = filename.split("_")[-1]
-    (fd, path) = mkstemp(suffix="_"+suff, prefix=filename[:-len(suff)-1]+"__")
-    written_bytes = os.write(fd, ufile)
-    os.close(fd)
+    (fd, path) = mkstemp(suffix="_"+suff+".gz", prefix=filename[:-len(suff)-1]+"__")
+    gzf = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
+    written_bytes = gzf.write(ufile)
+    gzf.close()
     logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
     return (path, written_bytes)
 
