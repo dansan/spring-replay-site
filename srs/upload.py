@@ -47,7 +47,7 @@ def upload(request):
                     short = form.cleaned_data['short']
                     long_text = form.cleaned_data['long_text']
                     tags = form.cleaned_data['tags']
-                    (path, written_bytes) = save_uploaded_file(ufile)
+                    (path, written_bytes) = save_uploaded_file(ufile.read(), ufile.name)
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
         #            try:
                     if written_bytes != ufile.size:
@@ -123,9 +123,8 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         return "2 Unknown or inactive owner account, please log in via web interface once."
 
     # this is code double from upload() :(
-    (fd, path) = mkstemp(suffix=".sdf", prefix=filename[:-4]+"__")
-    bytes_written = os.write(fd, demofile.data)
-    logger.debug("wrote %d bytes to /tmp/%s", bytes_written, filename)
+    (path, written_bytes) = save_uploaded_file(demofile.data, filename)
+    logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", username, path, subject)
 
     demofile = parse_demo_file.Parse_demo_file(path)
     demofile.check_magic()
@@ -147,9 +146,10 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         pass
 
     shutil.move(path, settings.MEDIA_ROOT)
-    os.chmod(settings.MEDIA_ROOT+os.path.basename(path), stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
+    newpath = settings.MEDIA_ROOT+os.path.basename(path)
+    os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
-        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), filename, subject, comment, user)
+        replay = store_demofile_data(demofile, tags, newpath, filename, subject, comment, user)
         replay.uploader = owner_ac
         replay.save()
     except Exception, e:
@@ -161,16 +161,15 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         rate_match(replay)
     except Exception, e:
         logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
-    return '0 received %d bytes, replay at "%s"'%(bytes_written, replay.get_absolute_url())
+    return '0 received %d bytes, replay at "%s"'%(written_bytes, replay.get_absolute_url())
 
-def save_uploaded_file(ufile):
+def save_uploaded_file(ufile, filename):
     """
     may raise an exception from os.open/write/close()
     """
-    (fd, path) = mkstemp(suffix=".sdf", prefix=ufile.name[:-4]+"__")
-    written_bytes = 0
-    for chunk in ufile.chunks():
-        written_bytes += os.write(fd, chunk)
+    suff = filename.split("_")[-1]
+    (fd, path) = mkstemp(suffix="_"+suff, prefix=filename[:-len(suff)-1]+"__")
+    written_bytes = os.write(fd, ufile)
     os.close(fd)
     logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
     return (path, written_bytes)
