@@ -160,7 +160,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
         # use lowest k-factor
         k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo_k for pa in pas_in_match])
 
-        if not settings.ELO_ONLY:
+        if not settings.ELO_ONLY and not ba1v1tourney:
             RatingFactory.rating_class = GlickoRating
             glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.get_rating(game, replay.match_type_short()).glicko, pa.get_rating(game, replay.match_type_short()).glicko_rd)) for pa in team]) for team in teams]
             glicko_matches = Matches([Match(glicko_teams, winner)])
@@ -175,7 +175,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
 
         elo_calculator = EloCalculator(k_factor=k_factor)
         elo_ratings = elo_calculator.new_ratings(elo_match, game_info=elo_game_info)
-        if not settings.ELO_ONLY:
+        if not settings.ELO_ONLY and not ba1v1tourney:
             glicko_calculator = GlickoCalculator()
             glicko_ratings = glicko_calculator.new_ratings(glicko_matches, game_info=glicko_game_info)
             #TODO: use glicko rating period
@@ -189,7 +189,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
                 continue
             rating = pa.get_rating(game, replay.match_type_short(ba1v1tourney))
             rating.set_elo(elo_ratings.rating_by_id(pa))
-            if not settings.ELO_ONLY:
+            if not settings.ELO_ONLY and not ba1v1tourney:
                 rating.set_glicko(glicko_ratings.rating_by_id(pa))
                 rating.set_trueskill(ts_ratings.rating_by_id(pa))
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa), ts_ratings.rating_by_id(pa)))
@@ -197,7 +197,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), None, None))
             rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short(ba1v1tourney))
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
-            if not settings.ELO_ONLY:
+            if not settings.ELO_ONLY and not ba1v1tourney:
                 rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
                 rating_history.set_trueskill(ts_ratings.rating_by_id(pa))
                 rating_history.algo_change="A"

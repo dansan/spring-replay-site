@@ -226,10 +226,12 @@ class RatingTable(tables.Table):
 
     def render_elo(self, value):
         return '%.2f' % value
-    def render_glicko(self, value):
-        return '%.2f' % value
-    def render_trueskill_mu(self, value):
-        return '%.2f' % value
+    def render_glicko(self, value, record):
+        if record["match_type"] == "O": return ""
+        else: return '%.2f' % value
+    def render_trueskill_mu(self, value, record):
+        if record["match_type"] == "O": return ""
+        else: return '%.2f' % value
 
 class WinLossTable(tables.Table):
     tag   = tables.Column(orderable=False)
