@@ -21,6 +21,13 @@
 {% else %}
 {% render_table table_1v1 %}
 {% endif %}
+
+            <h3>Rating history</h3>
+{% if table_1v1_history.data|length == 0 %}
+            <p><br/><b>No result.</b><br/></p>
+{% else %}
+{% render_table table_1v1_history %}
+{% endif %}
   {% endblock %}
         </div>
 {% endblock %}

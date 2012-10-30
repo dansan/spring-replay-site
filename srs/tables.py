@@ -102,6 +102,20 @@ class PlayerRatingHistoryTable(tables.Table):
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
+class Tourney1v1RatingHistoryTable(tables.Table):
+    match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+    title           = tables.LinkColumn('replay_detail', args=[A('gameID')])
+    elo             = tables.Column()
+    num_matches     = tables.Column(verbose_name="# Matches")
+
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-match_date"
+
+    def render_elo(self, value):
+        return '%.2f' % value
+
 class RatingHistoryTable(tables.Table):
     match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
     algo_change     = tables.Column(verbose_name="Algo")
@@ -119,10 +133,12 @@ class RatingHistoryTable(tables.Table):
 
     def render_elo(self, value):
         return '%.2f' % value
-    def render_glicko(self, value):
-        return '%.2f' % value
-    def render_trueskill_mu(self, value):
-        return '%.2f' % value
+    def render_glicko(self, value, record):
+        if record.match_type == "O": return ""
+        else: return '%.2f' % value
+    def render_trueskill_mu(self, value, record):
+        if record.match_type == "O": return ""
+        else: return '%.2f' % value
 
 class TSMatchRatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
@@ -149,10 +165,12 @@ class MatchRatingHistoryTable(tables.Table):
 
     def render_elo(self, value):
         return '%.2f' % value
-    def render_glicko(self, value):
-        return '%.2f' % value
-    def render_trueskill_mu(self, value):
-        return '%.2f' % value
+    def render_glicko(self, value, record):
+        if record["match_type"] == "O": return ""
+        else: return '%.2f' % value
+    def render_trueskill_mu(self, value, record):
+        if record["match_type"] == "O": return ""
+        else: return '%.2f' % value
 
 class TourneyMatchRatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])

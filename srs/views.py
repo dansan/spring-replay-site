@@ -503,12 +503,24 @@ def collect1v1ratings(game, match_type, limitresults):
 
 @never_cache
 def ba1v1tourney(request):
+    from django_tables2 import RequestConfig
+
     c = all_page_infos(request)
 
     game = get_object_or_404(Game, abbreviation="BA")
     r1v1 = collect1v1ratings(game, "O", limitresults=False)
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
+    rh = list(RatingHistory.objects.filter(match_type="O").values())
+    for r in rh:
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__id=r["playeraccount_id"]).count()
+        r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
+        r["title"] = Replay.objects.get(id=r["match_id"]).title
+        r["gameID"] =  Replay.objects.get(id=r["match_id"]).gameID
+    c["table_1v1_history"]  = Tourney1v1RatingHistoryTable(rh, prefix="H-")
     c["intro_text"]    = ["TEST TEST TEST", "The ratings here are done parallel to those done my Griffith in the forum. Values are seeded from his numbers.", "EXPERIMENTAL EXPERIMENTAL EXPERIMENTAL", "Please refer to Griffith numbers, and ignore this for now!!"]
+    rc = RequestConfig(request, paginate={"per_page": 20})
+    rc.configure(c["table_1v1"])
+    rc.configure(c["table_1v1_history"])
 
     return render_to_response('ba1v1tourney.html', c, context_instance=RequestContext(request))
 
