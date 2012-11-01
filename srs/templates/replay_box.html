@@ -39,6 +39,6 @@
                 <p>Map: <a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a></p>
                 <p>Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}</p>
                 <p>Uploaded by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
-                <p><a href="{% url srs.views.download replay.gameID %}">Download</a>s: {{ replay.replayfile.download_count }} Comments: {{ replay.comments }}</p>
+                <p><a href="{% url srs.views.download replay.gameID %}" class="piwik_download">Download</a>s: {{ replay.replayfile.download_count }} Comments: {{ replay.comments }}</p>
 {% endif %}
 {% endcache %}
