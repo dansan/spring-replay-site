@@ -86,7 +86,8 @@ def replay(request, gameID):
 
     rh = list(RatingHistory.objects.filter(match=c["replay"]).values())
     for r in rh:
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__id=r["playeraccount_id"]).count()
+        playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_all_accounts()).count()
         r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
         if c["replay"].match_type() == "1v1 BA Tourney": r["tourney"] = True
 
@@ -490,13 +491,14 @@ def collect1v1ratings(game, match_type, limitresults):
         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
     if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
         # thow out duplicates and players with less than x matches in this game and category
-        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__id=v["playeraccount_id"]).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=PlayerAccount.objects.get(id=v["playeraccount_id"]).get_all_accounts()).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
     else:
         # thow out duplicates
         r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
     # add data needed for the table
     for r1 in r1v1:
-        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__id=r1["playeraccount_id"]).count()
+        playeraccount = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=playeraccount.get_all_accounts()).count()
         r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
 
     return r1v1
@@ -512,7 +514,8 @@ def ba1v1tourney(request):
     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
     rh = list(RatingHistory.objects.filter(match_type="O").values())
     for r in rh:
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__id=r["playeraccount_id"]).count()
+        playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_alql_accounts()).count()
         r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
         r["title"] = Replay.objects.get(id=r["match_id"]).title
         r["gameID"] =  Replay.objects.get(id=r["match_id"]).gameID
