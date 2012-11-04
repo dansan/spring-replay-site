@@ -515,7 +515,7 @@ def ba1v1tourney(request):
     rh = list(RatingHistory.objects.filter(match_type="O").values())
     for r in rh:
         playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_alql_accounts()).count()
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_all_accounts()).count()
         r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
         r["title"] = Replay.objects.get(id=r["match_id"]).title
         r["gameID"] =  Replay.objects.get(id=r["match_id"]).gameID
