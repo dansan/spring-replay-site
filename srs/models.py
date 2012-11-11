@@ -249,6 +249,10 @@ class PlayerAccount(models.Model):
         names += reduce(lambda x, y: x+" "+y+" ", namelist)
         return names.rstrip()
 
+    def get_preffered_name(self):
+        if self.primary_account: return self.primary_account.preffered_name
+        else: return self.preffered_name
+
     class Meta:
         ordering = ['accountid']
 

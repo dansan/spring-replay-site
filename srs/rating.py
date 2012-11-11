@@ -169,7 +169,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
             ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
             ts_match = Match(ts_teams, winner)
 
-        elo_game_info = EloGameInfo(initial_mean=1500, beta=1500/6)
+        elo_game_info = EloGameInfo(initial_mean=1500, beta=200) # 200 will be doubled later -> use 400 as in original Elo algo
         glicko_game_info = GlickoGameInfo(initial_mean=1500, beta=1500/6)
         ts_game_info = TrueSkillGameInfo()
 
@@ -232,3 +232,79 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
 
     logger.debug("rated replay(%d | %s): %s", replay.pk, replay.gameID, replay)
     return rating_changes
+
+def rate_1v1_tourney(replays, game, match_type):
+    elo_corrections = dict()
+    replays_rated = list()
+
+    if match_type != "O":
+        raise NotImplementedError("Only 1v1 tourney with Elo atm.")
+
+    RatingFactory.rating_class = EloRating
+    k_factor = 30
+    elo_game_info = EloGameInfo(initial_mean=1500, beta=200) # 200 will be doubled later -> use 400 as in original Elo algo
+    elo_calculator = EloCalculator(k_factor=k_factor)
+
+    for replay in replays:
+        if replay in replays_rated: continue
+        if replay.notcomplete: raise RuntimeError("Replay(%d) %s is not complete, cannot compute."%(replay.pk, replay.gameID))
+
+        pas = PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)
+        if pas.count() != 2: raise RuntimeError("Replay(%d) %s has !=2 players: %s."%(replay.pk, replay.gameID, pas))
+
+        pa0 = pas[0]
+        pa1 = pas[1]
+        logger.debug("== %s (%f) vs %s (%f) ==", pa0.get_preffered_name(), pa0.get_rating(game, match_type).elo, pa1.get_preffered_name(), pa1.get_rating(game, match_type).elo)
+
+        all_matches_of_pa0 = replays.filter(player__account=pa0, player__spectator=False)
+        matches_of_pa0_vs_pa1 = all_matches_of_pa0.filter(player__account=pa1, player__spectator=False)
+
+        exp_score_pa0_vs_pa1 = matches_of_pa0_vs_pa1.count() * elo_calculator.expected_score(pa0.get_rating(game, match_type).elo, pa1.get_rating(game, match_type).elo, elo_game_info)
+
+        logger.debug("    matches: %s   (%s)", [int(m.id) for m in matches_of_pa0_vs_pa1], [m.gameID for m in matches_of_pa0_vs_pa1])
+        logger.debug("    exp_score (%s): %d * %.2f = %.2f", pa0.get_preffered_name(), matches_of_pa0_vs_pa1.count(), elo_calculator.expected_score(pa0.get_rating(game, match_type).elo, pa1.get_rating(game, match_type).elo, elo_game_info), exp_score_pa0_vs_pa1)
+
+        act_score_pa0_vs_pa1 = 0
+        for match in matches_of_pa0_vs_pa1:
+            allyteams = Allyteam.objects.filter(replay=match)
+            if not allyteams[0].winner and not allyteams[1].winner:
+                act_score_pa0_vs_pa1 += 0.5 # draw
+            else:
+                pa0_player = Player.objects.get(replay=match, account=pa0)
+                allyteam_pa0 = pa0_player.team.allyteam
+                if allyteam_pa0.winner:
+                    act_score_pa0_vs_pa1 += 1
+                # else: act_score_pa0_vs_pa1 += 0
+        logger.debug("    act_score (%s): %.2f", pa0.get_preffered_name(), act_score_pa0_vs_pa1)
+
+        elo_cor_pa0_vs_pa1 = k_factor * (act_score_pa0_vs_pa1 - exp_score_pa0_vs_pa1)
+        logger.debug("    Elo correction (%s): %.2f", pa0.get_preffered_name(), elo_cor_pa0_vs_pa1)
+
+        try:
+            elo_corrections[pa0] += elo_cor_pa0_vs_pa1
+        except KeyError:
+            elo_corrections[pa0] = elo_cor_pa0_vs_pa1
+
+        try:
+            elo_corrections[pa1] -= elo_cor_pa0_vs_pa1
+        except KeyError:
+            elo_corrections[pa1] = -1 * elo_cor_pa0_vs_pa1
+
+        logger.debug("    Elo correction sum for %s now: %.2f", pa0.get_preffered_name(), elo_corrections[pa0])
+        logger.debug("    Elo correction sum for %s now: %.2f", pa1.get_preffered_name(), elo_corrections[pa1])
+
+        replays_rated.extend(matches_of_pa0_vs_pa1)
+
+    for pa, elo_correction in elo_corrections.iteritems():
+        pa_rating = pa.get_rating(game, match_type)
+        logger.debug("Elo update %s: %.2f + %.2f = %.2f", pa.get_preffered_name(), pa_rating.elo, elo_correction, pa_rating.elo+elo_correction)
+        pa_rating.elo += elo_correction
+        pa_rating.save()
+
+    logger.debug("*** all matches:   (%d) %s ***", replays.count(), [int(r.id) for r in replays.order_by("id")])
+    li_ra = [int(r.id) for r in replays_rated]
+    li_ra.sort()
+    logger.debug("*** matches rated: (%d) %s ***", len(replays_rated), li_ra)
+    logger.debug("*** nicks: ***")
+    for pa in elo_corrections.iterkeys():
+        logger.debug("    %s \t\t %s", pa.get_preffered_name(), pa.get_all_names())
