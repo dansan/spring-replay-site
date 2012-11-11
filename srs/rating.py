@@ -300,6 +300,9 @@ def rate_1v1_tourney(replays, game, match_type):
         logger.debug("Elo update %s: %.2f + %.2f = %.2f", pa.get_preffered_name(), pa_rating.elo, elo_correction, pa_rating.elo+elo_correction)
         pa_rating.elo += elo_correction
         pa_rating.save()
+        # store history into last match of tourney
+        last_match = replays.order_by("-id")[0]
+        RatingHistory.objects.create(playeraccount=pa, match=last_match, algo_change="E", game=game, match_type=match_type, elo = pa_rating.elo)
 
     logger.debug("*** all matches:   (%d) %s ***", replays.count(), [int(r.id) for r in replays.order_by("id")])
     li_ra = [int(r.id) for r in replays_rated]
@@ -307,4 +310,7 @@ def rate_1v1_tourney(replays, game, match_type):
     logger.debug("*** matches rated: (%d) %s ***", len(replays_rated), li_ra)
     logger.debug("*** nicks: ***")
     for pa in elo_corrections.iterkeys():
-        logger.debug("    %s \t\t %s", pa.get_preffered_name(), pa.get_all_names())
+        try:
+            logger.debug("    %s \t\t %s", pa.get_preffered_name(), pa.get_all_names())
+        except:
+            logger.error("getting names for %s", pa)

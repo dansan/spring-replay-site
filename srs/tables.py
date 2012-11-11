@@ -191,7 +191,6 @@ class TourneyMatchRatingHistoryTable(tables.Table):
     def render_trueskill_mu(self, value):
         return '%.2f' % value
     def render_match_type(self, value):
-        print value
         if value == "O": return "yes"
         else           : return "no"
 
