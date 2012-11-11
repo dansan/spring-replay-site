@@ -10,20 +10,52 @@ from models import *
 from lobbyauth.models import UserProfile
 from django.contrib import admin
 
-admin.site.register(Tag)
-admin.site.register(Map)
-admin.site.register(MapImg)
-admin.site.register(Replay)
+class PlayerAccountAdmin(admin.ModelAdmin):
+    list_display = ("accountid", "preffered_name", "get_names")
+    search_fields = ["accountid", "preffered_name", "primary_account__preffered_name", "player__name"]
+
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ("name", "spectator")
+    search_fields = ["name", "account__preffered_name", "account__primary_account__preffered_name"]
+
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ("playername", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
+    search_fields = ["playername"]
+     
+class ReplayAdmin(admin.ModelAdmin):
+    list_display = ("title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
+    search_fields = ["title", "map_info__name", "uploader__username", "gameID"]
+       
+class ReplayFileAdmin(admin.ModelAdmin):
+    list_display = ("filename", "download_count")
+    search_fields = ["filename"]
+    
+class MapAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ["name"]
+    
+class MapImgAdmin(admin.ModelAdmin):
+    list_display = ("filename", "startpostype")
+    search_fields = ["filename"]
+    
+class TagAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ["name"]
+
+admin.site.register(Tag, TagAdmin)
+admin.site.register(Map, MapAdmin)
+admin.site.register(MapImg, MapImgAdmin)
+admin.site.register(Replay, ReplayAdmin)
 admin.site.register(Allyteam)
-admin.site.register(PlayerAccount)
-admin.site.register(Player)
+admin.site.register(PlayerAccount, PlayerAccountAdmin)
+admin.site.register(Player, PlayerAdmin)
 admin.site.register(Team)
 admin.site.register(MapOption)
 admin.site.register(ModOption)
-admin.site.register(ReplayFile)
+admin.site.register(ReplayFile, ReplayFileAdmin)
 admin.site.register(NewsItem)
 admin.site.register(UploadTmp)
-admin.site.register(Rating)
+admin.site.register(Rating, RatingAdmin)
 admin.site.register(RatingHistory)
 admin.site.register(Game)
 admin.site.register(GameRelease)
