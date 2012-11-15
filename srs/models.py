@@ -147,16 +147,14 @@ class Replay(models.Model):
 
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA / '1v1 BA Tourney'"""
-        try:
-            tag = self.tags.get(name__regex=r'^[0-9]v[0-9]$')
-            if tag.name == "1v1":
-                if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
-                    return "1v1 BA Tourney"
-                else:
-                    return tag.name # "1v1"
+        tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
+        if tag.name == "1v1":
+            if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
+                return "1v1 BA Tourney"
             else:
-                return "Team"
-        except: pass
+                return tag.name # "1v1"
+        else:
+            return "Team"
         try:
             tag = self.tags.get(name__regex=r'^TeamFFA$')
             return tag.name
@@ -193,6 +191,9 @@ class Allyteam(models.Model):
     startrecttop    = models.FloatField(blank=True, null = True)
     winner          = models.BooleanField()
     replay          = models.ForeignKey(Replay)
+
+    def __unicode__(self):
+        return str(self.id)+u" win:"+str(self.winner)
 
 class PlayerAccount(models.Model):
     accountid       = models.IntegerField(unique=True)
@@ -394,7 +395,7 @@ class RatingBase(models.Model):
         self.save()
 
     def __unicode__(self):
-        return str(self.playername)+" | "+self.match_type+" | "+"elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
+        return "("+str(self.id)+") "+str(self.playername)+" | "+self.match_type+" | "+"elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
 
     class Meta:
         ordering = ['-elo', '-glicko', '-trueskill_mu']
@@ -431,9 +432,8 @@ class RatingHistory(RatingBase):
         self.algo_change = "T"
         self.save()
 
-
     def __unicode__(self):
-        return str(self.playername)+" | "+str(self.match_date)+" | "+self.algo_change+" | "+super(RatingHistory, self).__unicode__()
+        return str(self.match_date)+" | "+super(RatingHistory, self).__unicode__()
 
     def set_sorting_data(self):
         self.playername = self.playeraccount.preffered_name
