@@ -80,7 +80,7 @@ def replay(request, gameID):
 
     allyteams = Allyteam.objects.filter(replay=replay)
     game = replay.game_release().game
-    match_type = replay.match_type_short()
+    match_type = replay.match_type_short(ba1v1tourney=True)
     c["allyteams"] = []
     for at in allyteams:
         playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at)
