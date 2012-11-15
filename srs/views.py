@@ -73,35 +73,65 @@ def all_of_a_kind_table(request, table, title, template="lists.html", intro_text
 def replay(request, gameID):
     c = all_page_infos(request)
     try:
-        c["replay"] = Replay.objects.prefetch_related().get(gameID=gameID)
+        replay = Replay.objects.prefetch_related().get(gameID=gameID)
+        c["replay"] = replay
     except:
         raise Http404
 
+    allyteams = Allyteam.objects.filter(replay=replay)
+    game = replay.game_release().game
+    match_type = replay.match_type_short()
     c["allyteams"] = []
-    for at in Allyteam.objects.filter(replay=c["replay"]):
-        teams = Team.objects.filter(allyteam=at, replay=c["replay"])
-        players = Player.objects.filter(team__in=teams).order_by("name")
-        if teams:
-            c["allyteams"].append((at, players))
+    for at in allyteams:
+        playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at)
+        teams = Team.objects.filter(allyteam=at)
+        players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
+        if Player.objects.filter(account__accountid=0, replay=replay).exists():
+            # bot present - no rating
+            new_rating = 0
+            old_rating = 0
+        else:
+            if match_type in ["1", "O"]:
+                # Elo ratings
+                new_rating = RatingHistory.objects.get(match=replay, playeraccount=playeraccounts[0], game=game, match_type=match_type).elo
+                rh_li = list(RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type).order_by("-id")[:2]) # must use list, because QueryDicts do not support negative indexing
+                if len(rh_li) == 1:
+                    old_rating = 1500  # 1st match in this category -> default Elo
+                else:
+                    old_rating = rh_li[-1].elo
+            else:
+                # TrueSkill ratings
+                new_rating = reduce(lambda x, y: x+y, [rhl.trueskill_mu for rhl in RatingHistory.objects.filter(match=replay, playeraccount__in=playeraccounts, game=game, match_type=match_type)])
+                old_rating = 0
+                for pa in playeraccounts:
+                    # find previous TS values
+                    rh_li = list(RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type).order_by("-id")[:2]) # must use list, because QueryDicts do not support negative indexing
+                    if len(rh_li) == 1:
+                        old_rating += 25  # 1st match in this category -> default TS
+                    else:
+                        old_rating += rh_li[-1].trueskill_mu
 
-    rh = list(RatingHistory.objects.filter(match=c["replay"]).values())
+        if teams:
+            c["allyteams"].append((at, players, old_rating, new_rating))
+
+    rh = list(RatingHistory.objects.filter(match=replay).values())
     for r in rh:
         playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
         r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_all_accounts()).count()
-        r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        if c["replay"].match_type() == "1v1 BA Tourney": r["tourney"] = True
+        r["playeraccount"] = playeraccount
+        if replay.match_type() == "1v1 BA Tourney": r["tourney"] = True
 
-    if c["replay"].match_type() == "1v1":
+    if replay.match_type() == "1v1":
         c["table"] = MatchRatingHistoryTable(rh)
-    elif c["replay"].match_type() == "1v1 BA Tourney":
+    elif replay.match_type() == "1v1 BA Tourney":
         c["table"] = TourneyMatchRatingHistoryTable(rh)
     else:
         c["table"] = TSMatchRatingHistoryTable(rh)
 
-    c["specs"] = Player.objects.filter(replay=c["replay"], spectator=True).order_by("name")
-    c["upload_broken"] = UploadTmp.objects.filter(replay=c["replay"]).exists()
-    c["mapoptions"] = MapOption.objects.filter(replay=c["replay"]).order_by("name")
-    c["modoptions"] = ModOption.objects.filter(replay=c["replay"]).order_by("name")
+    c["specs"] = Player.objects.filter(replay=replay, spectator=True).order_by("name")
+    c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
+    c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
+    c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
     c["replay_details"] = True
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
