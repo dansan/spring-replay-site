@@ -94,7 +94,7 @@
 	    </div>
 	    <div class="left" style="width: 220px; padding: 0 8px;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
-	        {% for at, players, old_rating, new_rating in allyteams %}<b>Team {{ forloop.counter }}</b>&nbsp;&nbsp;&nbsp;&nbsp; (Rating: {{ old_rating|floatformat:0 }} &rarr; {{ new_rating|floatformat:0 }})
+	        {% for at, players, old_rating, new_rating in allyteams %}<b>Team {{ forloop.counter }}</b>&nbsp;&nbsp;&nbsp;&nbsp; {% if replay.match_type_short != "1" and replay.match_type_short != "O" %}(Rating: {{ old_rating|floatformat:0 }} &rarr; {{ new_rating|floatformat:0 }}){% endif %}
 	        {% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
 	        <ul>
                 {% for p, pl_old, pl_new in players %}<li style="color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name|ljust:"20" }}</a>  &nbsp;&nbsp; {{ p.team.side|ljust:"4" }} &nbsp;&nbsp; ({{ pl_old|floatformat:0 }} &rarr; {{ pl_new|floatformat:0 }}){% else %}{{ p.name }} {{ p.team.side }}{% endif %}</li>
