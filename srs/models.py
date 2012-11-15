@@ -150,7 +150,7 @@ class Replay(models.Model):
         try:
             tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
             if tag.name == "1v1":
-                if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
+                if self.tags.filter(name="Tourney").exists() and self.game_release().game.name == "Balanced Annihilation":
                     return "1v1 BA Tourney"
                 else:
                     return tag.name # "1v1"
