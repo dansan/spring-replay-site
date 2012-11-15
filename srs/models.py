@@ -147,14 +147,16 @@ class Replay(models.Model):
 
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA / '1v1 BA Tourney'"""
-        tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
-        if tag.name == "1v1":
-            if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
-                return "1v1 BA Tourney"
+        try:
+            tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
+            if tag.name == "1v1":
+                if self.tags.filter(name="Tourney") and self.game_release().game.name == "Balanced Annihilation":
+                    return "1v1 BA Tourney"
+                else:
+                    return tag.name # "1v1"
             else:
-                return tag.name # "1v1"
-        else:
-            return "Team"
+                return "Team"
+        except: pass
         try:
             tag = self.tags.get(name__regex=r'^TeamFFA$')
             return tag.name
