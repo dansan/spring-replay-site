@@ -86,6 +86,7 @@ def replay(request, gameID):
         playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at)
         teams = Team.objects.filter(allyteam=at)
         players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
+        players_w_rating = list()
         if Player.objects.filter(account__accountid=0, replay=replay).exists():
             # bot present - no rating
             new_rating = 0
@@ -99,8 +100,18 @@ def replay(request, gameID):
                     old_rating = RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].elo
                 except:
                     old_rating = 1500  # 1st match in this category -> default Elo
+                players_w_rating.append((players[0], old_rating, new_rating))
             else:
                 # TrueSkill ratings
+                for pa in playeraccounts:
+                    pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
+                    try:
+                        # find previous TS value
+                        pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
+                    except:
+                        pl_old = 25  # 1st match in this category -> default TS
+                    players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
+
                 new_rating = reduce(lambda x, y: x+y, [rhl.trueskill_mu for rhl in RatingHistory.objects.filter(match=replay, playeraccount__in=playeraccounts, game=game, match_type=match_type)])
                 old_rating = 0
                 for pa in playeraccounts:
@@ -109,9 +120,9 @@ def replay(request, gameID):
                         old_rating += RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
                     except:
                         old_rating += 25  # 1st match in this category -> default TS
-
+        print players_w_rating
         if teams:
-            c["allyteams"].append((at, players, old_rating, new_rating))
+            c["allyteams"].append((at, players_w_rating, old_rating, new_rating))
 
     rh = list(RatingHistory.objects.filter(match=replay).values())
     for r in rh:
