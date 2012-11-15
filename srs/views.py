@@ -94,22 +94,21 @@ def replay(request, gameID):
             if match_type in ["1", "O"]:
                 # Elo ratings
                 new_rating = RatingHistory.objects.get(match=replay, playeraccount=playeraccounts[0], game=game, match_type=match_type).elo
-                rh_li = list(RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type).order_by("-id")[:2]) # must use list, because QueryDicts do not support negative indexing
-                if len(rh_li) == 1:
+                try:
+                    # find previous Elo value
+                    old_rating = RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].elo
+                except:
                     old_rating = 1500  # 1st match in this category -> default Elo
-                else:
-                    old_rating = rh_li[-1].elo
             else:
                 # TrueSkill ratings
                 new_rating = reduce(lambda x, y: x+y, [rhl.trueskill_mu for rhl in RatingHistory.objects.filter(match=replay, playeraccount__in=playeraccounts, game=game, match_type=match_type)])
                 old_rating = 0
                 for pa in playeraccounts:
-                    # find previous TS values
-                    rh_li = list(RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type).order_by("-id")[:2]) # must use list, because QueryDicts do not support negative indexing
-                    if len(rh_li) == 1:
+                    try:
+                        # find previous TS value
+                        old_rating += RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
+                    except:
                         old_rating += 25  # 1st match in this category -> default TS
-                    else:
-                        old_rating += rh_li[-1].trueskill_mu
 
         if teams:
             c["allyteams"].append((at, players, old_rating, new_rating))
