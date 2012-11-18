@@ -98,7 +98,7 @@ def replay(request, gameID):
                     new_rating = RatingHistory.objects.get(match=replay, playeraccount=playeraccounts[0], game=game, match_type=match_type).elo
                 except:
                     # no rating on this replay
-                    new_rating = 1500
+                    new_rating = 0
                 try:
                     # find previous Elo value
                     old_rating = RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].elo
@@ -112,7 +112,7 @@ def replay(request, gameID):
                         pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
                     except:
                         # no rating on this replay
-                        pl_new = 25
+                        pl_new = 0
                     try:
                         # find previous TS value
                         pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
