@@ -91,6 +91,8 @@ def replay(request, gameID):
             # bot present - no rating
             new_rating = 0
             old_rating = 0
+            for player in Player.objects.filter(account__in=playeraccounts, replay=replay):
+                players_w_rating.append((player, old_rating, new_rating))
         else:
             if match_type in ["1", "O"]:
                 # Elo ratings
@@ -128,7 +130,6 @@ def replay(request, gameID):
                         old_rating += RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
                     except:
                         old_rating += 25  # 1st match in this category -> default TS
-        print players_w_rating
         if teams:
             c["allyteams"].append((at, players_w_rating, old_rating, new_rating))
 
