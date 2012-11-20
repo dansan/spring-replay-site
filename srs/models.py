@@ -147,6 +147,7 @@ class Replay(models.Model):
 
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA / '1v1 BA Tourney'"""
+        # quick and dirty using tags
         try:
             tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
             if tag.name == "1v1":
@@ -166,7 +167,20 @@ class Replay(models.Model):
             return tag.name
         except: pass
 
-        return self.title
+        # thoroughly using player/team count
+        allyteams = Allyteam.objects.filter(replay=self)
+        if allyteams.count() == 2:
+            if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
+                return "1v1"
+            else:
+                return "Team"
+        elif allyteams.count() > 2:
+            if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == allyteams.count():
+                return "FFA"
+            else:
+                return "TeamFFA"
+
+        raise Exception("Could not determine match_type for replay(%d) %s."%(self.id, self.gameID))
 
     def match_type_short(self, ba1v1tourney=False):
         """returns string (from match_type()): 1 / T / F / G / O"""
