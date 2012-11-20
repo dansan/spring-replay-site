@@ -87,8 +87,8 @@ def replay(request, gameID):
         teams = Team.objects.filter(allyteam=at)
         players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
         players_w_rating = list()
-        if Player.objects.filter(account__accountid=0, replay=replay).exists():
-            # bot present - no rating
+        if replay.notcomplete or Player.objects.filter(account__accountid=0, replay=replay).exists():
+            # notcomplete or bot present - no rating
             new_rating = 0
             old_rating = 0
             for player in Player.objects.filter(account__in=playeraccounts, replay=replay):
