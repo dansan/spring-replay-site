@@ -109,9 +109,13 @@ def replay(request, gameID):
                 players_w_rating.append((players[0], old_rating, new_rating))
             else:
                 # TrueSkill ratings
+                old_rating = 0
+                new_rating = 0
+                lobby_rank_sum = 0
                 for pa in playeraccounts:
                     try:
                         pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
+                        new_rating += pl_new
                     except:
                         # no rating on this replay
                         pl_new = 0
@@ -120,18 +124,12 @@ def replay(request, gameID):
                         pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
                     except:
                         pl_old = 25  # 1st match in this category -> default TS
+                    old_rating += pl_old
                     players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
 
-                new_rating = reduce(lambda x, y: x+y, [rhl.trueskill_mu for rhl in RatingHistory.objects.filter(match=replay, playeraccount__in=playeraccounts, game=game, match_type=match_type)])
-                old_rating = 0
-                for pa in playeraccounts:
-                    try:
-                        # find previous TS value
-                        old_rating += RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
-                    except:
-                        old_rating += 25  # 1st match in this category -> default TS
         if teams:
-            c["allyteams"].append((at, players_w_rating, old_rating, new_rating))
+            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in Player.objects.filter(replay=replay, team__allyteam=at)])
+            c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
     rh = list(RatingHistory.objects.filter(match=replay).values())
     for r in rh:
