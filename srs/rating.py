@@ -79,7 +79,7 @@ def initial_rating(request):
     for game in Game.objects.all():
         gamereleases = [gr.name for gr in GameRelease.objects.filter(game=game)]
         # copy QuerySet into list, so it doesn't change while running
-        replays = list(Replay.objects.filter(gametype__in=gamereleases, tags__name__regex=r'^([0-9]v[0-9]|FFA|TeamFFA)$').exclude(tags__name__in=["Bot", "SP"]).distinct().order_by("unixTime"))
+        replays = list(Replay.objects.filter(gametype__in=gamereleases, tags__name__regex=r'^([0-9]v[0-9]|Duel|Team|FFA|TeamFFA)$').exclude(tags__name__in=["Bot", "SP"]).distinct().order_by("unixTime"))
         logger.info("Game = %s, number of replays = %d", game, len(replays))
         replays_count = 1
         for replay in replays:
@@ -135,8 +135,8 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
     allyteams = Allyteam.objects.filter(replay=replay)
 
     # do not allow bots
-    if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams, accountid=0).exists():
-        raise Exception("Replay(%d) %s has a bot as player, not rating."%(replay.pk, replay.gameID))
+    if replay.game_release().game.abbreviation in ["CD", "RD"] or PlayerAccount.objects.filter(player__replay=replay, accountid=0).exists():
+        raise Exception("Replay(%d) %s has a bot, not rating."%(replay.pk, replay.gameID))
 
     rating_changes = list()
 
