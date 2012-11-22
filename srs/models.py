@@ -459,6 +459,25 @@ class RatingHistory(RatingBase):
     class Meta:
         ordering = ['-match_date', 'playername']
 
+class RatingAdjustmentHistory(RatingBase):
+    change_date   = models.DateTimeField(auto_now=True)
+    ALGO_CHOICES  = (('E', u'ELO'),
+                     ('G', u'Glicko'),
+                     ('T', u'Trueskill'),
+                     )
+    algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="T")
+    admin         = models.ForeignKey(PlayerAccount)
+
+    def __unicode__(self):
+        if   self.algo_change == "E": change = self.elo
+        elif self.algo_change == "G": change = self.glicko
+        elif self.algo_change == "T": change = self.trueskill_mu
+        else: raise Exception("This should not happen.")
+        return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' changed '"+self.playeraccount.get_preffered_name()+"' | "+self.game.abbreviation+" | "+self.algo_change+" | "+str(change)
+
+    class Meta:
+        ordering = ['-change_date']
+
 
 class RatingQueue(models.Model):
     """used during long running initial_rating()"""

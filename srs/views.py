@@ -623,6 +623,11 @@ def rating_history(request):
     intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
     return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
 
+@never_cache
+def manual_rating_history(request):
+    table = RatingAdjustmentHistoryTable(RatingAdjustmentHistory.objects.all())
+    return all_of_a_kind_table(request, table, "Manual rating adjustment history")
+
 @login_required
 @never_cache
 def user_settings(request):

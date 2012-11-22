@@ -8,7 +8,7 @@
 
 import django_tables2 as tables
 from django_tables2 import A
-from models import Rating
+from models import Rating, RatingAdjustmentHistory
 
 
 class ReplayTable(tables.Table):
@@ -259,3 +259,25 @@ class WinLossTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
+
+class RatingAdjustmentHistoryTable(tables.Table):
+    change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
+    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.get_preffered_name"))
+    playeraccount   = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')], accessor=A("playeraccount.get_preffered_name"), verbose_name="Player")
+    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
+    match_type      = tables.Column(verbose_name="Match")
+    elo             = tables.Column()
+    trueskill_mu    = tables.Column(verbose_name="Trueskill")
+
+    class Meta:
+        model = RatingAdjustmentHistory
+        fields = ("change_date", "admin", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
+        attrs    = {'class': 'paleblue'}
+        order_by = "-change_date"
+
+    def render_elo(self, value, record):
+        if record.algo_change != "E": return ""
+        else: return '%.2f' % value
+    def render_trueskill_mu(self, value, record):
+        if record.match_type != "T": return ""
+        else: return '%.2f' % value
