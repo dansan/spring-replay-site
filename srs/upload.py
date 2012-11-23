@@ -307,6 +307,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
+        if pa.preffered_name == "??":
+            pa.preffered_name = player["name"]
+        if pa.countrycode == "??":
+            pa.countrycode    = player["countrycode"]
         players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], spectator=bool(player["spectator"]), replay=replay)
         if pa.accountid > 0:
             # if we found players w/o account, and now have a player with the
