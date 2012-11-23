@@ -169,4 +169,18 @@ def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
     all_account_ids_str = reduce(lambda x, y: str(x)+"|%d"%y, all_account_ids)
     AccountUnificationLog.objects.create(admin=admin, account1=pa1, account2=pa2, all_accounts=all_account_ids_str)
 
+    all_ratings = Rating.objects.filter(playeraccount__in=prim_acc.get_all_accounts())
+    for rating in all_ratings:
+        prim_rating = prim_acc.get_rating(game=rating.game, match_type=rating.match_type)
+        other_accounts_ratings = all_ratings.filter(game=rating.game, match_type=rating.match_type).exclude(id=prim_rating.id)
+        for oar in other_accounts_ratings:
+            prim_rating.elo             = max(prim_rating.elo, oar.elo)
+            prim_rating.elo_k           = min(prim_rating.elo_k, oar.elo_k)
+            prim_rating.glicko          = max(prim_rating.glicko, oar.glicko)
+            prim_rating.glicko_rd       = min(prim_rating.glicko_rd, oar.glicko_rd)
+            prim_rating.trueskill_mu    = max(prim_rating.trueskill_mu, oar.trueskill_mu)
+            prim_rating.trueskill_sigma = min(prim_rating.trueskill_sigma, oar.trueskill_sigma)
+        prim_rating.save()
+    all_ratings.filter().exclude(playeraccount=prim_acc).delete()
+
     return lowest_id
