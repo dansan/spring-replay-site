@@ -628,6 +628,11 @@ def manual_rating_history(request):
     table = RatingAdjustmentHistoryTable(RatingAdjustmentHistory.objects.all())
     return all_of_a_kind_table(request, table, "Manual rating adjustment history")
 
+@never_cache
+def account_unification_history(request):
+    table = AccountUnificationLogTable(AccountUnificationLog.objects.all())
+    return all_of_a_kind_table(request, table, "Account unification history")
+
 @login_required
 @never_cache
 def user_settings(request):

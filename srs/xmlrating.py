@@ -58,8 +58,8 @@ def authenticate_uploader(username, password):
     else:
         raise Exception("Unknown or inactive uploader account or bad password.")
 
-    if user.username not in settings.USERS_ALLOWED_TO_SET_RATINGS:
-        raise Exception("Your account is not allowed to change player ratings.")
+    if user.username not in settings.USERS_ALLOWED_TO_SET_RATINGS_AND_SMURFS:
+        raise Exception("Your account is not allowed to change player ratings or unify accounts.")
     else:
         return user
 
@@ -128,3 +128,45 @@ def set_rating(accountid, game, match_type, rating, username, password, admin_ac
     pa_rating.save()
 
     return get_rating_single_user(accountid, game, match_type)
+
+def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
+    logger.debug("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
+
+    try:
+        _    = authenticate_uploader(username, password)
+        acc1   = check_accountid(accountid1)
+        acc2   = check_accountid(accountid2)
+        adm_id = check_accountid(admin_accountid)
+    except Exception, e:
+        return error_log_return(e)
+
+    if acc1 == acc2: return acc1
+
+    pa1, _   = PlayerAccount.objects.get_or_create(accountid=acc1, defaults={'accountid': acc1, 'countrycode': "??", 'preffered_name': "??"})
+    pa2, _   = PlayerAccount.objects.get_or_create(accountid=acc2, defaults={'accountid': acc1, 'countrycode': "??", 'preffered_name': "??"})
+    admin, _ = PlayerAccount.objects.get_or_create(accountid=adm_id, defaults={'accountid': adm_id, 'countrycode': "??", 'preffered_name': "??"})
+
+    if pa1 in pa2.get_all_accounts(): return pa2.get_all_accounts()[0].accountid
+
+    logger.info("admin(%d) '%s' unifies: acc1(%d): %s AND acc2(%d): %s", adm_id, admin.get_preffered_name(), acc1, pa1.get_all_accounts(), acc2, pa2.get_all_accounts())
+
+    all_accounts = pa1.get_all_accounts()
+    all_accounts.extend(pa2.get_all_accounts())
+
+    lowest_id = reduce(min, [pa.accountid for pa in all_accounts])
+    prim_acc = PlayerAccount.objects.get(accountid=lowest_id)
+
+    prim_acc.primary_account = None
+    prim_acc.save()
+
+    all_accounts.remove(prim_acc)
+    for pa in all_accounts:
+        pa.primary_account = prim_acc
+        pa.save()
+
+    all_accounts.insert(0, prim_acc)
+    all_account_ids = sorted([pa.accountid for pa in all_accounts])
+    all_account_ids_str = reduce(lambda x, y: str(x)+"|%d"%y, all_account_ids)
+    AccountUnificationLog.objects.create(admin=admin, account1=pa1, account2=pa2, all_accounts=all_account_ids_str)
+
+    return lowest_id

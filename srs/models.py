@@ -242,7 +242,7 @@ class PlayerAccount(models.Model):
         else: prim_acc = self
 
         accounts.append(prim_acc)
-        accounts.extend(PlayerAccount.objects.filter(primary_account=prim_acc))
+        accounts.extend(PlayerAccount.objects.filter(primary_account=prim_acc).order_by("accountid"))
 
         return accounts
 
@@ -261,7 +261,10 @@ class PlayerAccount(models.Model):
         for pa in self.get_all_accounts():
             namelist.extend(pa.get_names())
         uniqify_list(namelist)
-        namelist.remove(pref_name)
+        try:
+            namelist.remove(pref_name)
+        except:
+            pass # Player with name "pref_name"  was removed from DB, but PlayerAccount stayed
         namelist.insert(0, pref_name)
         names += reduce(lambda x, y: x+" "+y+" ", namelist)
         return names.rstrip()
@@ -415,6 +418,7 @@ class RatingBase(models.Model):
 
     class Meta:
         ordering = ['-elo', '-glicko', '-trueskill_mu']
+#        abstract = True # damn... forgot this, and now I cannot add it without puging the whole table
 
 class Rating(RatingBase):
     pass
@@ -466,7 +470,7 @@ class RatingAdjustmentHistory(RatingBase):
                      ('T', u'Trueskill'),
                      )
     algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="T")
-    admin         = models.ForeignKey(PlayerAccount)
+    admin         = models.ForeignKey(PlayerAccount, related_name='ratingAdjustmentAdmin')
 
     def __unicode__(self):
         if   self.algo_change == "E": change = self.elo
@@ -482,6 +486,20 @@ class RatingAdjustmentHistory(RatingBase):
 class RatingQueue(models.Model):
     """used during long running initial_rating()"""
     replay = models.ForeignKey(Replay)
+
+
+class AccountUnificationLog(models.Model):
+    change_date   = models.DateTimeField(auto_now_add=True)
+    admin         = models.ForeignKey(PlayerAccount, related_name='accountUnificationAdmin')
+    account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount1')
+    account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount2')
+    all_accounts  = models.CharField(max_length=512)
+
+    def __unicode__(self):
+        return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' unified '"+self.account1.preffered_name+"'("+str(self.account1.accountid)+") and '"+self.account2.preffered_name+"'("+str(self.account2.accountid)+")"
+
+    class Meta:
+        ordering = ['-change_date']
 
 
 def update_stats():

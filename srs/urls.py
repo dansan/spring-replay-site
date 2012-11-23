@@ -49,6 +49,7 @@ urlpatterns = patterns('',
     url(r'^initial_rating/$', 'srs.rating.initial_rating', name="initial_rating"),
     url(r'^rating_history/$', 'srs.views.rating_history', name="rating_history"),
     url(r'^manual_rating_history/$', 'srs.views.manual_rating_history', name="manual_rating_history"),
+    url(r'^account_unification_history/$', 'srs.views.account_unification_history', name="account_unification_history"),
     url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
     url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
 )

@@ -37,4 +37,4 @@ INITIAL_RATING = False
 ELO_ONLY = False
 HALL_OF_FAME_MIN_MATCHES = 20
 
-USERS_ALLOWED_TO_SET_RATINGS = ["bibimDemos", "nixbot", "PrincessHost", "[ACE]FaFa_BOT", "[LOeT]upload", "[semprini]Replaybot", "[x]TheHost"]
+USERS_ALLOWED_TO_SET_RATINGS_AND_SMURFS = ["bibimDemos", "nixbot", "PrincessHost", "[ACE]FaFa_BOT", "[LOeT]upload", "[semprini]Replaybot", "[x]TheHost"]

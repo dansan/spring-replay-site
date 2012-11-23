@@ -8,7 +8,8 @@
 
 import django_tables2 as tables
 from django_tables2 import A
-from models import Rating, RatingAdjustmentHistory
+from django.utils.safestring import mark_safe
+from models import Rating, RatingAdjustmentHistory, PlayerAccount, AccountUnificationLog
 
 
 class ReplayTable(tables.Table):
@@ -281,3 +282,28 @@ class RatingAdjustmentHistoryTable(tables.Table):
     def render_trueskill_mu(self, value, record):
         if record.match_type != "T": return ""
         else: return '%.2f' % value
+
+class AccountUnificationLogTable(tables.Table):
+    change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
+    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.get_preffered_name"))
+    account1        = tables.LinkColumn('player_detail', args=[A('account1.accountid')], accessor=A("account1.preffered_name"), verbose_name="Player 1")
+    account2        = tables.LinkColumn('player_detail', args=[A('account2.accountid')], accessor=A("account2.preffered_name"), verbose_name="Player 2")
+    all_accounts    = tables.Column()
+
+    class Meta:
+        model = AccountUnificationLog
+        fields = ("change_date", "admin", "account1", "account2", "all_accounts")
+        attrs    = {'class': 'paleblue'}
+        order_by = "-change_date"
+
+    def render_all_accounts(self, value):
+        acc_ids = value.split("|")
+        result = str()
+        for acc in acc_ids:
+            try:
+                int(acc) # paranoid check, before inserting something bad into html
+            except:
+                continue
+            pa = PlayerAccount.objects.get(accountid=acc)
+            result += '<a href="'+pa.get_absolute_url()+'">'+pa.preffered_name+'</a> '
+        return mark_safe(result)
