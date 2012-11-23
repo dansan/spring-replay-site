@@ -130,9 +130,10 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
         RatingQueue.objects.create(replay=replay)
         raise Exception("initial_rating() is running, queued replay(%d) %s"%(replay.pk, replay.gameID))
 
-    game = Game.objects.get(gamerelease__name=replay.gametype)
-
+    game = replay.game_release().game
     allyteams = Allyteam.objects.filter(replay=replay)
+    match_type_short = replay.match_type_short()
+    match_type_short_b1t = replay.match_type_short(ba1v1tourney)
 
     # do not allow bots
     if replay.game_release().game.abbreviation in ["CD", "RD"] or PlayerAccount.objects.filter(player__replay=replay, accountid=0).exists():
@@ -140,33 +141,35 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
 
     rating_changes = list()
 
-    teams = list()
-    winner = list()
-    for at in allyteams:
-        ally_list = list()
-        for team in Team.objects.filter(allyteam=at):
-            ally_list.extend([player.account for player in Player.objects.filter(team=team)])
-        teams.append(ally_list)
-        if at.winner: winner.append(1)
-        else: winner.append(2)
+    teams = [PlayerAccount.objects.filter(player__team__allyteam=at) for at in allyteams]
+
+    # winner = 1
+    # looser = 2
+    # no winners -> all must be 1
+    winner = [at.winner for at in allyteams]
+    if not reduce(lambda x,y: x or y, winner):
+        # no winners
+        winner = [1 for _ in winner]
+    else:
+        winner = [int(not w)+1 for w in winner]
 
     pas_in_match = PlayerAccount.objects.filter(player__replay=replay, player__spectator=False)
 
     # calculate ELO and Glicko only for 1v1 and no bots
     if allyteams.count() == 2 and PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
         RatingFactory.rating_class = EloRating
-        elo_teams = [SkillsTeam([(pa, EloRating(pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo, pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo_k)) for pa in team]) for team in teams]
+        elo_teams = [SkillsTeam([(pa, EloRating(pa.get_rating(game, match_type_short_b1t).elo, pa.get_rating(game, match_type_short_b1t).elo_k)) for pa in team]) for team in teams]
         elo_match = Match(elo_teams, winner)
         # use lowest k-factor
-        k_factor = reduce(min, [pa.get_rating(game, replay.match_type_short(ba1v1tourney)).elo_k for pa in pas_in_match])
+        k_factor = reduce(min, [pa.get_rating(game, match_type_short_b1t).elo_k for pa in pas_in_match])
 
         if not settings.ELO_ONLY and not ba1v1tourney:
             RatingFactory.rating_class = GlickoRating
-            glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.get_rating(game, replay.match_type_short()).glicko, pa.get_rating(game, replay.match_type_short()).glicko_rd)) for pa in team]) for team in teams]
+            glicko_teams = [SkillsTeam([(pa, GlickoRating(pa.get_rating(game, match_type_short).glicko, pa.get_rating(game, match_type_short).glicko_rd)) for pa in team]) for team in teams]
             glicko_matches = Matches([Match(glicko_teams, winner)])
 
             RatingFactory.rating_class = GaussianRating
-            ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
+            ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, match_type_short).trueskill_mu, pa.get_rating(game, match_type_short).trueskill_sigma)) for pa in team]) for team in teams]
             ts_match = Match(ts_teams, winner)
 
         elo_game_info = EloGameInfo(initial_mean=1500, beta=200) # 200 will be doubled later -> use 400 as in original Elo algo
@@ -187,7 +190,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
                 # two accounts of the same player are in this match, none of them will get any rating
                 logger.info("found 2nd account of PA(%d) '%s'in replay(%d) '%s', not receiving rating", pa.pk, pa, replay.id, replay)
                 continue
-            rating = pa.get_rating(game, replay.match_type_short(ba1v1tourney))
+            rating = pa.get_rating(game, match_type_short_b1t)
             rating.set_elo(elo_ratings.rating_by_id(pa))
             if not settings.ELO_ONLY and not ba1v1tourney:
                 rating.set_glicko(glicko_ratings.rating_by_id(pa))
@@ -195,7 +198,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), glicko_ratings.rating_by_id(pa), ts_ratings.rating_by_id(pa)))
             else:
                 rating_changes.append((pa, elo_ratings.rating_by_id(pa), None, None))
-            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short(ba1v1tourney))
+            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=match_type_short_b1t)
             rating_history.set_elo(elo_ratings.rating_by_id(pa))
             if not settings.ELO_ONLY and not ba1v1tourney:
                 rating_history.set_glicko(glicko_ratings.rating_by_id(pa))
@@ -207,7 +210,7 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
     else:
         # use TrueSkill for Team and FFA matches
         RatingFactory.rating_class = GaussianRating
-        ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, replay.match_type_short()).trueskill_mu, pa.get_rating(game, replay.match_type_short()).trueskill_sigma)) for pa in team]) for team in teams]
+        ts_teams = [SkillsTeam([(pa, GaussianRating(pa.get_rating(game, match_type_short).trueskill_mu, pa.get_rating(game, match_type_short).trueskill_sigma)) for pa in team]) for team in teams]
         ts_match = Match(ts_teams, winner)
 
         game_info = TrueSkillGameInfo()
@@ -223,9 +226,9 @@ def rate_match(replay, from_initial_rating=False, ba1v1tourney=False):
                 # two accounts of the same player are in this match, none of them will get any rating
                 logger.info("found 2nd account of PA(%d) '%s'in replay(%d) '%s', not receiving rating", pa.pk, pa, replay.id, replay)
                 continue
-            pa.get_rating(game, replay.match_type_short()).set_trueskill(ts_ratings.rating_by_id(pa))
+            pa.get_rating(game, match_type_short).set_trueskill(ts_ratings.rating_by_id(pa))
             rating_changes.append((pa, None, None, ts_ratings.rating_by_id(pa)))
-            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=replay.match_type_short())
+            rating_history = RatingHistory.objects.create(playeraccount=pa, match=replay, algo_change="C", game=game, match_type=match_type_short)
             rating_history.set_trueskill(ts_ratings.rating_by_id(pa))
             rating_history.algo_change="T"
             rating_history.save()
