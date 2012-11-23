@@ -421,13 +421,7 @@ def save_tags(replay, tags):
             replay.tags.add(t_obj)
 
 def set_autotag(replay):
-    autotag = ""
-    if Allyteam.objects.filter(replay=replay).count() > 3:
-        autotag = "FFA"
-    else:
-        for at in Allyteam.objects.filter(replay=replay):
-            autotag += str(Team.objects.filter(allyteam=at).count())+"v"
-        autotag = autotag[:-1]
+    autotag = replay.match_type()
 
     tag, created = Tag.objects.get_or_create(name = autotag, defaults={'name': autotag})
     if created:
