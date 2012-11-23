@@ -433,11 +433,23 @@ def set_autotag(replay):
     else:
         if not replay.tags.filter(name=autotag).exists():
             replay.tags.add(tag)
+
+    if autotag != "1v1":
+        num_tag = replay.num_players()
+        tag, created = Tag.objects.get_or_create(name = num_tag, defaults={'name': num_tag})
+        if created:
+            replay.tags.add(tag)
+        else:
+            if not replay.tags.filter(name=num_tag).exists():
+                replay.tags.add(tag)
+
     return autotag
 
 def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
+    if not short:
+        short = "%s on %s"%(replay.match_type(), replay.map_info.name)
     if autotag in short:
         replay.title = short
     else:

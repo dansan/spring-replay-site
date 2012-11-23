@@ -191,11 +191,10 @@ class Replay(models.Model):
     def num_players(self):
         """returns string (from counting players): 1v1 / 1v5 / 6v6 / 2v2v2v2 / ..."""
         try:
-            result = ""
             allyteams = Allyteam.objects.filter(replay=self)
-            for at in allyteams:
-                result += str(PlayerAccount.objects.filter(player__team__allyteam=at).count())+"v"
-            return result[:-1]
+            at_sizes = [PlayerAccount.objects.filter(player__team__allyteam=at).count() for at in allyteams]
+            at_sizes.sort()
+            return reduce(lambda x,y: str(x)+"v"+str(y), at_sizes)
         except:
             return "?v?"
 

@@ -35,7 +35,10 @@ class Spring_maps():
         "nosensitive" : True,
         "images" : True}
 
-        self.map_info = proxy.springfiles.search(searchstring)
+        try:
+            self.map_info = proxy.springfiles.search(searchstring)
+        except:
+            self.map_info = None
 
     def fetch_img(self):
         """
