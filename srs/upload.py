@@ -449,7 +449,7 @@ def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
     if not short:
-        short = "%s on %s"%(replay.match_type(), replay.map_info.name)
+        short = "%s %s on %s"%(replay.num_players(), replay.match_type(), replay.map_info.name)
     if autotag in short:
         replay.title = short
     else:
