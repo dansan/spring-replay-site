@@ -39,7 +39,7 @@ def index(request):
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 def replays(request):
-    replays = list(Replay.objects.select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "List of all %d matches"%Replay.objects.count())
 
 def replay_table(request, replays, title, template="lists.html", form=None, ext=None, order_by=None):
@@ -54,6 +54,7 @@ def replay_table(request, replays, title, template="lists.html", form=None, ext=
         r = Replay.objects.get(id=replay["id"])
         replay["downloads"] = r.replayfile.download_count
         replay["comments"]  = r.comment_count()
+        replay["uploader"]  = r.uploader.username
 
     if order_by:
         table = ReplayTable(replays, prefix="r-", order_by=order_by)
@@ -259,7 +260,7 @@ def tag(request, reqtag):
     tag = get_object_or_404(Tag, name=reqtag)
     ext = {"adminurl": "tag", "obj": tag}
 
-    replays = list(Replay.objects.filter(tags=tag).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(tags=tag).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays with tag '%s'"%(len(replays), reqtag), ext=ext)
 
 def maps(request):
@@ -271,7 +272,7 @@ def rmap(request, mapname):
     rmap = get_object_or_404(Map, name=mapname)
     ext = {"adminurl": "map", "obj": rmap}
 
-    replays = list(Replay.objects.filter(map_info=rmap).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(map_info=rmap).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays on map '%s'"%(len(replays), mapname), ext=ext)
 
 @cache_page(3600 * 2)
@@ -366,7 +367,7 @@ def games(request):
     return all_of_a_kind_table(request, table, "List of all %d games"%len(games), intro_text=intro_text)
 
 def gamerelease(request, gametype):
-    replays = list(Replay.objects.filter(gametype=gametype).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(gametype=gametype).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays of game '%s'"%(len(replays), gametype))
 
 @never_cache
@@ -418,7 +419,7 @@ def search(request):
         form = AdvSearchForm()
 
     replays = search_replays(query)
-    replays = list(replays.select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(replays.select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
 
     return replay_table(request, replays, "%d replays matching your search"%len(replays), "search.html", form, ext)
 
@@ -659,15 +660,15 @@ def see_user(request, username):
         user = User.objects.get(username=username)
     except:
         raise Http404
-    replays = list(Replay.objects.filter(uploader=user).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(uploader=user).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays uploaded by '%s'"%(len(replays), user))
 
 def match_date(request, shortdate):
-    replays = list(Replay.objects.filter(unixTime__startswith=shortdate).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(unixTime__startswith=shortdate).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays played on '%s'"%(len(replays), shortdate))
 
 def upload_date(request, shortdate):
-    replays = list(Replay.objects.filter(upload_date__startswith=shortdate).select_related('replayfile').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    replays = list(Replay.objects.filter(upload_date__startswith=shortdate).select_related('replayfile', 'uploader').order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "gameID"))
     return replay_table(request, replays, "%d replays uploaded on '%s'"%(len(replays), shortdate))
 
 def all_comments(request):
