@@ -60,8 +60,11 @@ class Map(models.Model):
     def get_absolute_url(self):
         return ('srs.views.rmap', [self.name])
 
-    def replays(self):
-        return Replay.objects.filter(map_info__name=self.name).count()
+    def replay_count(self):
+        return Replay.objects.filter(map_info=self).count()
+
+    class Meta:
+        ordering = ['name']
 
 class MapImg(models.Model):
     filename        = models.CharField(max_length=128)

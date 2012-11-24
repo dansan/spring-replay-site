@@ -256,8 +256,9 @@ def tag(request, reqtag):
     return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag), ext=ext)
 
 def maps(request):
-    table = MapTable(Map.objects.all())
-    return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count())
+    table = MapTable([{"name": rmap.name, "count": rmap.replay_count()} for rmap in Map.objects.all()])
+    intro_text = ["Click on a map name to see a list of matches played on that map."]
+    return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count(), intro_text=intro_text)
 
 def rmap(request, mapname):
     rmap = get_object_or_404(Map, name=mapname)

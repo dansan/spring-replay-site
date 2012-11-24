@@ -45,7 +45,7 @@ class TagTable(tables.Table):
 
 class MapTable(tables.Table):
     name           = tables.LinkColumn('map_detail', args=[A('name')])
-    replays        = tables.Column(orderable=False)
+    count          = tables.Column(verbose_name="# matches")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "name"
