@@ -17,8 +17,8 @@ class ReplayTable(tables.Table):
     unixTime       = tables.Column(verbose_name="Match")
     upload_date    = tables.Column(verbose_name="Upload")
     uploader       = tables.Column()
-    downloads      = tables.Column(accessor="replayfile.download_count", orderable=False, verbose_name="DL")
-    comments       = tables.Column(orderable=False, verbose_name="C")
+    downloads      = tables.Column(verbose_name="DL")
+    comments       = tables.Column(verbose_name="C")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-upload_date"
@@ -38,7 +38,7 @@ class PlayersReplayTable(tables.Table):
 
 class TagTable(tables.Table):
     name           = tables.LinkColumn('tag_detail', args=[A('name')])
-    replays        = tables.Column(orderable=False)
+    count          = tables.Column(verbose_name="# matches")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "name"
@@ -52,17 +52,17 @@ class MapTable(tables.Table):
 
 class GameTable(tables.Table):
     name           = tables.LinkColumn('gamerelease_detail', args=[A('name')])
-    replays        = tables.Column(orderable=False)
+    count          = tables.Column(verbose_name="# matches")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "name"
 
 class UserTable(tables.Table):
-    username       = tables.LinkColumn('user_detail', args=[A('username')])
-    replays_uploaded = tables.Column(orderable=False)
+    name           = tables.LinkColumn('user_detail', args=[A('name')])
+    count          = tables.Column(verbose_name="# uploads")
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "username"
+        order_by = "name"
 
 class CommentTable(tables.Table):
     submit_date     = tables.Column()

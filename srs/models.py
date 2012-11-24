@@ -44,8 +44,8 @@ class Tag(models.Model):
     def get_absolute_url(self):
         return ('srs.views.tag', [self.name])
 
-    def replays(self):
-        return Replay.objects.filter(tags__name=self.name).count()
+    def replay_count(self):
+        return Replay.objects.filter(tags=self).count()
 
 class Map(models.Model):
     name            = models.CharField(max_length=128)
@@ -112,7 +112,7 @@ class Replay(models.Model):
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
 
-    def comments(self):
+    def comment_count(self):
         r_t = ContentType.objects.get_for_model(Replay)
         return Comment.objects.filter(object_pk=str(self.pk), content_type=r_t.pk).count()
 

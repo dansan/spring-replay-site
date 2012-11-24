@@ -39,8 +39,14 @@ def index(request):
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
 def replays(request):
-    replays = Replay.objects.all()
-    return replay_table(request, replays, "all %d replays"%replays.count())
+    replays = list(Replay.objects.order_by("-upload_date").values("id", "title", "unixTime", "upload_date", "uploader", "gameID"))
+    for replay in replays:
+        r = Replay.objects.get(id=replay["id"])
+        replay["downloads"] = r.replayfile.download_count
+        replay["comments"]  = r.comment_count()
+    table = ReplayTable(replays)
+    intro_text = ["Click on a map name to see a list of matches played on that map."]
+    return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count(), intro_text=intro_text)
 
 def replay_table(request, replays, title, template="lists.html", form=None, ext=None, order_by=None):
     from django_tables2 import RequestConfig
@@ -245,8 +251,9 @@ def download(request, gameID):
     return response
 
 def tags(request):
-    table = TagTable(Tag.objects.all())
-    return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count())
+    table = TagTable([{"name": tag.name, "count": tag.replay_count()} for tag in Tag.objects.all()])
+    intro_text = ["Click on a tag to see a list of matches tagged with it."]
+    return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count(), intro_text=intro_text)
 
 def tag(request, reqtag):
     tag = get_object_or_404(Tag, name=reqtag)
@@ -352,9 +359,10 @@ def games(request):
     games = []
     for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
         games.append({'name': gt,
-                      'replays': Replay.objects.filter(gametype=gt).count()})
+                      'count': Replay.objects.filter(gametype=gt).count()})
     table = GameTable(games)
-    return all_of_a_kind_table(request, table, "List of all %d games"%len(games))
+    intro_text = ["Click on a game name to see a list of matches played."]
+    return all_of_a_kind_table(request, table, "List of all %d games"%len(games), intro_text=intro_text)
 
 def gamerelease(request, gametype):
     replays = Replay.objects.filter(gametype=gametype)
@@ -640,8 +648,9 @@ def user_settings(request):
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
-    table = UserTable(User.objects.all())
-    return all_of_a_kind_table(request, table, "List of all %d uploaders"%User.objects.count())
+    table = UserTable([{"name": user.username, "count": user.replays_uploaded()} for user in User.objects.all()])
+    intro_text = ["Click on a username to see a list of matches uploaded by that user."]
+    return all_of_a_kind_table(request, table, "List of all %d uploaders"%User.objects.count(), intro_text=intro_text)
 
 def see_user(request, username):
     try:
