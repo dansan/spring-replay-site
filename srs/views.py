@@ -265,15 +265,13 @@ def rmap(request, mapname):
     replays = Replay.objects.filter(map_info=rmap)
     return replay_table(request, replays, "%d replays on map '%s'"%(replays.count(), mapname), ext=ext)
 
+@cache_page(3600 * 2)
 def players(request):
-    players = []
-    for pa in PlayerAccount.objects.all():
-        players.append({'name': pa.preffered_name,
-                        'replay_count': pa.replay_count(),
-                        'spectator_count': pa.spectator_count(),
-                        'accid': pa.accountid})
-    table = PlayerTable(players)
-    return all_of_a_kind_table(request, table, "List of all %d players"%len(players))
+    c = all_page_infos(request)
+
+    c["playerlist"] = PlayerAccount.objects.order_by("preffered_name").values_list("accountid", "preffered_name")
+
+    return render_to_response('all_players.html', c, context_instance=RequestContext(request))
 
 def player(request, accountid):
     from django_tables2 import RequestConfig

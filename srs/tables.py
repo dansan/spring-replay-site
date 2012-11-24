@@ -50,14 +50,6 @@ class MapTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "name"
 
-class PlayerTable(tables.Table):
-    name           = tables.LinkColumn('player_detail', args=[A('accid')])
-    replay_count   = tables.Column()
-    spectator_count= tables.Column()
-    class Meta:
-        attrs    = {'class': 'paleblue'}
-        order_by = "name"
-
 class GameTable(tables.Table):
     name           = tables.LinkColumn('gamerelease_detail', args=[A('name')])
     replays        = tables.Column(orderable=False)
