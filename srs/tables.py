@@ -277,7 +277,7 @@ class RatingAdjustmentHistoryTable(tables.Table):
 
 class AccountUnificationLogTable(tables.Table):
     change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
-    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.get_preffered_name"))
+    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.preffered_name"), verbose_name="Admin")
     account1        = tables.LinkColumn('player_detail', args=[A('account1.accountid')], accessor=A("account1.preffered_name"), verbose_name="Player 1")
     account2        = tables.LinkColumn('player_detail', args=[A('account2.accountid')], accessor=A("account2.preffered_name"), verbose_name="Player 2")
     all_accounts    = tables.Column()

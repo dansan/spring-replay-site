@@ -94,7 +94,7 @@ def replay(request, gameID):
         teams = Team.objects.filter(allyteam=at)
         players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
         players_w_rating = list()
-        if replay.notcomplete or replay.game_release().game.abbreviation in ["CD", "RD"] or Player.objects.filter(account__accountid=0, replay=replay).exists():
+        if replay.notcomplete or not players.exists() or replay.game_release().game.abbreviation in ["CD", "RD"] or Player.objects.filter(account__accountid=0, replay=replay).exists():
             # notcomplete or bot present - no rating
             new_rating = 0
             old_rating = 0
@@ -135,7 +135,7 @@ def replay(request, gameID):
                     players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
 
         if teams:
-            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in Player.objects.filter(replay=replay, team__allyteam=at)])
+            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in Player.objects.filter(replay=replay, team__allyteam=at)], 0)
             c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
     rh = list(RatingHistory.objects.filter(match=replay).values())
