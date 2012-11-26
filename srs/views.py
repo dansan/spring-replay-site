@@ -162,11 +162,8 @@ def replay(request, gameID):
 
 def mapmodlinks(request, gameID):
     c = all_page_infos(request)
-    try:
-        replay = Replay.objects.get(gameID=gameID)
-    except:
-        raise Http404
 
+    replay = get_object_or_404(Replay, gameID=gameID)
     gamename = replay.gametype
     mapname  = replay.map_info.name
 
@@ -228,10 +225,7 @@ def edit_replay(request, gameID):
     return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
 
 def download(request, gameID):
-    try:
-        rf = Replay.objects.get(gameID=gameID).replayfile
-    except:
-        raise Http404
+    rf = get_object_or_404(Replay, gameID=gameID).replayfile
 
     rf.download_count += 1
     rf.save()
@@ -287,11 +281,8 @@ def player(request, accountid):
     from django_tables2 import RequestConfig
     c = all_page_infos(request)
 
-    try:
-        pa = PlayerAccount.objects.get(accountid=accountid)
-        accounts = pa.get_all_accounts()
-    except:
-        raise Http404
+    pa = get_object_or_404(PlayerAccount, accountid=accountid)
+    accounts = pa.get_all_accounts()
 
     c["accounts"] = accounts
     c["all_names"] = accounts[0].get_all_names()
