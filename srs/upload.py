@@ -455,6 +455,10 @@ def save_desc(replay, short, long_text, autotag):
     else:
         replay.title = autotag+" "+short
 
+    num_tag = replay.num_players()
+    if num_tag not in short:
+        replay.title = num_tag+" "+short
+
 def clamp(val, low, high):
     return min(high, max(low, val))
 
