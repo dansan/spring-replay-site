@@ -41,7 +41,7 @@
             {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
             {% if user.is_staff %}<a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a>{% endif %}
 {% cache 600 replay replay.pk %}
-            <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner (needs JS).&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
+            <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner and rating changes.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
 	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
 	        <div class="footer"></div>
@@ -92,23 +92,84 @@
 	       <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
 	       <p><br/></p>
 	    </div>
-	    <div class="left" style="width: 220px; padding: 0 8px;">
+	    <div class="left" style="width: 240px; padding: 0;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete, winner and match length are unknown. Please leave a comment.</b></p>{% endif %}
-	        {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}<b>Team {{ forloop.counter }}</b>{% if replay.match_type_short == "T" or replay.match_type_short == "G" %}{% if old_rating != 0 and new_rating != 0 %}<br/>(Rating: {{ old_rating|floatformat:1 }} &rarr; {{ new_rating|floatformat:1 }}) &nbsp;&nbsp; [Rank: {{ lobby_rank_sum }}]{% endif %}{% endif %}
-	        {% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}<br/>
-	        <ul>
-                {% for p, pl_old, pl_new in players %}<li style="color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name|ljust:"20" }}</a>  &nbsp; {{ p.team.side|ljust:"4" }}{% if pl_old != 0 and pl_new != 0 %} &nbsp; ({{ pl_old|floatformat:1 }} &rarr; {{ pl_new|floatformat:1 }}) [{{ p.rank }}]{% endif %}{% else %}{{ p.name }} {{ p.team.side }}{% endif %}</li>
-                {% endfor %}
-            </ul>
-	        <p>&nbsp;</p>{% endfor %}
-	        <b>Spectators</b>
-	        {% if specs|length > 0 %}
-	        <ul>
-	            {% for s in specs %}<li>{{ s.name }}</li>{% endfor %}
-	        </ul>
-	        {% else %}
-	        <p>None.</p>
-	        {% endif %}
+
+	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
+                <colgroup>
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                    <col />
+                </colgroup>
+{% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
+                <tr>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
+                    <td></td>
+    {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}{% if old_rating != 0 and new_rating != 0 %}
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{{ old_rating|floatformat:1 }}</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:center;">&rarr;</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{{ new_rating|floatformat:1 }}</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;[{{ lobby_rank_sum }}]</td>
+    {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+    {% endif %}{% endif %}
+	            </tr>
+    {% for p, pl_old, pl_new in players %}
+                <tr>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ p.team.side|ljust:"4" }}</td>
+        {% if pl_old != 0 and pl_new != 0 %}
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;{{ pl_old|floatformat:1 }}</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:center;">&rarr;</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{{ pl_new|floatformat:1 }}</td>
+        {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+        {% endif %}
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;" >&nbsp;[{{ p.rank }}]</td>
+                </tr>
+    {% endfor %}
+                <tr>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">&nbsp;</td><td></td><td></td>
+                </tr>
+{% endfor %}
+	            <tr>
+		            <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;"><b>Spectators</b></td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+                </tr>
+	{% if specs|length > 0 %}
+        {% for s in specs %}
+                <tr>
+	                <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ s.name }}</td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+	                <td></td>
+	            </tr>
+        {% endfor %}
+	{% else %}
+                <tr>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">None.</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+    {% endif %}
+	        </table>
 	   </div>
 {% endcache %}
 	   <div class="left">
