@@ -16,9 +16,9 @@ class ReplayTable(tables.Table):
     title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
     unixTime       = tables.Column(verbose_name="Match")
     upload_date    = tables.Column(verbose_name="Upload")
-    uploader       = tables.Column()
-    downloads      = tables.Column(verbose_name="DL")
-    comments       = tables.Column(verbose_name="C")
+    uploader       = tables.Column(orderable=False, accessor=A("uploader.username"))
+    download_count = tables.Column(verbose_name="DL")
+    comment_count  = tables.Column(verbose_name="C")
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-upload_date"

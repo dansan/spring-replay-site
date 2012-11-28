@@ -25,7 +25,7 @@
                         <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</td>
                     </tr>
                     <tr>
-                        <td>Downloads</td><td>{{ replay.replayfile.download_count }}</td>
+                        <td>Downloads</td><td>{{ replay.download_count }}</td>
                     </tr>
                     <tr>
                         <td>Comments<br/>&nbsp;</td><td>{{ replay.comments }}</td>
@@ -39,6 +39,6 @@
                 <p>Map: <a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a></p>
                 <p>Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}</p>
                 <p>Uploaded by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
-                <p><a href="{% url srs.views.download replay.gameID %}" class="piwik_download">Download</a>s: {{ replay.replayfile.download_count }} Comments: {{ replay.comments }}</p>
+                <p><a href="{% url srs.views.download replay.gameID %}" class="piwik_download">Download</a>s: {{ replay.download_count }} Comments: {{ replay.comments }}</p>
 {% endif %}
 {% endcache %}

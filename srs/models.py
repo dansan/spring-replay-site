@@ -77,15 +77,6 @@ class MapImg(models.Model):
     def get_absolute_url(self):
         return (settings.STATIC_URL+"maps/"+self.filename)
 
-class ReplayFile(models.Model):
-    filename        = models.CharField(max_length=256)
-    path            = models.CharField(max_length=256)
-    ori_filename    = models.CharField(max_length=256)
-    download_count  = models.IntegerField()
-
-    def __unicode__(self):
-        return self.filename[:20]
-
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
     gameID          = models.CharField(max_length=32, unique=True)
@@ -103,7 +94,10 @@ class Replay(models.Model):
     tags            = models.ManyToManyField(Tag)
     uploader        = models.ForeignKey(User)
     upload_date     = models.DateTimeField(auto_now_add=True)
-    replayfile      = models.ForeignKey(ReplayFile)
+    filename        = models.CharField(max_length=256)
+    path            = models.CharField(max_length=256)
+    download_count  = models.IntegerField()
+    comment_count   = models.IntegerField()
 
     def __unicode__(self):
         return "("+str(self.pk)+") "+self.title+" "+self.unixTime.strftime("%Y-%m-%d")
@@ -111,10 +105,6 @@ class Replay(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
-
-    def comment_count(self):
-        r_t = ContentType.objects.get_for_model(Replay)
-        return Comment.objects.filter(object_pk=str(self.pk), content_type=r_t.pk).count()
 
     def was_succ_uploaded(self):
         return not UploadTmp.objects.filter(replay=self).exists()

@@ -28,7 +28,9 @@ def add_500_replays():
                                   map_info = Map.objects.get(id=1),
                                   map_img = MapImg.objects.get(id=1),
                                   uploader=User.objects.all()[0],
-                                  replayfile=ReplayFile.objects.all()[0])
+                                  filename="test.sdf",
+                                  path="test",
+                                  downloadcount=0)
         r.tags.add(Tag.objects.get_or_create(name="test500", defaults={"name": "test500"})[0])
         r.save()
 

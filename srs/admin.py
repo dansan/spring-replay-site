@@ -26,10 +26,6 @@ class ReplayAdmin(admin.ModelAdmin):
     list_display = ("title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
     search_fields = ["title", "map_info__name", "uploader__username", "gameID"]
        
-class ReplayFileAdmin(admin.ModelAdmin):
-    list_display = ("filename", "download_count")
-    search_fields = ["filename"]
-    
 class MapAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ["name"]
@@ -52,7 +48,6 @@ admin.site.register(Player, PlayerAdmin)
 admin.site.register(Team)
 admin.site.register(MapOption)
 admin.site.register(ModOption)
-admin.site.register(ReplayFile, ReplayFileAdmin)
 admin.site.register(NewsItem)
 admin.site.register(UploadTmp)
 admin.site.register(Rating, RatingAdmin)

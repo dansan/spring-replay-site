@@ -192,8 +192,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
-    # the replay file
-    replay.replayfile = ReplayFile.objects.create(filename=os.path.basename(path), path=os.path.dirname(path), ori_filename=filename, download_count=0)
+    replay.filename       = os.path.basename(path)
+    replay.path           = os.path.dirname(path)
+    replay.download_count = 0
 
     replay.save()
     uploadtmp = UploadTmp.objects.create(replay=replay)
@@ -469,7 +470,6 @@ def floats2rgbhex(floats):
     return rgb
 
 def del_replay(replay):
-    replay.replayfile.delete()
     replay.map_img.delete()
     for tag in replay.tags.all():
         if tag.replays() == 1 and tag.pk > 10:
