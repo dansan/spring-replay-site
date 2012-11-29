@@ -214,8 +214,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     logger.debug("replay(%d) allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
 
-    # winner known?
-    replay.notcomplete = demofile.header['winningAllyTeamsSize'] == 0
+    # if match is <2 min long, don't rate it
+    replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:") 
 
     # get / create map infos
     try:

@@ -16,7 +16,7 @@
                         <td>Map</td><td><a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a></td>
                     </tr>
                     <tr>
-                        <td>Length</td><td>{% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}</td>
+                        <td>Length</td><td>{{ replay.wallclockTime }}</td>
                     </tr>
                     <tr>
                         <td>Tags</td><td>{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}</td>
@@ -37,7 +37,7 @@
 {% else %}
                 <p><a href="{% url srs.views.gamerelease replay.gametype %}">{{ replay.gametype }}</a> (engine {{ replay.versionString }})</p>
                 <p>Map: <a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a></p>
-                <p>Length: {% if replay.notcomplete %}replay incomplete, time unknown{% else %}{{ replay.wallclockTime }}{% endif %}</p>
+                <p>Length: {{ replay.wallclockTime }}</p>
                 <p>Uploaded by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
                 <p><a href="{% url srs.views.download replay.gameID %}" class="piwik_download">Download</a>s: {{ replay.download_count }} Comments: {{ replay.comments }}</p>
 {% endif %}

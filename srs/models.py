@@ -96,8 +96,8 @@ class Replay(models.Model):
     upload_date     = models.DateTimeField(auto_now_add=True)
     filename        = models.CharField(max_length=256)
     path            = models.CharField(max_length=256)
-    download_count  = models.IntegerField()
-    comment_count   = models.IntegerField()
+    download_count  = models.IntegerField(default=0)
+    comment_count   = models.IntegerField(default=0)
 
     def __unicode__(self):
         return "("+str(self.pk)+") "+self.title+" "+self.unixTime.strftime("%Y-%m-%d")

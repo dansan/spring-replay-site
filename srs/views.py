@@ -153,6 +153,7 @@ def replay(request, gameID):
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
     c["replay_details"] = True
+    c["is_draw"] = not allyteams.filter(winner=True).exists()
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
