@@ -21,5 +21,6 @@ Needs
 * django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc
 * skills/PythonSkills 0.2.0: http://pypi.python.org/pypi/skills | https://github.com/McLeopold/PythonSkills
 * python-magic: http://pypi.python.org/pypi/python-magic/
+* timezone defs: dev-python/pytz | python-tz
 
-Edit and rename local_settings_.py to local_settings.py.
+Rename local_settings_.py to local_settings.py, and edit.
