@@ -255,8 +255,8 @@ class WinLossTable(tables.Table):
 
 class RatingAdjustmentHistoryTable(tables.Table):
     change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
-    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.get_preffered_name"))
-    playeraccount   = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')], accessor=A("playeraccount.get_preffered_name"), verbose_name="Player")
+    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.preffered_name"), verbose_name="Admin")
+    playeraccount   = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')], accessor=A("playeraccount.preffered_name"), verbose_name="Player")
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.Column(verbose_name="Match")
     elo             = tables.Column()

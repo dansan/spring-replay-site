@@ -31,7 +31,8 @@ class LobbyBackend():
         logger.debug("soap_check() returned '%s'", accountinfo)
         if not accountinfo == None:
             try:
-                userprofile = UserProfile.objects.get(accountid=accountinfo.LobbyID)
+                user = User.objects.get(username=accountinfo.Name)
+                userprofile = user.get_profile() 
                 if hasattr(accountinfo, "Aliases"):
                     server_aliases = accountinfo.Aliases.split(",")
                     up_aliases     = userprofile.aliases.split(",")
@@ -40,14 +41,12 @@ class LobbyBackend():
                             userprofile.aliases += s_a
                 userprofile.save()
 
-                user = userprofile.user
                 # password might have changed on the lobby server,
                 # we store a hashed version in case server is down
                 # to use as fallback
                 user.set_password(password)
                 user.save()
                 logger.debug("User '%s' existed.", user.username)
-
             except:
                 user = User.objects.create_user(username=accountinfo.Name, password=password, email="django@needs.this") # email, so comments form doesn't ask for it
                 user.is_staff = False
