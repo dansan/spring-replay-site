@@ -203,7 +203,7 @@ def edit_replay(request, gameID):
             tags = request.POST['tags']
 
             for tag in replay.tags.all():
-                if tag.replays() == 1 and tag.pk > 10:
+                if tag.replay_count() == 1 and tag.pk > 10:
                     # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
                     tag.delete()
             replay.tags.clear()
