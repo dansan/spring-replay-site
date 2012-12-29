@@ -11,20 +11,20 @@ from lobbyauth.models import UserProfile
 from django.contrib import admin
 
 class PlayerAccountAdmin(admin.ModelAdmin):
-    list_display = ("accountid", "preffered_name", "get_names")
-    search_fields = ["accountid", "preffered_name", "primary_account__preffered_name", "player__name"]
+    list_display = ("accountid", "id", "preffered_name", "get_names")
+    search_fields = ["id", "accountid", "preffered_name", "primary_account__preffered_name", "player__name"]
 
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("name", "spectator")
-    search_fields = ["name", "account__preffered_name", "account__primary_account__preffered_name"]
+    list_display = ("name", "id", "spectator")
+    search_fields = ["id", "name", "account__preffered_name", "account__primary_account__preffered_name"]
 
 class RatingAdmin(admin.ModelAdmin):
     list_display = ("playername", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
     search_fields = ["playername"]
      
 class ReplayAdmin(admin.ModelAdmin):
-    list_display = ("title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
-    search_fields = ["title", "map_info__name", "uploader__username", "gameID"]
+    list_display = ("id", "title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
+    search_fields = ["id", "title", "map_info__name", "uploader__username", "gameID"]
        
 class MapAdmin(admin.ModelAdmin):
     list_display = ("name",)
