@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
+from ajax_select import urls as ajax_select_urls
 
 from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
 
@@ -52,4 +53,5 @@ urlpatterns = patterns('',
     url(r'^account_unification_history/$', 'srs.views.account_unification_history', name="account_unification_history"),
     url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
     url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
+    url(r'^lookups/', include(ajax_select_urls)),
 )

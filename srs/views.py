@@ -420,32 +420,35 @@ def search_replays(query):
         q = Q()
 
         for key in query.keys():
-            if   key == 'text': q |= Q(title__icontains=query['text']) | Q(long_text__icontains=query['text'])
+            if   key == 'text': q &= Q(Q(title__icontains=query['text']) | Q(long_text__icontains=query['text']))
             elif key == 'comment':
                 ct = ContentType.objects.get_for_model(Replay)
                 comments = Comment.objects.filter(content_type=ct, comment__icontains=query['comment'])
                 c_pks = [c.object_pk for c in comments]
-                q |= Q(pk__in=c_pks)
-            elif key == 'tag': q |= Q(tags__name__icontains=query['tag'])
+                q &= Q(pk__in=c_pks)
+            elif key == 'tag': q &= Q(tags__id__in=query['tag'])
             elif key == 'player':
                 if query.has_key('spectator'):
-                    q |= Q(player__account__preffered_name__icontains=query['player'])
+                    q &= Q(player__account__id__in=query['player'])
                 else:
-                    q |= Q(player__account__preffered_name__icontains=query['player'], player__spectator=False)
+                    q &= Q(player__account__id__in=query['player'], player__spectator=False)
             elif key == 'spectator': pass # used in key == 'player'
-            elif key == 'maps': q |= Q(map_info__name__icontains=query['maps'])
-            elif key == 'game': q |= Q(gametype__icontains=query['game'])
+            elif key == 'maps': q &= Q(map_info__id__in=query['maps'])
+            elif key == 'game':
+                qg = Q()
+                for g_id in query['game']:
+                    qg |= Q(gametype__icontains=Game.objects.get(id=g_id).name)
+                q &= qg
             elif key == 'matchdate':
                 start_date = query['matchdate']-datetime.timedelta(1)
                 end_date   = query['matchdate']+datetime.timedelta(1)
-                q |= Q(unixTime__range=(start_date, end_date))
+                q &= Q(unixTime__range=(start_date, end_date))
             elif key == 'uploaddate':
                 start_date = query['uploaddate']-datetime.timedelta(1)
                 end_date   = query['uploaddate']+datetime.timedelta(1)
-                q |= Q(upload_date__range=(start_date, end_date))
+                q &= Q(upload_date__range=(start_date, end_date))
             elif key == 'uploader':
-                users = User.objects.filter(username__icontains=query['uploader'])
-                q |= Q(uploader__in=users)
+                q &= Q(uploader__id__in=query['uploader'])
             else:
                 logger.error("Unknown query key: query[%s]=%s",key, query[key])
                 raise Exception("Unknown query key: query[%s]=%s"%(key, query[key]))

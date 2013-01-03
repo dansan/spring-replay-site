@@ -1,14 +1,18 @@
 {% extends 'lists.html' %}
 
-{% block searchheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.9.2.custom.min.css" />
+{% block searchheader %}{% comment %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.9.2.custom.min.css" />
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.9.2.custom.min.js"></script>
-
+{% endcomment %}
+<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/ajax_select.css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/ajax_select.js"></script>
     <script type="text/javascript">
     $(document).ready(function() {
     	$(".datePicker").datepicker({ dateFormat: "yy-mm-dd" });
-    });
-    $(document).ready(function() {
+
     	$(".clickme_advsearch").click(function () {
     		$(".blind_advsearch").show("blind", {}, 1000);
     	});
@@ -24,7 +28,8 @@
 <div class="blind_advsearch" style="display:none;">
 {% endif %}
 <h2>Search</h2>
-<p><b>All search parameters are OR'd</b></p>
+<p style="font-weight: bold;">All search parameters are used together to narrow the results ("AND").</p>
+<p style="font-weight: bold;">Multiple entry fields: the entries of <i>player</i> and <i>tag</i> are used such as they must all be together in a replay ("AND"). The entries of <i>map</i>, <i>game</i> and <i>uploader</i> are used such that one of them must be in the replay ("OR").</p>
 	<form action="." method="post">{% csrf_token %}
 	    {{ form.non_field_errors }}
 	    {% for field in form %}
@@ -34,6 +39,12 @@
         </div>
         {% endif %}
         {% endfor %}
+
+        <noscript>
+            <p style="font-weight: bold; color: red">To use this page, you must activate JavaScript!(sorry)!</p>
+            <p style="color: red">(Sorry, to lazy to write two versions...)</p>
+        </noscript>
+
 		<table border="0" cellpadding="2" cellspacing="0" rules="none">
 	        <colgroup>
 	            <col width="60"/><col width="180"/><col width="60"/><col width="180"/>

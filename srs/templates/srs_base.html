@@ -60,8 +60,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         </div>
 
         <div class="search_field">
-            <form method="post" action="{% url srs.views.search %}">{% csrf_token %}
-                <p><span class="grey">Search Replays (<a href="{% url srs.views.search %}">Advanced</a>):</span> &nbsp;&nbsp; <input type="text" name="search" class="search" /> <input type="submit" value="Search" class="button" /></p>
+            <form method="get" action="{% url srs.views.search %}">
+                <p><input type="submit" value="Search Replays" class="button" /></p>
             </form>
         </div>
 

@@ -35,7 +35,7 @@ def uniqify_list(seq, idfun=None): # from http://www.peterbe.com/plog/uniqifiers
 
 
 class Tag(models.Model):
-    name            = models.CharField(max_length=128, unique=True)
+    name            = models.CharField(max_length=128, unique=True, db_index=True)
 
     def __unicode__(self):
         return self.name
@@ -48,7 +48,7 @@ class Tag(models.Model):
         return Replay.objects.filter(tags=self).count()
 
 class Map(models.Model):
-    name            = models.CharField(max_length=128)
+    name            = models.CharField(max_length=128, db_index=True)
     startpos        = models.CharField(max_length=1024, blank=True, null = True)
     height          = models.IntegerField()
     width           = models.IntegerField()
@@ -79,21 +79,21 @@ class MapImg(models.Model):
 
 class Replay(models.Model):
     versionString   = models.CharField(max_length=32)
-    gameID          = models.CharField(max_length=32, unique=True)
-    unixTime        = models.DateTimeField(verbose_name='date of match')
+    gameID          = models.CharField(max_length=32, unique=True, db_index=True)
+    unixTime        = models.DateTimeField(verbose_name='date of match', db_index=True)
     wallclockTime   = models.CharField(max_length=32, verbose_name='length of match')
-    autohostname    = models.CharField(max_length=128, blank=True, null = True)
-    gametype        = models.CharField(max_length=256)
+    autohostname    = models.CharField(max_length=128, blank=True, null = True, db_index=True)
+    gametype        = models.CharField(max_length=256, db_index=True)
     startpostype    = models.IntegerField(blank=True, null = True)
-    title           = models.CharField(max_length=256)
-    short_text      = models.CharField(max_length=50)
-    long_text       = models.CharField(max_length=513)
+    title           = models.CharField(max_length=256, db_index=True)
+    short_text      = models.CharField(max_length=50, db_index=True)
+    long_text       = models.CharField(max_length=513, db_index=True)
     notcomplete     = models.BooleanField()
     map_info        = models.ForeignKey(Map, blank=True, null = True)
     map_img         = models.ForeignKey(MapImg, blank=True, null = True)
     tags            = models.ManyToManyField(Tag)
     uploader        = models.ForeignKey(User)
-    upload_date     = models.DateTimeField(auto_now_add=True)
+    upload_date     = models.DateTimeField(auto_now_add=True, db_index=True)
     filename        = models.CharField(max_length=256)
     path            = models.CharField(max_length=256)
     download_count  = models.IntegerField(default=0)
@@ -206,7 +206,7 @@ class Allyteam(models.Model):
 class PlayerAccount(models.Model):
     accountid       = models.IntegerField(unique=True)
     countrycode     = models.CharField(max_length=2)
-    preffered_name  = models.CharField(max_length=128)
+    preffered_name  = models.CharField(max_length=128, db_index=True)
     primary_account = models.ForeignKey("self", blank=True, null = True)
 
     def __unicode__(self):
@@ -258,7 +258,7 @@ class PlayerAccount(models.Model):
         except:
             pass # Player with name "pref_name"  was removed from DB, but PlayerAccount stayed
         namelist.insert(0, pref_name)
-        names += reduce(lambda x, y: x+" "+y+" ", namelist)
+        names += reduce(lambda x, y: x+" "+y, namelist)
         return names.rstrip()
 
     def get_preffered_name(self):
@@ -271,7 +271,7 @@ class PlayerAccount(models.Model):
 
 class Player(models.Model):
     account         = models.ForeignKey(PlayerAccount, blank=True, null = True)
-    name            = models.CharField(max_length=128)
+    name            = models.CharField(max_length=128, db_index=True)
     rank            = models.IntegerField()
     spectator       = models.BooleanField()
     team            = models.ForeignKey("Team", blank=True, null = True)
@@ -339,8 +339,8 @@ class SiteStats(models.Model):
 
 
 class Game(models.Model):
-    name         = models.CharField(max_length=256)
-    abbreviation = models.CharField(max_length=64)
+    name         = models.CharField(max_length=256, db_index=True)
+    abbreviation = models.CharField(max_length=64, db_index=True)
 
     def __unicode__(self):
         return self.name[:70]+" ("+self.abbreviation+")"
@@ -376,10 +376,10 @@ class RatingBase(models.Model):
                            ('G', u'TeamFFA'),
                            ('O', u'BA 1v1 Tourney'),
                            )
-    match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES)
+    match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
     playeraccount = models.ForeignKey(PlayerAccount)
     # this fields is really redundant, but neccessary for db-side ordering of tables
-    playername    = models.CharField(max_length=128, blank=True, null=True)
+    playername    = models.CharField(max_length=128, blank=True, null=True, db_index=True)
 
     elo                = models.FloatField(default=1500.0)
     elo_k              = models.FloatField(default=30.0)
@@ -419,7 +419,7 @@ class RatingHistory(RatingBase):
     match         = models.ForeignKey(Replay)
 
     # this fields is really redundant, but neccessary for db-side ordering of tables
-    match_date    = models.DateTimeField(blank=True, null=True)
+    match_date    = models.DateTimeField(blank=True, null=True, db_index=True)
     ALGO_CHOICES  = (('E', u'ELO'),
                      ('G', u'Glicko'),
                      ('B', u'ELO & Glicko'),
@@ -456,7 +456,7 @@ class RatingHistory(RatingBase):
         ordering = ['-match_date', 'playername']
 
 class RatingAdjustmentHistory(RatingBase):
-    change_date   = models.DateTimeField(auto_now=True)
+    change_date   = models.DateTimeField(auto_now=True, db_index=True)
     ALGO_CHOICES  = (('E', u'ELO'),
                      ('G', u'Glicko'),
                      ('T', u'Trueskill'),
@@ -481,7 +481,7 @@ class RatingQueue(models.Model):
 
 
 class AccountUnificationLog(models.Model):
-    change_date   = models.DateTimeField(auto_now_add=True)
+    change_date   = models.DateTimeField(auto_now_add=True, db_index=True)
     admin         = models.ForeignKey(PlayerAccount, related_name='accountUnificationAdmin')
     account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount1')
     account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount2')

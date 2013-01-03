@@ -100,7 +100,7 @@ input.search {
 input.button {
 	border: 0;
 	height: 27px;
-	width: 76px;
+	width: 128px;
 	background: #ABC43C url("/static/img/button.gif") no-repeat;
 	color: #FFF;
 	font: bold 1.1em Arial, Helvetica, Sans-Serif;

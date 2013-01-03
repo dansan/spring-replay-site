@@ -7,6 +7,8 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
+from ajax_select.fields import AutoCompleteSelectMultipleField
+from srs.models import Player, PlayerAccount, Game, RatingBase
 
 class UploadFileForm(forms.Form):
     file      = forms.FileField()
@@ -21,13 +23,19 @@ class EditReplayForm(forms.Form):
 
 class AdvSearchForm(forms.Form):
     # don't forget to update search() and advsearch() if anything changes here
-    text      = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Description", required=False)
-    comment   = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Comment", required=False)
-    tag       = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Tag", required=False)
-    player    = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Player", required=False)
+    text      = forms.CharField(widget=forms.TextInput(attrs={'size': '26'}), max_length=50, label="Description", required=False)
+    comment   = forms.CharField(widget=forms.TextInput(attrs={'size': '26'}), max_length=50, label="Comment", required=False)
+    tag       = AutoCompleteSelectMultipleField('tag', label="Tag", max_length=50, help_text=None, required=False, plugin_options = {'minLength': 2})
+    player    = AutoCompleteSelectMultipleField('player', label="Player", max_length=50, help_text=None, required=False, plugin_options = {'minLength': 3})
     spectator = forms.BooleanField(label="Include spectators?", required=False)
-    maps      = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Map", required=False)
-    game      = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Game", required=False)
-    matchdate = forms.DateField(widget=forms.DateInput(attrs={'class':'datePicker'}, format='%Y-%m-%d'), label="Day of match", required=False)
-    uploaddate= forms.DateField(widget=forms.DateInput(attrs={'class':'datePicker'}, format='%Y-%m-%d'), label="Day of upload", required=False)
-    uploader  = forms.CharField(widget=forms.TextInput(attrs={'size': '20'}), max_length=50, label="Uploader", required=False)
+    maps      = AutoCompleteSelectMultipleField('map', label="Map", max_length=50, help_text=None, required=False, plugin_options = {'minLength': 2})
+    game      = AutoCompleteSelectMultipleField('game', label="Game", max_length=50, help_text=None, required=False)
+    matchdate = forms.DateField(widget=forms.DateInput(attrs={'size': '26', 'class':'datePicker'}, format='%Y-%m-%d'), label="Day of match", required=False)
+    uploaddate= forms.DateField(widget=forms.DateInput(attrs={'size': '26', 'class':'datePicker'}, format='%Y-%m-%d'), label="Day of upload", required=False)
+    uploader  = AutoCompleteSelectMultipleField('user', label="Uploader", max_length=50, help_text=None, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(AdvSearchForm, self).__init__(*args, **kwargs)
+        for field in ["game", "tag", "maps", "player", "uploader"]:
+            self.fields[field].widget.attrs['size'] = 26
+            self.fields[field].widget.attrs['title'] = "Start typing. Click autocompleted results to add them to the query, use trashcan to remove it."

@@ -36,6 +36,34 @@ LOG_PATH        = realpath(dirname(__file__))+'/log'
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
 INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
 LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+AJAX_LOOKUP_CHANNELS = {
+    'game'   : ('srs.lookups','GameLookup'),
+    'map'   : ('srs.lookups','MapLookup'),
+    'player': ('srs.lookups','PlayerLookup'),
+    'tag'   : ('srs.lookups','TagLookup'),
+    'user'  : ('srs.lookups','UserLookup'),
+}
+AJAX_SELECT_BOOTSTRAP = False
+# True: [easiest]
+#   use the admin's jQuery if present else load from jquery's CDN
+#   use jqueryUI if present else load from jquery's CDN
+#   use jqueryUI theme if present else load one from jquery's CDN
+# False/None/Not set: [default]
+#   you should include jQuery, jqueryUI + theme in your template
+AJAX_SELECT_INLINES = False
+# 'inline': [easiest]
+#   includes the js and css inline
+#   this gets you up and running easily
+#   but on large admin pages or with higher traffic it will be a bit wasteful.
+# 'staticfiles':
+#   @import the css/js from {{STATIC_URL}}/ajax_selects using django's staticfiles app
+#   requires staticfiles to be installed and to run its management command to collect files
+#   this still includes the css/js multiple times and is thus inefficient
+#   but otherwise harmless
+# False/None: [default]
+#   does not inline anything. include the css/js files in your compressor stack
+#   or include them in the head of the admin/base_site.html template
+#   this is the most efficient but takes the longest to configure
 
 
 # Local time zone for this installation. Choices can be found here:
@@ -145,7 +173,8 @@ INSTALLED_APPS = (
     'lobbyauth',
     'django.contrib.comments',
     'django_tables2',
-    'django_xmlrpc'
+    'django_xmlrpc',
+    'ajax_select'
 )
 
 # A sample logging configuration. The only tangible logging
