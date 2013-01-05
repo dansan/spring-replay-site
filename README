@@ -22,5 +22,7 @@ Needs
 * skills/PythonSkills 0.2.0: http://pypi.python.org/pypi/skills | https://github.com/McLeopold/PythonSkills
 * python-magic: http://pypi.python.org/pypi/python-magic/
 * timezone defs: dev-python/pytz | python-tz
+* django-ajax-selects 1.2.5: https://github.com/crucialfelix/django-ajax-selects/
 
 Rename local_settings_.py to local_settings.py, and edit.
+

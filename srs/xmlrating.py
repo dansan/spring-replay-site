@@ -40,15 +40,16 @@ def check_match_type(match_type):
 def get_rating(ga, mt, aid):
     try:
         pa = PlayerAccount.objects.get(accountid=aid)
+        rating = pa.get_rating(ga, mt)
     except Exception:
         # unknown user -> return default rating
-        if mt in ["T", "F", "G"]: return 25.0
-        else: return 1500.0
+        if mt in ["T", "F", "G"]: return (25.0, 25.0/3)
+        else: return (1500.0, 30.0)
 
     if mt in ["T", "F", "G"]:
-        return pa.get_rating(ga, mt).trueskill_mu
+        return (rating.trueskill_mu, rating.trueskill_sigma)
     else:
-        return pa.get_rating(ga, mt).elo
+        return (rating.elo, rating.elo_k)
 
 def authenticate_uploader(username, password):
     user = django.contrib.auth.authenticate(username=username, password=password)
@@ -70,8 +71,10 @@ def check_new_rating(rating):
         raise Exception("Rating '%s' not a number (float)."%str(rating))
 
 def get_rating_single_user(accountid, game, match_type):
-    logger.debug("accountid=%s game=%s match_type=%s", accountid, game, match_type)
+    rating, _ = get_rating_single_user2(accountid, game, match_type)
+    return rating
 
+def get_rating_single_user2(accountid, game, match_type):
     try:
         aid = check_accountid(accountid)
         ga  = check_game(game)
@@ -79,10 +82,14 @@ def get_rating_single_user(accountid, game, match_type):
     except Exception, e:
         return error_log_return(e)
 
-    return get_rating(ga, mt, aid)
+    rating, stdev =  get_rating(ga, mt, aid)
+    return rating, stdev
 
 def get_rating_multiple_users(accountids, game, match_type):
-    logger.debug("accountids=%s game=%s match_type=%s", accountids, game, match_type)
+    ratings_with_stdev = get_rating_multiple_users2(accountids, game, match_type)
+    return [(accountid, rating) for (accountid, rating, _) in ratings_with_stdev]
+
+def get_rating_multiple_users2(accountids, game, match_type):
 
     try:
         ga  = check_game(game)
@@ -96,8 +103,8 @@ def get_rating_multiple_users(accountids, game, match_type):
     result = list()
     for accountid in accountids:
         aid = check_accountid(accountid)
-        rating = get_rating(ga, mt, aid)
-        result.append((accountid, rating))
+        rating, stdev = get_rating(ga, mt, aid)
+        result.append((accountid, rating, stdev))
     return result
 
 def set_rating(accountid, game, match_type, rating, username, password, admin_account):

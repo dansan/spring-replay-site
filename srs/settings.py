@@ -26,8 +26,9 @@ AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_set
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),
                   ('srs.xmlrating.get_rating_single_user', 'xmlrpc_rate_single_user'),
                   ('srs.xmlrating.get_rating_single_user', 'get_rating_single_user'),
+                  ('srs.xmlrating.get_rating_single_user2', 'get_rating_single_user2'),
                   ('srs.xmlrating.get_rating_multiple_users', 'get_rating_multiple_users'),
-                  ('srs.xmlrating.set_rating', 'set_rating'),
+                  ('srs.xmlrating.get_rating_multiple_users2', 'get_rating_multiple_users2'),
                   ('srs.xmlrating.set_rating', 'set_rating'),
                   ('srs.xmlrating.unify_accounts', 'unify_accounts'))
 AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
