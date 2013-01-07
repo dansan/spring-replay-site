@@ -9,7 +9,7 @@
 import django_tables2 as tables
 from django_tables2 import A
 from django.utils.safestring import mark_safe
-from models import Rating, RatingAdjustmentHistory, PlayerAccount, AccountUnificationLog
+from models import Rating, RatingAdjustmentHistory, PlayerAccount, AccountUnificationLog, AccountUnificationRatingBackup
 
 
 class ReplayTable(tables.Table):
@@ -280,11 +280,12 @@ class AccountUnificationLogTable(tables.Table):
     admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.preffered_name"), verbose_name="Admin")
     account1        = tables.LinkColumn('player_detail', args=[A('account1.accountid')], accessor=A("account1.preffered_name"), verbose_name="Player 1")
     account2        = tables.LinkColumn('player_detail', args=[A('account2.accountid')], accessor=A("account2.preffered_name"), verbose_name="Player 2")
-    all_accounts    = tables.Column()
+    all_accounts    = tables.Column(orderable=False)
+    id              = tables.LinkColumn('account_unification_rating_backup', args=[A('id')], orderable=False, verbose_name="Original Ratings")
 
     class Meta:
         model = AccountUnificationLog
-        fields = ("change_date", "admin", "account1", "account2", "all_accounts")
+        fields = ("change_date", "admin", "account1", "account2", "all_accounts", "id")
         attrs    = {'class': 'paleblue'}
         order_by = "-change_date"
 
@@ -299,3 +300,12 @@ class AccountUnificationLogTable(tables.Table):
             pa = PlayerAccount.objects.get(accountid=acc)
             result += '<a href="'+pa.get_absolute_url()+'">'+pa.preffered_name+'</a> '
         return mark_safe(result)
+
+class AccountUnificationRatingBackupTable(PlayerRatingTable):
+    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
+
+    class Meta:
+        model = AccountUnificationRatingBackup
+        fields = ("playername", "game", "match_type", "elo", "glicko", "trueskill_mu")
+        attrs    = {'class': 'paleblue'}
+        order_by = "playername", "game", "match_type"

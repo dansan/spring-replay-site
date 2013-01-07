@@ -633,6 +633,11 @@ def account_unification_history(request):
     table = AccountUnificationLogTable(AccountUnificationLog.objects.all())
     return all_of_a_kind_table(request, table, "Account unification history")
 
+def account_unification_rating_backup(request, aulogid):
+    aulog = get_object_or_404(AccountUnificationLog, id=aulogid)
+    table = AccountUnificationRatingBackupTable(AccountUnificationRatingBackup.objects.filter(account_unification_log=aulog))
+    return all_of_a_kind_table(request, table, "Account unification rating backup")
+
 @login_required
 @never_cache
 def user_settings(request):

@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from ajax_select import urls as ajax_select_urls
 
+from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed, SmurfsFeed
 from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
 
 admin.autodiscover()
@@ -22,6 +23,7 @@ urlpatterns = patterns('',
     url(r'^feeds/latest_comments/$', SRSLatestCommentFeed()),
     url(r'^feeds/latest/$', LatestUploadsFeed()),
     url(r'^feeds/uploader/(?P<username>[\w\ .:()\[\]-]+)/$', UploaderFeed()),
+    url(r'^feeds/smurfs/$', SmurfsFeed()),
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),
@@ -54,4 +56,5 @@ urlpatterns = patterns('',
     url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
     url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
     url(r'^lookups/', include(ajax_select_urls)),
+    url(r'^account_unification_rating_backup/(?P<aulogid>[\d-]+)/$', 'srs.views.account_unification_rating_backup', name="account_unification_rating_backup"),
 )

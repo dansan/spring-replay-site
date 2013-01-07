@@ -490,8 +490,18 @@ class AccountUnificationLog(models.Model):
     def __unicode__(self):
         return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' unified '"+self.account1.preffered_name+"'("+str(self.account1.accountid)+") and '"+self.account2.preffered_name+"'("+str(self.account2.accountid)+")"
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('srs.views.account_unification_history', [])
+
     class Meta:
         ordering = ['-change_date']
+
+class AccountUnificationRatingBackup(RatingBase):
+    account_unification_log = models.ForeignKey(AccountUnificationLog)
+
+    def __unicode__(self):
+        return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
 
 
 def update_stats():

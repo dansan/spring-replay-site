@@ -174,9 +174,17 @@ def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
     all_accounts.insert(0, prim_acc)
     all_account_ids = sorted([pa.accountid for pa in all_accounts])
     all_account_ids_str = reduce(lambda x, y: str(x)+"|%d"%y, all_account_ids)
-    AccountUnificationLog.objects.create(admin=admin, account1=pa1, account2=pa2, all_accounts=all_account_ids_str)
+    acc_uni_log = AccountUnificationLog.objects.create(admin=admin, account1=pa1, account2=pa2, all_accounts=all_account_ids_str)
 
     all_ratings = Rating.objects.filter(playeraccount__in=prim_acc.get_all_accounts())
+
+    for rating in all_ratings:
+        AccountUnificationRatingBackup.objects.create(account_unification_log=acc_uni_log, game=rating.game, match_type=rating.match_type,
+                                                      playeraccount=rating.playeraccount, playername=rating.playername,
+                                                      elo=rating.elo, elo_k=rating.elo_k,
+                                                      glicko=rating.glicko, glicko_rd=rating.glicko_rd, glicko_last_period=rating.glicko_last_period,
+                                                      trueskill_mu=rating.trueskill_mu, trueskill_sigma=rating.trueskill_sigma)
+
     for rating in all_ratings:
         prim_rating = prim_acc.get_rating(game=rating.game, match_type=rating.match_type)
         other_accounts_ratings = all_ratings.filter(game=rating.game, match_type=rating.match_type).exclude(id=prim_rating.id)
@@ -185,8 +193,12 @@ def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
             prim_rating.elo_k           = min(prim_rating.elo_k, oar.elo_k)
             prim_rating.glicko          = max(prim_rating.glicko, oar.glicko)
             prim_rating.glicko_rd       = min(prim_rating.glicko_rd, oar.glicko_rd)
-            prim_rating.trueskill_mu    = max(prim_rating.trueskill_mu, oar.trueskill_mu)
-            prim_rating.trueskill_sigma = min(prim_rating.trueskill_sigma, oar.trueskill_sigma)
+            if prim_rating.trueskill_sigma > oar.trueskill_sigma:
+                # the other accounts TrueSkill value is more correct / had more matches 
+                prim_rating.trueskill_mu    = oar.trueskill_mu
+                prim_rating.trueskill_sigma = oar.trueskill_sigma
+            #else:
+            #   keep prim_rating.TS
         prim_rating.save()
     all_ratings.filter().exclude(playeraccount=prim_acc).delete()
 
