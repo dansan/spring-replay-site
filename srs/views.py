@@ -418,6 +418,7 @@ def search_replays(query):
 
     if query:
         q = Q()
+        multi_and = list()
 
         for key in query.keys():
             if   key == 'text': q &= Q(Q(title__icontains=query['text']) | Q(long_text__icontains=query['text']))
@@ -426,12 +427,22 @@ def search_replays(query):
                 comments = Comment.objects.filter(content_type=ct, comment__icontains=query['comment'])
                 c_pks = [c.object_pk for c in comments]
                 q &= Q(pk__in=c_pks)
-            elif key == 'tag': q &= Q(tags__id__in=query['tag'])
+            elif key == 'tag':
+                q &= Q(tags__id=query['tag'][0])
+                if len(query['tag']) > 1:
+                    for qtag in query['tag'][1:]:
+                        multi_and.append(Q(tags__id=qtag))
             elif key == 'player':
                 if query.has_key('spectator'):
-                    q &= Q(player__account__id__in=query['player'])
+                    q &= Q(player__account__in=PlayerAccount.objects.get(id=query['player'][0]).get_all_accounts())
+                    if len(query['player']) > 1:
+                        for qtag in query['player'][1:]:
+                            multi_and.append(Q(player__account__in=PlayerAccount.objects.get(id=qtag).get_all_accounts()))
                 else:
-                    q &= Q(player__account__id__in=query['player'], player__spectator=False)
+                    q &= Q(player__account__in=PlayerAccount.objects.get(id=query['player'][0]).get_all_accounts(), player__spectator=False)
+                    if len(query['player']) > 1:
+                        for qtag in query['player'][1:]:
+                            multi_and.append(Q(player__account__in=PlayerAccount.objects.get(id=qtag).get_all_accounts(), player__spectator=False))
             elif key == 'spectator': pass # used in key == 'player'
             elif key == 'maps': q &= Q(map_info__id__in=query['maps'])
             elif key == 'game':
