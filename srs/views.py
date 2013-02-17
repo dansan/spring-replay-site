@@ -466,6 +466,8 @@ def search_replays(query):
 
         if len(q.children):
             replays = Replay.objects.filter(q).distinct()
+            for and_query in multi_and:
+                replays = replays.filter(and_query).distinct()
         else:
             replays = Replay.objects.none()
     else:
