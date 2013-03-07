@@ -40,7 +40,7 @@ def index(request):
 
 def replays(request):
     replays = Replay.objects.all()
-    return replay_table(request, replays, "List of all %d matches"%Replay.objects.count())
+    return replay_table(request, replays, "List of all %d matches"%Replay.objects.count(), ext={"pagedescription": "list of all replays."})
 
 def replay_table(request, replays, title, template="lists.html", form=None, ext=None, order_by=None):
     from django_tables2 import RequestConfig
@@ -60,6 +60,7 @@ def replay_table(request, replays, title, template="lists.html", form=None, ext=
     c['table'] = table
     c['pagetitle'] = title
     if form: c['form'] = form
+    if not c.has_key("pagedescription"): c["pagedescription"] = title
     return render_to_response(template, c, context_instance=RequestContext(request))
 
 def all_of_a_kind_table(request, table, title, template="lists.html", intro_text=None):
@@ -70,6 +71,7 @@ def all_of_a_kind_table(request, table, title, template="lists.html", intro_text
     c['table'] = table
     c['pagetitle'] = title
     c['intro_text'] = intro_text
+    c["pagedescription"] = title
     return render_to_response(template, c, context_instance=RequestContext(request))
 
 @cache_page(3600 * 1)
@@ -154,6 +156,7 @@ def replay(request, gameID):
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
     c["replay_details"] = True
     c["is_draw"] = not allyteams.filter(winner=True).exists()
+    c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players(), replay.match_type(), replay.game_release().game.name, replay.map_info.name, replay.unixTime)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
@@ -178,6 +181,7 @@ def mapmodlinks(request, gameID):
     except:
         c['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: <a href=\"http://springfiles.com/finder/1/%s\">game</a>  <a href=\"http://springfiles.com/finder/1/%s\">map</a>."%(gamename, mapname)
 
+    c["pagedescription"] = "Download links for game %s and map %s."%(gamename, mapname)
     return render_to_response('mapmodlinks.html', c, context_instance=RequestContext(request))
 
 @login_required
@@ -271,7 +275,7 @@ def players(request):
     c = all_page_infos(request)
 
     c["playerlist"] = PlayerAccount.objects.order_by("preffered_name").values_list("accountid", "preffered_name")
-
+    c["pagedescription"] = "List of all known player accounts"
     return render_to_response('all_players.html', c, context_instance=RequestContext(request))
 
 def player(request, accountid):
@@ -328,6 +332,7 @@ def player(request, accountid):
     RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
 
     c['pagetitle'] = "Player "+pa.preffered_name
+    c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
 #class PlayersReplayTable(tables.Table):
@@ -407,7 +412,7 @@ def search(request):
         form = AdvSearchForm()
 
     replays = search_replays(query)
-
+    c["pagedescription"] = "Search replays"
     return replay_table(request, replays, "%d replays matching your search"%len(replays), "search.html", form, ext)
 
 def search_replays(query):
@@ -585,6 +590,7 @@ def ba1v1tourney(request):
     rc.configure(c["table_1v1"])
     rc.configure(c["table_1v1_history"])
 
+    c["pagedescription"] = "Balanced Annihilation 1v1 tourney ladder"
     return render_to_response('ba1v1tourney.html', c, context_instance=RequestContext(request))
 
 @cache_page(3600 / 2)
@@ -627,7 +633,7 @@ def hall_of_fame(request, abbreviation):
     c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
     c["thisgame"] = game
     c["INITIAL_RATING"] = settings.INITIAL_RATING
-
+    c["pagedescription"] = "Hall Of Fame for "+game.name
     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
 @never_cache
@@ -656,6 +662,7 @@ def account_unification_rating_backup(request, aulogid):
 def user_settings(request):
     # TODO:
     c = all_page_infos(request)
+    c["pagedescription"] = "User settings"
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
@@ -707,6 +714,7 @@ def login(request):
     else:
         form = AuthenticationForm()
     c['form'] = form
+    c["pagedescription"] = "Login form"
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
 @never_cache
