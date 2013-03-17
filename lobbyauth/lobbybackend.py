@@ -28,39 +28,36 @@ class LobbyBackend():
             # we reserve this one for us (local django db auth)
             return None
         accountinfo = self.soap_getaccountinfo(username, password)
-        logger.debug("soap_check() returned '%s'", accountinfo)
+        logger.debug("accountinfo returned by soap: '%s'", accountinfo)
         if not accountinfo == None:
             try:
-                user = User.objects.get(username=accountinfo.Name)
-                userprofile = user.get_profile() 
-                if hasattr(accountinfo, "Aliases"):
-                    server_aliases = accountinfo.Aliases.split(",")
-                    up_aliases     = userprofile.aliases.split(",")
-                    for s_a in server_aliases:
-                        if not s_a in up_aliases:
-                            userprofile.aliases += s_a
-                userprofile.save()
-
-                # password might have changed on the lobby server,
-                # we store a hashed version in case server is down
-                # to use as fallback
-                user.set_password(password)
-                user.save()
-                logger.debug("User '%s' existed.", user.username)
+                user = User.objects.get(username=str(accountinfo.LobbyID))
             except:
-                user = User.objects.create_user(username=accountinfo.Name, password=password, email="django@needs.this") # email, so comments form doesn't ask for it
+                user = User.objects.create_user(username=str(accountinfo.LobbyID), password=password, email="django@needs.this") # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
-                user.save()
+                logger.info("created User %s (%s)", user.username, user.first_name)
+            # password might have changed on the lobby server, we store a hashed version in case server is down to use as fallback
+            user.set_password(password)
+            user.first_name = accountinfo.Name
+            user.save()
 
-                userprofile = UserProfile.objects.create(accountid = accountinfo.LobbyID, timerank = accountinfo.LobbyTimeRank, aliases = accountinfo.Name, country = accountinfo.Country, user = user)
-                if hasattr(accountinfo, "Aliases"):
-                    userprofile.aliases = accountinfo.Aliases
-                userprofile.save()
-                logger.info("Created user '%s'.", user.username)
+            userprofile, up_created = UserProfile.objects.get_or_create(accountid=accountinfo.LobbyID,
+                                                                        defaults={"user": user,
+                                                                                  "accountid": accountinfo.LobbyID,
+                                                                                  "timerank": accountinfo.LobbyTimeRank,
+                                                                                  "aliases": accountinfo.Name,
+                                                                                  "country": accountinfo.Country})
+            if up_created: logger.info("created UserProfile(%d) for User %s (%s)", userprofile.id, user.username, user.first_name)
 
-            userprofile.timerank = accountinfo.LobbyTimeRank
-            userprofile.country  = accountinfo.Country
+            server_aliases = [accountinfo.Name]
+            if hasattr(accountinfo, "Aliases"):
+                server_aliases.extend(accountinfo.Aliases.split(","))
+            up_aliases     = userprofile.aliases.split(",")
+            for s_a in server_aliases:
+                if not s_a in up_aliases:
+                    if len(userprofile.aliases) > 0: userprofile.aliases += ","
+                    userprofile.aliases += s_a
             userprofile.save()
 
             return user
