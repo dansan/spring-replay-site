@@ -11,8 +11,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 -->
     <meta name="author" content="Dansan" />
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
-    <meta name="Description" content="Replay upload site for matches on the SPringRTS game engine."/>
-    <meta name="Keywords" content="replay, demo, sdf, spring, springrts, game"/>
+    <meta name="Description" content="{% if not pagedescription %}Replay upload site for matches on the SpringRTS game engine.{% else %}{{ pagedescription }}{% endif %}"/>
+    <meta name="Keywords" content="replay, demo, sdf, spring, springrts, game, rts, real time strategy"/>
 
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads" href="/feeds/latest/" />
     {% if user.is_authenticated %}
@@ -34,7 +34,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="top_info">
                 <div class="top_info_right">
                     {% if user.is_authenticated %}
-                    <p>Welcome {{ user }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | {% endif %}<a href="{% url srs.views.logout %}">Logout</a></p>
+                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | {% endif %}<a href="{% url srs.views.logout %}">Logout</a></p>
                     {% else %}
                     <p><a href="/">Home</a> | You are not Logged in. To upload a replay or write a comment you must <b><a href="{% url srs.views.login %}">Log in</a></b> using your spring lobby account. If you don't have one start a lobby and register.</p>
                     {% endif %}                    

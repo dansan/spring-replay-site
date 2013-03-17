@@ -23,23 +23,23 @@ logger = logging.getLogger(__package__)
 class LobbyBackend():
 
     def authenticate(self, username=None, password=None):
-        logger.debug("username=%s password=xxxxxx", username)
+        logger.info("username=%s password=xxxxxx", username)
         if username == "admin" or username == "root":
             # we reserve this one for us (local django db auth)
+            logger.info("username = '%s', not using lobbybackend", username)
             return None
         accountinfo = self.soap_getaccountinfo(username, password)
         logger.debug("accountinfo returned by soap: '%s'", accountinfo)
         if not accountinfo == None:
             try:
-                user = User.objects.get(username=str(accountinfo.LobbyID))
+                user = User.objects.get(last_name=str(accountinfo.LobbyID))
             except:
-                user = User.objects.create_user(username=str(accountinfo.LobbyID), password=password, email="django@needs.this") # email, so comments form doesn't ask for it
+                user = User.objects.create_user(username=username, last_name=str(accountinfo.LobbyID), password=password, email="django@needs.this") # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
-                logger.info("created User %s (%s)", user.username, user.first_name)
+                logger.info("created User %s (%s)", user.username, user.last_name)
             # password might have changed on the lobby server, we store a hashed version in case server is down to use as fallback
             user.set_password(password)
-            user.first_name = accountinfo.Name
             user.save()
 
             userprofile, up_created = UserProfile.objects.get_or_create(accountid=accountinfo.LobbyID,
@@ -48,7 +48,7 @@ class LobbyBackend():
                                                                                   "timerank": accountinfo.LobbyTimeRank,
                                                                                   "aliases": accountinfo.Name,
                                                                                   "country": accountinfo.Country})
-            if up_created: logger.info("created UserProfile(%d) for User %s (%s)", userprofile.id, user.username, user.first_name)
+            if up_created: logger.info("created UserProfile(%d) for User %s (%s)", userprofile.id, user.username, user.last_name)
 
             server_aliases = [accountinfo.Name]
             if hasattr(accountinfo, "Aliases"):
@@ -62,7 +62,7 @@ class LobbyBackend():
 
             return user
         else:
-            logger.debug("Wrong username/password.")
+            logger.info("Wrong username/password.")
             return None
 
     def get_user(self, user_id):

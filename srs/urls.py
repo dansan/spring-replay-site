@@ -44,7 +44,7 @@ urlpatterns = patterns('',
     url(r'^gamerelease/(?P<gametype>.+)/$', 'srs.views.gamerelease', name="gamerelease_detail"),
 
     url(r'^users/$', 'srs.views.users'),
-    url(r'^user/(?P<username>[\w\ .:()\[\]-]+)/$', 'srs.views.see_user', name="user_detail"),
+    url(r'^user/(?P<accountid>[\d-]+)/$', 'srs.views.see_user', name="user_detail"),
 
     url(r'^match_date/(?P<shortdate>[\d-]+)/$', 'srs.views.match_date'),
     url(r'^upload_date/(?P<shortdate>[\d-]+)/$', 'srs.views.upload_date'),

@@ -58,7 +58,7 @@ class GameTable(tables.Table):
         order_by = "name"
 
 class UserTable(tables.Table):
-    name           = tables.LinkColumn('user_detail', args=[A('name')])
+    name           = tables.LinkColumn('user_detail', args=[A('accountid')])
     count          = tables.Column(verbose_name="# uploads")
     class Meta:
         attrs    = {'class': 'paleblue'}

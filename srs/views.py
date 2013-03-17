@@ -335,15 +335,6 @@ def player(request, accountid):
     c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
-#class PlayersReplayTable(tables.Table):
-#    title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
-#    unixTime       = tables.Column(verbose_name="Date")
-#    playername     = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-#    game           = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
-#    match_type     = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
-#    result         = tables.Column()
-#    side           = tables.Column()
-
 def game(request, name):
     game = get_object_or_404(Game, name=name)
     gr_list = [{'name': gr.name, 'count': Replay.objects.filter(gametype=gr.name).count()} for gr in GameRelease.objects.filter(game=game)]
@@ -412,7 +403,7 @@ def search(request):
         form = AdvSearchForm()
 
     replays = search_replays(query)
-    c["pagedescription"] = "Search replays"
+    ext["pagedescription"] = "Search replays"
     return replay_table(request, replays, "%d replays matching your search"%len(replays), "search.html", form, ext)
 
 def search_replays(query):
@@ -666,17 +657,17 @@ def user_settings(request):
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
-    table = UserTable([{"name": user.username, "count": user.replays_uploaded()} for user in User.objects.all()])
+    table = UserTable([{"name": user.username, "count": user.replays_uploaded(), "accountid": user.last_name} for user in User.objects.all()])
     intro_text = ["Click on a username to see a list of matches uploaded by that user."]
     return all_of_a_kind_table(request, table, "List of all %d uploaders"%User.objects.count(), intro_text=intro_text)
 
-def see_user(request, username):
+def see_user(request, accountid):
     try:
-        user = User.objects.get(username=username)
+        user = User.objects.get(last_name=accountid)
     except:
         raise Http404
     replays = Replay.objects.filter(uploader=user)
-    return replay_table(request, replays, "%d replays uploaded by '%s'"%(len(replays), user))
+    return replay_table(request, replays, "%d replays uploaded by '%s'"%(len(replays), user.username))
 
 def match_date(request, shortdate):
     replays = Replay.objects.filter(unixTime__startswith=shortdate)
@@ -699,18 +690,18 @@ def login(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
-            user = django.contrib.auth.authenticate(username=form.cleaned_data["username"], password=form.cleaned_data["password"])
-            if user is not None:
-                if user.is_active:
-                    django.contrib.auth.login(request, user)
-                    logger.info("Logged in user '%s'", request.user)
-                    nexturl = request.GET.get('next')
-                    # TODO: "next" is never passed...
-                    if nexturl:
-                        dest = nexturl
-                    else:
-                        dest = "/"
-                    return HttpResponseRedirect(dest)
+            user = form.get_user()
+            django.contrib.auth.login(request, user)
+            logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.get_profile().aliases)
+            nexturl = request.GET.get('next')
+            # TODO: "next" is never passed...
+            if nexturl:
+                dest = nexturl
+            else:
+                dest = "/"
+            return HttpResponseRedirect(dest)
+        else:
+            logger.info("login error: %s", form.errors)
     else:
         form = AuthenticationForm()
     c['form'] = form
