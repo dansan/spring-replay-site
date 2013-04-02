@@ -1,11 +1,14 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from ajax_select import urls as ajax_select_urls
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed, SmurfsFeed
-from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
 
 admin.autodiscover()
+
+from dajaxice.core import dajaxice_autodiscover, dajaxice_config
+dajaxice_autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
@@ -55,6 +58,10 @@ urlpatterns = patterns('',
     url(r'^account_unification_history/$', 'srs.views.account_unification_history', name="account_unification_history"),
     url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
     url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
+    url(r'^manual_rating_adjustment/$', 'srs.views.manual_rating_adjustment', name="manual_rating_adjustment"),
     url(r'^lookups/', include(ajax_select_urls)),
     url(r'^account_unification_rating_backup/(?P<aulogid>[\d-]+)/$', 'srs.views.account_unification_rating_backup', name="account_unification_rating_backup"),
+    url(dajaxice_config.dajaxice_url, include('dajaxice.urls')),
 )
+
+urlpatterns += staticfiles_urlpatterns()

@@ -503,7 +503,6 @@ class AccountUnificationRatingBackup(RatingBase):
     def __unicode__(self):
         return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
 
-
 def update_stats():
     replays  = Replay.objects.count()
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]

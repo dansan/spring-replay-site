@@ -15,6 +15,11 @@ from django.http import Http404, HttpResponse
 from django.contrib.comments import Comment
 from django.views.decorators.cache import cache_control
 from django.db.models import Max
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.urlresolvers import reverse
+
+from dajax.core import Dajax
+from dajaxice.decorators import dajaxice_register
 
 import logging
 from types import StringTypes
@@ -26,6 +31,8 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
+from forms import ManualRatingAdjustmentForm
+from xmlrating import set_rating_authenticated
 
 logger = logging.getLogger(__package__)
 
@@ -638,15 +645,119 @@ def manual_rating_history(request):
     table = RatingAdjustmentHistoryTable(RatingAdjustmentHistory.objects.all())
     return all_of_a_kind_table(request, table, "Manual rating adjustment history")
 
+@staff_member_required
 @never_cache
 def account_unification_history(request):
     table = AccountUnificationLogTable(AccountUnificationLog.objects.all())
     return all_of_a_kind_table(request, table, "Account unification history")
 
+@staff_member_required
+@never_cache
 def account_unification_rating_backup(request, aulogid):
     aulog = get_object_or_404(AccountUnificationLog, id=aulogid)
     table = AccountUnificationRatingBackupTable(AccountUnificationRatingBackup.objects.filter(account_unification_log=aulog))
     return all_of_a_kind_table(request, table, "Account unification rating backup")
+
+@staff_member_required
+@never_cache
+def manual_rating_adjustment(request):
+    c = all_page_infos(request)
+    if request.method == 'POST':
+        form = ManualRatingAdjustmentForm(request.POST)
+        if form.is_valid():
+            logger.debug("form.cleaned_data=%s", form.cleaned_data)
+            accountid     = PlayerAccount.objects.get(id=form.cleaned_data["player"]).accountid
+            game          = Game.objects.get(id=int(form.cleaned_data["game"]))
+            match_type    = form.cleaned_data["match_type"]
+            if match_type in ["T", "F", "G"]:
+                rating        = form.cleaned_data["trueskill"]
+            else:
+                rating        = form.cleaned_data["elo"]
+            admin_account = request.user.get_profile().accountid
+            set_rating_authenticated(accountid, game.abbreviation, match_type, rating, admin_account)
+            return HttpResponseRedirect(reverse(manual_rating_history))
+    else:
+        form = ManualRatingAdjustmentForm()
+
+    c["form"] = form
+    c["pagedescription"] = "History of manual rating adjustments"
+    return render_to_response("manual_rating_adjustment.html", c, context_instance=RequestContext(request))
+
+@staff_member_required
+@dajaxice_register
+def mra_update_game(request, paid):
+    dajax = Dajax()
+
+    pa = get_object_or_404(PlayerAccount, id=paid)
+    games = Game.objects.filter(id__in=Rating.objects.filter(playeraccount=pa).values_list("game", flat=True)).order_by("name")
+
+    if games:
+        out = ["<option value=''>Please select a game.</option>"]
+        out.extend(["<option value='%d'>%s</option>"%(game.id, game.name) for game in games])
+    else:
+        out = ["<option value=''>NO RATINGS</option>"]
+
+    dajax.assign('#id_game', 'innerHTML', ''.join(out))
+    dajax.assign('#id_match_type', 'innerHTML', '')
+    dajax.assign('#id_elo', 'value', "")
+    dajax.assign('#id_glicko', 'value', "")
+    dajax.assign('#id_trueskill', 'value', "")
+    return dajax.json()
+
+@staff_member_required
+@dajaxice_register
+def mra_update_match_type(request, paid, gameid):
+    dajax = Dajax()
+
+    pa = get_object_or_404(PlayerAccount, id=paid)
+    ga = get_object_or_404(Game, id=gameid)
+    ra = Rating.objects.filter(playeraccount=pa, game=ga)
+
+    def long_type(mt):
+        for mtc in Rating.MATCH_TYPE_CHOICES:
+            if mtc[0] == mt:
+                return mtc[1]
+
+    out = ["<option value=''>Please select a match type.</option>"]
+    out.extend(["<option value='%s'>%s</option>"%(r.match_type, long_type(r.match_type)) for r in ra])
+
+    dajax.assign('#id_match_type', 'innerHTML', ''.join(out))
+    dajax.assign('#id_elo', 'value', "")
+    dajax.assign('#id_glicko', 'value', "")
+    dajax.assign('#id_trueskill', 'value', "")
+    return dajax.json()
+
+@staff_member_required
+@dajaxice_register
+def mra_update_ratings(request, paid, gameid, matchtype):
+    dajax = Dajax()
+
+    pa   = get_object_or_404(PlayerAccount, id=paid)
+    if pa.primary_account:
+        pa = pa.primary_account
+    game = get_object_or_404(Game, id=gameid)
+
+    try:
+        rating = Rating.objects.get(game=game, match_type=matchtype, playeraccount=pa)
+        elo = rating.elo
+        glicko = rating.glicko
+        trueskill = rating.trueskill_mu
+    except:
+        elo = 0
+        glicko = 0
+        trueskill = 0
+
+    if matchtype in ["T", "F", "G"]:
+        dajax.assign('#id_elo', 'disabled', 'True')
+        dajax.clear('#id_trueskill', 'disabled')
+    else:
+        dajax.clear('#id_elo', 'disabled')
+        dajax.assign('#id_trueskill', 'disabled', 'True')
+
+    dajax.assign('#id_elo', 'value', str(elo))
+    dajax.assign('#id_glicko', 'value', str(glicko))
+    dajax.assign('#id_trueskill', 'value', str(trueskill))
+    return dajax.json()
 
 @login_required
 @never_cache

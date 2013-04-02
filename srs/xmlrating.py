@@ -108,10 +108,16 @@ def get_rating_multiple_users2(accountids, game, match_type):
     return result
 
 def set_rating(accountid, game, match_type, rating, username, password, admin_account):
-    logger.debug("accountid=%s game=%s match_type=%s rating=%s username='%s' password=xxxxxx admin_account=%s", accountid, game, match_type, rating, username, admin_account)
-
     try:
         _    = authenticate_uploader(username, password)
+        return set_rating_authenticated(accountid, game, match_type, rating, admin_account)
+    except Exception, e:
+        logger.error("accountid=%s game=%s match_type=%s rating=%s username='%s' password=xxxxxx admin_account=%s", accountid, game, match_type, rating, username, admin_account)
+        return error_log_return(e)
+
+def set_rating_authenticated(accountid, game, match_type, rating, admin_account):
+    logger.info("accountid=%s game=%s match_type=%s rating=%s admin_account=%s", accountid, game, match_type, rating, admin_account)
+    try:
         rat  = check_new_rating(rating)
         acid = check_accountid(accountid)
         adid = check_accountid(admin_account)
@@ -137,7 +143,7 @@ def set_rating(accountid, game, match_type, rating, username, password, admin_ac
     return get_rating_single_user(accountid, game, match_type)
 
 def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
-    logger.debug("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
+    logger.info("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
 
     try:
         _    = authenticate_uploader(username, password)

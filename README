@@ -23,6 +23,7 @@ Needs
 * python-magic: http://pypi.python.org/pypi/python-magic/
 * timezone defs: dev-python/pytz | python-tz
 * django-ajax-selects 1.2.5: https://github.com/crucialfelix/django-ajax-selects/
+* django-dajaxice & django-dajax: http://www.dajaxproject.com/ (pip/easy_install django-dajaxice ; pip/easy_install django-dajax)
 
 Rename local_settings_.py to local_settings.py, and edit.
 

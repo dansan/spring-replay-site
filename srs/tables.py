@@ -272,7 +272,7 @@ class RatingAdjustmentHistoryTable(tables.Table):
         if record.algo_change != "E": return ""
         else: return '%.2f' % value
     def render_trueskill_mu(self, value, record):
-        if record.match_type != "T": return ""
+        if record.algo_change != "T": return ""
         else: return '%.2f' % value
 
 class AccountUnificationLogTable(tables.Table):
