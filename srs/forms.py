@@ -9,6 +9,8 @@
 from django import forms
 from ajax_select.fields import AutoCompleteSelectMultipleField
 from srs.models import Player, PlayerAccount, Game, RatingBase
+import logging
+logger = logging.getLogger(__package__)
 
 class UploadFileForm(forms.Form):
     file      = forms.FileField()
@@ -59,3 +61,35 @@ class ManualRatingAdjustmentForm(forms.Form):
 
         self.fields["match_type"].choices = RatingBase.MATCH_TYPE_CHOICES
         self.fields["match_type"].choices.insert(0, (0, "Please select a match type."))
+
+class UnifyAccountsForm(forms.Form):
+    player1 = forms.ChoiceField()
+    player2 = forms.ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        super(UnifyAccountsForm, self).__init__(*args, **kwargs)
+        playeraccounts = PlayerAccount.objects.exclude(accountid=0)#.values_list("accountid", "preffered_name", "primary_account")
+        choices = list()
+        for pa in playeraccounts: # (pa_id, name, pri_acc)
+            if pa.primary_account:
+                choices.append((pa.get_primary_account().accountid, "%06d"%pa.accountid+"..."+pa.preffered_name.ljust(30, ".")+" (%d, %s)"%(pa.get_primary_account().accountid, pa.get_primary_account().preffered_name)))
+            else:
+                choices.append((pa.accountid, "%06d"%pa.accountid+"..."+pa.preffered_name))
+        choices.insert(0, (0, "Please select a player."))
+
+        self.fields["player1"].choices = choices
+        self.fields["player2"].choices = choices
+
+    def clean(self):
+        try:
+            player1 = PlayerAccount.objects.get(accountid=self.cleaned_data.get("player1"))
+            player2 = PlayerAccount.objects.get(accountid=self.cleaned_data.get("player2"))
+        except Exception, e:
+            logger.error("Invalid AccountIDs: player1='%s', player2='%s', Exeption='%s'", self.cleaned_data.get("player1"), self.cleaned_data.get("player2"), e)
+            raise forms.ValidationError("Invalid AccountIDs")
+
+        if player1 in player2.get_all_accounts():
+            logger.error("Accounts are already unified: %s AND %s", player1, player2)
+            raise forms.ValidationError("Accounts are already unified.")
+        else:
+            return self.cleaned_data

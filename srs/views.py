@@ -31,8 +31,8 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from forms import ManualRatingAdjustmentForm
-from xmlrating import set_rating_authenticated
+from forms import ManualRatingAdjustmentForm, UnifyAccountsForm
+from xmlrating import set_rating_authenticated, unify_accounts_authenticated
 
 logger = logging.getLogger(__package__)
 
@@ -653,10 +653,76 @@ def account_unification_history(request):
 
 @staff_member_required
 @never_cache
-def account_unification_rating_backup(request, aulogid):
-    aulog = get_object_or_404(AccountUnificationLog, id=aulogid)
+def account_unification_rating_backup(request, au_logid):
+    aulog = get_object_or_404(AccountUnificationLog, id=au_logid)
     table = AccountUnificationRatingBackupTable(AccountUnificationRatingBackup.objects.filter(account_unification_log=aulog))
-    return all_of_a_kind_table(request, table, "Account unification rating backup")
+    return all_of_a_kind_table(request, table=table, title="Account unification rating backup", template="au_rating_backup.html")
+
+@staff_member_required
+@never_cache
+def revert_unify_accounts(request, au_logid):
+    """
+    AccountUnificationRatingBackup and User that started the revert
+    """
+    logger.info("reverting AccountUnificationLog #%d on behalf of admin(%d) %s", au_logid, request.user.id, request.user)
+
+    au_log = get_object_or_404(AccountUnificationLog, id=au_logid)
+    au_rating_backups = AccountUnificationRatingBackup.objects.filter(account_unification_log=au_log)
+    logger.info("AccountUnificationRatingBackups: %s", au_rating_backups)
+
+    # separate accounts
+    if au_log.account1.primary_account == None:
+        au_log.account2.primary_account = None
+        au_log.account2.save()
+    elif au_log.account2.primary_account == None:
+        au_log.account1.primary_account = None
+        au_log.account1.save()
+    else:
+        err = "both accounts are not primary_account: %s AND %s"% (au_log.account1, au_log.account2)
+        logger.error(err)
+        raise RuntimeError(err)
+
+    # restore previous ratings
+    Rating.objects.filter(playeraccount=au_log.account1.get_primary_account()).delete()
+    Rating.objects.filter(playeraccount=au_log.account2.get_primary_account()).delete()
+
+    for au_rating in au_rating_backups:
+        Rating.objects.create(game=au_rating.game, match_type=au_rating.match_type, playeraccount=au_rating.playeraccount, playername=au_rating.playername,
+                              elo=au_rating.elo, elo_k=au_rating.elo_k,
+                              glicko=au_rating.glicko, glicko_rd=au_rating.glicko_rd, glicko_last_period=au_rating.glicko_last_period,
+                              trueskill_mu=au_rating.trueskill_mu, trueskill_sigma=au_rating.trueskill_sigma)
+    au_log.reverted = True
+    au_log.save()
+
+    # block future AccountUnification
+    AccountUnificationBlocking.objects.create(account1=au_log.account1, account2=au_log.account2)
+    # log
+    try:
+        admin_pa_name = PlayerAccount.objects.get(id=request.user.get_profile().playeraccount).get_preffered_name()
+    except:
+        admin_pa_name = "unknown admin PA name"
+    logger.info("admin(user=%d) '%s' reverted AccountUnification '%s' and blocked futher unification", request.user.id, admin_pa_name, au_log)
+    return HttpResponseRedirect(reverse(account_unification_history))
+
+@staff_member_required
+@never_cache
+def manual_unify_accounts(request):
+    c = all_page_infos(request)
+    if request.method == 'POST':
+        form = UnifyAccountsForm(request.POST)
+        if form.is_valid():
+            result = unify_accounts_authenticated(form.cleaned_data.get("player1"), form.cleaned_data.get("player2"), request.user.get_profile().accountid)
+            try:
+                result_id = int(result)
+                logger.info("Accounts %s and %s unified to %d.", form.cleaned_data.get("player1"), form.cleaned_data.get("player2"), result_id)
+                return HttpResponseRedirect(reverse(account_unification_history))
+            except:
+                form._errors = {'player1': [u"An error occured: %s"%result]}
+    else:
+        form = UnifyAccountsForm()
+
+    c["form"] = form
+    return render_to_response("unify_accounts.html", c, context_instance=RequestContext(request))
 
 @staff_member_required
 @never_cache
@@ -665,7 +731,6 @@ def manual_rating_adjustment(request):
     if request.method == 'POST':
         form = ManualRatingAdjustmentForm(request.POST)
         if form.is_valid():
-            logger.debug("form.cleaned_data=%s", form.cleaned_data)
             accountid     = PlayerAccount.objects.get(id=form.cleaned_data["player"]).accountid
             game          = Game.objects.get(id=int(form.cleaned_data["game"]))
             match_type    = form.cleaned_data["match_type"]
@@ -733,12 +798,10 @@ def mra_update_ratings(request, paid, gameid, matchtype):
     dajax = Dajax()
 
     pa   = get_object_or_404(PlayerAccount, id=paid)
-    if pa.primary_account:
-        pa = pa.primary_account
     game = get_object_or_404(Game, id=gameid)
 
     try:
-        rating = Rating.objects.get(game=game, match_type=matchtype, playeraccount=pa)
+        rating = Rating.objects.get(game=game, match_type=matchtype, playeraccount=pa.get_primary_account())
         elo = rating.elo
         glicko = rating.glicko
         trueskill = rating.trueskill_mu

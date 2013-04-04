@@ -196,7 +196,7 @@ class PlayerRatingTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "game, match_type"
+        order_by = ("game", "match_type")
 
     def render_elo(self, value, record):
         if record.match_type in ["1", "O"]: return '%.2f' % value
@@ -282,10 +282,11 @@ class AccountUnificationLogTable(tables.Table):
     account2        = tables.LinkColumn('player_detail', args=[A('account2.accountid')], accessor=A("account2.preffered_name"), verbose_name="Player 2")
     all_accounts    = tables.Column(orderable=False)
     id              = tables.LinkColumn('account_unification_rating_backup', args=[A('id')], orderable=False, verbose_name="Original Ratings")
+    reverted        = tables.Column()
 
     class Meta:
         model = AccountUnificationLog
-        fields = ("change_date", "admin", "account1", "account2", "all_accounts", "id")
+        fields = ("change_date", "admin", "account1", "account2", "all_accounts", "id", "reverted")
         attrs    = {'class': 'paleblue'}
         order_by = "-change_date"
 
@@ -308,4 +309,4 @@ class AccountUnificationRatingBackupTable(PlayerRatingTable):
         model = AccountUnificationRatingBackup
         fields = ("playername", "game", "match_type", "elo", "glicko", "trueskill_mu")
         attrs    = {'class': 'paleblue'}
-        order_by = "playername", "game", "match_type"
+        order_by = ("playername", "game", "match_type")

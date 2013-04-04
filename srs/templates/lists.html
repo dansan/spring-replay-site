@@ -20,10 +20,11 @@
   {% block result_table %}
     {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
     {% if table.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
+            <p style="font-weight: bold;"><br/>No result.<br/></p>
     {% else %}
       {% render_table table %}
     {% endif %}
   {% endblock %}
+  {% block au_rating_backup %}{% endblock %}
         </div>
 {% endblock %}

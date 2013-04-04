@@ -35,7 +35,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="top_info">
                 <div class="top_info_right">
                     {% if user.is_authenticated %}
-                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | <a href="{% url srs.views.manual_rating_adjustment %}">Chrank</a> | {% endif %}<a href="{% url srs.views.logout %}">Logout</a></p>
+                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | <a href="{% url srs.views.manual_rating_adjustment %}">Chrank</a> | <a href="{% url srs.views.manual_unify_accounts %}">Unify Accounts</a> | {% endif %}<a href="{% url srs.views.logout %}">Logout</a></p>
                     {% else %}
                     <p><a href="/">Home</a> | You are not Logged in. To upload a replay or write a comment you must <b><a href="{% url srs.views.login %}">Log in</a></b> using your spring lobby account. If you don't have one start a lobby and register.</p>
                     {% endif %}                    
@@ -85,10 +85,10 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             </div>
             <div class="rt"></div>
             <div class="right_articles">
-                <p><b>Rating: <a href="{% url srs.views.hall_of_fame "BA" %}">Hall of fame</a></b> <a href="{% url srs.views.ba1v1tourney %}">BA 1v1 Tourney</a> <a href="{% url srs.views.manual_rating_history %}">chranks</a></p>
+                <p><b>Rating: <a href="{% url srs.views.hall_of_fame "BA" %}">Hall of fame</a></b> <a href="{% url srs.views.ba1v1tourney %}">BA 1v1 Tourney</a></p>
                 <p><b>Tags (<a href="{% url srs.views.tags %}">All</a>)</b><br /><a href="{% url srs.views.tag '1v1' %}">1v1</a> <a href="{% url srs.views.tag '2v2' %}">2v2</a> <a href="{% url srs.views.tag '3v3' %}">3v3</a> <a href="{% url srs.views.tag '6v6' %}">6v6</a> <a href="{% url srs.views.tag '8v8' %}">8v8</a> <a href="{% url srs.views.tag 'Tourney' %}">Tourney</a><br />Top {{ top_tags|length }}: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
                 <p><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps|length }}: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
-                <p><b>Players (<a href="{% url srs.views.players %}">All</a></b>, <a href="{% url srs.views.account_unification_history %}">Smurfs</a><b>)</b><br />{{ top_players|length }} most active: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
+                <p><b>Players (<a href="{% url srs.views.players %}">All</a></b>, <a href="{% url srs.views.account_unification_history %}">Smurfs</a>, <a href="{% url srs.views.manual_rating_history %}">Chranks</a><b>)</b><br />{{ top_players|length }} most active: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
                 <p><b>Games (<a href="{% url srs.views.games %}">All</a>)</b><br />{% for game in all_games %}<a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a> {% endfor %}</p>
                 <p><b>Uploaders (<a href="{% url srs.views.users %}">All</a>)</b></p>
                 <p><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>

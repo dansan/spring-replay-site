@@ -222,20 +222,19 @@ class PlayerAccount(models.Model):
         return Player.objects.filter(account__in=self.get_all_accounts(), spectator=True).count()
 
     def get_rating(self, game, match_type):
-        if self.primary_account: acc = self.primary_account
-        else:                    acc = self
-        rating, _ = Rating.objects.get_or_create(playeraccount=acc, game=game, match_type=match_type, defaults={"playeraccount": acc, "game": game, "match_type": match_type})
+        rating, _ = Rating.objects.get_or_create(playeraccount=self.get_primary_account(), game=game, match_type=match_type, defaults={"playeraccount": self.get_primary_account(), "game": game, "match_type": match_type})
         return rating
 
+    def get_primary_account(self):
+        if self.primary_account == None:
+            return self
+        else:
+            return self.primary_account.get_primary_account()
+
     def get_all_accounts(self):
-        accounts = list()
-
-        if self.primary_account: prim_acc = self.primary_account
-        else: prim_acc = self
-
-        accounts.append(prim_acc)
-        accounts.extend(PlayerAccount.objects.filter(primary_account=prim_acc).order_by("accountid"))
-
+        accounts = [self.get_primary_account()]
+        accounts.extend(PlayerAccount.objects.filter(primary_account=self.get_primary_account()).order_by("accountid"))
+        accounts.extend(PlayerAccount.objects.filter(primary_account__in=accounts).exclude(primary_account=self.get_primary_account()).order_by("accountid"))
         return accounts
 
     def get_names(self):
@@ -262,8 +261,7 @@ class PlayerAccount(models.Model):
         return names.rstrip()
 
     def get_preffered_name(self):
-        if self.primary_account: return self.primary_account.preffered_name
-        else: return self.preffered_name
+        return self.get_primary_account().preffered_name
 
     class Meta:
         ordering = ['accountid']
@@ -486,6 +484,7 @@ class AccountUnificationLog(models.Model):
     account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount1')
     account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount2')
     all_accounts  = models.CharField(max_length=512)
+    reverted      = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' unified '"+self.account1.preffered_name+"'("+str(self.account1.accountid)+") and '"+self.account2.preffered_name+"'("+str(self.account2.accountid)+")"
@@ -503,6 +502,13 @@ class AccountUnificationRatingBackup(RatingBase):
     def __unicode__(self):
         return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
 
+class AccountUnificationBlocking(models.Model):
+    account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationBlockingAccount1')
+    account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationBlockingAccount2')
+
+    def __unicode__(self):
+        return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
+
 def update_stats():
     replays  = Replay.objects.count()
     tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
@@ -510,8 +516,7 @@ def update_stats():
     tp = list()
 
     for pa in PlayerAccount.objects.filter(primary_account__isnull=True).exclude(accountid=0).order_by("accountid"): # exclude bots
-        nummatches =  Player.objects.filter(account=pa, spectator=False).count()
-        nummatches += Player.objects.filter(account__primary_account=pa, spectator=False).count()
+        nummatches =  Player.objects.filter(account__in=pa.get_all_accounts(), spectator=False).count()
         tp.append((nummatches, pa))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]

@@ -60,7 +60,9 @@ urlpatterns = patterns('',
     url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
     url(r'^manual_rating_adjustment/$', 'srs.views.manual_rating_adjustment', name="manual_rating_adjustment"),
     url(r'^lookups/', include(ajax_select_urls)),
-    url(r'^account_unification_rating_backup/(?P<aulogid>[\d-]+)/$', 'srs.views.account_unification_rating_backup', name="account_unification_rating_backup"),
+    url(r'^account_unification_rating_backup/(?P<au_logid>[\d-]+)/$', 'srs.views.account_unification_rating_backup', name="account_unification_rating_backup"),
+    url(r'^revert_unify_accounts/(?P<au_logid>[\d-]+)/$', 'srs.views.revert_unify_accounts', name="revert_unify_accounts"),
+    url(r'^unify_accounts/$', 'srs.views.manual_unify_accounts', name="unify_accounts"),
     url(dajaxice_config.dajaxice_url, include('dajaxice.urls')),
 )
 

@@ -143,10 +143,17 @@ def set_rating_authenticated(accountid, game, match_type, rating, admin_account)
     return get_rating_single_user(accountid, game, match_type)
 
 def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
-    logger.info("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
-
     try:
         _    = authenticate_uploader(username, password)
+        return unify_accounts_authenticated(accountid1, accountid2, admin_accountid)
+    except Exception, e:
+        logger.error("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
+        return error_log_return(e)
+
+def unify_accounts_authenticated(accountid1, accountid2, admin_accountid):
+    logger.info("accountid1=%s accountid2=%s admin_accountid=%s", accountid1, accountid2, admin_accountid)
+
+    try:
         acc1   = check_accountid(accountid1)
         acc2   = check_accountid(accountid2)
         adm_id = check_accountid(admin_accountid)
@@ -156,28 +163,32 @@ def unify_accounts(accountid1, accountid2, username, password, admin_accountid):
     if acc1 == acc2: return acc1
 
     pa1, _   = PlayerAccount.objects.get_or_create(accountid=acc1, defaults={'accountid': acc1, 'countrycode': "??", 'preffered_name': "??"})
-    pa2, _   = PlayerAccount.objects.get_or_create(accountid=acc2, defaults={'accountid': acc1, 'countrycode': "??", 'preffered_name': "??"})
+    pa2, _   = PlayerAccount.objects.get_or_create(accountid=acc2, defaults={'accountid': acc2, 'countrycode': "??", 'preffered_name': "??"})
     admin, _ = PlayerAccount.objects.get_or_create(accountid=adm_id, defaults={'accountid': adm_id, 'countrycode': "??", 'preffered_name': "??"})
-
-    if pa1 in pa2.get_all_accounts(): return pa2.get_all_accounts()[0].accountid
-
-    logger.info("admin(%d) '%s' unifies: acc1(%d): %s AND acc2(%d): %s", adm_id, admin.get_preffered_name(), acc1, pa1.get_all_accounts(), acc2, pa2.get_all_accounts())
 
     all_accounts = pa1.get_all_accounts()
     all_accounts.extend(pa2.get_all_accounts())
-
     lowest_id = reduce(min, [pa.accountid for pa in all_accounts])
-    prim_acc = PlayerAccount.objects.get(accountid=lowest_id)
 
+    if pa1 in pa2.get_all_accounts(): return lowest_id
+
+    if AccountUnificationBlocking.objects.filter(account1=pa1, account2__in=pa2.get_all_accounts()).exists() or AccountUnificationBlocking.objects.filter(account1=pa2, account2__in=pa1.get_all_accounts()).exists():
+        logger.info("blocking unification of '%s' (acid:%d) and '%s' (acid:%d)", pa1, pa1.accountid, pa2, pa2.accountid)
+        return lowest_id
+
+    logger.info("admin(%d) '%s' unifies: acc1(%d): %s AND acc2(%d): %s", adm_id, admin.get_preffered_name(), acc1, pa1.get_all_accounts(), acc2, pa2.get_all_accounts())
+
+    prim_acc = PlayerAccount.objects.get(accountid=lowest_id)
     prim_acc.primary_account = None
     prim_acc.save()
 
     all_accounts.remove(prim_acc)
     for pa in all_accounts:
-        pa.primary_account = prim_acc
-        pa.save()
-
+        if pa.primary_account == None:
+            pa.primary_account = prim_acc
+            pa.save()
     all_accounts.insert(0, prim_acc)
+
     all_account_ids = sorted([pa.accountid for pa in all_accounts])
     all_account_ids_str = reduce(lambda x, y: str(x)+"|%d"%y, all_account_ids)
     acc_uni_log = AccountUnificationLog.objects.create(admin=admin, account1=pa1, account2=pa2, all_accounts=all_account_ids_str)
