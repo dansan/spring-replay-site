@@ -16,6 +16,7 @@
 import os
 import sys
 import xmlrpclib
+from time import sleep
 
 # argparse for python installations <2.7
 from os.path import realpath, dirname
@@ -94,6 +95,7 @@ def main(argv=None):
     if args.verbose:
         print "[Replay Upload] %s" % result
 
+    sleep(10) # allow site to process replay before displaying the URL
     return int(result[0])
 
 if __name__ == "__main__":
