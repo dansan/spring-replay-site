@@ -30,7 +30,8 @@ XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),
                   ('srs.xmlrating.get_rating_multiple_users', 'get_rating_multiple_users'),
                   ('srs.xmlrating.get_rating_multiple_users2', 'get_rating_multiple_users2'),
                   ('srs.xmlrating.set_rating', 'set_rating'),
-                  ('srs.xmlrating.unify_accounts', 'unify_accounts'))
+                  ('srs.xmlrating.unify_accounts', 'unify_accounts'),
+                  ('srs.xmlrating.separate_accounts', 'separate_accounts'))
 AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
 
 LOG_PATH        = realpath(dirname(__file__))+'/log'

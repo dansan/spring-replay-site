@@ -60,7 +60,7 @@ def authenticate_uploader(username, password):
         raise Exception("Unknown or inactive uploader account or bad password.")
 
     if user.username not in settings.USERS_ALLOWED_TO_SET_RATINGS_AND_SMURFS:
-        raise Exception("Your account is not allowed to change player ratings or unify accounts.")
+        raise Exception("Your account is not allowed to change player ratings or unify/separate accounts.")
     else:
         return user
 
@@ -220,3 +220,34 @@ def unify_accounts_authenticated(accountid1, accountid2, admin_accountid):
     all_ratings.filter().exclude(playeraccount=prim_acc).delete()
 
     return lowest_id
+
+def separate_accounts(accountid1, accountid2, username, password, admin_accountid):
+    try:
+        _    = authenticate_uploader(username, password)
+        return separate_accounts_authenticated(accountid1, accountid2, admin_accountid)
+    except Exception, e:
+        logger.error("accountid1=%s accountid2=%s username=%s password=xxxxxx admin_accountid=%s", accountid1, accountid2, username, admin_accountid)
+        return error_log_return(e)
+
+def separate_accounts_authenticated(accountid1, accountid2, admin_accountid):
+    from views import revert_unify_accounts
+    logger.info("accountid1=%s accountid2=%s admin_accountid=%s", accountid1, accountid2, admin_accountid)
+    try:
+        acc1   = check_accountid(accountid1)
+        acc2   = check_accountid(accountid2)
+        adm_id = check_accountid(admin_accountid)
+
+        if acc1 == acc2: return acc1
+
+        pa1   = PlayerAccount.objects.get(accountid=acc1)
+        pa2   = PlayerAccount.objects.get(accountid=acc2)
+        admin = PlayerAccount.objects.get(accountid=adm_id)
+    except Exception, e:
+        return error_log_return(e)
+
+    au_log = AccountUnificationLog.objects.filter(account1=pa1, account2=pa2).order_by("-change_date")
+    if not au_log.exists():
+        au_log = AccountUnificationLog.objects.filter(account1=pa2, account2=pa1).order_by("-change_date")
+    if not au_log.exists():
+        return error_log_return("Cannot find log entry of previous unification.")
+    return revert_unify_accounts(au_log[0], admin, from_xmlrpc=True)

@@ -660,13 +660,19 @@ def account_unification_rating_backup(request, au_logid):
 
 @staff_member_required
 @never_cache
-def revert_unify_accounts(request, au_logid):
+def revert_unify_accounts_view(request, au_logid):
     """
-    AccountUnificationRatingBackup and User that started the revert
+    AccountUnificationRatingBackup that started the revert
     """
     logger.info("reverting AccountUnificationLog #%d on behalf of admin(%d) %s", au_logid, request.user.id, request.user)
-
     au_log = get_object_or_404(AccountUnificationLog, id=au_logid)
+    try:
+        pa = PlayerAccount.objects.get(accountid=request.user.get_profile().accountid)
+    except:
+        pa = request.user # let revert_unify_accounts() handle this
+    return revert_unify_accounts(au_log, pa)
+
+def revert_unify_accounts(au_log, adminuser, from_xmlrpc=False):
     au_rating_backups = AccountUnificationRatingBackup.objects.filter(account_unification_log=au_log)
     logger.info("AccountUnificationRatingBackups: %s", au_rating_backups)
 
@@ -680,7 +686,10 @@ def revert_unify_accounts(request, au_logid):
     else:
         err = "both accounts are not primary_account: %s AND %s"% (au_log.account1, au_log.account2)
         logger.error(err)
-        raise RuntimeError(err)
+        if from_xmlrpc:
+            return "-1 "+err
+        else:
+            raise RuntimeError(err)
 
     # restore previous ratings
     Rating.objects.filter(playeraccount=au_log.account1.get_primary_account()).delete()
@@ -698,11 +707,14 @@ def revert_unify_accounts(request, au_logid):
     AccountUnificationBlocking.objects.create(account1=au_log.account1, account2=au_log.account2)
     # log
     try:
-        admin_pa_name = PlayerAccount.objects.get(id=request.user.get_profile().playeraccount).get_preffered_name()
+        admin_pa_name = adminuser.get_preffered_name()
     except:
         admin_pa_name = "unknown admin PA name"
-    logger.info("admin(user=%d) '%s' reverted AccountUnification '%s' and blocked futher unification", request.user.id, admin_pa_name, au_log)
-    return HttpResponseRedirect(reverse(account_unification_history))
+    logger.info("admin(%d) '%s' reverted AccountUnification '%s' and blocked futher unification", adminuser.id, admin_pa_name, au_log)
+    if from_xmlrpc:
+        return "0 sucessfully separated accounts (%d) '%s' and (%d) '%s'"%(au_log.account1.accountid, au_log.account1, au_log.account2.accountid, au_log.account2)
+    else:
+        return HttpResponseRedirect(reverse(account_unification_history))
 
 @staff_member_required
 @never_cache
