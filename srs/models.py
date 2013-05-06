@@ -122,17 +122,17 @@ class Replay(models.Model):
             version = str()
             in_version = False
             for gr_name_part in gr_name.split():
-                if gr_name_part.isalpha() and not in_version:
-                    game_name += gr_name_part+" "
-                else:
+                version_start =  ["v", "V"]
+                version_start.extend(map(str, range(10)))
+                if in_version or gr_name_part[0] in version_start:
                     in_version = True
                     version += gr_name_part+" "
+                else:
+                    game_name += gr_name_part+" "
 
             game_name = game_name.rstrip()
             version = version.rstrip()
-            if version[0].upper() == "V":
-                version = version[1:]
-            if version[0] == ".":
+            if version[0].upper() == "V" or version[0] == ".":
                 version = version[1:]
 
             game, _ = Game.objects.get_or_create(name__startswith=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})

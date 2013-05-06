@@ -294,10 +294,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.save()
 
     # save map and mod options
+    def truncate_option(k, v):
+        if len(str(k)) > 512: k = "string to long, sorry"
+        if len(str(v)) > 512: v = "string to long, sorry"
+        return k, v
+
     for k,v in demofile.game_setup['mapoptions'].items():
+        k,v = truncate_option(k, v)
         MapOption.objects.create(name=k, value=v, replay=replay)
 
     for k,v in demofile.game_setup['modoptions'].items():
+        k,v = truncate_option(k, v)
         ModOption.objects.create(name=k, value=v, replay=replay)
 
     logger.debug("replay(%d) added tags (%s), mapoptions and modoptions", replay.pk, replay.tags.all().values_list("name"))
