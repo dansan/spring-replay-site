@@ -271,6 +271,7 @@ class Player(models.Model):
     account         = models.ForeignKey(PlayerAccount, blank=True, null = True)
     name            = models.CharField(max_length=128, db_index=True)
     rank            = models.IntegerField()
+    skill           = models.CharField(max_length=16, blank=True)
     spectator       = models.BooleanField()
     team            = models.ForeignKey("Team", blank=True, null = True)
     replay          = models.ForeignKey(Replay)

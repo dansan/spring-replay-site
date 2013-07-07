@@ -21,6 +21,7 @@ from django.template import RequestContext
 from django.db.models import Min
 import django.contrib.auth
 from django.forms.formsets import formset_factory
+from django.utils import timezone
 
 from models import *
 from common import all_page_infos
@@ -75,11 +76,14 @@ def upload(request):
                             replays.append((False, "Error while uploading."))
                         continue
                     except:
-                        shutil.move(path, settings.MEDIA_ROOT)
-                        os.chmod(settings.MEDIA_ROOT+os.path.basename(path), stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
-                        replay = store_demofile_data(demofile, tags, settings.MEDIA_ROOT+os.path.basename(path), ufile.name, short, long_text, request.user)
+                        new_filename = os.path.basename(path).replace(" ", "_")
+                        newpath = settings.MEDIA_ROOT+"/"+new_filename
+                        shutil.move(path, newpath)
+                        os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
+                        replay = store_demofile_data(demofile, tags, newpath, ufile.name, short, long_text, request.user)
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
+
                         try:
                             rate_match(replay)
                         except Exception, e:
@@ -146,11 +150,12 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     except:
         pass
 
-    shutil.move(path, settings.MEDIA_ROOT)
-    newpath = settings.MEDIA_ROOT+os.path.basename(path)
+    new_filename = os.path.basename(path).replace(" ", "_")
+    newpath = settings.MEDIA_ROOT+"/"+new_filename
+    shutil.move(path, newpath)
     os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
-        replay = store_demofile_data(demofile, tags, newpath, filename, subject, comment, user)
+        replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, user)
         replay.uploader = owner_ac
         replay.save()
     except Exception, e:
@@ -187,7 +192,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # copy match infos 
     for key in ["versionString", "gameID", "wallclockTime"]:
         replay.__setattr__(key, demofile.header[key])
-    replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S")
+    replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.get_current_timezone())
     for key in ["autohostname", "gametype", "startpostype"]:
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
@@ -319,7 +324,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             pa.preffered_name = player["name"]
         if pa.countrycode == "??":
             pa.countrycode    = player["countrycode"]
-        players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], spectator=bool(player["spectator"]), replay=replay)
+        try:
+            skill = player["skill"]
+        except:
+            skill = ""
+        players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], skill=skill, spectator=bool(player["spectator"]), replay=replay)
         if pa.accountid > 0:
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
