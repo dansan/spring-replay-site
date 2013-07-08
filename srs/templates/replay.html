@@ -126,9 +126,9 @@
                     <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
                     <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ p.team.side|ljust:"4" }}</td>
         {% if pl_old != 0 and pl_new != 0 %}
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;{{ pl_old|floatformat:1 }}</td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;{% if p.skill %}{{ p.skill|first }}{{ pl_old|floatformat:0 }}{% else %}{{ pl_old|floatformat:1 }}{% endif %}</td>
                     <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;"><div class="blind_winner" style="display:none;">{{ pl_new|floatformat:1 }}</div></td>
+                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;"><div class="blind_winner" style="display:none;">{% if p.skill %}{{ p.skill }}{% else %}{{ pl_new|floatformat:1 }}{% endif %}</div></td>
         {% else %}
                     <td></td>
                     <td></td>
