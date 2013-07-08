@@ -253,6 +253,23 @@ def download(request, gameID):
     response['Content-Disposition'] = 'attachment; filename="%s"'%filename
     return response
 
+def autohosts(request):
+    hosts = dict()
+    for host in Replay.objects.values_list("autohostname", flat=True):
+        if host:
+            try:
+                hosts[host] += 1
+            except:
+                hosts[host] = 0
+
+    table = AutoHostTable([{"name": name, "count": count} for name, count in hosts.items()])
+    intro_text = ["Click on a hostname to see a list of matches played on that host."]
+    return all_of_a_kind_table(request, table, "List of all %d autohosts"%Map.objects.count(), intro_text=intro_text)
+
+def autohost(request, hostname):
+    replays = Replay.objects.filter(autohostname=hostname)
+    return replay_table(request, replays, "%d replays on autohost '%s'"%(replays.count(), hostname))
+
 def tags(request):
     table = TagTable([{"name": tag.name, "count": tag.replay_count()} for tag in Tag.objects.all()])
     intro_text = ["Click on a tag to see a list of matches tagged with it."]
@@ -263,7 +280,7 @@ def tag(request, reqtag):
     ext = {"adminurl": "tag", "obj": tag}
 
     replays = Replay.objects.filter(tags=tag)
-    return replay_table(request, replays, "%d replays with tag '%s'"%(len(replays), reqtag), ext=ext)
+    return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag), ext=ext)
 
 def maps(request):
     table = MapTable([{"name": rmap.name, "count": rmap.replay_count()} for rmap in Map.objects.all()])
@@ -365,7 +382,7 @@ def gamerelease(request, gametype):
 def search(request):
     from forms import AdvSearchForm
 
-    form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader']
+    form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader', 'autohost']
     query = {}
     ext = {}
 
@@ -463,6 +480,13 @@ def search_replays(query):
                 q &= Q(upload_date__range=(start_date, end_date))
             elif key == 'uploader':
                 q &= Q(uploader__id__in=query['uploader'])
+            elif key == 'autohost':
+                try:
+                    hostnames = Replay.objects.filter(id__in=query['autohost']).values_list("autohostname", flat=True)
+                    logger.debug("hostnames=%s", hostnames)
+                    q &= Q(autohostname__in=hostnames)
+                except:
+                    pass
             else:
                 logger.error("Unknown query key: query[%s]=%s",key, query[key])
                 raise Exception("Unknown query key: query[%s]=%s"%(key, query[key]))
@@ -843,9 +867,10 @@ def user_settings(request):
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def users(request):
-    table = UserTable([{"name": user.username, "count": user.replays_uploaded(), "accountid": user.last_name} for user in User.objects.all()])
+    users = [user for user in User.objects.all() if user.replays_uploaded() > 0]
+    table = UserTable([{"name": user.username, "count": user.replays_uploaded(), "accountid": user.last_name} for user in users])
     intro_text = ["Click on a username to see a list of matches uploaded by that user."]
-    return all_of_a_kind_table(request, table, "List of all %d uploaders"%User.objects.count(), intro_text=intro_text)
+    return all_of_a_kind_table(request, table, "List of all %d uploaders"%len(users), intro_text=intro_text)
 
 def see_user(request, accountid):
     try:

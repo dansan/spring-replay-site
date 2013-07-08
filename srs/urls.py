@@ -32,6 +32,9 @@ urlpatterns = patterns('',
     url(r'^replay/(?P<gameID>\w+)/$', 'srs.views.replay', name="replay_detail"),
     url(r'^edit_replay/(?P<gameID>\w+)/$', 'srs.views.edit_replay'),
 
+    url(r'^autohosts/$', 'srs.views.autohosts'),
+    url(r'^autohost/(?P<hostname>.+)/$', 'srs.views.autohost', name="autohost_detail"),
+
     url(r'^tags/$', 'srs.views.tags'),
     url(r'^tag/(?P<reqtag>[\w\ .:()\[\]-]+)/$', 'srs.views.tag', name="tag_detail"),
 

@@ -8,11 +8,13 @@
 
 import settings
 from django.utils.html import escape
+from django.core.urlresolvers import reverse
 
 from ajax_select import LookupChannel
 
 from django.contrib.auth.models import User
-from models import Game, Map, PlayerAccount, Tag
+from models import Game, Map, PlayerAccount, Tag, Replay
+from views import autohost
 
 class PublicLookupChannel(LookupChannel):
     def check_auth(self, request):
@@ -96,3 +98,27 @@ class UserLookup(PublicLookupChannel):
 
     def format_item_display(self, obj):
         return u'<a href="%s" target="_blank">%s</a>' % (obj.get_absolute_url(), obj.username)
+
+class AutoHostLookup(PublicLookupChannel):
+    #
+    # This is a bit hacky... PublicLookupChannel only works on classes, but
+    # the thing that should be search for is an attribute. So the resultset is
+    # actually a list of objects containing the needed attributes.
+    #
+    model = Replay
+
+    def get_query(self, q, request):
+        hosts = dict()
+        for replay in Replay.objects.filter(autohostname__icontains=q).only("autohostname"):
+            if replay.autohostname:
+                hosts[replay.autohostname] = replay
+        return hosts.values()
+
+    def get_result(self, obj):
+        return obj.autohostname
+
+    def format_match(self, obj):
+        return u'%s' % obj.autohostname
+
+    def format_item_display(self, obj):
+        return u'<a href="%s" target="_blank">%s</a>' % (reverse(autohost, args=[obj.autohostname]), obj.autohostname)

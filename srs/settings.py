@@ -44,6 +44,7 @@ AJAX_LOOKUP_CHANNELS = {
     'player': ('srs.lookups','PlayerLookup'),
     'tag'   : ('srs.lookups','TagLookup'),
     'user'  : ('srs.lookups','UserLookup'),
+    'autohostname'  : ('srs.lookups','AutoHostLookup'),
 }
 AJAX_SELECT_BOOTSTRAP = False
 # True: [easiest]

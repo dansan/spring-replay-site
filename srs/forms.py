@@ -35,10 +35,11 @@ class AdvSearchForm(forms.Form):
     matchdate = forms.DateField(widget=forms.DateInput(attrs={'size': '26', 'class':'datePicker'}, format='%Y-%m-%d'), label="Day of match", required=False)
     uploaddate= forms.DateField(widget=forms.DateInput(attrs={'size': '26', 'class':'datePicker'}, format='%Y-%m-%d'), label="Day of upload", required=False)
     uploader  = AutoCompleteSelectMultipleField('user', label="Uploader", max_length=50, help_text=None, required=False)
+    autohost  = AutoCompleteSelectMultipleField('autohostname', label="Autohost", max_length=50, help_text=None, required=False, plugin_options = {'minLength': 3})
 
     def __init__(self, *args, **kwargs):
         super(AdvSearchForm, self).__init__(*args, **kwargs)
-        for field in ["game", "tag", "maps", "player", "uploader"]:
+        for field in ["game", "tag", "maps", "player", "uploader", "autohost"]:
             self.fields[field].widget.attrs['size'] = 26
             self.fields[field].widget.attrs['title'] = "Start typing. Click autocompleted results to add them to the query, use trashcan to remove it."
 

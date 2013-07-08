@@ -36,6 +36,13 @@ class PlayersReplayTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "-match_date"
 
+class AutoHostTable(tables.Table):
+    name           = tables.LinkColumn('autohost_detail', args=[A('name')])
+    count          = tables.Column(verbose_name="# matches")
+    class Meta:
+        attrs    = {'class': 'paleblue'}
+        order_by = "-count"
+
 class TagTable(tables.Table):
     name           = tables.LinkColumn('tag_detail', args=[A('name')])
     count          = tables.Column(verbose_name="# matches")

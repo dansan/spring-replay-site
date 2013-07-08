@@ -30,7 +30,7 @@
 {% endif %}
 <h2>Search</h2>
 <p style="font-weight: bold;">All search parameters are used together to narrow the results ("AND").</p>
-<p style="font-weight: bold;">Multiple entry fields: the entries of <i>player</i> and <i>tag</i> are used such as they must all be together in a replay ("AND"). The entries of <i>map</i>, <i>game</i> and <i>uploader</i> are used such that one of them must be in the replay ("OR").</p>
+<p>Multiple entry fields: the entries of <i>player</i> and <i>tag</i> are used such as they must all be together in a replay ("<b>AND</b>"). The entries of <i>map</i>, <i>game</i>, <i>uploader</i> and <i>autohost</i> are used such that one of them must be in the replay ("<b>OR</b>").</p>
 	<form action="." method="post">{% csrf_token %}
 	    {{ form.non_field_errors }}
 	    {% for field in form %}
@@ -69,6 +69,10 @@
             <tr>
                <td>{{ form.tag.label_tag }}:</td><td>{{ form.tag }}</td>
                <td>{{ form.uploader.label_tag }}:</td><td>{{ form.uploader }}</td>
+            </tr>
+            <tr>
+               <td>{{ form.autohost.label_tag }}:</td><td>{{ form.autohost }}</td>
+               <td></td>
             </tr>
 	    </table>
 	    <p><input type="submit" value="Submit" /></p>
