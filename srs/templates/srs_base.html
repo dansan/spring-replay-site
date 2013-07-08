@@ -90,8 +90,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
                 <p><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps|length }}: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
                 <p><b>Players (<a href="{% url srs.views.players %}">All</a></b>, <a href="{% url srs.views.account_unification_history %}">Smurfs</a>, <a href="{% url srs.views.manual_rating_history %}">Chranks</a><b>)</b><br />{{ top_players|length }} most active: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
                 <p><b>Games (<a href="{% url srs.views.games %}">All</a>)</b><br />{% for game in all_games %}<a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a> {% endfor %}</p>
-                <p><b>Autohosts (<a href="{% url srs.views.autohosts %}">All</a>)</b></p>
-                <p><b>Uploaders (<a href="{% url srs.views.users %}">All</a>)</b></p>
+                <p><b><a href="{% url srs.views.autohosts %}">Autohosts</a></b></p>
+                <p><b><a href="{% url srs.views.users %}">Uploaders</a></b></p>
                 <p><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>
             </div>
             <div class="rt"></div>
