@@ -18,7 +18,7 @@
   {% block rating %}{% endblock %}
 
   {% block result_table %}
-    {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
+    {% if intro_text %}{% for text in intro_text %}<p>{{ text|safe }}</p>{% endfor %}{% endif %}
     {% if table.data|length == 0 %}
             <p style="font-weight: bold;"><br/>No result.<br/></p>
     {% else %}

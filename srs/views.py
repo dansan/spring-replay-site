@@ -878,7 +878,13 @@ def see_user(request, accountid):
     except:
         raise Http404
     replays = Replay.objects.filter(uploader=user)
-    return replay_table(request, replays, "%d replays uploaded by '%s'"%(len(replays), user.username))
+    try:
+        pa = PlayerAccount.objects.get(accountid=accountid)
+        txt = 'to see the users player page, <a href="'+pa.get_absolute_url()+'">click here</a>'
+    except:
+        txt = 'the user has no player page.'
+    ext = {"intro_text": ['This page shows the users UPLOADS, '+txt]}
+    return replay_table(request, replays=replays, title="%d replays uploaded by '%s'"%(len(replays), user.username), ext=ext)
 
 def match_date(request, shortdate):
     replays = Replay.objects.filter(unixTime__startswith=shortdate)
