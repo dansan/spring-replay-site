@@ -1,4 +1,6 @@
-Map: {{ obj.map_info.name }}<br/>
-Length: {{ obj.wallclockTime }}<br/>
-Uploaded: {{ obj.upload_date|date:"c" }}<br/>
-Description: {{ obj.long_text }}
+<p>Game: {{ obj.gametype }}</p>
+<p>Map: {{ obj.map_info.name }}</p>
+<p>Length: {{ obj.wallclockTime }}</p>
+<p>Uploaded: {{ obj.upload_date|date:"c" }}</p>
+<p>Description: {{ obj.long_text }}</p>
+<p>Tags: {% for tag in obj.tags.all %}{{ tag }} {% endfor %}</p>
