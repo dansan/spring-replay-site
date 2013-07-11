@@ -73,7 +73,7 @@ class UserTable(tables.Table):
 
 class CommentTable(tables.Table):
     submit_date     = tables.Column()
-    user_name       = tables.LinkColumn('user_detail', args=[A('user_name')])
+    user_name       = tables.LinkColumn('user_detail', args=[A('user.get_profile.accountid')])
     replay          = tables.LinkColumn('replay_detail', args=[A('content_object.gameID')], orderable=False, accessor=A("content_object.title"))
     comment_short   = tables.Column(orderable=False)
     class Meta:
