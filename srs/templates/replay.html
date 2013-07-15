@@ -95,6 +95,7 @@
 	    <div class="left" style="width: 240px; padding: 0;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
             {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
+            {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was stopped!</div>{% endif %}
             <p style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{% if replay.match_type_short == "T" or replay.match_type_short == "G" %}TrueSkill{% else %}Elo{% endif %} &nbsp;[Rank]</p>
 	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
                 <colgroup>
