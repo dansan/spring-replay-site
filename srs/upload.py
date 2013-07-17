@@ -280,14 +280,28 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     elif startpos == 2:
         # start boxes
-        try:
-            mapfile = spring_maps.create_map_with_boxes(replay)
-        except Exception, e:
-            logger.error("error creating map img: %s", e)
-            mapfile = "error creating map img"
+        # look for replays with the same map and start boxes
+        replay_same_map_n_boxes = Replay.objects.filter(map_info__name=replay.map_info.name)
+        for at in Allyteam.objects.filter(replay=replay):
+            replay_same_map_n_boxes = replay_same_map_n_boxes.filter(allyteam__startrectbottom=at.startrectbottom, allyteam__startrectleft=at.startrectleft, allyteam__startrectright=at.startrectright, allyteam__startrecttop=at.startrecttop)
+        if replay_same_map_n_boxes.exists():
+            # found at least one replay with the same map and the same boxes
+            # make sure the number of boxes match
+            for replay_smnb in replay_same_map_n_boxes:
+                if replay_smnb.allyteam_set.count() == replay.allyteam_set.count():
+                    replay.map_img = replay_smnb.map_img
+                    logger.debug("replay(%d) using existing map_img(%d) from replay(pk=%d, gameID=%s)", replay.pk, replay_smnb.map_img.pk, replay_smnb.pk, replay_smnb.gameID)
+                    break
+        if not replay.map_img:
+            # didn't find an existing map_img before
+            try:
+                mapfile = spring_maps.create_map_with_boxes(replay)
+            except Exception, e:
+                logger.error("error creating map img: %s", e)
+                mapfile = "error creating map img"
 
-        replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
-        logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
+            replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
+            logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
     else:
         logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
         raise Exception("startpostype '%d' not supported"%startpos)
