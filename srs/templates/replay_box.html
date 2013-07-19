@@ -22,7 +22,7 @@
                         <td>Tags</td><td>{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}</td>
                     </tr>
                     <tr>
-                        <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a> from <a href="{% url srs.views.autohost replay.autohostname %}">{{ replay.autohostname }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</td>
+                        <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a>{% if replay.autohostname %} from <a href="{% url srs.views.autohost replay.autohostname %}">{{ replay.autohostname }}</a>{% endif %} on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</td>
                     </tr>
                     <tr>
                         <td>Downloads</td><td>{{ replay.download_count }}</td>
