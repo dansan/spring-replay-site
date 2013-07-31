@@ -16,7 +16,8 @@ framework.
 import os,sys
 from os.path import realpath, dirname
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "srs.settings")
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "srs.settings")
+os.environ["DJANGO_SETTINGS_MODULE"] = "srs.settings"
 
 sys.path.append(realpath(realpath(dirname(__file__))+"/.."))
 
