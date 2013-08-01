@@ -38,7 +38,7 @@
                 <p><a href="{% url srs.views.gamerelease replay.gametype %}">{{ replay.gametype }}</a> (engine {{ replay.versionString }})</p>
                 <p>Map: <a href="{{ replay.map_info.get_absolute_url }}">{{ replay.map_info.name }}</a></p>
                 <p>Length: {{ replay.wallclockTime }}</p>
-                <p>Uploaded from <a href="{% url srs.views.autohost replay.autohostname %}">{{ replay.autohostname }}</a> on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
+                <p>Uploaded {% if replay.autohostname %}from <a href="{% url srs.views.autohost replay.autohostname %}">{{ replay.autohostname }}</a>{% else %}by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a>{% endif %} on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></p>
                 <p><a href="{% url srs.views.download replay.gameID %}" class="piwik_download">Download</a>s: {{ replay.download_count }} Comments: {{ replay.comments }}</p>
 {% endif %}
 {% endcache %}
