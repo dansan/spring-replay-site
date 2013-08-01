@@ -122,7 +122,7 @@ class Replay(models.Model):
             version = str()
             in_version = False
             for gr_name_part in gr_name.split():
-                version_start =  ["v", "V"]
+                version_start =  ["v", "V", "b"]
                 version_start.extend(map(str, range(10)))
                 if in_version or gr_name_part[0] in version_start:
                     in_version = True
