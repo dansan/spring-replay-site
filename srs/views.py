@@ -240,7 +240,12 @@ def download(request, gameID):
     replay.save()
 
     path = replay.path+"/"+replay.filename
-    filemagic = magic.from_file(path, mime=True)
+    try:
+        filemagic = magic.from_file(path, mime=True)
+    except IOError:
+        errmsg = 'File for replay(%d) "%s" not found.' %(replay.id, replay)
+        logger.error(errmsg)
+        raise Http404(errmsg)
     if filemagic.endswith("gzip"):
         demofile = gzip.open(path, 'rb')
     else:
