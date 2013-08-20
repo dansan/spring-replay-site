@@ -124,7 +124,7 @@ class Replay(models.Model):
             for gr_name_part in gr_name.split():
                 version_start =  ["v", "V", "b"]
                 version_start.extend(map(str, range(10)))
-                if in_version or gr_name_part[0] in version_start:
+                if in_version or gr_name_part.startswith("test-") or gr_name_part[0] in version_start:
                     in_version = True
                     version += gr_name_part+" "
                 else:
@@ -132,6 +132,7 @@ class Replay(models.Model):
 
             game_name = game_name.rstrip()
             version = version.rstrip()
+
             if version[0].upper() == "V" or version[0] == ".":
                 version = version[1:]
 
@@ -172,6 +173,9 @@ class Replay(models.Model):
                 return "FFA"
             else:
                 return "TeamFFA"
+        else:
+            # this is kind of a broken match, but not returning anything breaks the web site
+            return "1v1"
 
         raise Exception("Could not determine match_type for replay(%d) %s."%(self.id, self.gameID))
 
