@@ -1,0 +1,51 @@
+{% extends 'srs_base.html' %}
+
+{% block uploadheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.9.2.custom.min.css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.9.2.custom.min.js"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    $(".clickme").click(function () {
+      $(".blind").show("blind", {}, 1000);
+    });
+  });
+</script>
+{% endblock %}
+
+{% block pagetitle %}Upload Media{% endblock %}
+
+{% block maincontent%}
+        <div class="left">
+            <h2>Upload Media</h2>
+
+            <div class="lt"></div>
+            <div class="lbox" style="height:200px;">
+                <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
+                <div class="thumb">
+                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
+                </div>
+{% include "replay_box.html" %}
+            </div>
+            <p>&nbsp;</p>
+            <p>Please supply a media file or an image and a short comment (max. 512 characters).</p>
+            <p>For <u>images</u> (JPG, PNG) please use the extra input line</p>
+            <p>&nbsp;</p>
+            <form action="." method="post" enctype="multipart/form-data">
+            {{ formset.management_form }}
+			{% for form in formset %}
+	            <div class="lt"></div>
+	            <div class="lbox" style="height:200px;">
+	                    {% csrf_token %}
+	                    {{ form.as_p }}
+	                    <input type="submit" value="Submit" />
+	            </div>
+	            {% if forloop.first %}
+	            <p class="clickme" style="color: #4A8EBC; text-align: center;"><big><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me for multi-upload.&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></big><br/>&nbsp;</p>
+                <div class="blind" style="display:none;">
+                {% endif %}
+            {% endfor %}
+                </div>
+            </form>
+        </div>    
+{% endblock %}

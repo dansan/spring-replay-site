@@ -8,6 +8,7 @@
 
 import logging
 import operator
+from os.path import basename
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -513,6 +514,42 @@ class AccountUnificationBlocking(models.Model):
 
     def __unicode__(self):
         return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
+
+class AdditionalReplayOwner(models.Model):
+    uploader         = models.ForeignKey(User)
+    additional_owner = models.ForeignKey(PlayerAccount)
+
+    def __unicode__(self):
+        return u"("+unicode(self.id)+u") uploader: "+unicode(self.uploader)+u" additional_owner: "+unicode(self.additional_owner)
+
+    class Meta:
+        ordering = ['uploader__username']
+
+class ExtraReplayMedia(models.Model):
+    replay         = models.ForeignKey(Replay)
+    uploader       = models.ForeignKey(User)
+    upload_date    = models.DateTimeField(auto_now_add=True, db_index=True)
+    comment        = models.CharField(max_length=513)
+    media          = models.FileField(upload_to="media/%Y/%m/%d", blank=True)
+    image          = models.ImageField(upload_to="image/%Y/%m/%d", blank=True)
+    mediamagic     = models.CharField(max_length=128)
+
+    def media_basename(self):
+        return basename(self.media.name)
+
+    def image_basename(self):
+        return basename(self.image.name)
+
+    def __unicode__(self):
+        return u"("+unicode(self.id)+u") replay: "+unicode(self.replay)+u" media: "+unicode(self.media)+u" image: "+unicode(self.image)+u" by: "+unicode(self.uploader)+u" on: "+unicode(self.upload_date)
+
+    class Meta:
+        ordering = ['-upload_date']
+
+def get_owner_list(uploader):
+    res = [uploader]
+    res.extend(AdditionalReplayOwner.objects.filter(uploader=uploader))
+    return res
 
 def update_stats():
     replays  = Replay.objects.count()

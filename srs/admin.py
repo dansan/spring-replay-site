@@ -21,7 +21,7 @@ class PlayerAdmin(admin.ModelAdmin):
 class RatingAdmin(admin.ModelAdmin):
     list_display = ("playername", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
     search_fields = ["playername"]
-     
+
 class RatingAdjustmentHistoryAdmin(admin.ModelAdmin):
     list_display = ("change_date", "playername", "playeraccount", "game", "match_type", "admin", "algo_change", "elo", "trueskill_mu")
     search_fields = ["playername", "admin"]
@@ -29,18 +29,26 @@ class RatingAdjustmentHistoryAdmin(admin.ModelAdmin):
 class ReplayAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
     search_fields = ["id", "title", "map_info__name", "uploader__username", "gameID"]
-       
+
 class MapAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ["name"]
-    
+
 class MapImgAdmin(admin.ModelAdmin):
     list_display = ("filename", "startpostype")
     search_fields = ["filename"]
-    
+
 class TagAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ["name"]
+
+class AdditionalReplayOwnerAdmin(admin.ModelAdmin):
+    list_display = ("uploader", "additional_owner")
+    search_fields = ["uploader", "additional_owner"]
+
+class ExtraReplayMediaAdmin(admin.ModelAdmin):
+    list_display = ("uploader", "upload_date", "media", "image", "mediamagic")
+    search_fields = ["uploader", "media", "image", "mediamagic"]
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Map, MapAdmin)
@@ -59,5 +67,7 @@ admin.site.register(RatingHistory)
 admin.site.register(RatingAdjustmentHistory, RatingAdjustmentHistoryAdmin)
 admin.site.register(Game)
 admin.site.register(GameRelease)
+admin.site.register(AdditionalReplayOwner, AdditionalReplayOwnerAdmin)
+admin.site.register(ExtraReplayMedia, ExtraReplayMediaAdmin)
 
 admin.site.register(UserProfile)

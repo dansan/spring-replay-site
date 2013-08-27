@@ -30,12 +30,18 @@
 {% block pagetitle %}{{ replay.title }}{% endblock %}
 
 {% block maincontent%}
+
+<!-- REPLAY_BOX -->
+
         <div class="left">
             <div class="lt"></div>
             <div class="lbox" style="height:200px;">
                 <p><big><b>{{ replay.title }}</b></big></p>
 {% include "replay_box.html" %}
             </div>
+
+<!-- MAP IMG -->
+
         <div class="left" style="width: 350px;">
             {% if upload_broken %}<p style="text-align:center; color:red; font-weight:bold;">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
             {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
@@ -44,7 +50,16 @@
             <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner and rating changes.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
 	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
+            <div class="footer"></div>
+
+<!-- UPLOAD COMMENT -->
+
+            <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
+            <p><br/></p>
 	        <div class="footer"></div>
+
+<!-- MAP / MOD OPTIONS -->
+
 	        <p class="clickme_mapoptions" style="color: #4A8EBC; text-align: center; font-weight:bold;">Map options (click me)</p>
 	        <div class="blind_mapoptions" style="display:none;">
 		        {% if mapoptions|length > 0 %}
@@ -62,7 +77,6 @@
 			       <p>None.</p>
 		       {% endif %}
 	       </div>
-	       <div class="footer"></div>
            <p class="clickme_modoptions" style="color: #4A8EBC; text-align: center; font-weight:bold;">Mod options (click me)</p>
            <div class="blind_modoptions" style="display:none;">
 	           {% if modoptions|length > 0 %}
@@ -81,17 +95,10 @@
 	           {% endif %}
            </div>
            <div class="footer"></div>
-           <h3>Players ratings after this match</h3>
-           {% if table.data|length == 0 %}
-            <p style="font-weight:bold;"><br/>This match has not been rated (yet).</p>
-			{% else %}
-			{% render_table table %}
-			{% endif %}
-			<p><br/></p>
-           <div class="footer"></div>
-	       <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
-	       <p><br/></p>
 	    </div>
+
+<!-- RATING -->
+
 	    <div class="left" style="width: 240px; padding: 0;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
             {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
@@ -162,8 +169,36 @@
 	        </table>
 	   </div>
 {% endcache %}
+
+<!-- EXTRA MEDIA -->
+
+       <div class="left" style="width: 580px; padding: 0;">
+  {% if user in replay_owners %}
+            <p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.upload.upload_media replay.gameID %}">Upload media files.</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
+            <div class="footer"></div>
+  {% endif %}
+  {% if extra_media %}
+    {% for media in extra_media %}
+            <p><b>Uploaded by {{ media.uploader }} on {{ media.upload_date }}:</b> {{ media.media_basename }} {{ media.image_basename }}</p>
+            {% if media.image %}
+            <p><img src="{{ media.image.url }}" alt="User-supplied image." style="max-width:100%; max-height:250px;"/></p>
+            {% endif %}
+            {% if media.media %}
+              {% if media.mediamagic == "image/svg+xml" %}
+                <p><img src="{{ media.media.url }}" style="max-width:100%; max-height:300px;" /></p>
+              {% else %}
+            <p>I don't know how to display "{{ media.media_basename }}" inline, please <a href="{{ media.media.url }}">click me to see it</a>.</p>
+              {% endif %}
+            {% endif %}
+            <p><b>Comment: </b>{{ media.comment }}</p>
+            <div class="footer"></div>
+    {% endfor %}
+  {% endif %}
+       </div>
+
+<!-- COMMENTS -->
+
 	   <div class="left">
-       <div class="footer"></div>
             {% get_comment_count for replay as comment_count %}
 	        <h3>Comments ({{ comment_count }}):</h3>
 	        {% get_comment_list for replay as comment_list %}

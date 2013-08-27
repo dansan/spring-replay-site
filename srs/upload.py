@@ -13,10 +13,11 @@ import stat
 from tempfile import mkstemp
 import datetime
 import gzip
+import magic
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.db.models import Min
 import django.contrib.auth
@@ -25,7 +26,7 @@ from django.utils import timezone
 
 from models import *
 from common import all_page_infos
-from forms import UploadFileForm
+from forms import UploadFileForm, UploadMediaForm
 import parse_demo_file
 import spring_maps
 from rating import rate_match
@@ -77,7 +78,7 @@ def upload(request):
                         continue
                     except:
                         new_filename = os.path.basename(path).replace(" ", "_")
-                        newpath = settings.MEDIA_ROOT+"/"+new_filename
+                        newpath = settings.REPLAYS_PATH+"/"+new_filename
                         shutil.move(path, newpath)
                         os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
                         replay = store_demofile_data(demofile, tags, newpath, ufile.name, short, long_text, request.user)
@@ -151,7 +152,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         pass
 
     new_filename = os.path.basename(path).replace(" ", "_")
-    newpath = settings.MEDIA_ROOT+"/"+new_filename
+    newpath = settings.REPLAYS_PATH+"/"+new_filename
     shutil.move(path, newpath)
     os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
@@ -506,3 +507,43 @@ def del_replay(replay):
             # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
             tag.delete()
     UploadTmp.objects.filter(replay=replay).delete()
+
+@login_required
+def upload_media(request, gameID):
+    c = all_page_infos(request)
+
+    replay = get_object_or_404(Replay, gameID=gameID)
+    if not request.user in get_owner_list(replay.uploader):
+        return HttpResponseRedirect(replay.get_absolute_url())
+
+    UploadMediaFormSet = formset_factory(UploadMediaForm, extra=5)
+    c["replay"] = replay
+    c["replay_details"] = True
+
+    if request.method == 'POST':
+        logger.debug("request.FILES: %s", request.FILES)
+        formset = UploadMediaFormSet(request.POST, request.FILES)
+        if formset.is_valid():
+            c["media_files"] = list()
+            for form in formset:
+                if form.cleaned_data:
+                    logger.info("form.cleaned_data=%s", form.cleaned_data)
+                    media = form.cleaned_data['media_file']
+                    image = form.cleaned_data['image_file']
+                    comment=form.cleaned_data['comment']
+                    if media:
+                        mediamagic = magic.from_buffer(media.read(), mime=True)
+                    else:
+                        mediamagic = None
+                    erm = ExtraReplayMedia.objects.create(replay=replay, uploader=request.user, comment=comment, media=media, image=image, mediamagic=mediamagic)
+                    c["media_files"].append(erm)
+                    logger.info("User '%s' uploaded for replay:'%s' media:'%s' img:'%s' with comment:'%s'.", request.user, replay, erm.media, erm.image, erm.comment[:20])
+            return render_to_response('upload_media_success.html', c, context_instance=RequestContext(request))
+        else:
+            logger.error("formset.errors: %s", formset.errors)
+            logger.error("request.FILES: %s", request.FILES)
+            logger.error("request.POST: %s", request.POST)
+    else:
+        formset = UploadMediaFormSet()
+    c["formset"] = formset
+    return render_to_response('upload_media.html', c, context_instance=RequestContext(request))

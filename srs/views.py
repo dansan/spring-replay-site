@@ -165,6 +165,8 @@ def replay(request, gameID):
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
     c["is_draw"] = allyteams.filter(winner=True).count() > 1
     c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players(), replay.match_type(), replay.game_release().game.name, replay.map_info.name, replay.unixTime)
+    c["replay_owners"] = get_owner_list(replay.uploader)
+    c["extra_media"] = ExtraReplayMedia.objects.filter(replay=replay)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 

@@ -1,0 +1,43 @@
+{% extends 'srs_base.html' %}
+
+{% block uploadheader %}
+<style>
+img {
+    max-width:100%;
+    max-height:150px;
+}
+</style>
+{% endblock %}
+
+{% block pagetitle %}Upload Media Success{% endblock %}
+
+{% block maincontent%}
+        <div class="left">
+            <h2>Upload Media Success</h2>
+
+            <div class="lt"></div>
+            <div class="lbox" style="height:200px;">
+                <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
+                <div class="thumb">
+                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
+                </div>
+{% include "replay_box.html" %}
+            </div>
+            <p>&nbsp;</p>
+            <p>You successfully uploaded the following files:</p>
+            <p>&nbsp;</p>
+            {% for media in media_files %}
+	            <div class="lt"></div>
+	            <div class="lbox" style="height:200px;">
+	          {% if media.image %}
+                  <img src="{{ media.image.url }}" alt="uploaded image" />
+              {% else %}
+                  <p>Media file: {{ media.media }} (<a href="{{ media.media.url }}">click me to verify</a>)</p>
+              {% endif %}
+                  <p><b>Comment: </b>{{ media.comment }}</p>
+	            </div>
+            {% endfor %}
+            <p>&nbsp;</p>
+            <p><a href="{{ replay.get_absolute_url }}">Return to replay page.</a></p>
+        </div>    
+{% endblock %}
