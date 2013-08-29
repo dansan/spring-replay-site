@@ -167,6 +167,8 @@ def replay(request, gameID):
     c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players(), replay.match_type(), replay.game_release().game.name, replay.map_info.name, replay.unixTime)
     c["replay_owners"] = get_owner_list(replay.uploader)
     c["extra_media"] = ExtraReplayMedia.objects.filter(replay=replay)
+    c["known_video_formats"] = ["video/webm", "video/mp4", "video/ogg", "video/x-flv", "application/ogg"]
+    c["has_video"] = c["extra_media"].filter(media_magic_mime__in=c["known_video_formats"]).exists()
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
@@ -941,3 +943,18 @@ def logout(request):
     django.contrib.auth.logout(request)
     logger.info("Logged out user '%s'", username)
     return HttpResponseRedirect("/")
+
+def media(request, mediaid):
+    media = get_object_or_404(ExtraReplayMedia, id=mediaid)
+    if media.media_magic_mime == "image/svg+xml":
+        c = all_page_infos(request)
+        c["media"] = media
+        return render_to_response('show_svg.html', c, context_instance=RequestContext(request))
+    else:
+        try:
+            response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
+            response['Content-Disposition'] = 'attachment; filename="%s"'%media.media_basename()
+            return response
+        except IOError, e:
+            logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" %(media.id, media.replay.id, media.media_basename(), str(e)))
+            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum."%media.media_basename())

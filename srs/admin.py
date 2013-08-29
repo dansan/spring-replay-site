@@ -47,8 +47,8 @@ class AdditionalReplayOwnerAdmin(admin.ModelAdmin):
     search_fields = ["uploader", "additional_owner"]
 
 class ExtraReplayMediaAdmin(admin.ModelAdmin):
-    list_display = ("uploader", "upload_date", "media", "image", "mediamagic")
-    search_fields = ["uploader", "media", "image", "mediamagic"]
+    list_display = ("uploader", "upload_date", "media", "image", "media_magic_mime", "replay")
+    search_fields = ["uploader", "media", "image", "media_magic_mime"]
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Map, MapAdmin)

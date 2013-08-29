@@ -1,0 +1,18 @@
+{% extends 'srs_base.html' %}
+{% block replayheader %}
+<style>
+.content {
+        width: 1024px;
+}
+.search_field {
+        width: 757px;
+}
+</style>
+{% endblock %}
+
+{% block pagetitle %}{{ media.media_basename }}{% endblock %}
+
+{% block maincontent%}
+        <p><img src="{{ media.media.url }}" style="max-width: 100%;" /></p>
+{% endblock %}
+{% block rightside %}{% endblock %}

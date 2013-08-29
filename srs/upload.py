@@ -535,10 +535,15 @@ def upload_media(request, gameID):
                     image = form.cleaned_data['image_file']
                     comment=form.cleaned_data['comment']
                     if media:
-                        mediamagic = magic.from_buffer(media.read(), mime=True)
+                        media.seek(0)
+                        media_magic_text = magic.from_buffer(media.read(1024))
+                        media.seek(0)
+                        media_magic_mime = magic.from_buffer(media.read(1024), mime=True)
+                        media.seek(0)
                     else:
-                        mediamagic = None
-                    erm = ExtraReplayMedia.objects.create(replay=replay, uploader=request.user, comment=comment, media=media, image=image, mediamagic=mediamagic)
+                        media_magic_text = None
+                        media_magic_mime = None
+                    erm = ExtraReplayMedia.objects.create(replay=replay, uploader=request.user, comment=comment, media=media, image=image, media_magic_text=media_magic_text, media_magic_mime=media_magic_mime)
                     c["media_files"].append(erm)
                     logger.info("User '%s' uploaded for replay:'%s' media:'%s' img:'%s' with comment:'%s'.", request.user, replay, erm.media, erm.image, erm.comment[:20])
             return render_to_response('upload_media_success.html', c, context_instance=RequestContext(request))

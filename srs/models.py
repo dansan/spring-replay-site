@@ -532,7 +532,8 @@ class ExtraReplayMedia(models.Model):
     comment        = models.CharField(max_length=513)
     media          = models.FileField(upload_to="media/%Y/%m/%d", blank=True)
     image          = models.ImageField(upload_to="image/%Y/%m/%d", blank=True)
-    mediamagic     = models.CharField(max_length=128, blank=True, null=True)
+    media_magic_text = models.CharField(max_length=1024, blank=True, null=True)
+    media_magic_mime = models.CharField(max_length=128, blank=True, null=True)
 
     def media_basename(self):
         return basename(self.media.name)
