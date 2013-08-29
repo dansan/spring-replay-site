@@ -25,6 +25,15 @@
           });
       });
 </script>
+<style>
+.players a {
+    color: inherit;
+}
+.players a:hover {
+    color: #C3593C;
+}
+
+</style>
 {% endblock %}
 
 {% block pagetitle %}{{ replay.title }}{% endblock %}
@@ -99,7 +108,7 @@
 
 <!-- RATING -->
 
-	    <div class="left" style="width: 240px; padding: 0;">
+	    <div class="left players" style="width: 240px; padding: 0;">
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
             {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
             {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was stopped!</div>{% endif %}
@@ -114,14 +123,14 @@
                     <col />
                 </colgroup>
 {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
-                <tr>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
+                <tr style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
                     <td></td>
     {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}{% if old_rating != 0 and new_rating != 0 %}
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{{ old_rating|floatformat:1 }}</td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;"><div class="blind_winner" style="display:none;">{{ new_rating|floatformat:1 }}</div></td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;[{{ lobby_rank_sum }}]</td>
+                    <td style="text-align:right;">{{ old_rating|floatformat:1 }}</td>
+                    <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
+                    <td style="text-align:right;"><div class="blind_winner" style="display:none;">{{ new_rating|floatformat:1 }}</div></td>
+                    <td style="text-align:right;">&nbsp;[{{ lobby_rank_sum }}]</td>
     {% else %}
                     <td></td>
                     <td></td>
@@ -130,13 +139,13 @@
     {% endif %}{% endif %}
 	            </tr>
     {% for p, pl_old, pl_new in players %}
-                <tr>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color:#{{ t.rgbcolor }}">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ p.team.side|ljust:"4" }}</td>
+                <tr style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color: #{{ p.team.rgbcolor }};">
+                    <td>{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
+                    <td style="">{{ p.team.side|ljust:"4" }}</td>
         {% if pl_old != 0 and pl_new != 0 %}
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">&nbsp;{% if p.skill %}{{ p.skill|first }}{{ pl_old|floatformat:0 }}{% else %}{{ pl_old|floatformat:1 }}{% endif %}</td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;"><div class="blind_winner" style="display:none;">{% if p.skill %}{{ p.skill }}{% else %}{{ pl_new|floatformat:1 }}{% endif %}</div></td>
+                    <td style="text-align:right;">&nbsp;{% if p.skill %}{{ p.skill|first }}{{ pl_old|floatformat:0 }}{% else %}{{ pl_old|floatformat:1 }}{% endif %}</td>
+                    <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
+                    <td style="text-align:right;"><div class="blind_winner" style="display:none;">{% if p.skill %}{{ p.skill }}{% else %}{{ pl_new|floatformat:1 }}{% endif %}</div></td>
         {% else %}
                     <td></td>
                     <td></td>

@@ -497,7 +497,10 @@ def clamp(val, low, high):
 def floats2rgbhex(floats):
     rgb = ""
     for color in floats.split():
-        rgb += str(hex(clamp(int(float(color)*256), 0, 256))[2:])
+        hexstr = str(hex(clamp(int(float(color)*255), 0, 255))[2:])
+        if len(hexstr) < 2:
+            hexstr = "0"+hexstr
+        rgb += hexstr
     return rgb
 
 def del_replay(replay):
