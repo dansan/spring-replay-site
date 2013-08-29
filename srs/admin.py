@@ -50,6 +50,10 @@ class ExtraReplayMediaAdmin(admin.ModelAdmin):
     list_display = ("uploader", "upload_date", "media", "image", "media_magic_mime", "replay")
     search_fields = ["uploader", "media", "image", "media_magic_mime"]
 
+class NewsItemAdmin(admin.ModelAdmin):
+    list_display = ("post_date", "show", "text")
+    search_fields = ["post_date", "text"]
+
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Map, MapAdmin)
 admin.site.register(MapImg, MapImgAdmin)
@@ -60,7 +64,7 @@ admin.site.register(Player, PlayerAdmin)
 admin.site.register(Team)
 admin.site.register(MapOption)
 admin.site.register(ModOption)
-admin.site.register(NewsItem)
+admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(UploadTmp)
 admin.site.register(Rating, RatingAdmin)
 admin.site.register(RatingHistory)

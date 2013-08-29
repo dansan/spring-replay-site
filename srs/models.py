@@ -322,6 +322,7 @@ class ModOption(MapModOption):
 class NewsItem(models.Model):
     text            = models.CharField(max_length=256)
     post_date       = models.DateTimeField(auto_now=True)
+    show            = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.text[:50]
