@@ -29,6 +29,13 @@
           $(".blind_modoptions").show("blind", {}, 1000);
           });
       });
+	$(document).ready(function() {
+		$('tr.linehl').hover(function() {
+			$(this).css("background-color", "rgb(224, 224, 224)");
+		}, function() {
+			$(this).css("background-color", "inherit");
+		});
+	});
 </script>
 <style>
 .players a {
@@ -124,7 +131,7 @@
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
             {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
             {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was stopped!</div>{% endif %}
-            <p style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{% if replay.match_type_short == "T" or replay.match_type_short == "G" %}TrueSkill{% else %}Elo{% endif %} &nbsp;[Rank]</p>
+            <p class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{% if replay.match_type_short == "T" or replay.match_type_short == "G" %}TrueSkill{% else %}Elo{% endif %} &nbsp;[Rank]</p>
 	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
                 <colgroup>
                     <col />
@@ -135,7 +142,7 @@
                     <col />
                 </colgroup>
 {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
-                <tr style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
                     <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
                     <td></td>
     {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}{% if old_rating != 0 and new_rating != 0 %}
@@ -151,7 +158,7 @@
     {% endif %}{% endif %}
 	            </tr>
     {% for p, pl_old, pl_new in players %}
-                <tr style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color: #{{ p.team.rgbcolor }};">
+                <tr class="body linehl" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color: #{{ p.team.rgbcolor }};">
                     <td>{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
                     <td style="">{{ p.team.side|ljust:"4" }}</td>
         {% if pl_old != 0 and pl_new != 0 %}
@@ -163,7 +170,7 @@
                     <td></td>
                     <td></td>
         {% endif %}
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;" >&nbsp;[{{ p.rank }}]</td>
+                    <td class="body linehl" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;" >&nbsp;[{{ p.rank }}]</td>
                 </tr>
     {% endfor %}
                 <tr>
@@ -171,19 +178,19 @@
                 </tr>
 {% endfor %}
 	            <tr>
-		            <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px; padding-bottom:5px"><b>Spectators</b></td>
+		            <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; padding-bottom:5px"><b>Spectators</b></td>
 	                <td></td><td></td><td></td><td></td><td></td>
                 </tr>
 	{% if specs|length > 0 %}
         {% for s in specs %}
                 <tr>
-	                <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ s.name }}</td>
+	                <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ s.name }}</td>
 	                <td></td><td></td><td></td><td></td><td></td>
 	            </tr>
         {% endfor %}
 	{% else %}
                 <tr>
-                    <td style="class:body; font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">None.</td>
+                    <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">None.</td>
                     <td></td><td></td><td></td><td></td><td></td>
                 </tr>
     {% endif %}
