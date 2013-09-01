@@ -192,7 +192,7 @@ class Replay(models.Model):
             allyteams = Allyteam.objects.filter(replay=self)
             at_sizes = [PlayerAccount.objects.filter(player__team__allyteam=at).count() for at in allyteams]
             at_sizes.sort()
-            return reduce(lambda x,y: str(x)+"v"+str(y), at_sizes)
+            return str(reduce(lambda x,y: str(x)+"v"+str(y), at_sizes))
         except:
             return "?v?"
 
