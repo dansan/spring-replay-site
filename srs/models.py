@@ -585,7 +585,7 @@ def update_stats():
         sist.save()
 
 # TODO: use a proxy model for this
-User.get_absolute_url = lambda self: "/user/"+self.username+"/"
+User.get_absolute_url = lambda self: "/user/"+str(self.get_profile().accountid)+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
 
 # TODO: use a proxy model for this
