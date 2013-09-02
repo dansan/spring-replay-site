@@ -43,12 +43,23 @@ class LobbyBackend():
             user.set_password(password)
             user.save()
 
+            accountid = accountinfo.LobbyID
+            timerank  = accountinfo.LobbyTimeRank
+            try:
+                aliases   = accountinfo.Name
+            except:
+                aliases   = ""
+            try:
+                country   = accountinfo.Country
+            except:
+                country   = "?"
+
             userprofile, up_created = UserProfile.objects.get_or_create(accountid=accountinfo.LobbyID,
                                                                         defaults={"user": user,
-                                                                                  "accountid": accountinfo.LobbyID,
-                                                                                  "timerank": accountinfo.LobbyTimeRank,
-                                                                                  "aliases": accountinfo.Name,
-                                                                                  "country": accountinfo.Country})
+                                                                                  "accountid": accountid,
+                                                                                  "timerank": timerank,
+                                                                                  "aliases": aliases,
+                                                                                  "country": country})
             if up_created: logger.info("created UserProfile(%d) for User %s (%s)", userprofile.id, user.username, user.last_name)
 
             server_aliases = [accountinfo.Name]
