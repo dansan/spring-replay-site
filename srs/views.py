@@ -347,7 +347,6 @@ def player(request, accountid):
                     privatize = request.user.get_profile().accountid != pa.accountid
                 else:
                     privatize = True
-            logger.debug("pa.sldb_privacy_mode: %d request.user.is_authenticated(): %s request.user.get_profile().accountid: %d pa.accountid: %d", pa.sldb_privacy_mode, request.user.is_authenticated(), request.user.get_profile().accountid, pa.accountid )
             skills = get_sldb_playerskill("BA", [pa.accountid], privatize)[0]
             if pa.sldb_privacy_mode != skills["privacyMode"]:
                 pa.sldb_privacy_mode = skills["privacyMode"]
