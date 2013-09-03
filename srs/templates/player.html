@@ -2,6 +2,7 @@
 {% load render_table from django_tables2 %}
 
 {% block rating %}
+  {% comment %}
     {% if accounts|length > 1 %}
             <p>Showing accumulated data for players:</p>
        {% for acc in accounts %}
@@ -12,6 +13,7 @@
 	        <p>Names used: {{ all_names }}</p>
 	   {% endif %}
     {% endif %}
+  {% endcomment %}
                 <p> </p>
     {% block adminlink %}{% endblock %}
     {% if user.is_staff %}
@@ -20,23 +22,45 @@
       {% endfor %}
     {% endif %}
             <h2>Rating</h2>
+  {% if errmsg %}
+            <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
+  {% else %}
+            <p>The following values are provided by SLDB, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
+    {% if playeraccount.sldb_privacy_mode != 0 %}
+            <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url srs.views.login %}">login</a></b> to the website using your lobby account.</p>
+    {% endif %}
+    {% if playeraccount.sldb_privacy_mode != 0 %}
+            <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, type in any chat window:</p>
+            <pre>    /msg SLDB !set privacyMode 0</pre>
+            <p>Or click here (not yet implemeneted).</p>
+    {% endif %}
 		    {% if playerratingtable.data|length == 0 %}
 		    <p><br/><b>No result.</b><br/></p>
 		    {% else %}
 		      {% render_table playerratingtable %}
 		    {% endif %}
-		    <p><br/></p>
-
+  {% endif %}
+            <p><br/></p>
 			<h2>Win/loss</h2>
+  {% if errmsg %}
+            <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
+  {% else %}
+      {% comment %}
 			{% render_table winlosstable %}
+      {% endcomment %}
+            <p>Currently under reconstruction (moving to SLDB provided values).
 			<p><br/></p>
 
             <h2>Rating history</h2>
+      {% comment %}
             {% if playerratinghistorytable.data|length == 0 %}
             <p><br/><b>No result.</b><br/></p>
             {% else %}
               {% render_table playerratinghistorytable %}
             {% endif %}
+      {% endcomment %}
+            <p>Currently under reconstruction (moving to SLDB provided values).
+  {% endif %}
             <p><br/></p>
 
 			<h2>All Replays</h2>

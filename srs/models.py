@@ -213,6 +213,7 @@ class PlayerAccount(models.Model):
     countrycode     = models.CharField(max_length=2)
     preffered_name  = models.CharField(max_length=128, db_index=True)
     primary_account = models.ForeignKey("self", blank=True, null = True)
+    sldb_privacy_mode = models.SmallIntegerField(default=1)
 
     def __unicode__(self):
         return str(self.accountid)+u" "+reduce(lambda x, y: x+"|"+y, self.get_names())[:40]

@@ -33,6 +33,7 @@ from tables import *
 from upload import save_tags, set_autotag, save_desc
 from forms import ManualRatingAdjustmentForm, UnifyAccountsForm
 from xmlrating import set_rating_authenticated, unify_accounts_authenticated
+from sldb import get_sldb_playerskill, privatize_skill
 
 logger = logging.getLogger(__package__)
 
@@ -317,32 +318,59 @@ def player(request, accountid):
     c = all_page_infos(request)
 
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    accounts = pa.get_all_accounts()
+    c['pagetitle'] = "Player "+pa.preffered_name
+    c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
+    c["playeraccount"] = pa
 
-    c["accounts"] = accounts
-    c["all_names"] = accounts[0].get_all_names()
-    wl = win_loss_calc(accounts)
-    table_data = list()
-    for t in ["1v1", "Team", "FFA", "TeamFFA"]:
-        wl["at_"+t.lower()]["tag"] = t
-        table_data.append(wl["at_"+t.lower()])
-    wl["at_all"]["tag"] = "Total"
-    table_data.append(wl["at_all"])
-    c["winlosstable"] = WinLossTable(table_data, prefix="w-")
+#     accounts = pa.get_all_accounts()
+# 
+#     c["accounts"] = accounts
+#     c["all_names"] = accounts[0].get_all_names()
+#     wl = win_loss_calc(accounts)
+#     table_data = list()
+#     for t in ["1v1", "Team", "FFA", "TeamFFA"]:
+#         wl["at_"+t.lower()]["tag"] = t
+#         table_data.append(wl["at_"+t.lower()])
+#     wl["at_all"]["tag"] = "Total"
+#     table_data.append(wl["at_all"])
+#     c["winlosstable"] = WinLossTable(table_data, prefix="w-")
 
-    c["playerratingtable"] = PlayerRatingTable(Rating.objects.filter(playeraccount__in=accounts), prefix="p-")
-    c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
-    RequestConfig(request, paginate={"per_page": 20}).configure(c["playerratinghistorytable"])
+    ratings = list()
+    if pa.accountid <=0:
+        c["errmsg"] = "No rating for single player or bots."
+    else:
+        try:
+            if pa.sldb_privacy_mode == 0:
+                privatize = False
+            else:
+                if request.user.is_authenticated():
+                    privatize = request.user.get_profile().accountid != pa.accountid
+                else:
+                    privatize = True
+            logger.debug("pa.sldb_privacy_mode: %d request.user.is_authenticated(): %s request.user.get_profile().accountid: %d pa.accountid: %d", pa.sldb_privacy_mode, request.user.is_authenticated(), request.user.get_profile().accountid, pa.accountid )
+            skills = get_sldb_playerskill("BA", [pa.accountid], privatize)[0]
+            if pa.sldb_privacy_mode != skills["privacyMode"]:
+                pa.sldb_privacy_mode = skills["privacyMode"]
+                pa.save()
+            for mt, i in settings.SLDB_SKILL_ORDER:
+                ratings.append(Rating(game=Game.objects.get(abbreviation="BA"), match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i]))
+        except Exception, e:
+            logger.error("Exception in get_sldb_playerskill(): %s", e)
+            c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
+
+    c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
+#     c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
+#     RequestConfig(request, paginate={"per_page": 20}).configure(c["playerratinghistorytable"])
 
     replay_table_data = list()
-    replays = Replay.objects.filter(player__account__in=accounts).order_by("unixTime")
+    replays = Replay.objects.filter(player__account=pa).order_by("unixTime")
     for replay in replays:
         replay_dict = dict()
         replay_table_data.append(replay_dict)
 
         replay_dict["title"] = replay.title
         replay_dict["unixTime"] = replay.unixTime
-        player = Player.objects.filter(replay=replay, account__in=accounts)[0] # not using get() for the case of a spec-cheater
+        player = Player.objects.filter(replay=replay, account=pa)[0] # not using get() for the case of a spec-cheater
         replay_dict["playername"] = player.name
         try:
             replay_dict["game"] = replay.game_release().game.abbreviation
@@ -365,8 +393,6 @@ def player(request, accountid):
     c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime")
     RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
 
-    c['pagetitle'] = "Player "+pa.preffered_name
-    c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
 def game(request, name):

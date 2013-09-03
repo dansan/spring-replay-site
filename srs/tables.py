@@ -197,20 +197,20 @@ class TourneyMatchRatingHistoryTable(tables.Table):
 class PlayerRatingTable(tables.Table):
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.Column()
-    elo             = tables.Column()
-    glicko          = tables.Column()
+#     elo             = tables.Column()
+#     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = ("game", "match_type")
 
-    def render_elo(self, value, record):
-        if record.match_type in ["1", "O"]: return '%.2f' % value
-        else: return ""
-    def render_glicko(self, value, record):
-        if record.match_type in ["1", "O"]: return '%.2f' % value
-        else: return ""
+#     def render_elo(self, value, record):
+#         if record.match_type in ["1", "O"]: return '%.2f' % value
+#         else: return ""
+#     def render_glicko(self, value, record):
+#         if record.match_type in ["1", "O"]: return '%.2f' % value
+#         else: return ""
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
