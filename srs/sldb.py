@@ -38,8 +38,16 @@ def skill2rank(ts):
 def privatize_skill(ts):
     return rank2skill[skill2rank(ts)]
 
-def get_sldb_playerskill(game_abbr, accountids, privatize):
-    logger.debug("game: %s accountids: %s privatize: %s", game_abbr, accountids, privatize)
+def get_sldb_playerskill(game_abbr, accountids, user, privatize):
+    """
+    game_abbr: "BA", "ZK" etc
+    accountids: [1234, 567]  -- PlayerAccount for those must already exist!
+    user: request.user
+    privatize: privatize TS depending on privacyMode and logged in user,
+               if False exact values are returned regardless of privacyMode
+               and user
+    """
+    logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
     rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
     try:
         rpc_skills = rpc_srv.getSkills(settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, game_abbr, accountids)
@@ -54,13 +62,22 @@ def get_sldb_playerskill(game_abbr, accountids, privatize):
     else:
         for pa_result in rpc_skills["results"]:
             if pa_result["status"] != 0:
-                logger.error("status=%d for accountid %d", pa_result["status"], pa_result["accountId"])
+                logger.error("status: %d for accountId %d", pa_result["status"], pa_result["accountId"])
                 pa_result["skills"] = [0.0, 0.0, 0.0, 0.0]
             else:
-                logger.debug("privacyMode: %d skills: %s", pa_result["privacyMode"], pa_result["skills"])
+                logger.debug("accountId: %d privacyMode: %d skills: %s", pa_result["accountId"], pa_result["privacyMode"], pa_result["skills"])
                 for i in range(4):
                     ts = float(pa_result["skills"][i].split("|")[0])
                     if privatize:
+                        pa = PlayerAccount.objects.get(accountid=pa_result["accountId"])
+                        if pa.sldb_privacy_mode == 0:
+                            do_priv = False
+                        else:
+                            if user:
+                                do_priv = user.get_profile().accountid != pa.accountid
+                            else:
+                                do_priv = True
+                    if do_priv:
                         pa_result["skills"][i] = privatize_skill(ts)
                     else:
                         pa_result["skills"][i] = ts

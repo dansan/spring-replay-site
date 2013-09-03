@@ -340,14 +340,8 @@ def player(request, accountid):
         c["errmsg"] = "No rating for single player or bots."
     else:
         try:
-            if pa.sldb_privacy_mode == 0:
-                privatize = False
-            else:
-                if request.user.is_authenticated():
-                    privatize = request.user.get_profile().accountid != pa.accountid
-                else:
-                    privatize = True
-            skills = get_sldb_playerskill("BA", [pa.accountid], privatize)[0]
+            user = request.user if request.user.is_authenticated() else None
+            skills = get_sldb_playerskill("BA", [pa.accountid], user, True)[0]
             if pa.sldb_privacy_mode != skills["privacyMode"]:
                 pa.sldb_privacy_mode = skills["privacyMode"]
                 pa.save()
