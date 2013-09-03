@@ -58,10 +58,11 @@ class UploaderFeed(Feed):
 
 class SRSLatestCommentFeed(LatestCommentFeed):
     def item_author_name(self, item):
-        if item.user_name:
-            return item.user_name
-        else:
-            return str()
+        return item.user.username
+
+    def item_title(self, item):
+        dots = "..." if len(item.comment) > 50 else ""
+        return item.user.username+item.comment[:50]+dots
 
 class SmurfsFeed(Feed):
     title = "Accounts unified"
