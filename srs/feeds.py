@@ -62,7 +62,10 @@ class SRSLatestCommentFeed(LatestCommentFeed):
 
     def item_title(self, item):
         dots = "..." if len(item.comment) > 50 else ""
-        return item.user.username+item.comment[:50]+dots
+        return item.user.username+": "+item.comment[:50]+dots
+
+    def item_description(self, item):
+        return item.user.username+": "+item.comment
 
 class SmurfsFeed(Feed):
     title = "Accounts unified"
