@@ -34,7 +34,7 @@ class LobbyBackend():
             try:
                 user = User.objects.get(last_name=str(accountinfo.LobbyID))
             except:
-                user = User.objects.create_user(username=username, email="django@needs.this", password=password) # email, so comments form doesn't ask for it
+                user = User.objects.create_user(username=username, email="django@needs.this", password="NoNeedToStoreEvenHashedPasswords") # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
                 user.last_name = str(accountinfo.LobbyID)
