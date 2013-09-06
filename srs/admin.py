@@ -19,12 +19,8 @@ class PlayerAdmin(admin.ModelAdmin):
     search_fields = ["id", "name", "account__preffered_name", "account__primary_account__preffered_name"]
 
 class RatingAdmin(admin.ModelAdmin):
-    list_display = ("playername", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
+    list_display = ("playername", "playeraccount", "game", "match_type", "trueskill_mu")
     search_fields = ["playername"]
-
-class RatingAdjustmentHistoryAdmin(admin.ModelAdmin):
-    list_display = ("change_date", "playername", "playeraccount", "game", "match_type", "admin", "algo_change", "elo", "trueskill_mu")
-    search_fields = ["playername", "admin"]
 
 class ReplayAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
@@ -68,7 +64,6 @@ admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(UploadTmp)
 admin.site.register(Rating, RatingAdmin)
 admin.site.register(RatingHistory)
-admin.site.register(RatingAdjustmentHistory, RatingAdjustmentHistoryAdmin)
 admin.site.register(Game)
 admin.site.register(GameRelease)
 admin.site.register(AdditionalReplayOwner, AdditionalReplayOwnerAdmin)

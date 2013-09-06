@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.comments.feeds import LatestCommentFeed
 
-from models import Replay, AccountUnificationLog
+from models import Replay
 
 class LatestUploadsFeed(Feed):
     title = "Spring replay uploads"
@@ -66,21 +66,3 @@ class SRSLatestCommentFeed(LatestCommentFeed):
 
     def item_description(self, item):
         return item.user.username+": "+item.comment
-
-class SmurfsFeed(Feed):
-    title = "Accounts unified"
-    link = "/account_unification_history/"
-    description = "Newest unified accounts"
-    description_template = 'feeds_acc_uni_description.html'
-
-    def items(self):
-        return AccountUnificationLog.objects.order_by('-change_date')[:20]
-
-    def item_title(self, aulog):
-        return aulog.admin.preffered_name + " : " +  aulog.account1.preffered_name + " + " +  aulog.account2.preffered_name
-
-    def item_pubdate(self, item):
-        return item.change_date
-
-    def item_author_name(self, item):
-        return item.admin.preffered_name

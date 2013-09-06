@@ -141,15 +141,12 @@ class Replay(models.Model):
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
     def match_type(self):
-        """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA / '1v1 BA Tourney'"""
+        """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA'"""
         # quick and dirty using tags
         try:
             tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
             if tag.name == "1v1":
-                if self.tags.filter(name="Tourney").exists() and self.game_release().game.name == "Balanced Annihilation":
-                    return "1v1 BA Tourney"
-                else:
-                    return tag.name # "1v1"
+                return "1v1"
             else:
                 return "Team"
         except: pass
@@ -180,10 +177,9 @@ class Replay(models.Model):
 
         raise Exception("Could not determine match_type for replay(%d) %s."%(self.id, self.gameID))
 
-    def match_type_short(self, ba1v1tourney=False):
-        """returns string (from match_type()): 1 / T / F / G / O"""
+    def match_type_short(self):
+        """returns string (from match_type()): 1 / T / F / G"""
         if self.match_type() == "TeamFFA": return "G"
-        elif ba1v1tourney and self.match_type() == "1v1 BA Tourney": return "O" # return "O" only if a manual rating.rate_match() is run with ba1v1tourney=True
         else: return self.match_type()[0]
 
     def num_players(self):
@@ -314,6 +310,9 @@ class MapModOption(models.Model):
     def __unicode__(self):
         return self.name
 
+#     class Meta:
+#         abstract = True
+
 class MapOption(MapModOption):
     pass
 
@@ -380,142 +379,40 @@ class RatingBase(models.Model):
                            ('T', u'Team'),
                            ('F', u'FFA'),
                            ('G', u'TeamFFA'),
-                           ('O', u'BA 1v1 Tourney'),
                            )
     match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
     playeraccount = models.ForeignKey(PlayerAccount)
-    # this fields is really redundant, but neccessary for db-side ordering of tables
-    playername    = models.CharField(max_length=128, blank=True, null=True, db_index=True)
+    playername    = models.CharField(max_length=128, blank=True, null=True, db_index=True) # this fields is redundant, but neccessary for db-side ordering of tables
 
-    elo                = models.FloatField(default=1500.0)
-    elo_k              = models.FloatField(default=30.0)
-    glicko             = models.FloatField(default=1500.0)
-    glicko_rd          = models.FloatField(default=350.0)
-    glicko_last_period = models.DateTimeField(auto_now_add=True, blank=True, null = True)
     trueskill_mu       = models.FloatField(default=25.0)
     trueskill_sigma    = models.FloatField(default=25.0/3)
 
-    def set_elo(self, elo_rating):
-        self.elo = elo_rating.mean
-        self.elo_k = elo_rating.k_factor
-        self.save()
-
-    def set_glicko(self, glicko_rating):
-        self.glicko = glicko_rating.mean
-        self.glicko_rd = min(glicko_rating.stdev, 50) # never drop RD < 50, to allow for improvements for regular players
-        self.glicko_last_period = glicko_rating.last_rating_period
-        self.save()
-
-    def set_trueskill(self, trueskill_rating):
-        self.trueskill_mu = trueskill_rating.mean
-        self.trueskill_sigma = trueskill_rating.stdev
-        self.save()
+    def skilluncertainty(self):
+        # from spads_0.11.9.pl - sendPlayerSkill()
+        if   self.trueskill_sigma > 3  : return 3
+        elif self.trueskill_sigma > 2  : return 2
+        elif self.trueskill_sigma > 1.5: return 1
+        else                           : return 0
 
     def __unicode__(self):
         return "("+str(self.id)+") "+str(self.playername)+" | "+self.game.abbreviation+" | "+self.match_type+" | "+"elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
 
     class Meta:
-        ordering = ['-elo', '-glicko', '-trueskill_mu']
-#        abstract = True # damn... forgot this, and now I cannot add it without puging the whole table
+        ordering = ['-trueskill_mu']
+        abstract = True
 
 class Rating(RatingBase):
     pass
 
 class RatingHistory(RatingBase):
-    match         = models.ForeignKey(Replay)
-
-    # this fields is really redundant, but neccessary for db-side ordering of tables
-    match_date    = models.DateTimeField(blank=True, null=True, db_index=True)
-    ALGO_CHOICES  = (('E', u'ELO'),
-                     ('G', u'Glicko'),
-                     ('B', u'ELO & Glicko'),
-                     ('T', u'Trueskill'),
-                     ('A', u'ELO, Glicko & Trueskill'),
-                     ('C', u'Creation'),
-                     )
-    algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="C")
-
-    def set_elo(self, elo_rating):
-        super(RatingHistory, self).set_elo(elo_rating)
-        self.algo_change = "E"
-        self.save()
-
-    def set_glicko(self, glicko_rating):
-        super(RatingHistory, self).set_glicko(glicko_rating)
-        self.algo_change = "G"
-        self.save()
-
-    def set_trueskill(self, trueskill_rating):
-        super(RatingHistory, self).set_trueskill(trueskill_rating)
-        self.algo_change = "T"
-        self.save()
+    match      = models.ForeignKey(Replay)
+    match_date = models.DateTimeField(blank=True, null=True, db_index=True) # this fields is redundant, but neccessary for db-side ordering of tables
 
     def __unicode__(self):
         return str(self.match_date)+" | "+super(RatingHistory, self).__unicode__()
 
-    def set_sorting_data(self):
-        self.playername = self.playeraccount.preffered_name
-        self.match_date = self.match.unixTime
-        self.save()
-
     class Meta:
         ordering = ['-match_date', 'playername']
-
-class RatingAdjustmentHistory(RatingBase):
-    change_date   = models.DateTimeField(auto_now=True, db_index=True)
-    ALGO_CHOICES  = (('E', u'ELO'),
-                     ('G', u'Glicko'),
-                     ('T', u'Trueskill'),
-                     )
-    algo_change   = models.CharField(max_length=1, choices=ALGO_CHOICES, default="T")
-    admin         = models.ForeignKey(PlayerAccount, related_name='ratingAdjustmentAdmin')
-
-    def __unicode__(self):
-        if   self.algo_change == "E": change = self.elo
-        elif self.algo_change == "G": change = self.glicko
-        elif self.algo_change == "T": change = self.trueskill_mu
-        else: raise Exception("This should not happen.")
-        return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' changed '"+self.playeraccount.get_preffered_name()+"' | "+self.game.abbreviation+" | "+self.algo_change+" | "+str(change)
-
-    class Meta:
-        ordering = ['-change_date']
-
-
-class RatingQueue(models.Model):
-    """used during long running initial_rating()"""
-    replay = models.ForeignKey(Replay)
-
-
-class AccountUnificationLog(models.Model):
-    change_date   = models.DateTimeField(auto_now_add=True, db_index=True)
-    admin         = models.ForeignKey(PlayerAccount, related_name='accountUnificationAdmin')
-    account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount1')
-    account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationAccount2')
-    all_accounts  = models.CharField(max_length=512)
-    reverted      = models.BooleanField(default=False)
-
-    def __unicode__(self):
-        return "("+str(self.id)+") "+str(self.change_date)+" | '"+self.admin.get_preffered_name()+"' unified '"+self.account1.preffered_name+"'("+str(self.account1.accountid)+") and '"+self.account2.preffered_name+"'("+str(self.account2.accountid)+")"
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ('srs.views.account_unification_history', [])
-
-    class Meta:
-        ordering = ['-change_date']
-
-class AccountUnificationRatingBackup(RatingBase):
-    account_unification_log = models.ForeignKey(AccountUnificationLog)
-
-    def __unicode__(self):
-        return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
-
-class AccountUnificationBlocking(models.Model):
-    account1      = models.ForeignKey(PlayerAccount, related_name='accountUnificationBlockingAccount1')
-    account2      = models.ForeignKey(PlayerAccount, related_name='accountUnificationBlockingAccount2')
-
-    def __unicode__(self):
-        return str(self.account_unification_log.change_date)+" | "+super(AccountUnificationRatingBackup, self).__unicode__()
 
 class AdditionalReplayOwner(models.Model):
     uploader         = models.ForeignKey(User)
@@ -639,7 +536,10 @@ def playerAccount_save_callback(sender, instance, **kwargs):
 @receiver(post_save, sender=RatingHistory)
 def ratinghistory_save_callback(sender, instance, **kwargs):
     # check for new new Game[Release] object
-    if kwargs["created"]: instance.set_sorting_data()
+    if kwargs["created"]:
+        instance.playername = instance.playeraccount.preffered_name
+        instance.match_date = instance.match.unixTime
+        instance.save()
 
 # set sorting info when a RatingHistory is saved
 @receiver(post_save, sender=Rating)

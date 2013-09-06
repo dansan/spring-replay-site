@@ -1,8 +1,0 @@
-{% extends 'lists.html' %}
-{% block au_rating_backup %}
-{% if user.is_staff %}
-        <p><br/></p>
-        <p style="font-weight: bold;"><a href="{% with tdf=table.data|first %}{% url srs.views.revert_unify_accounts_view tdf.account_unification_log.id %}{% endwith %}">&raquo;&raquo;&raquo;&nbsp;&nbsp;Revert this account unification, and block future unification of those accounts.&nbsp;&nbsp;&laquo;&laquo;&laquo;</a></p>
-        <p style="font-weight: bold;">ATTENTION! Both accounts will be set to the shown ratings, all newer ratings (incl. those from other games or match types) will be lost!</p>
-{% endif %}
-{% endblock %}

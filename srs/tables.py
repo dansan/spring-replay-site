@@ -9,7 +9,7 @@
 import django_tables2 as tables
 from django_tables2 import A
 from django.utils.safestring import mark_safe
-from models import Rating, RatingAdjustmentHistory, PlayerAccount, AccountUnificationLog, AccountUnificationRatingBackup
+from models import Rating, PlayerAccount
 
 
 class ReplayTable(tables.Table):
@@ -85,35 +85,13 @@ class PlayerRatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
-    elo             = tables.Column()
-    glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-match_date"
 
-    def render_elo(self, value, record):
-        if record.match_type in ["1", "O"]: return '%.2f' % value
-        else: return ""
-    def render_glicko(self, value, record):
-        if record.match_type in ["1", "O"]: return '%.2f' % value
-        else: return ""
     def render_trueskill_mu(self, value):
-        return '%.2f' % value
-
-class Tourney1v1RatingHistoryTable(tables.Table):
-    match_date      = tables.DateTimeColumn(format="Y-m-d H:i:s", verbose_name="Match_Date")
-    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    title           = tables.LinkColumn('replay_detail', args=[A('gameID')])
-    elo             = tables.Column()
-    num_matches     = tables.Column(verbose_name="# Matches")
-
-    class Meta:
-        attrs    = {'class': 'paleblue'}
-        order_by = "-match_date"
-
-    def render_elo(self, value):
         return '%.2f' % value
 
 class RatingHistoryTable(tables.Table):
@@ -123,19 +101,12 @@ class RatingHistoryTable(tables.Table):
     match_type      = tables.LinkColumn('replay_detail', args=[A('match.gameID')])
     num             = tables.Column(accessor=A("match.num_players"), orderable=False)
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    elo             = tables.Column()
-    glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = "-match_date"
 
-    def render_elo(self, value):
-        return '%.2f' % value
-    def render_glicko(self, value, record):
-        if record.match_type == "O": return ""
-        else: return '%.2f' % value
     def render_trueskill_mu(self, value, record):
         if record.match_type == "O": return ""
         else: return '%.2f' % value
@@ -154,8 +125,6 @@ class TSMatchRatingHistoryTable(tables.Table):
 
 class MatchRatingHistoryTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    elo             = tables.Column()
-    glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
     num_matches     = tables.Column(verbose_name="# Matches")
 
@@ -163,54 +132,19 @@ class MatchRatingHistoryTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "-elo"
 
-    def render_elo(self, value):
-        return '%.2f' % value
-    def render_glicko(self, value, record):
-        if record["match_type"] == "O": return ""
-        else: return '%.2f' % value
     def render_trueskill_mu(self, value, record):
         if record["match_type"] == "O": return ""
         else: return '%.2f' % value
 
-class TourneyMatchRatingHistoryTable(tables.Table):
-    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    elo             = tables.Column()
-    glicko          = tables.Column()
-    trueskill_mu    = tables.Column(verbose_name="Trueskill")
-    num_matches     = tables.Column(verbose_name="# Matches")
-    match_type      = tables.Column(verbose_name="Tourney")
-
-    class Meta:
-        attrs    = {'class': 'paleblue'}
-        order_by = "-match_type"
-
-    def render_elo(self, value):
-        return '%.2f' % value
-    def render_glicko(self, value):
-        return '%.2f' % value
-    def render_trueskill_mu(self, value):
-        return '%.2f' % value
-    def render_match_type(self, value):
-        if value == "O": return "yes"
-        else           : return "no"
-
 class PlayerRatingTable(tables.Table):
     game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
     match_type      = tables.Column()
-#     elo             = tables.Column()
-#     glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
 
     class Meta:
         attrs    = {'class': 'paleblue'}
         order_by = ("game", "match_type")
 
-#     def render_elo(self, value, record):
-#         if record.match_type in ["1", "O"]: return '%.2f' % value
-#         else: return ""
-#     def render_glicko(self, value, record):
-#         if record.match_type in ["1", "O"]: return '%.2f' % value
-#         else: return ""
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
@@ -230,8 +164,6 @@ class TSRatingTable(tables.Table):
 
 class RatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    elo             = tables.Column()
-    glicko          = tables.Column()
     trueskill_mu    = tables.Column(verbose_name="Trueskill")
     num_matches     = tables.Column(verbose_name="# Matches")
 
@@ -241,11 +173,6 @@ class RatingTable(tables.Table):
         attrs    = {'class': 'paleblue'}
         order_by = "-elo"
 
-    def render_elo(self, value):
-        return '%.2f' % value
-    def render_glicko(self, value, record):
-        if record["match_type"] == "O": return ""
-        else: return '%.2f' % value
     def render_trueskill_mu(self, value, record):
         if record["match_type"] == "O": return ""
         else: return '%.2f' % value
@@ -259,61 +186,3 @@ class WinLossTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-
-class RatingAdjustmentHistoryTable(tables.Table):
-    change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
-    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.preffered_name"), verbose_name="Admin")
-    playeraccount   = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')], accessor=A("playeraccount.preffered_name"), verbose_name="Player")
-    game            = tables.Column(accessor=A("game.abbreviation"), verbose_name="Game")
-    match_type      = tables.Column(verbose_name="Match")
-    elo             = tables.Column()
-    trueskill_mu    = tables.Column(verbose_name="Trueskill")
-
-    class Meta:
-        model = RatingAdjustmentHistory
-        fields = ("change_date", "admin", "playeraccount", "game", "match_type", "elo", "trueskill_mu")
-        attrs    = {'class': 'paleblue'}
-        order_by = "-change_date"
-
-    def render_elo(self, value, record):
-        if record.algo_change != "E": return ""
-        else: return '%.2f' % value
-    def render_trueskill_mu(self, value, record):
-        if record.algo_change != "T": return ""
-        else: return '%.2f' % value
-
-class AccountUnificationLogTable(tables.Table):
-    change_date     = tables.DateTimeColumn(format='d.m.Y H:i:s', verbose_name="Date")
-    admin           = tables.LinkColumn('player_detail', args=[A('admin.accountid')], accessor=A("admin.preffered_name"), verbose_name="Admin")
-    account1        = tables.LinkColumn('player_detail', args=[A('account1.accountid')], accessor=A("account1.preffered_name"), verbose_name="Player 1")
-    account2        = tables.LinkColumn('player_detail', args=[A('account2.accountid')], accessor=A("account2.preffered_name"), verbose_name="Player 2")
-    all_accounts    = tables.Column(orderable=False)
-    id              = tables.LinkColumn('account_unification_rating_backup', args=[A('id')], orderable=False, verbose_name="Original Ratings")
-    reverted        = tables.Column()
-
-    class Meta:
-        model = AccountUnificationLog
-        fields = ("change_date", "admin", "account1", "account2", "all_accounts", "id", "reverted")
-        attrs    = {'class': 'paleblue'}
-        order_by = "-change_date"
-
-    def render_all_accounts(self, value):
-        acc_ids = value.split("|")
-        result = str()
-        for acc in acc_ids:
-            try:
-                int(acc) # paranoid check, before inserting something bad into html
-            except:
-                continue
-            pa = PlayerAccount.objects.get(accountid=acc)
-            result += '<a href="'+pa.get_absolute_url()+'">'+pa.preffered_name+'</a> '
-        return mark_safe(result)
-
-class AccountUnificationRatingBackupTable(PlayerRatingTable):
-    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-
-    class Meta:
-        model = AccountUnificationRatingBackup
-        fields = ("playername", "game", "match_type", "elo", "glicko", "trueskill_mu")
-        attrs    = {'class': 'paleblue'}
-        order_by = ("playername", "game", "match_type")

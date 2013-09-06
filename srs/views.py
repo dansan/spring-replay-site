@@ -32,7 +32,6 @@ from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
 from forms import ManualRatingAdjustmentForm, UnifyAccountsForm
-from xmlrating import set_rating_authenticated, unify_accounts_authenticated
 from sldb import get_sldb_playerskill, privatize_skill
 
 logger = logging.getLogger(__package__)
@@ -532,360 +531,123 @@ def search_replays(query):
 
     return replays
 
-#@cache_page(3600 * 24)
-#def win_loss_overview(request):
-#    c = all_page_infos(request)
-#
-#    playerlist = list()
-#    for pa in PlayerAccount.objects.all():
-#        try:
-#            name = Player.objects.filter(account=pa).values_list("name")[0][0]
-#            playerlist.append((pa.accountid, name))
-#        except:
-#            pass
-#    playerlist.sort(key=operator.itemgetter(1))
-#    c["playerlist"] = playerlist
-#    return render_to_response('win_loss_overview.html', c, context_instance=RequestContext(request))
+# def win_loss_calc(playeraccounts):
+#     c = dict()
+# 
+#     players = Player.objects.filter(account__in=playeraccounts, spectator=False)
+# 
+#     ats = Allyteam.objects.filter(team__player__in=players)
+#     at_1v1 = ats.filter(replay__tags__name="1v1")
+#     at_team = ats.filter(replay__tags__name="Team")
+#     at_ffa = ats.filter(replay__tags__name="FFA")
+#     at_teamffa = ats.filter(replay__tags__name="TeamFFA")
+# 
+#     c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
+#     try:
+#         c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
+#     except ZeroDivisionError:
+#         if at_1v1.count() == 0: c["at_1v1"]["ratio"] = "0.00"
+#         else: c["at_1v1"]["ratio"] = "1.00"
+# 
+#     c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count()}
+#     try:
+#         c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
+#     except ZeroDivisionError:
+#         if at_team.count() == 0: c["at_team"]["ratio"] = "0.00"
+#         else: c["at_team"]["ratio"] = "1.00"
+# 
+#     c["at_ffa"] = {"all": at_ffa.count(), "win": at_ffa.filter(winner=True).count(), "loss": at_ffa.filter(winner=False).count()}
+#     try:
+#         c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
+#     except ZeroDivisionError:
+#         if at_ffa.count() == 0: c["at_ffa"]["ratio"] = "0.00"
+#         else: c["at_ffa"]["ratio"] = "1.00"
+# 
+#     c["at_teamffa"] = {"all": at_teamffa.count(), "win": at_teamffa.filter(winner=True).count(), "loss": at_teamffa.filter(winner=False).count()}
+#     try:
+#         c["at_teamffa"]["ratio"] = "%.02f"%(float(at_teamffa.filter(winner=True).count())/at_teamffa.filter(winner=False).count())
+#     except ZeroDivisionError:
+#         if at_teamffa.count() == 0: c["at_teamffa"]["ratio"] = "0.00"
+#         else: c["at_teamffa"]["ratio"] = "1.00"
+# 
+#     c["at_all"] = {"all": ats.count(), "win": ats.filter(winner=True).count(), "loss": ats.filter(winner=False).count()}
+#     try:
+#         c["at_all"]["ratio"] = "%.02f"%(float(ats.filter(winner=True).count())/ats.filter(winner=False).count())
+#     except ZeroDivisionError:
+#         if ats.count() == 0: c["at_all"]["ratio"] = "0.00"
+#         else: c["at_all"]["ratio"] = "1.00"
+# 
+#     return c
 
-def win_loss_calc(playeraccounts):
-    c = dict()
-
-    players = Player.objects.filter(account__in=playeraccounts, spectator=False)
-
-    ats = Allyteam.objects.filter(team__player__in=players)
-    at_1v1 = ats.filter(replay__tags__name="1v1")
-    at_team = ats.filter(replay__tags__name="Team")
-    at_ffa = ats.filter(replay__tags__name="FFA")
-    at_teamffa = ats.filter(replay__tags__name="TeamFFA")
-
-    c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
-    try:
-        c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
-    except ZeroDivisionError:
-        if at_1v1.count() == 0: c["at_1v1"]["ratio"] = "0.00"
-        else: c["at_1v1"]["ratio"] = "1.00"
-
-    c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count()}
-    try:
-        c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
-    except ZeroDivisionError:
-        if at_team.count() == 0: c["at_team"]["ratio"] = "0.00"
-        else: c["at_team"]["ratio"] = "1.00"
-
-    c["at_ffa"] = {"all": at_ffa.count(), "win": at_ffa.filter(winner=True).count(), "loss": at_ffa.filter(winner=False).count()}
-    try:
-        c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
-    except ZeroDivisionError:
-        if at_ffa.count() == 0: c["at_ffa"]["ratio"] = "0.00"
-        else: c["at_ffa"]["ratio"] = "1.00"
-
-    c["at_teamffa"] = {"all": at_teamffa.count(), "win": at_teamffa.filter(winner=True).count(), "loss": at_teamffa.filter(winner=False).count()}
-    try:
-        c["at_teamffa"]["ratio"] = "%.02f"%(float(at_teamffa.filter(winner=True).count())/at_teamffa.filter(winner=False).count())
-    except ZeroDivisionError:
-        if at_teamffa.count() == 0: c["at_teamffa"]["ratio"] = "0.00"
-        else: c["at_teamffa"]["ratio"] = "1.00"
-
-    c["at_all"] = {"all": ats.count(), "win": ats.filter(winner=True).count(), "loss": ats.filter(winner=False).count()}
-    try:
-        c["at_all"]["ratio"] = "%.02f"%(float(ats.filter(winner=True).count())/ats.filter(winner=False).count())
-    except ZeroDivisionError:
-        if ats.count() == 0: c["at_all"]["ratio"] = "0.00"
-        else: c["at_all"]["ratio"] = "1.00"
-
-    return c
-
-def collect1v1ratings(game, match_type, limitresults):
-    if limitresults:
-        # get ratings for top 20 players for each algorithm
-        r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
-        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
-        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
-    else:
-        r1v1 = list(Rating.objects.filter(game=game, match_type=match_type).order_by('-elo').values())
-        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-glicko').values())
-        r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
-    if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
-        # thow out duplicates and players with less than x matches in this game and category
-        r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=PlayerAccount.objects.get(id=v["playeraccount_id"]).get_all_accounts()).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
-    else:
-        # thow out duplicates
-        r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
-    # add data needed for the table
-    for r1 in r1v1:
-        playeraccount = PlayerAccount.objects.get(id=r1["playeraccount_id"])
-        r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=playeraccount.get_all_accounts()).count()
-        r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
-
-    return r1v1
-
-@never_cache
-def ba1v1tourney(request):
-    from django_tables2 import RequestConfig
-
-    c = all_page_infos(request)
-
-    game = get_object_or_404(Game, abbreviation="BA")
-    r1v1 = collect1v1ratings(game, "O", limitresults=False)
-    c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
-    rh = list(RatingHistory.objects.filter(match_type="O").values())
-    for r in rh:
-        playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_all_accounts()).count()
-        r["playeraccount"] = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        r["title"] = Replay.objects.get(id=r["match_id"]).title
-        r["gameID"] =  Replay.objects.get(id=r["match_id"]).gameID
-    c["table_1v1_history"]  = Tourney1v1RatingHistoryTable(rh, prefix="H-")
-    c["intro_text"]    = ["TEST TEST TEST", "The ratings here are done parallel to those done my Griffith in the forum. Values are seeded from his numbers.", "EXPERIMENTAL EXPERIMENTAL EXPERIMENTAL", "Please refer to Griffith numbers, and ignore this for now!!"]
-    rc = RequestConfig(request, paginate={"per_page": 20})
-    rc.configure(c["table_1v1"])
-    rc.configure(c["table_1v1_history"])
-
-    c["pagedescription"] = "Balanced Annihilation 1v1 tourney ladder"
-    return render_to_response('ba1v1tourney.html', c, context_instance=RequestContext(request))
+# def collect1v1ratings(game, match_type, limitresults):
+#     if limitresults:
+#         # get ratings for top 20 players for each algorithm
+#         r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
+#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
+#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
+#     else:
+#         r1v1 = list(Rating.objects.filter(game=game, match_type=match_type).order_by('-elo').values())
+#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-glicko').values())
+#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
+#     if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+#         # thow out duplicates and players with less than x matches in this game and category
+#         r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=PlayerAccount.objects.get(id=v["playeraccount_id"]).get_all_accounts()).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+#     else:
+#         # thow out duplicates
+#         r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
+#     # add data needed for the table
+#     for r1 in r1v1:
+#         playeraccount = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+#         r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=playeraccount.get_all_accounts()).count()
+#         r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
+# 
+#     return r1v1
 
 @cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):
-    from django_tables2 import RequestConfig
-
     c = all_page_infos(request)
-
-    game = get_object_or_404(Game, abbreviation=abbreviation)
-
-    r1v1 = collect1v1ratings(game, "1", limitresults=True)
-    c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
-
-    for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
-        # get ratings for top 100 players
-        rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
-        if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
-            # thow out players with less than x matches in this game and category
-            rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
-        else:
-            rtype = list(rtype)
-        # add data needed for the table
-        for rt in rtype:
-            playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
-            rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
-            rt["playeraccount"] = playeraccount
-            rt["playername"] = playeraccount.preffered_name
-        c[mtl] = TSRatingTable(rtype, prefix=prefix)
-
-    rc = RequestConfig(request, paginate={"per_page": 20})
-    rc.configure(c["table_1v1"])
-    rc.configure(c["table_team"])
-    rc.configure(c["table_ffa"])
-    rc.configure(c["table_teamffa"])
-
-    c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game. Change the diplayed game by clicking the link above this text.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
-    if game.abbreviation == "BA":
-        c["intro_text"].append("Only players with at least %d matches will be listed here."%settings.HALL_OF_FAME_MIN_MATCHES)
-    c['pagetitle'] = "Hall Of Fame ("+game.name+")"
-    c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
-    c["thisgame"] = game
-    c["INITIAL_RATING"] = settings.INITIAL_RATING
-    c["pagedescription"] = "Hall Of Fame for "+game.name
-    return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
-
-@never_cache
-def rating_history(request):
-    table = RatingHistoryTable(RatingHistory.objects.all())
-    intro_text = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
-    return all_of_a_kind_table(request, table, "Rating history", template="wide_list.html", intro_text=intro_text)
-
-@never_cache
-def manual_rating_history(request):
-    table = RatingAdjustmentHistoryTable(RatingAdjustmentHistory.objects.all())
-    return all_of_a_kind_table(request, table, "Manual rating adjustment history")
-
-@staff_member_required
-@never_cache
-def account_unification_history(request):
-    table = AccountUnificationLogTable(AccountUnificationLog.objects.all())
-    return all_of_a_kind_table(request, table, "Account unification history")
-
-@staff_member_required
-@never_cache
-def account_unification_rating_backup(request, au_logid):
-    aulog = get_object_or_404(AccountUnificationLog, id=au_logid)
-    table = AccountUnificationRatingBackupTable(AccountUnificationRatingBackup.objects.filter(account_unification_log=aulog))
-    return all_of_a_kind_table(request, table=table, title="Account unification rating backup", template="au_rating_backup.html")
-
-@staff_member_required
-@never_cache
-def revert_unify_accounts_view(request, au_logid):
-    """
-    AccountUnificationRatingBackup that started the revert
-    """
-    logger.info("reverting AccountUnificationLog #%d on behalf of admin(%d) %s", au_logid, request.user.id, request.user)
-    au_log = get_object_or_404(AccountUnificationLog, id=au_logid)
-    try:
-        pa = PlayerAccount.objects.get(accountid=request.user.get_profile().accountid)
-    except:
-        pa = request.user # let revert_unify_accounts() handle this
-    return revert_unify_accounts(au_log, pa)
-
-def revert_unify_accounts(au_log, adminuser, from_xmlrpc=False):
-    au_rating_backups = AccountUnificationRatingBackup.objects.filter(account_unification_log=au_log)
-    logger.info("AccountUnificationRatingBackups: %s", au_rating_backups)
-
-    # separate accounts
-    if au_log.account1.primary_account == None:
-        au_log.account2.primary_account = None
-        au_log.account2.save()
-    elif au_log.account2.primary_account == None:
-        au_log.account1.primary_account = None
-        au_log.account1.save()
-    else:
-        err = "both accounts are not primary_account: %s AND %s"% (au_log.account1, au_log.account2)
-        logger.error(err)
-        if from_xmlrpc:
-            return "-1 "+err
-        else:
-            raise RuntimeError(err)
-
-    # restore previous ratings
-    Rating.objects.filter(playeraccount=au_log.account1.get_primary_account()).delete()
-    Rating.objects.filter(playeraccount=au_log.account2.get_primary_account()).delete()
-
-    for au_rating in au_rating_backups:
-        Rating.objects.create(game=au_rating.game, match_type=au_rating.match_type, playeraccount=au_rating.playeraccount, playername=au_rating.playername,
-                              elo=au_rating.elo, elo_k=au_rating.elo_k,
-                              glicko=au_rating.glicko, glicko_rd=au_rating.glicko_rd, glicko_last_period=au_rating.glicko_last_period,
-                              trueskill_mu=au_rating.trueskill_mu, trueskill_sigma=au_rating.trueskill_sigma)
-    au_log.reverted = True
-    au_log.save()
-
-    # block future AccountUnification
-    AccountUnificationBlocking.objects.create(account1=au_log.account1, account2=au_log.account2)
-    # log
-    try:
-        admin_pa_name = adminuser.get_preffered_name()
-    except:
-        admin_pa_name = "unknown admin PA name"
-    logger.info("admin(%d) '%s' reverted AccountUnification '%s' and blocked futher unification", adminuser.id, admin_pa_name, au_log)
-    if from_xmlrpc:
-        return "0 sucessfully separated accounts (%d) '%s' and (%d) '%s'"%(au_log.account1.accountid, au_log.account1, au_log.account2.accountid, au_log.account2)
-    else:
-        return HttpResponseRedirect(reverse(account_unification_history))
-
-@staff_member_required
-@never_cache
-def manual_unify_accounts(request):
-    c = all_page_infos(request)
-    if request.method == 'POST':
-        form = UnifyAccountsForm(request.POST)
-        if form.is_valid():
-            result = unify_accounts_authenticated(form.cleaned_data.get("player1"), form.cleaned_data.get("player2"), request.user.get_profile().accountid)
-            try:
-                result_id = int(result)
-                logger.info("Accounts %s and %s unified to %d.", form.cleaned_data.get("player1"), form.cleaned_data.get("player2"), result_id)
-                return HttpResponseRedirect(reverse(account_unification_history))
-            except:
-                form._errors = {'player1': [u"An error occured: %s"%result]}
-    else:
-        form = UnifyAccountsForm()
-
-    c["form"] = form
-    return render_to_response("unify_accounts.html", c, context_instance=RequestContext(request))
-
-@staff_member_required
-@never_cache
-def manual_rating_adjustment(request):
-    c = all_page_infos(request)
-    if request.method == 'POST':
-        form = ManualRatingAdjustmentForm(request.POST)
-        if form.is_valid():
-            accountid     = PlayerAccount.objects.get(id=form.cleaned_data["player"]).accountid
-            game          = Game.objects.get(id=int(form.cleaned_data["game"]))
-            match_type    = form.cleaned_data["match_type"]
-            if match_type in ["T", "F", "G"]:
-                rating        = form.cleaned_data["trueskill"]
-            else:
-                rating        = form.cleaned_data["elo"]
-            admin_account = request.user.get_profile().accountid
-            set_rating_authenticated(accountid, game.abbreviation, match_type, rating, admin_account)
-            return HttpResponseRedirect(reverse(manual_rating_history))
-    else:
-        form = ManualRatingAdjustmentForm()
-
-    c["form"] = form
-    c["pagedescription"] = "History of manual rating adjustments"
-    return render_to_response("manual_rating_adjustment.html", c, context_instance=RequestContext(request))
-
-@staff_member_required
-@dajaxice_register
-def mra_update_game(request, paid):
-    dajax = Dajax()
-
-    pa = get_object_or_404(PlayerAccount, id=paid)
-    games = Game.objects.filter(id__in=Rating.objects.filter(playeraccount=pa).values_list("game", flat=True)).order_by("name")
-
-    if games:
-        out = ["<option value=''>Please select a game.</option>"]
-        out.extend(["<option value='%d'>%s</option>"%(game.id, game.name) for game in games])
-    else:
-        out = ["<option value=''>NO RATINGS</option>"]
-
-    dajax.assign('#id_game', 'innerHTML', ''.join(out))
-    dajax.assign('#id_match_type', 'innerHTML', '')
-    dajax.assign('#id_elo', 'value', "")
-    dajax.assign('#id_glicko', 'value', "")
-    dajax.assign('#id_trueskill', 'value', "")
-    return dajax.json()
-
-@staff_member_required
-@dajaxice_register
-def mra_update_match_type(request, paid, gameid):
-    dajax = Dajax()
-
-    pa = get_object_or_404(PlayerAccount, id=paid)
-    ga = get_object_or_404(Game, id=gameid)
-    ra = Rating.objects.filter(playeraccount=pa, game=ga)
-
-    def long_type(mt):
-        for mtc in Rating.MATCH_TYPE_CHOICES:
-            if mtc[0] == mt:
-                return mtc[1]
-
-    out = ["<option value=''>Please select a match type.</option>"]
-    out.extend(["<option value='%s'>%s</option>"%(r.match_type, long_type(r.match_type)) for r in ra])
-
-    dajax.assign('#id_match_type', 'innerHTML', ''.join(out))
-    dajax.assign('#id_elo', 'value', "")
-    dajax.assign('#id_glicko', 'value', "")
-    dajax.assign('#id_trueskill', 'value', "")
-    return dajax.json()
-
-@staff_member_required
-@dajaxice_register
-def mra_update_ratings(request, paid, gameid, matchtype):
-    dajax = Dajax()
-
-    pa   = get_object_or_404(PlayerAccount, id=paid)
-    game = get_object_or_404(Game, id=gameid)
-
-    try:
-        rating = Rating.objects.get(game=game, match_type=matchtype, playeraccount=pa.get_primary_account())
-        elo = rating.elo
-        glicko = rating.glicko
-        trueskill = rating.trueskill_mu
-    except:
-        elo = 0
-        glicko = 0
-        trueskill = 0
-
-    if matchtype in ["T", "F", "G"]:
-        dajax.assign('#id_elo', 'disabled', 'True')
-        dajax.clear('#id_trueskill', 'disabled')
-    else:
-        dajax.clear('#id_elo', 'disabled')
-        dajax.assign('#id_trueskill', 'disabled', 'True')
-
-    dajax.assign('#id_elo', 'value', str(elo))
-    dajax.assign('#id_glicko', 'value', str(glicko))
-    dajax.assign('#id_trueskill', 'value', str(trueskill))
-    return dajax.json()
+    return render_to_response("sldb_reconstr.html", c, context_instance=RequestContext(request))
+# 
+#     from django_tables2 import RequestConfig
+# 
+#     c = all_page_infos(request)
+# 
+#     game = get_object_or_404(Game, abbreviation=abbreviation)
+# 
+#     r1v1 = collect1v1ratings(game, "1", limitresults=True)
+#     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
+# 
+#     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
+#         # get ratings for top 100 players
+#         rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
+#         if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
+#             # thow out players with less than x matches in this game and category
+#             rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
+#         else:
+#             rtype = list(rtype)
+#         # add data needed for the table
+#         for rt in rtype:
+#             playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
+#             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
+#             rt["playeraccount"] = playeraccount
+#             rt["playername"] = playeraccount.preffered_name
+#         c[mtl] = TSRatingTable(rtype, prefix=prefix)
+# 
+#     rc = RequestConfig(request, paginate={"per_page": 20})
+#     rc.configure(c["table_1v1"])
+#     rc.configure(c["table_team"])
+#     rc.configure(c["table_ffa"])
+#     rc.configure(c["table_teamffa"])
+# 
+#     c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game. Change the diplayed game by clicking the link above this text.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
+#     if game.abbreviation == "BA":
+#         c["intro_text"].append("Only players with at least %d matches will be listed here."%settings.HALL_OF_FAME_MIN_MATCHES)
+#     c['pagetitle'] = "Hall Of Fame ("+game.name+")"
+#     c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
+#     c["thisgame"] = game
+#     c["INITIAL_RATING"] = settings.INITIAL_RATING
+#     c["pagedescription"] = "Hall Of Fame for "+game.name
+#     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
 @login_required
 @never_cache

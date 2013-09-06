@@ -3,7 +3,7 @@ from django.contrib import admin
 from ajax_select import urls as ajax_select_urls
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed, SmurfsFeed
+from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
 
 admin.autodiscover()
 
@@ -28,7 +28,6 @@ urlpatterns = patterns('',
     url(r'^feeds/latest_comments/$', SRSLatestCommentFeed()),
     url(r'^feeds/latest/$', LatestUploadsFeed()),
     url(r'^feeds/uploader/(?P<username>[\w\ .:()\[\]-]+)/$', UploaderFeed()),
-    url(r'^feeds/smurfs/$', SmurfsFeed()),
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.replay', name="replay_detail"),
@@ -47,7 +46,6 @@ urlpatterns = patterns('',
     url(r'^player/(?P<accountid>[\d-]+)/$', 'srs.views.player', name="player_detail"),
 
     url(r'^game/(?P<name>.+)/$', 'srs.views.game', name="game_detail"),
-
     url(r'^games/$', 'srs.views.games'),
     url(r'^gamerelease/(?P<gametype>.+)/$', 'srs.views.gamerelease', name="gamerelease_detail"),
 
@@ -57,17 +55,8 @@ urlpatterns = patterns('',
     url(r'^match_date/(?P<shortdate>[\d-]+)/$', 'srs.views.match_date'),
     url(r'^upload_date/(?P<shortdate>[\d-]+)/$', 'srs.views.upload_date'),
 
-    url(r'^initial_rating/$', 'srs.rating.initial_rating', name="initial_rating"),
-    url(r'^rating_history/$', 'srs.views.rating_history', name="rating_history"),
-    url(r'^manual_rating_history/$', 'srs.views.manual_rating_history', name="manual_rating_history"),
-    url(r'^account_unification_history/$', 'srs.views.account_unification_history', name="account_unification_history"),
     url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', 'srs.views.hall_of_fame', name="hall_of_fame"),
-    url(r'^ba1v1tourney/$', 'srs.views.ba1v1tourney', name="ba1v1tourney"),
-    url(r'^manual_rating_adjustment/$', 'srs.views.manual_rating_adjustment', name="manual_rating_adjustment"),
     url(r'^lookups/', include(ajax_select_urls)),
-    url(r'^account_unification_rating_backup/(?P<au_logid>[\d-]+)/$', 'srs.views.account_unification_rating_backup', name="account_unification_rating_backup"),
-    url(r'^revert_unify_accounts/(?P<au_logid>[\d-]+)/$', 'srs.views.revert_unify_accounts_view', name="revert_unify_accounts_view"),
-    url(r'^unify_accounts/$', 'srs.views.manual_unify_accounts', name="unify_accounts"),
     url(dajaxice_config.dajaxice_url, include('dajaxice.urls')),
 )
 
