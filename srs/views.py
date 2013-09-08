@@ -31,7 +31,6 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from forms import ManualRatingAdjustmentForm, UnifyAccountsForm
 from sldb import get_sldb_playerskill, privatize_skill
 
 logger = logging.getLogger(__package__)
@@ -99,45 +98,40 @@ def replay(request, gameID):
         teams = Team.objects.filter(allyteam=at)
         players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
         players_w_rating = list()
-        if replay.notcomplete or not players.exists() or replay.game_release().game.abbreviation in ["CD", "RD"] or Player.objects.filter(account__accountid=0, replay=replay).exists():
-            # notcomplete or bot present - no rating
+        if replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or Player.objects.filter(account__accountid=0, replay=replay).exists():
+            # notcomplete, no SLDB rating or bot present - no rating
             new_rating = 0
             old_rating = 0
             for player in Player.objects.filter(account__in=playeraccounts, replay=replay):
                 players_w_rating.append((player, old_rating, new_rating))
         else:
-            if match_type in ["1", "O"]:
-                # Elo ratings
+            # TrueSkill ratings
+            old_rating = 0
+            new_rating = 0
+            lobby_rank_sum = 0
+            for pa in playeraccounts:
                 try:
-                    new_rating = RatingHistory.objects.get(match=replay, playeraccount=playeraccounts[0], game=game, match_type=match_type).elo
+                    pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
                 except:
                     # no rating on this replay
-                    new_rating = 0
+                    pl_new = 0
                 try:
-                    # find previous Elo value
-                    old_rating = RatingHistory.objects.filter(playeraccount=playeraccounts[0], game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].elo
+                    # find previous TS value
+                    pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
                 except:
-                    old_rating = 1500  # 1st match in this category -> default Elo
-                players_w_rating.append((players[0], old_rating, new_rating))
-            else:
-                # TrueSkill ratings
-                old_rating = 0
-                new_rating = 0
-                lobby_rank_sum = 0
-                for pa in playeraccounts:
-                    try:
-                        pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
-                        new_rating += pl_new
-                    except:
-                        # no rating on this replay
-                        pl_new = 0
-                    try:
-                        # find previous TS value
-                        pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
-                    except:
-                        pl_old = 25  # 1st match in this category -> default TS
+                    pl_old = 0
+
+                if playeraccounts.count() > 2 or pa.sldb_privacy_mode == 0:
+                    new_rating += pl_new
                     old_rating += pl_old
-                    players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
+                else:
+                    new_rating += privatize_skill(pl_new)
+                    old_rating += privatize_skill(pl_old)
+
+                if pa.sldb_privacy_mode != 0 and (not request.user.is_authenticated() or pa.accountid != request.user.get_profile().accountid):
+                    pl_new = privatize_skill(pl_new)
+                    pl_old = privatize_skill(pl_old)
+                players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
 
         if teams:
             lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in Player.objects.filter(replay=replay, team__allyteam=at)], 0)
@@ -152,8 +146,6 @@ def replay(request, gameID):
 
     if replay.match_type() == "1v1":
         c["table"] = MatchRatingHistoryTable(rh)
-    elif replay.match_type() == "1v1 BA Tourney":
-        c["table"] = TourneyMatchRatingHistoryTable(rh)
     else:
         c["table"] = TSMatchRatingHistoryTable(rh)
 
@@ -338,17 +330,24 @@ def player(request, accountid):
     if pa.accountid <=0:
         c["errmsg"] = "No rating for single player or bots."
     else:
-        try:
-            user = request.user if request.user.is_authenticated() else None
-            skills = get_sldb_playerskill("BA", [pa.accountid], user, True)[0]
-            if pa.sldb_privacy_mode != skills["privacyMode"]:
-                pa.sldb_privacy_mode = skills["privacyMode"]
-                pa.save()
-            for mt, i in settings.SLDB_SKILL_ORDER:
-                ratings.append(Rating(game=Game.objects.get(abbreviation="BA"), match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i]))
-        except Exception, e:
-            logger.error("Exception in get_sldb_playerskill(): %s", e)
-            c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
+        for game in pa.get_all_games():
+            if not game.sldb_name:
+                continue
+            try:
+                user = request.user if request.user.is_authenticated() else None
+                skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
+                if pa != skills["account"]:
+                    errmsg = "Requested (%s) and returned (%s) PlayerAccounts do not match!"%(pa, skills["account"])
+                    logger.error(errmsg)
+                    raise Exception(errmsg)
+                if pa.sldb_privacy_mode != skills["privacyMode"]:
+                    pa.sldb_privacy_mode = skills["privacyMode"]
+                    pa.save()
+                for mt, i in settings.SLDB_SKILL_ORDER:
+                    ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
+            except Exception, e:
+                logger.error("Exception in/after get_sldb_playerskill(): %s", e)
+                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
 
     c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
 #     c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")

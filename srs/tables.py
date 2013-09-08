@@ -62,7 +62,7 @@ class GameTable(tables.Table):
     count          = tables.Column(verbose_name="# matches")
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "name"
+        order_by = "-name"
 
 class UserTable(tables.Table):
     name           = tables.LinkColumn('user_detail', args=[A('accountid')])
@@ -130,7 +130,7 @@ class MatchRatingHistoryTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
-        order_by = "-elo"
+        order_by = "-trueskill_mu"
 
     def render_trueskill_mu(self, value, record):
         if record["match_type"] == "O": return ""
@@ -169,9 +169,9 @@ class RatingTable(tables.Table):
 
     class Meta:
         model = Rating
-        fields = ("playername", "elo", "glicko", "trueskill_mu", "num_matches")
+        fields = ("playername", "trueskill_mu", "num_matches")
         attrs    = {'class': 'paleblue'}
-        order_by = "-elo"
+        order_by = "-trueskill_mu"
 
     def render_trueskill_mu(self, value, record):
         if record["match_type"] == "O": return ""

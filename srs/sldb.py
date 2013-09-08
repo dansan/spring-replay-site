@@ -2,6 +2,7 @@ from django.conf import settings
 from srs.models import *
 import logging
 import xmlrpclib
+import socket
 
 logger = logging.getLogger(__package__)
 
@@ -46,28 +47,38 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
     privatize: privatize TS depending on privacyMode and logged in user,
                if False exact values are returned regardless of privacyMode
                and user
+
+    May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
+    a problem with the data/request.
+    If the overall request was OK, but one or more results are bad, no
+    exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0] will be
+    returned.
     """
     logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
+    socket_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
     rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
     try:
         rpc_skills = rpc_srv.getSkills(settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, game_abbr, accountids)
     except Exception, e:
         logger.error("Exception in getSkill(..., %s, %s): %s", game_abbr, accountids, e)
+        socket.setdefaulttimeout(socket_timeout)
         raise e
-
+    socket.setdefaulttimeout(socket_timeout)
     if rpc_skills["status"] != 0:
-        errmsg = "getSkill(..., %s, %s) returned status %d" %(game_abbr, accountids, rpc_skills["status"])
+        errmsg = "getSkill(..., %s, %s) returned status %d, got: %s" %(game_abbr, accountids, rpc_skills["status"], rpc_skills)
         logger.error(errmsg)
         raise Exception(errmsg)
     else:
         for pa_result in rpc_skills["results"]:
             if pa_result["status"] != 0:
-                logger.error("status: %d for accountId %d", pa_result["status"], pa_result["accountId"])
-                pa_result["skills"] = [0.0, 0.0, 0.0, 0.0]
+                logger.error("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
+                pa_result["skills"] = [[0, 0], [0, 0], [0, 0], [0, 0]]
             else:
-                logger.debug("accountId: %d privacyMode: %d skills: %s", pa_result["accountId"], pa_result["privacyMode"], pa_result["skills"])
                 for i in range(4):
                     ts = float(pa_result["skills"][i].split("|")[0])
+                    si = float(pa_result["skills"][i].split("|")[1])
+                    pa_result["skills"][i] = [0, 0]
                     if privatize:
                         pa = PlayerAccount.objects.get(accountid=pa_result["accountId"])
                         if pa.sldb_privacy_mode == 0:
@@ -77,9 +88,18 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
                                 do_priv = user.get_profile().accountid != pa.accountid
                             else:
                                 do_priv = True
-                    if do_priv:
-                        pa_result["skills"][i] = privatize_skill(ts)
                     else:
-                        pa_result["skills"][i] = ts
-                logger.debug("returned skills: %s", pa_result["skills"])
+                        do_priv = False
+
+                    if do_priv:
+                        pa_result["skills"][i][0] = privatize_skill(ts)
+                    else:
+                        pa_result["skills"][i][0] = ts
+                    pa_result["skills"][i][1] = si
+            try:
+                pa_result["account"] = PlayerAccount.objects.get(accountid=pa_result["accountId"])
+            except Exception, e:
+                logger.error("Unknown PlayerAccount(%d): %s", pa_result["accountId"], e)
+                pass
+        logger.debug("returning: %s", rpc_skills["results"])
         return rpc_skills["results"]

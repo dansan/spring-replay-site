@@ -8,7 +8,6 @@
 
 from django import forms
 from ajax_select.fields import AutoCompleteSelectMultipleField
-from srs.models import Player, PlayerAccount, Game, RatingBase
 import logging
 logger = logging.getLogger(__package__)
 
@@ -47,55 +46,3 @@ class AdvSearchForm(forms.Form):
         for field in ["game", "tag", "maps", "player", "uploader", "autohost"]:
             self.fields[field].widget.attrs['size'] = 26
             self.fields[field].widget.attrs['title'] = "Start typing. Click autocompleted results to add them to the query, use trashcan to remove it."
-
-class ManualRatingAdjustmentForm(forms.Form):
-    player     = forms.ChoiceField(widget=forms.Select(attrs={"onchange": "Dajaxice.srs.views.mra_update_game(Dajax.process, {'paid':this.value})"}))
-    game       = forms.ChoiceField(widget=forms.Select(attrs={"onchange": "Dajaxice.srs.views.mra_update_match_type(Dajax.process, {'gameid':this.value, 'paid':$('#id_player').children('option:selected').val()})"}))
-    match_type = forms.ChoiceField(widget=forms.Select(attrs={"onchange": "Dajaxice.srs.views.mra_update_ratings(Dajax.process, {'matchtype': this.value, 'gameid':$('#id_game').children('option:selected').val(), 'paid':$('#id_player').children('option:selected').val()})"}))
-    elo        = forms.FloatField(min_value=0, max_value=2600, required=False)
-    glicko     = forms.FloatField(min_value=0, max_value=2600, required=False)
-    trueskill  = forms.FloatField(min_value=0, max_value=50, required=False)
-
-    def __init__(self, *args, **kwargs):
-        super(ManualRatingAdjustmentForm, self).__init__(*args, **kwargs)
-        players = Player.objects.exclude(name__startswith="Bot (of").values_list("account", "name").distinct().order_by("name")
-        self.fields["player"].choices = [(pa_id, name.ljust(30, ".")+" (%d, %s)"%(pa_id, PlayerAccount.objects.get(id=pa_id).preffered_name)) for (pa_id, name) in players if pa_id > 0]
-        self.fields["player"].choices.insert(0, (0, "Please select a player."))
-
-        self.fields["game"].choices = Game.objects.values_list("id", "name").order_by("name")
-        self.fields["game"].choices.insert(0, (0, "Please select a game."))
-
-        self.fields["match_type"].choices = RatingBase.MATCH_TYPE_CHOICES
-        self.fields["match_type"].choices.insert(0, (0, "Please select a match type."))
-
-class UnifyAccountsForm(forms.Form):
-    player1 = forms.ChoiceField()
-    player2 = forms.ChoiceField()
-
-    def __init__(self, *args, **kwargs):
-        super(UnifyAccountsForm, self).__init__(*args, **kwargs)
-        playeraccounts = PlayerAccount.objects.exclude(accountid=0)#.values_list("accountid", "preffered_name", "primary_account")
-        choices = list()
-        for pa in playeraccounts: # (pa_id, name, pri_acc)
-            if pa.primary_account:
-                choices.append((pa.get_primary_account().accountid, "%06d"%pa.accountid+"..."+pa.preffered_name.ljust(30, ".")+" (%d, %s)"%(pa.get_primary_account().accountid, pa.get_primary_account().preffered_name)))
-            else:
-                choices.append((pa.accountid, "%06d"%pa.accountid+"..."+pa.preffered_name))
-        choices.insert(0, (0, "Please select a player."))
-
-        self.fields["player1"].choices = choices
-        self.fields["player2"].choices = choices
-
-    def clean(self):
-        try:
-            player1 = PlayerAccount.objects.get(accountid=self.cleaned_data.get("player1"))
-            player2 = PlayerAccount.objects.get(accountid=self.cleaned_data.get("player2"))
-        except Exception, e:
-            logger.error("Invalid AccountIDs: player1='%s', player2='%s', Exeption='%s'", self.cleaned_data.get("player1"), self.cleaned_data.get("player2"), e)
-            raise forms.ValidationError("Invalid AccountIDs")
-
-        if player1 in player2.get_all_accounts():
-            logger.error("Accounts are already unified: %s AND %s", player1, player2)
-            raise forms.ValidationError("Accounts are already unified.")
-        else:
-            return self.cleaned_data

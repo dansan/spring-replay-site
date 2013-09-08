@@ -114,6 +114,9 @@ class Replay(models.Model):
         get_latest_by = 'upload_date'
         ordering = ['-upload_date']
 
+    def game(self):
+        return self.game_release().game
+
     def game_release(self):
         gr_name = self.gametype
         try:
@@ -265,6 +268,10 @@ class PlayerAccount(models.Model):
     def get_preffered_name(self):
         return self.get_primary_account().preffered_name
 
+    def get_all_games(self):
+        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).values_list("gametype", flat=True)
+        return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
+
     class Meta:
         ordering = ['accountid']
 
@@ -272,8 +279,9 @@ class PlayerAccount(models.Model):
 class Player(models.Model):
     account         = models.ForeignKey(PlayerAccount, blank=True, null = True)
     name            = models.CharField(max_length=128, db_index=True)
-    rank            = models.IntegerField()
+    rank            = models.SmallIntegerField()
     skill           = models.CharField(max_length=16, blank=True)
+    skilluncertainty= models.SmallIntegerField(default=-1, blank=True)
     spectator       = models.BooleanField()
     team            = models.ForeignKey("Team", blank=True, null = True)
     replay          = models.ForeignKey(Replay)
@@ -346,6 +354,7 @@ class SiteStats(models.Model):
 class Game(models.Model):
     name         = models.CharField(max_length=256, db_index=True)
     abbreviation = models.CharField(max_length=64, db_index=True)
+    sldb_name    = models.CharField(max_length=64, db_index=True)
 
     def __unicode__(self):
         return self.name[:70]+" ("+self.abbreviation+")"
@@ -359,7 +368,7 @@ class Game(models.Model):
 
 
 class GameRelease(models.Model):
-    name    = models.CharField(max_length=256)
+    name    = models.CharField(max_length=256, db_index=True)
     version = models.CharField(max_length=64)
     game    = models.ForeignKey(Game)
 
@@ -395,7 +404,7 @@ class RatingBase(models.Model):
         else                           : return 0
 
     def __unicode__(self):
-        return "("+str(self.id)+") "+str(self.playername)+" | "+self.game.abbreviation+" | "+self.match_type+" | "+"elo:("+str(self.elo)+", "+str(self.elo_k)+") glicko:("+str(self.glicko)+", "+str(self.glicko_rd)+") trueskill: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
+        return "("+str(self.id)+") "+str(self.playername)+" | "+self.game.abbreviation+" | "+self.match_type+" | "+" TS: ("+str(self.trueskill_mu)+", "+str(self.trueskill_sigma)+")"
 
     class Meta:
         ordering = ['-trueskill_mu']
