@@ -40,7 +40,7 @@ def privatize_skill(ts):
     return rank2skill[skill2rank(ts)]
 
 def demoskill2float(skill):
-    num = ""
+    num = "0"
     for s in skill:
         if s.isdigit() or s == ".":
             num += s

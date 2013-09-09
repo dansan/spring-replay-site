@@ -341,7 +341,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         try:
             skill = player["skill"]
         except:
-            skill = "?"
+            skill = ""
         try:
             skilluncertainty = player["skilluncertainty"]
         except:
