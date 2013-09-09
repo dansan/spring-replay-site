@@ -165,7 +165,7 @@
                 <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
                     <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
                     <td></td>
-    {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}{% if old_rating != 0 and new_rating != 0 %}
+    {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
                     <td style="text-align:right;">{{ old_rating|floatformat:1 }}</td>
                     <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
                     <td style="text-align:right;"><div class="blind_winner" style="display:none;">{{ new_rating|floatformat:1 }}</div></td>
@@ -175,7 +175,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-    {% endif %}{% endif %}
+    {% endif %}
 	            </tr>
     {% for p, pl_old, pl_new in players %}
                 <tr class="body linehl" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color: #{{ p.team.rgbcolor }};">

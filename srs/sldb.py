@@ -87,12 +87,11 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
                     si = float(pa_result["skills"][i].split("|")[1])
                     pa_result["skills"][i] = [0, 0]
                     if privatize:
-                        pa = PlayerAccount.objects.get(accountid=pa_result["accountId"])
-                        if pa.sldb_privacy_mode == 0:
+                        if pa_result["privacyMode"] == 0:
                             do_priv = False
                         else:
                             if user:
-                                do_priv = user.get_profile().accountid != pa.accountid
+                                do_priv = user.get_profile().accountid != pa_result["accountId"]
                             else:
                                 do_priv = True
                     else:
