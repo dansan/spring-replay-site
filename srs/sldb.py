@@ -39,6 +39,13 @@ def skill2rank(ts):
 def privatize_skill(ts):
     return rank2skill[skill2rank(ts)]
 
+def demoskill2float(skill):
+    num = ""
+    for s in skill:
+        if s.isdigit() or s == ".":
+            num += s
+    return float(num)
+
 def get_sldb_playerskill(game_abbr, accountids, user, privatize):
     """
     game_abbr: "BA", "ZK" etc

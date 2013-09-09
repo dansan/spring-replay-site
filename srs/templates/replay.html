@@ -141,6 +141,26 @@
                     <col />
                     <col />
                 </colgroup>
+{% if not user.is_authenticated or logged_in_pa and logged_in_pa.sldb_privacy_mode != 0 %}
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6">Want to see <b>exact TrueSkill</b> values?</td>
+                </tr>
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6">* <u><a href="{% url srs.views.login %}">Log in</a></u> to see yours.</td>
+                </tr>
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6">* To let others see your TrueSkill, type into lobby chat: <pre>/msg SLDB !set privacyMode 0</pre></td>
+                </tr>
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6">* To see other players exact skills, tell them to do so too.</td>
+                </tr>
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6"><br/></td>
+                </tr>
+                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                    <td colspan="6"><br/></td>
+                </tr>
+{% endif %}
 {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
                 <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
                     <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>

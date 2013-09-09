@@ -509,14 +509,19 @@ def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
     if not short:
-        short = "%s %s on %s"%(replay.num_players(), replay.match_type(), replay.map_info.name)
-    if autotag in short:
+        short = "%s on %s"%(replay.match_type(), replay.map_info.name)
+        if replay.match_type() != "1v1":
+            short = replay.num_players() + " " + short
         replay.title = short
     else:
-        replay.title = autotag+" "+short
+        logger.debug("short")
+        if autotag in short.split():
+            replay.title = short
+        else:
+            replay.title = autotag+" "+short
 
     num_tag = replay.num_players()
-    if num_tag not in short:
+    if num_tag not in short.split():
         replay.title = num_tag+" "+short
 
 def clamp(val, low, high):

@@ -20,6 +20,12 @@ def all_page_infos(request):
         update_stats()
         sist = SiteStats.objects.get(id=1)
 
+    if request.user.is_authenticated():
+        try:
+            c["logged_in_pa"] = PlayerAccount.objects.get(accountid=request.user.get_profile().accountid)
+        except:
+            pass
+
     c["total_replays"]   = sist.replays
     if sist.tags: c["top_tags"] = [Tag.objects.get(id=int(x)) for x in sist.tags.split('|')]
     if sist.maps: c["top_maps"] = [Map.objects.get(id=int(x)) for x in sist.maps.split('|')]

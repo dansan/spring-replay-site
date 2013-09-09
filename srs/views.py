@@ -31,7 +31,7 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill
+from sldb import get_sldb_playerskill, privatize_skill, demoskill2float
 
 logger = logging.getLogger(__package__)
 
@@ -114,7 +114,8 @@ def replay(request, gameID):
                     pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
                 except:
                     # no rating on this replay
-                    pl_new = 0
+                    pl_new = Player.objects.get(replay=replay, account=pa).skill
+                    pl_new = demoskill2float(pl_new) if pl_new else 0
                 try:
                     # find previous TS value
                     pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
