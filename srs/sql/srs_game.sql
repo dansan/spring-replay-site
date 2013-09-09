@@ -1,0 +1,10 @@
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (1, 'Balanced Annihilation', 'BA', 'BA');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (2, 'NOTA', 'NOTA', 'NOTA');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (3, 'Chicken Defense (BA)', 'CD', '');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (4, 'Robot Defense', 'RD', '');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (5, 'Spring: 1944', 'S1944', 'S1944');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (6, 'Tech Annihilation', 'TA', 'TA');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (7, 'XTA', 'XTA', 'XTA');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (8, 'Zero-K', 'ZK', 'ZK');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (9, 'Evolution RTS', 'EvoRTS', 'EVO');
+INSERT INTO `srs_game` (`id`, `name`, `abbreviation`, `sldb_name`) VALUES (10, 'Imperial Winter', 'IW', '');
