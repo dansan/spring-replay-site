@@ -30,6 +30,7 @@ from forms import UploadFileForm, UploadMediaForm
 import parse_demo_file
 import spring_maps
 from sldb import get_sldb_playerskill
+from srs.sldb import demoskill2float
 
 logger = logging.getLogger(__package__)
 
@@ -426,13 +427,13 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     return replay
 
 def rate_match(replay):
-    # Workaround until getMatchSkills() is implemented by SLDB:
-    # fetch TS values for each player if match happend in the last 20min.
+    game = replay.game()
     if datetime.datetime.now(replay.unixTime.tzinfo) - replay.unixTime < datetime.timedelta(minutes=20):
+        # Workaround until getMatchSkills() is implemented by SLDB:
+        # fetch TS values for each player if match happend in the last 20min.
         logger.debug("Detected recent upload, fetching TS values from SLDB.")
         accountids = [int(i) for i in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False).exclude(accountid__lte=0).values_list("accountid", flat=True)]
         try:
-            game = replay.game()
             sldb_skills = get_sldb_playerskill(game.abbreviation, accountids, None, False)
             for sldb_skill in sldb_skills:
                 if sldb_skill["status"] != 0:
@@ -447,9 +448,31 @@ def rate_match(replay):
                         pa_rating.trueskill_mu    = sldb_skill["skills"][i][0]
                         pa_rating.trueskill_sigma = sldb_skill["skills"][i][1]
                         pa_rating.save()
-                        RatingHistory.objects.create(playeraccount=sldb_skill["account"], match=replay, game=game, match_type=mt, trueskill_mu=pa_rating.trueskill_mu, trueskill_sigma=pa_rating.trueskill_sigma) 
+                        rh, created = RatingHistory.objects.get_or_create(playeraccount=sldb_skill["account"], match=replay, game=game, match_type=mt,
+                                                                          defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
+                        if not created:
+                            rh.trueskill_mu    = pa_rating.trueskill_mu
+                            rh.trueskill_sigma = pa_rating.trueskill_sigma
+                            rh.save()
         except Exception, e:
             logger.error("Exception in/after get_sldb_playerskill(): %s", e)
+    else:
+        # use "skill" tag from demo data if available
+        logger.debug("trying to use skill tag from demofile")
+        for player in Player.objects.filter(replay=replay, spectator=False).exclude(skill=""):
+            logger.debug("Player(%d) %s has player.skill: %s", player.skill)
+            logger.debug("Player(%d) %s has demoskill2float(player.skill): %s", demoskill2float(player.skill))
+            pa_rating = player.account.get_rating(game, replay.match_type_short())
+            logger.debug("pa_rating: %s", pa_rating)
+            pa_rating.trueskill_mu    = demoskill2float(player.skill)
+            pa_rating.save()
+            logger.debug("pa_rating after save(): %s", pa_rating)
+            rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
+                                                              defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
+            if not created:
+                rh.trueskill_mu    = pa_rating.trueskill_mu
+                rh.trueskill_sigma = pa_rating.trueskill_sigma
+                rh.save()
 
 def set_accountid(player):
     if player.has_key("lobbyid"):

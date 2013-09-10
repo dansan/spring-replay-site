@@ -100,10 +100,7 @@ def replay(request, gameID):
         players_w_rating = list()
         if replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or Player.objects.filter(account__accountid=0, replay=replay).exists():
             # notcomplete, no SLDB rating or bot present - no rating
-            new_rating = 0
-            old_rating = 0
-            for player in Player.objects.filter(account__in=playeraccounts, replay=replay):
-                players_w_rating.append((player, old_rating, new_rating))
+            players_w_rating = [(player, None, None) for player in players]
         else:
             # TrueSkill ratings
             old_rating = 0
@@ -114,24 +111,25 @@ def replay(request, gameID):
                     pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
                 except:
                     # no rating on this replay
-                    pl_new = Player.objects.get(replay=replay, account=pa).skill
-                    pl_new = demoskill2float(pl_new) if pl_new else 0
+                    pl_new = None
                 try:
                     # find previous TS value
                     pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
                 except:
-                    pl_old = 0
+                    pl_old = None
 
                 if playeraccounts.count() > 2 or pa.sldb_privacy_mode == 0:
-                    new_rating += pl_new
-                    old_rating += pl_old
+                    new_rating += pl_new if pl_new else 0
+                    old_rating += pl_old if pl_old else 0
                 else:
-                    new_rating += privatize_skill(pl_new)
-                    old_rating += privatize_skill(pl_old)
+                    new_rating += privatize_skill(pl_new) if pl_new else 0
+                    old_rating += privatize_skill(pl_old) if pl_old else 0
 
                 if pa.sldb_privacy_mode != 0 and (not request.user.is_authenticated() or pa.accountid != request.user.get_profile().accountid):
-                    pl_new = privatize_skill(pl_new)
-                    pl_old = privatize_skill(pl_old)
+                    if pl_new:
+                        pl_new = privatize_skill(pl_new)
+                    if pl_old:
+                        pl_old = privatize_skill(pl_old)
                 players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
 
         if teams:
