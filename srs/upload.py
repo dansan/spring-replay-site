@@ -458,15 +458,14 @@ def rate_match(replay):
             logger.error("Exception in/after get_sldb_playerskill(): %s", e)
     else:
         # use "skill" tag from demo data if available
-        logger.debug("trying to use skill tag from demofile")
-        for player in Player.objects.filter(replay=replay, spectator=False).exclude(skill=""):
-            logger.debug("Player(%d) %s has player.skill: %s", player.skill)
-            logger.debug("Player(%d) %s has demoskill2float(player.skill): %s", demoskill2float(player.skill))
+        logger.debug("Trying to use skill tag from demofile")
+        players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="").prefetch_related("account")
+        if not players.exists():
+            logger.debug(".. no skill tags found.")
+        for player in players:
             pa_rating = player.account.get_rating(game, replay.match_type_short())
-            logger.debug("pa_rating: %s", pa_rating)
             pa_rating.trueskill_mu    = demoskill2float(player.skill)
             pa_rating.save()
-            logger.debug("pa_rating after save(): %s", pa_rating)
             rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
                                                               defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
             if not created:

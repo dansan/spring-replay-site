@@ -114,7 +114,7 @@ def replay(request, gameID):
                     pl_new = None
                 try:
                     # find previous TS value
-                    pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__id__lt=replay.id).order_by("-id")[0].trueskill_mu
+                    pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__unixTime__lt=replay.unixTime,).order_by("-match__unixTime")[0].trueskill_mu
                 except:
                     pl_old = None
 
