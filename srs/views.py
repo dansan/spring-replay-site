@@ -98,14 +98,14 @@ def replay(request, gameID):
         teams = Team.objects.filter(allyteam=at)
         players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
         players_w_rating = list()
+        old_rating = 0
+        new_rating = 0
+        lobby_rank_sum = 0
         if replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or Player.objects.filter(account__accountid=0, replay=replay).exists():
             # notcomplete, no SLDB rating or bot present - no rating
             players_w_rating = [(player, None, None) for player in players]
         else:
             # TrueSkill ratings
-            old_rating = 0
-            new_rating = 0
-            lobby_rank_sum = 0
             for pa in playeraccounts:
                 try:
                     pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
