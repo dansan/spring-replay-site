@@ -9,6 +9,7 @@
 import logging
 import operator
 from os.path import basename
+import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -17,6 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.db.models import Count
+from django.utils import timezone
 
 import settings
 
@@ -462,12 +464,14 @@ def get_owner_list(uploader):
 
 def update_stats():
     replays  = Replay.objects.count()
-    tags     = Tag.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    maps     = Map.objects.annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    now = datetime.datetime.now(timezone.get_current_timezone())
+    start_date = now - datetime.timedelta(days=30)
+    tags     = Tag.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+    maps     = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     tp = list()
 
     for pa in PlayerAccount.objects.filter(primary_account__isnull=True).exclude(accountid=0).order_by("accountid"): # exclude bots
-        nummatches =  Player.objects.filter(account__in=pa.get_all_accounts(), spectator=False).count()
+        nummatches =  Player.objects.filter(account__in=pa.get_all_accounts(), spectator=False, replay__unixTime__range=(start_date, now)).count()
         tp.append((nummatches, pa))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
