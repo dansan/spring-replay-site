@@ -38,19 +38,27 @@
 	});
 </script>
 <style>
+.players {
+     font: 11px Verdana,Arial,Helvetica,sans-serif;
+     line-height: 14px;
+}
 .players a {
     color: inherit;
 }
 .players a:hover {
     color: #C3593C;
 }
+.bold {
+     font-weight: bold;
+}
+
   {% if has_video %}
- .flowplayer { width: 80%; background-color: #222; background-size: cover; max-width: 800px; }
- .flowplayer .fp-controls { background-color: rgba(0, 0, 0, 0.4)}
- .flowplayer .fp-timeline { background-color: rgba(0, 0, 0, 0.5)}
- .flowplayer .fp-progress { background-color: rgba(219, 0, 0, 1)}
- .flowplayer .fp-buffer { background-color: rgba(249, 249, 249, 1)}
- .flowplayer { background-image: url({{ STATIC_URL }}img/flvbackground.jpg)}
+.flowplayer { width: 80%; background-color: #222; background-size: cover; max-width: 800px; }
+.flowplayer .fp-controls { background-color: rgba(0, 0, 0, 0.4)}
+.flowplayer .fp-timeline { background-color: rgba(0, 0, 0, 0.5)}
+.flowplayer .fp-progress { background-color: rgba(219, 0, 0, 1)}
+.flowplayer .fp-buffer { background-color: rgba(249, 249, 249, 1)}
+.flowplayer { background-image: url({{ STATIC_URL }}img/flvbackground.jpg)}
   {% endif %}
 </style>
 {% endblock %}
@@ -131,7 +139,6 @@
 	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
             {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
             {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was stopped!</div>{% endif %}
-            <p class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;">{% if replay.match_type_short == "T" or replay.match_type_short == "G" %}TrueSkill{% else %}Elo{% endif %} &nbsp;[Rank]</p>
 	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
                 <colgroup>
                     <col />
@@ -142,27 +149,27 @@
                     <col />
                 </colgroup>
 {% if not user.is_authenticated or logged_in_pa and logged_in_pa.sldb_privacy_mode != 0 %}
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body">
                     <td colspan="6">Want to see <b>exact TrueSkill</b> values?</td>
                 </tr>
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body">
                     <td colspan="6">* <u><a href="{% url srs.views.login %}">Log in</a></u> to see yours.</td>
                 </tr>
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body">
                     <td colspan="6">* To let others see your TrueSkill, type into lobby chat: <pre>/msg SLDB !set privacyMode 0</pre></td>
                 </tr>
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body">
                     <td colspan="6">* To see other players exact skills, tell them to do so too.</td>
                 </tr>
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
-                    <td colspan="6"><br/></td>
-                </tr>
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body">
                     <td colspan="6"><br/></td>
                 </tr>
 {% endif %}
+                <tr class="body">
+                    <td colspan="6" style="text-align:right;">TrueSkill &nbsp;[Rank]</td>
+                </tr>
 {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
-                <tr class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">
+                <tr class="body bold">
                     <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
                     <td></td>
     {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
@@ -178,7 +185,7 @@
     {% endif %}
 	            </tr>
     {% for p, pl_old, pl_new in players %}
-                <tr class="body linehl" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; color: #{{ p.team.rgbcolor }};">
+                <tr class="body linehl bold" style="color: #{{ p.team.rgbcolor }};">
                     <td>{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
                     <td style="">{{ p.team.side|ljust:"4" }}</td>
 
@@ -186,7 +193,7 @@
                     <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
                     <td style="text-align:right;"><div class="blind_winner" style="display:none;">{{ pl_new }}</div></td>
 
-                    <td class="body linehl" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; text-align:right;" >&nbsp;[{{ p.rank }}]</td>
+                    <td class="body linehl" style="text-align:right;" >&nbsp;[{{ p.rank }}]</td>
                 </tr>
     {% endfor %}
                 <tr>
@@ -194,19 +201,19 @@
                 </tr>
 {% endfor %}
 	            <tr>
-		            <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px; padding-bottom:5px"><b>Spectators</b></td>
+		            <td class="body" style="padding-bottom:5px"><b>Spectators</b></td>
 	                <td></td><td></td><td></td><td></td><td></td>
                 </tr>
 	{% if specs|length > 0 %}
         {% for s in specs %}
                 <tr>
-	                <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">{{ s.name }}</td>
+	                <td class="body">{{ s.name }}</td>
 	                <td></td><td></td><td></td><td></td><td></td>
 	            </tr>
         {% endfor %}
 	{% else %}
                 <tr>
-                    <td class="body" style="font: 11px Arial,Helvetica,sans-serif; line-height: 14px;">None.</td>
+                    <td class="body">None.</td>
                     <td></td><td></td><td></td><td></td><td></td>
                 </tr>
     {% endif %}

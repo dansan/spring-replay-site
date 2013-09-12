@@ -29,3 +29,5 @@ l2 = logging.FileHandler(settings.LOG_PATH+'/srs_info.log')
 l2.setLevel(logging.INFO)
 l2.setFormatter(logging.Formatter(fmt=settings.INFO_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT))
 logger.addHandler(l2)
+
+# logging.disable(logging.DEBUG)
