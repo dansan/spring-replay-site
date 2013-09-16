@@ -21,6 +21,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}img/favicon.png" />
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/css/base.css"/>
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/piwik_track.js"></script>
 {% block listheader %}{% endblock %}
 {% block searchheader %}{% endblock %}
 {% block uploadheader %}{% endblock %}
@@ -109,19 +110,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     </div>
     <!-- Piwik -->
     <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
-	<script type="text/javascript">
-		var pkBaseURL = (("https:" == document.location.protocol) ? "https://replays.springrts.com/piwik/" : "http://replays.springrts.com/piwik/");
-		document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
-	</script>
-	<script type="text/javascript">
-		try {
-			var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 1);
-			piwikTracker.trackPageView();
-			piwikTracker.enableLinkTracking();
-		} catch( err ) {}
-	</script>
 	<noscript>
-	   <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p>
+	   <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></p>
 	</noscript>
 	<!-- End Piwik Tracking Code -->
 </body>

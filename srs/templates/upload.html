@@ -3,14 +3,7 @@
 {% block uploadheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/smoothness/jquery-ui-1.9.2.custom.min.css" />
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.9.2.custom.min.js"></script>
-
-<script type="text/javascript">
-  $(document).ready(function() {
-    $(".clickme").click(function () {
-      $(".blind").show("blind", {}, 1000);
-    });
-  });
-</script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/srs_upload.js"></script>
 {% endblock %}
 
 {% block pagetitle %}Upload{% endblock %}
