@@ -695,6 +695,7 @@ def login(request):
     c = all_page_infos(request)
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
+        form.fields["password"].max_length = 4096
         if form.is_valid():
             user = form.get_user()
             django.contrib.auth.login(request, user)
@@ -711,6 +712,7 @@ def login(request):
     else:
         form = AuthenticationForm()
     c['form'] = form
+    form.fields["password"].max_length = 4096
     c["pagedescription"] = "Login form"
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
