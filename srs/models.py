@@ -137,12 +137,15 @@ class Replay(models.Model):
                     game_name += gr_name_part+" "
 
             game_name = game_name.rstrip()
+            while game_name[-1] in [" ", "-"]:
+                game_name = game_name[:-1]
+
             version = version.rstrip()
 
             if version[0].upper() == "V" or version[0] == ".":
                 version = version[1:]
 
-            game, _ = Game.objects.get_or_create(name__startswith=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
+            game, _ = Game.objects.get_or_create(name=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
     def match_type(self):
