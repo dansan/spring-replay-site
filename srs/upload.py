@@ -156,9 +156,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     shutil.move(path, newpath)
     os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
-        replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, user)
-        replay.uploader = owner_ac
-        replay.save()
+        replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, owner_ac)
     except Exception, e:
         logger.error("Error in store_demofile_data(): %s", e)
         return "4 server error, please try again later, or contact admin"
@@ -221,7 +219,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     logger.debug("replay(%d) allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
 
     # if match is <2 min long, don't rate it
-    replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:") 
+    replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
 
     # get / create map infos
     try:
@@ -307,11 +305,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
         raise Exception("startpostype '%d' not supported"%startpos)
 
-    replay.save()
-
     # save tags
     save_tags(replay, tags)
-    replay.save()
 
     # save map and mod options
     def truncate_option(k, v):
