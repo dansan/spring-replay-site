@@ -130,7 +130,7 @@
                     <td colspan="6">Want to see <b>exact TrueSkill</b> values?</td>
                 </tr>
                 <tr class="body">
-                    <td colspan="6">* <u><a href="{% url srs.views.login %}">Log in</a></u> to see yours.</td>
+                    <td colspan="6">* <u><a href="{% url srs.views.login %}?next={{ selfurl }}">Log in</a></u> to see yours.</td>
                 </tr>
                 <tr class="body">
                     <td colspan="6">* To let others see your TrueSkill, type into lobby chat: <pre>/msg SLDB !set privacyMode 0</pre></td>
@@ -248,7 +248,7 @@
             <h3>Post a comment:</h3>
 {% render_comment_form for replay %}
 			{% else %}
-			<h3>To post a comment you have to <a href="{% url srs.views.login %}">log in</a>.</h3>
+			<h3>To post a comment you have to <a href="{% url srs.views.login %}?next={{ selfurl }}">log in</a>.</h3>
             {% endif %}
         </div>
         </div>

@@ -38,7 +38,7 @@ logger = logging.getLogger(__package__)
 @cache_control(must_revalidate=True, max_age=60)
 def index(request):
     c = all_page_infos(request)
-    c["newest_replays"] = Replay.objects.all().order_by("-pk")[:10]
+    c["newest_replays"] = Replay.objects.all().order_by("-unixTime")[:10]
     c["news"] = NewsItem.objects.filter(show=True).order_by('-pk')[:6]
     c["replay_details"] = False
     c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["newest_replays"]])
@@ -693,6 +693,7 @@ def login(request):
     from django.contrib.auth.forms import AuthenticationForm
 
     c = all_page_infos(request)
+    nexturl = request.GET.get('next')
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         form.fields["password"].max_length = 4096
@@ -700,7 +701,6 @@ def login(request):
             user = form.get_user()
             django.contrib.auth.login(request, user)
             logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.get_profile().aliases)
-            nexturl = request.GET.get('next')
             # TODO: "next" is never passed...
             if nexturl:
                 dest = nexturl
@@ -711,6 +711,7 @@ def login(request):
             logger.info("login error: %s", form.errors)
     else:
         form = AuthenticationForm()
+    c["next"] = nexturl
     c['form'] = form
     form.fields["password"].max_length = 4096
     c["pagedescription"] = "Login form"
@@ -723,7 +724,12 @@ def logout(request):
     username = str(request.user)
     django.contrib.auth.logout(request)
     logger.info("Logged out user '%s'", username)
-    return HttpResponseRedirect("/")
+    nexturl = request.GET.get('next')
+    if nexturl:
+        dest = nexturl
+    else:
+        dest = "/"
+    return HttpResponseRedirect(dest)
 
 def media(request, mediaid):
     media = get_object_or_404(ExtraReplayMedia, id=mediaid)

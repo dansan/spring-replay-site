@@ -4,6 +4,6 @@
 
 {% block maincontent%}
 
-<p>To edit this replay you must login as the uploader ({{ replay.uploader }}).</p>
+<p>To edit this replay you must <a href="{% url srs.views.login %}?next={{ selfurl }}">login</a> as the uploader ({{ replay.uploader }}).</p>
 
 {% endblock %}

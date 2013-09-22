@@ -36,9 +36,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="top_info">
                 <div class="top_info_right">
                     {% if user.is_authenticated %}
-                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | {% endif %}<a href="{% url srs.views.logout %}">Logout</a></p>
+                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url srs.upload.upload %}">Upload</a> | <a href="{% url srs.views.user_settings %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | {% endif %}<a href="{% url srs.views.logout %}?next={{ selfurl }}">Logout</a></p>
                     {% else %}
-                    <p><a href="/">Home</a> | You are not Logged in. To upload a replay or write a comment you must <b><a href="{% url srs.views.login %}">Log in</a></b> using your spring lobby account. If you don't have one start a lobby and register.</p>
+                    <p><a href="/">Home</a> | You are not Logged in. To upload a replay or write a comment you must <b><a href="{% url srs.views.login %}?next={{ selfurl }}">Log in</a></b> using your spring lobby account. If you don't have one start a lobby and register.</p>
                     {% endif %}                    
                 </div>      
             </div>

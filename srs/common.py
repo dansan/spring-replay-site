@@ -32,4 +32,5 @@ def all_page_infos(request):
     if sist.players: c["top_players"] = [PlayerAccount.objects.get(id=int(x)) for x in sist.players.split('|')]
     if sist.comments: c["latest_comments"] = [Comment.objects.get(id=int(x)) for x in sist.comments.split('|')]
     c["all_games"] = Game.objects.all()
+    c["selfurl"] = request.path
     return c

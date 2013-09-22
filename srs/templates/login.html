@@ -8,7 +8,7 @@
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
 
-<form action="." method="post">{% csrf_token %}
+<form action="{{ selfurl }}?next={{ next }}" method="post">{% csrf_token %}
     {{ form.as_p }}
     <p><input type="submit" value="Submit" /></p>
     <p><input type="hidden" name="next" value="{{ next }}" /></p>
