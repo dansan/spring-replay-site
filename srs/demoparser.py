@@ -1,7 +1,9 @@
 import sys
 import struct
 import zlib
+import logging
 
+logger = logging.getLogger(__package__)
 
 class DemoParser:
 	DEMOFILE_MAGIC = 'spring demofile'
@@ -379,3 +381,5 @@ def parsePacket(packet):
 		cmd = 'teamstat'
 		data = 'unparsed'
 		return write(locals(), 'cmd', 'data')
+	else:
+		logger.error("Unknown cmd found. packet: %s cmd: %s data: %s", packet, cmd, data)

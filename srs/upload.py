@@ -429,7 +429,7 @@ def rate_match(replay):
         logger.debug("Detected recent upload, fetching TS values from SLDB.")
         accountids = [int(i) for i in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False).exclude(accountid__lte=0).values_list("accountid", flat=True)]
         try:
-            sldb_skills = get_sldb_playerskill(game.abbreviation, accountids, None, False)
+            sldb_skills = get_sldb_playerskill(game.sldb_name, accountids, None, False)
             for sldb_skill in sldb_skills:
                 if sldb_skill["status"] != 0:
                     logger.error("status = %d for accountid = %d", sldb_skill["status"], sldb_skill["accountId"])

@@ -48,7 +48,7 @@ def demoskill2float(skill):
 
 def get_sldb_playerskill(game_abbr, accountids, user, privatize):
     """
-    game_abbr: "BA", "ZK" etc
+    game_abbr: "BA", "ZK" etc from Game.sldb_name
     accountids: [1234, 567]  -- PlayerAccount for those must already exist!
     user: request.user
     privatize: privatize TS depending on privacyMode and logged in user,
