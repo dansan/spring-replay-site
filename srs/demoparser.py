@@ -104,7 +104,8 @@ class DemoParser:
 		return {'modGameTime':modGameTime, 'length':length, 'data':data}
 
 def write(vars, *keys):
-	blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
+#	blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
+	blacklist = ('newframe', 'playerinfo', 'mapdraw', 'aicommand')
 	returnval = dict()
 	if vars['cmd'] in blacklist: return
 	for key in keys:

@@ -1,28 +1,8 @@
 import io
 from ConfigParser import RawConfigParser as CfgParser
 from collections import defaultdict
-# import datetime
 
-# from db_entities import Result
 class Result():
-# 	__tablename__ 	= 'results'
-# 	id 				= Column( Integer, primary_key=True )
-# 	player_id 		= Column( Integer, ForeignKey( Player.id ) )
-# 	match_id 		= Column( Integer, ForeignKey( Match.id ) )
-# 	ladder_id 		= Column( Integer, ForeignKey( Ladder.id ),index=True )
-# 	date 			= datetime.datetime(1,1,1)
-# 	team			= int()
-# 	ally			= int()
-# 	disconnect		= int()
-# 	quit			= bool()
-# 	died			= int()
-# 	desync			= int()
-# 	timeout			= bool()
-# 	kicked			= bool()
-# 	connected		= bool()
-
-# 	player			= relation(Player)
-# 	match			= relation(Match)
 
 	def __init__(self):
 		self.team 		= -1
@@ -34,6 +14,9 @@ class Result():
 		self.connected	= False
 		self.quit		= False
 		self.kicked		= False
+		self.start_pos_x= -1
+		self.start_pos_y= -1
+		self.start_pos_z= -1
 
 	def __cmp__(self,other):
 		assert isinstance(other,Result)
@@ -116,9 +99,9 @@ class Script(object):
 		self.restrictions = dict()
 		self.mapoptions = dict() 
 		self.modoptions = dict()
-		self.players = defaultdict(Result) 
+		self.players = defaultdict(Result)
 		self.bots = dict()
-		self.spectators = dict()
+		self.spectators = defaultdict(Result)
 		self.teams = [] 
 		self.allies = []
 		self.other = dict()
@@ -146,4 +129,3 @@ class Script(object):
 				self.other['mapname'] = config.get(section, 'mapname')
 			if config.has_option(section, 'gametype'):
 				self.other['modname'] = config.get(section, 'gametype')
-				
