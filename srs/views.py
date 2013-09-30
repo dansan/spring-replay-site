@@ -148,6 +148,7 @@ def replay(request, gameID):
     else:
         c["table"] = TSMatchRatingHistoryTable(rh)
 
+    c["has_bot"] = replay.tags.filter(name="Bot").exists()
     c["specs"] = Player.objects.filter(replay=replay, spectator=True).order_by("name")
     c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
