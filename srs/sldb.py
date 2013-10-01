@@ -72,6 +72,13 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
         socket.setdefaulttimeout(socket_timeout)
         raise e
     socket.setdefaulttimeout(socket_timeout)
+#
+# "status"   values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
+# "results"  is an array of maps having following keys: accountId (int), status (int), privacyMode (int), skills (array)
+#     "status"   values: 0: OK, 1: invalid accountId, 2: unknown skill (user not rated yet) (the privacyMode and skills keys are only present if status=0)
+#     "skills"   is an array of 5 strings containing skill data in following order:
+#                Duel.mu|Duel.sigma , Ffa.mu|Ffa.sigma , Team.mu|Team.sigma , TeamFfa.mu|TeamFfa.sigma , Global.mu|Global.sigma
+#
     if rpc_skills["status"] != 0:
         errmsg = "getSkill(..., %s, %s) returned status %d, got: %s" %(game_abbr, accountids, rpc_skills["status"], rpc_skills)
         logger.error(errmsg)
@@ -79,10 +86,10 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
     else:
         for pa_result in rpc_skills["results"]:
             if pa_result["status"] != 0:
-                logger.error("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
-                pa_result["skills"] = [[0, 0], [0, 0], [0, 0], [0, 0]]
+                logger.info("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
+                pa_result["skills"] = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
             else:
-                for i in range(4):
+                for i in range(5):
                     ts = float(pa_result["skills"][i].split("|")[0])
                     si = float(pa_result["skills"][i].split("|")[1])
                     pa_result["skills"][i] = [0, 0]

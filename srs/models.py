@@ -393,6 +393,7 @@ class RatingBase(models.Model):
                            ('T', u'Team'),
                            ('F', u'FFA'),
                            ('G', u'TeamFFA'),
+                           ('L', u'Global'),
                            )
     match_type         = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
     playeraccount = models.ForeignKey(PlayerAccount)
