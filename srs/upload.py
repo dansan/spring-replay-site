@@ -332,8 +332,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
         if pa.preffered_name == "??":
             pa.preffered_name = player["name"]
+            pa.save()
         if pa.countrycode == "??":
             pa.countrycode    = player["countrycode"]
+            pa.save()
         try:
             skill = player["skill"]
         except:
@@ -443,12 +445,8 @@ def rate_match(replay):
                         pa_rating.trueskill_mu    = sldb_skill["skills"][i][0]
                         pa_rating.trueskill_sigma = sldb_skill["skills"][i][1]
                         pa_rating.save()
-                        rh, created = RatingHistory.objects.get_or_create(playeraccount=sldb_skill["account"], match=replay, game=game, match_type=mt,
-                                                                          defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
-                        if not created:
-                            rh.trueskill_mu    = pa_rating.trueskill_mu
-                            rh.trueskill_sigma = pa_rating.trueskill_sigma
-                            rh.save()
+                        RatingHistory.objects.get_or_create(playeraccount=sldb_skill["account"], match=replay, game=game, match_type=mt,
+                                                            defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
         except Exception, e:
             logger.error("Exception in/after get_sldb_playerskill(): %s", e)
     else:
@@ -461,12 +459,8 @@ def rate_match(replay):
             pa_rating = player.account.get_rating(game, replay.match_type_short())
             pa_rating.trueskill_mu    = demoskill2float(player.skill)
             pa_rating.save()
-            rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
-                                                              defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
-            if not created:
-                rh.trueskill_mu    = pa_rating.trueskill_mu
-                rh.trueskill_sigma = pa_rating.trueskill_sigma
-                rh.save()
+            RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
+                                                defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
 
 def set_accountid(player):
     if player.has_key("lobbyid"):
