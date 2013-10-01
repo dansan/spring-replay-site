@@ -340,11 +340,13 @@ def player(request, accountid):
                     errmsg = "Requested (%s) and returned (%s) PlayerAccounts do not match!"%(pa, skills["account"])
                     logger.error(errmsg)
                     raise Exception(errmsg)
-                if pa.sldb_privacy_mode != skills["privacyMode"]:
-                    pa.sldb_privacy_mode = skills["privacyMode"]
-                    pa.save()
-                for mt, i in settings.SLDB_SKILL_ORDER:
-                    ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
+                if skills["status"] == 0:
+                    # privacyMode and skills is only set by sldb if status==0
+                    if pa.sldb_privacy_mode != skills["privacyMode"]:
+                        pa.sldb_privacy_mode = skills["privacyMode"]
+                        pa.save()
+                    for mt, i in settings.SLDB_SKILL_ORDER:
+                        ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
             except Exception, e:
                 logger.error("Exception in/after get_sldb_playerskill(): %s", e)
                 c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
