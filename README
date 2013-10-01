@@ -27,4 +27,4 @@ Needs
 * jQuery UI: http://jqueryui.com/
 * flowplayer: http://flowplayer.org/
 
-Rename local_settings_.py to local_settings.py, and edit.
+Copy local_settings_.py to local_settings.py, and overwrite default settings there.

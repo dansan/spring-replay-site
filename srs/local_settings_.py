@@ -1,4 +1,4 @@
-# edit and rename to local_settings.py
+# copy to local_settings.py and overwrite settings there
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG

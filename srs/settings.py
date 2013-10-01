@@ -206,4 +206,6 @@ LOGGING = {
 }
 
 # import site specific settings
+from local_settings_ import *
+# overwrite default settings
 from local_settings import *
