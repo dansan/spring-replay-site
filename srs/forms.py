@@ -8,6 +8,8 @@
 
 from django import forms
 from ajax_select.fields import AutoCompleteSelectMultipleField
+from django.utils.safestring import mark_safe
+from django.utils.encoding import force_unicode
 import logging
 logger = logging.getLogger(__package__)
 
@@ -46,3 +48,13 @@ class AdvSearchForm(forms.Form):
         for field in ["game", "tag", "maps", "player", "uploader", "autohost"]:
             self.fields[field].widget.attrs['size'] = 26
             self.fields[field].widget.attrs['title'] = "Start typing. Click autocompleted results to add them to the query, use trashcan to remove it."
+
+class RadioSelectTableRenderer(forms.widgets.RadioFieldRenderer):
+    def render(self):
+        return mark_safe(u'\n'.join([u'<tr><td>%s</td></tr>' % force_unicode(w) for w in self]))
+
+class SLDBPrivacyForm(forms.Form):
+    MODE_CHOICES = ((0, '<b>Privacy disabled</b>: your exact trueskill rating is shown to everyone on the replay website and in "!status" output on the autohosts.'),
+                    (1, '<b>Basic privacy enabled <u>(default)</u></b>: players and website visitors only see a rough estimate of your trueskill rating. If you log into the website you will still see your own exact ratings. On the autohosts only privileged users can still see an exact value in !status output.'),
+                    (2, '<b>Full privacy enabled</b>: same as "Basic privacy", but even privileged autohost users see only a rough estimate in !status output.'))
+    mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect(renderer=RadioSelectTableRenderer))

@@ -28,6 +28,7 @@ urlpatterns = patterns('',
     url(r'^feeds/latest_comments/$', SRSLatestCommentFeed()),
     url(r'^feeds/latest/$', LatestUploadsFeed()),
     url(r'^feeds/uploader/(?P<username>[\w\ .:()\[\]-]+)/$', UploaderFeed()),
+    url(r'^sldb_privacy_mode/$', 'srs.views.sldb_privacy_mode'),
 
     url(r'^replays/$', 'srs.views.replays'),
     url(r'^replay/(?P<gameID>[0-9,a-f]+)/$', 'srs.views.replay', name="replay_detail"),

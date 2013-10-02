@@ -127,7 +127,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
 
 def get_sldb_pref(accountid, pref):
     """
-    get_sldb_pref(130601, "privacyMode")
+    get_sldb_pref(130601, "privacyMode") -> {'status': 0, 'result': '0'}
 
     returns a dict with following keys: status (int), result (string)
         "status" values: 0: OK, 1: authentication failed, 2: invalid params
@@ -137,7 +137,7 @@ def get_sldb_pref(accountid, pref):
 
 def set_sldb_pref(accountid, pref, value=None):
     """
-    set_sldb_pref(130601, "privacyMode", "0")
+    set_sldb_pref(130601, "privacyMode", "0") -> {'status': 0}
     "value" is optional, if not provided the preference is set back to default value in SLDB.
 
     returns a dict with only one key: status (int)

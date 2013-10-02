@@ -31,7 +31,7 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill, demoskill2float
+from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref
 
 logger = logging.getLogger(__package__)
 
@@ -748,3 +748,44 @@ def media(request, mediaid):
         except IOError, e:
             logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" %(media.id, media.replay.id, media.media_basename(), str(e)))
             raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum."%media.media_basename())
+
+@login_required
+@never_cache
+def sldb_privacy_mode(request):
+    from forms import SLDBPrivacyForm
+    c = all_page_infos(request)
+
+    accountid = request.user.get_profile().accountid
+    sldb_pref = get_sldb_pref(accountid, "privacyMode")
+    if sldb_pref["status"] != 0:
+        logger.error("get_sldb_pref(%d, privacyMode) returned status=%d (user: %s)", accountid, sldb_pref["status"], request.user)
+        c["current_privacy_mode"] = -1
+    else:
+        c["current_privacy_mode"] = int(sldb_pref["result"])
+        logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
+
+    if request.method == 'POST':
+        #
+        # POST
+        #
+        form = SLDBPrivacyForm(request.POST)
+        if form.is_valid():
+            c["in_post"] = True
+            new_mode = int(form.cleaned_data["mode"])
+            logger.debug("new_mode: %d (user: %s)", new_mode, request.user)
+            sldb_pref = set_sldb_pref(accountid, "privacyMode", str(new_mode))
+            if sldb_pref["status"] != 0:
+                logger.error("set_sldb_pref(%d, privacyMode, %d) returned status=%d (user: %s)", accountid, new_mode, sldb_pref["status"], request.user)
+                c["new_privacy_mode"] = -1
+            else:
+                c["new_privacy_mode"] = new_mode
+                logger.debug("new_privacy_mode: %d (user: %s)", new_mode, request.user)
+    else:
+        #
+        # GET
+        #
+        form = SLDBPrivacyForm({'mode': c["current_privacy_mode"]})
+
+    c['form'] = form
+
+    return render_to_response('sldb_privacy_mode.html', c, context_instance=RequestContext(request))
