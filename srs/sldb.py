@@ -125,7 +125,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
         logger.debug("returning: %s", rpc_skills["results"])
         return rpc_skills["results"]
 
-def sldb_getPref(accountid, pref):
+def get_sldb_pref(accountid, pref):
     """
     sldb_getPref(130601, "privacyMode")
 
@@ -135,7 +135,7 @@ def sldb_getPref(accountid, pref):
     """
     return _query_sldb("getPref", accountid, pref)
 
-def sldb_setPref(accountid, pref, value=None):
+def set_sldb_pref(accountid, pref, value=None):
     """
     sldb_setPref(130601, "privacyMode", "0")
     "value" is optional, if not provided the preference is set back to default value in SLDB.
