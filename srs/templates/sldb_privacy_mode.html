@@ -1,0 +1,45 @@
+{% extends 'srs_base.html' %}
+
+{% block listheader %}
+<style>
+td, th {
+    padding: 5px;
+}
+</style>
+{% endblock %}
+
+{% block pagetitle %}Privacy Mode{% endblock %}
+
+{% block maincontent%}
+<div class="left">
+    <h1>SLDB Privacy Mode</h1>
+    <p><br/></p>
+    {% if current_privacy_mode >= 0 %}
+      {% if in_post %}
+        {% if new_privacy_mode >= 0 %}
+    <p style="color: red; font-weight:bold;">Your privacy setting has been set to {{ new_privacy_mode }}.</p>
+        {% else %}
+    <p style="color: red; font-weight:bold;">There was an error changing your privacy setting, please retry later or contact "Dansan" in the SpringRTS forums.</p>
+        {% endif %}
+      {% endif %}
+    <h3>Please choose the mode you want your privacy be set to.</h3>
+      {% for error in form.errors %}
+    <p>{{ error }}</p>
+      {% endfor %}
+
+    <form action="{{ selfurl }}" method="post">{% csrf_token %}
+        <table>
+      {% for radio in form.mode %}
+            <tr>
+                <td>{{ radio.tag }}</td>
+                <td>{{ radio.choice_label|safe }}</td>
+            </tr>
+      {% endfor %}
+        </table>
+        <p><br/><input type="submit" value="Submit" /></p>        
+    </form>
+    {% else %}
+    <h3>Sorry!<br/>There was an error communicating with the skills database ("SLDB"), please retry later or contact "Dansan" in the SpringRTS forums.</h3>
+    {% endif %}
+</div>
+{% endblock %}
