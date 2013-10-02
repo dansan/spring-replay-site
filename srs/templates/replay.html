@@ -149,6 +149,7 @@
                 <tr class="body bold">
                     <td style="padding-bottom:5px"><b>Team {{ forloop.counter }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
                     <td></td>
+  {% if not has_bot %}
     {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
                     <td style="text-align:right;">{{ old_rating|floatformat:1 }}</td>
                     <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
@@ -160,6 +161,13 @@
                     <td></td>
                     <td></td>
     {% endif %}
+  {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+  {% endif %}
+
 	            </tr>
     {% for p, pl_old, pl_new in players %}
                 <tr class="body linehl bold" style="color: #{{ p.team.rgbcolor }};">
