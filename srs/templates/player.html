@@ -35,9 +35,7 @@ TODO: use AJAX, so page loads quicker, and stays responsive in case of network e
             <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url srs.views.login %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
     {% endif %}
     {% if playeraccount.sldb_privacy_mode != 0 %}
-            <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, type in any chat window:</p>
-            <pre>    /msg SLDB !set privacyMode 0</pre>
-            <p>Or click here (not yet implemeneted).</p>
+            <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url srs.views.sldb_privacy_mode %}">click to change your privacy setting</a></b>.</p>
     {% endif %}
 		    {% if playerratingtable.data|length == 0 %}
 		    <p><br/><b>No result.</b><br/></p>
