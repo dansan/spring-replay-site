@@ -135,7 +135,6 @@ def sldb_getPref(accountid, pref):
     """
     return _query_sldb("getPref", accountid, pref)
 
-
 def sldb_setPref(accountid, pref, value=None):
     """
     sldb_setPref(130601, "privacyMode", "0")
