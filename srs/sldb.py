@@ -3,6 +3,7 @@ from srs.models import *
 import logging
 import xmlrpclib
 import socket
+from operator import methodcaller
 
 logger = logging.getLogger(__package__)
 
@@ -46,7 +47,21 @@ def demoskill2float(skill):
             num += s
     return float(num)
 
-def get_sldb_playerskill(game_abbr, accountids, user, privatize):
+def _query_sldb(service, *args, **kwargs):
+    socket_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
+    rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
+    rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
+    try:
+        rpc_skills = rpc(rpc_srv)
+    except Exception, e:
+        logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, e)
+        raise e
+    finally:
+        socket.setdefaulttimeout(socket_timeout)
+    return rpc_skills
+
+def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
     """
     game_abbr: "BA", "ZK" etc from Game.sldb_name
     accountids: [1234, 567]  -- PlayerAccount for those must already exist!
@@ -62,16 +77,9 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
     returned.
     """
     logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
-    socket_timeout = socket.getdefaulttimeout()
-    socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
-    rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
-    try:
-        rpc_skills = rpc_srv.getSkills(settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, game_abbr, accountids)
-    except Exception, e:
-        logger.error("Exception in getSkill(..., %s, %s): %s", game_abbr, accountids, e)
-        socket.setdefaulttimeout(socket_timeout)
-        raise e
-    socket.setdefaulttimeout(socket_timeout)
+
+    rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
+
 #
 # "status"   values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
 # "results"  is an array of maps having following keys: accountId (int), status (int), privacyMode (int), skills (array)
@@ -116,3 +124,27 @@ def get_sldb_playerskill(game_abbr, accountids, user, privatize):
                 pass
         logger.debug("returning: %s", rpc_skills["results"])
         return rpc_skills["results"]
+
+def sldb_getPref(accountid, pref):
+    """
+    sldb_getPref(130601, "privacyMode")
+
+    returns a dict with following keys: status (int), result (string)
+        "status" values: 0: OK, 1: authentication failed, 2: invalid params
+        the "result" key is only present if status=0
+    """
+    return _query_sldb("getPref", accountid, pref)
+
+
+def sldb_setPref(accountid, pref, value=None):
+    """
+    sldb_setPref(130601, "privacyMode", "0")
+    "value" is optional, if not provided the preference is set back to default value in SLDB.
+
+    returns a dict with only one key: status (int)
+        "status" values are the same as for getPref (the preference is only updated if status=0)
+    """
+    if value:
+        return _query_sldb("setPref", accountid, pref, value)
+    else:
+        return _query_sldb("setPref", accountid, pref)
