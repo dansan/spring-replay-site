@@ -145,7 +145,7 @@ class Replay(models.Model):
             if version[0].upper() == "V" or version[0] == ".":
                 version = version[1:]
 
-            game, _ = Game.objects.get_or_create(name=game_name, defaults={"name": game_name, "abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
+            game, _ = Game.objects.get_or_create(name=game_name, defaults={"abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
     def match_type(self):
@@ -231,7 +231,7 @@ class PlayerAccount(models.Model):
         return Player.objects.filter(account__in=self, spectator=True).count()
 
     def get_rating(self, game, match_type):
-        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={"playeraccount": self, "game": game, "match_type": match_type})
+        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={})
         return rating
 
     def get_names(self):

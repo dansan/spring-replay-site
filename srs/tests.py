@@ -31,7 +31,7 @@ def add_500_replays():
                                   filename="test.sdf",
                                   path="test",
                                   downloadcount=0)
-        r.tags.add(Tag.objects.get_or_create(name="test500", defaults={"name": "test500"})[0])
+        r.tags.add(Tag.objects.get_or_create(name="test500", defaults={})[0])
         r.save()
 
     post_save.connect(replay_save_callback, sender=Replay)

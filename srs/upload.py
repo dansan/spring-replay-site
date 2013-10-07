@@ -329,7 +329,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     teams = []
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
-        pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'accountid': player["accountid"], 'countrycode': player["countrycode"], 'preffered_name': player["name"]})
+        pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'countrycode': player["countrycode"], 'preffered_name': player["name"]})
         if pa.preffered_name == "??":
             pa.preffered_name = player["name"]
             pa.save()
@@ -396,12 +396,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             Player.objects.create(account=bot_pa, name="Bot (of "+team.teamleader.name+")", rank=1, spectator=False, team=team, replay=replay)
 
             # add a "Bot" tag
-            bottag, _ = Tag.objects.get_or_create(name = "Bot", defaults={'name': "Bot"})
+            bottag, _ = Tag.objects.get_or_create(name = "Bot", defaults={})
             replay.tags.add(bottag)
 
             # detect single player and add tag
             if demofile.game_setup["host"].has_key("hostip") and demofile.game_setup["host"]["hostip"] == "" and demofile.game_setup["host"]["ishost"] == 1:
-                sptag, _ = Tag.objects.get_or_create(name = "Single Player", defaults={'name': "Single Player"})
+                sptag, _ = Tag.objects.get_or_create(name = "Single Player", defaults={})
                 replay.tags.add(sptag)
 
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
@@ -498,7 +498,7 @@ def save_tags(replay, tags):
 def set_autotag(replay):
     autotag = replay.match_type()
 
-    tag, created = Tag.objects.get_or_create(name = autotag, defaults={'name': autotag})
+    tag, created = Tag.objects.get_or_create(name = autotag, defaults={})
     if created:
         replay.tags.add(tag)
     else:
@@ -507,7 +507,7 @@ def set_autotag(replay):
 
     if autotag != "1v1":
         num_tag = replay.num_players()
-        tag, created = Tag.objects.get_or_create(name = num_tag, defaults={'name': num_tag})
+        tag, created = Tag.objects.get_or_create(name = num_tag, defaults={})
         if created:
             replay.tags.add(tag)
         else:

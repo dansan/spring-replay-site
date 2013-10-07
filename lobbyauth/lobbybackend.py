@@ -56,7 +56,6 @@ class LobbyBackend():
 
             userprofile, up_created = UserProfile.objects.get_or_create(accountid=accountinfo.LobbyID,
                                                                         defaults={"user": user,
-                                                                                  "accountid": accountid,
                                                                                   "timerank": timerank,
                                                                                   "aliases": aliases,
                                                                                   "country": country})
