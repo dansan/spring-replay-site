@@ -75,18 +75,22 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
     If the overall request was OK, but one or more results are bad, no
     exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0] will be
     returned.
+
+SLDB XmlRpc interface docu provided by bibim:
+
+getSkills parameters: login (string), password (string), modShortName (string), accountIds (array of ints)
+    modShortName: BA,EVO,KP,NOTA,S1944,TA,XTA,ZK
+It returns a map with following keys: status (int), results (array of maps):
+"status"   values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
+"results"  is an array of maps having following keys: accountId (int), status (int), privacyMode (int), skills (array)
+  "status"   values: 0: OK, 1: invalid accountId, 2: unknown skill (user not rated yet) (the privacyMode and skills keys are only present if status=0)
+  "skills"   is an array of 5 strings containing skill data in following order:
+                 Duel.mu|Duel.sigma , Ffa.mu|Ffa.sigma , Team.mu|Team.sigma , TeamFfa.mu|TeamFfa.sigma , Global.mu|Global.sigma
     """
     logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
 
     rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
 
-#
-# "status"   values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
-# "results"  is an array of maps having following keys: accountId (int), status (int), privacyMode (int), skills (array)
-#     "status"   values: 0: OK, 1: invalid accountId, 2: unknown skill (user not rated yet) (the privacyMode and skills keys are only present if status=0)
-#     "skills"   is an array of 5 strings containing skill data in following order:
-#                Duel.mu|Duel.sigma , Ffa.mu|Ffa.sigma , Team.mu|Team.sigma , TeamFfa.mu|TeamFfa.sigma , Global.mu|Global.sigma
-#
     if rpc_skills["status"] != 0:
         errmsg = "getSkill(..., %s, %s) returned status %d, got: %s" %(game_abbr, accountids, rpc_skills["status"], rpc_skills)
         logger.error(errmsg)
@@ -129,9 +133,11 @@ def get_sldb_pref(accountid, pref):
     """
     get_sldb_pref(130601, "privacyMode") -> {'status': 0, 'result': '0'}
 
-    returns a dict with following keys: status (int), result (string)
-        "status" values: 0: OK, 1: authentication failed, 2: invalid params
-        the "result" key is only present if status=0
+SLDB XmlRpc interface docu provided by bibim:
+
+getPref parameters: login (string), password (string), accountId (int), prefName (string)
+returns a map with following keys: status (int), result (string)
+   "status" values: 0: OK, 1: authentication failed, 2: invalid params (the "result" key is only present if status=0)
     """
     return _query_sldb("getPref", accountid, pref)
 
@@ -140,8 +146,12 @@ def set_sldb_pref(accountid, pref, value=None):
     set_sldb_pref(130601, "privacyMode", "0") -> {'status': 0}
     "value" is optional, if not provided the preference is set back to default value in SLDB.
 
-    returns a dict with only one key: status (int)
-        "status" values are the same as for getPref (the preference is only updated if status=0)
+SLDB XmlRpc interface docu provided by bibim:
+
+setPref parameters: login (string), password (string), accountId (int), prefName (string) [, value (string)]
+   "value" is optional, if not provided the preference is set back to default value in SLDB.
+returns a map with only one key: status (int)
+   "status" values are the same as for getPref (the preference is only updated if status=0)
     """
     if value:
         return _query_sldb("setPref", accountid, pref, value)
