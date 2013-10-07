@@ -2,69 +2,64 @@
 {% load render_table from django_tables2 %}
 
 {% block rating %}
-  {% comment %}
-    {% if accounts|length > 1 %}
-            <p>Showing accumulated data for players:</p>
-       {% for acc in accounts %}
-            <p><a href="{{ acc.get_absolute_url }}">{{ acc.preffered_name }}</a>{% if acc.get_names|length > 1 %} (names used: {% for name in acc.get_names %}{{ name }} {% endfor %}){% endif %}</p>
-       {% endfor %}
-    {% else %}
-	   {% if all_names|length > 1 %}
-	        <p>Names used: {{ all_names }}</p>
-	   {% endif %}
+    {% if all_names|length > 1 %}
+        <p>Aliases:
+    {% with all_names|slice:"1:" as aliases %}
+    {% for alias in aliases %} {{ alias }},{% endfor %}
+    {% endwith %}
+        </p>
     {% endif %}
-  {% endcomment %}
-                <p> </p>
+        <p> </p>
     {% block adminlink %}{% endblock %}
     {% if user.is_staff %}
       {% for acc in accounts %}
-      <p><a href="/admin/srs/playeraccount/{{ acc.pk }}/">{{ acc.preffered_name }} @admin site</a></p>
+        <p><a href="/admin/srs/playeraccount/{{ acc.pk }}/">{{ acc.preffered_name }} @admin site</a></p>
       {% endfor %}
     {% endif %}
-            <h2>Rating</h2>
+        <h2>Rating</h2>
 <!--
 
 TODO: use AJAX, so page loads quicker, and stays responsive in case of network error
 
  -->
   {% if errmsg %}
-            <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
+        <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
   {% else %}
-            <p>The following values are provided by SLDB, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
+        <p>The following values are provided by SLDB, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
     {% if playeraccount.sldb_privacy_mode != 0 %}
-            <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url srs.views.login %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
+        <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url srs.views.login %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
     {% endif %}
     {% if playeraccount.sldb_privacy_mode != 0 %}
-            <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url srs.views.sldb_privacy_mode %}">click to change your privacy setting</a></b>.</p>
+        <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url srs.views.sldb_privacy_mode %}">click to change your privacy setting</a></b>.</p>
     {% endif %}
 		    {% if playerratingtable.data|length == 0 %}
-		    <p><br/><b>No result.</b><br/></p>
+        <p><br/><b>No result.</b><br/></p>
 		    {% else %}
 		      {% render_table playerratingtable %}
 		    {% endif %}
   {% endif %}
-            <p><br/></p>
-			<h2>Win/loss</h2>
+        <p><br/></p>
+        <h2>Win/loss</h2>
   {% if errmsg %}
-            <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
+        <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
   {% else %}
       {% comment %}
 			{% render_table winlosstable %}
       {% endcomment %}
-            <p>Currently under reconstruction (moving to SLDB provided values).</p>
-			<p><br/></p>
+        <p>Currently under reconstruction (moving to SLDB provided values).</p>
+        <p><br/></p>
 
-            <h2>Rating history</h2>
+        <h2>Rating history</h2>
       {% comment %}
             {% if playerratinghistorytable.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
+        <p><br/><b>No result.</b><br/></p>
             {% else %}
               {% render_table playerratinghistorytable %}
             {% endif %}
       {% endcomment %}
-            <p>Currently under reconstruction (moving to SLDB provided values).</p>
+        <p>Currently under reconstruction (moving to SLDB provided values).</p>
   {% endif %}
-            <p><br/></p>
+        <p><br/></p>
 
-			<h2>All Replays</h2>
+        <h2>All Replays</h2>
 {% endblock %}

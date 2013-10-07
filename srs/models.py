@@ -216,7 +216,6 @@ class PlayerAccount(models.Model):
     accountid       = models.IntegerField(unique=True)
     countrycode     = models.CharField(max_length=2)
     preffered_name  = models.CharField(max_length=128, db_index=True)
-    primary_account = models.ForeignKey("self", blank=True, null = True)
     sldb_privacy_mode = models.SmallIntegerField(default=1)
 
     def __unicode__(self):
@@ -227,51 +226,26 @@ class PlayerAccount(models.Model):
         return ('srs.views.player', [self.accountid])
 
     def replay_count(self):
-        return Player.objects.filter(account__in=self.get_all_accounts()).count()
+        return Player.objects.filter(account__in=self).count()
     def spectator_count(self):
-        return Player.objects.filter(account__in=self.get_all_accounts(), spectator=True).count()
+        return Player.objects.filter(account__in=self, spectator=True).count()
 
     def get_rating(self, game, match_type):
-        rating, _ = Rating.objects.get_or_create(playeraccount=self.get_primary_account(), game=game, match_type=match_type, defaults={"playeraccount": self.get_primary_account(), "game": game, "match_type": match_type})
+        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={"playeraccount": self, "game": game, "match_type": match_type})
         return rating
 
-    def get_primary_account(self):
-        if self.primary_account == None:
-            return self
-        else:
-            return self.primary_account.get_primary_account()
-
-    def get_all_accounts(self):
-        accounts = [self.get_primary_account()]
-        accounts.extend(PlayerAccount.objects.filter(primary_account=self.get_primary_account()).order_by("accountid"))
-        accounts.extend(PlayerAccount.objects.filter(primary_account__in=accounts).exclude(primary_account=self.get_primary_account()).order_by("accountid"))
-        return accounts
-
     def get_names(self):
-        pls = [p[0] for p in Player.objects.filter(account=self).values_list("name")]
+        pls = list(Player.objects.filter(account=self).values_list("name", flat=True))
         if pls:
+            try:
+                pls.remove(self.preffered_name)
+            except:
+                pass # Player with name "pref_name"  was removed from DB, but PlayerAccount stayed
+            else:
+                pls.insert(0, self.preffered_name)
             return uniqify_list(pls)
         else:
             return [self.preffered_name]
-
-    def get_all_names(self):
-        pref_name = self.get_all_accounts()[0].preffered_name
-        names = str()
-        namelist = list()
-
-        for pa in self.get_all_accounts():
-            namelist.extend(pa.get_names())
-        uniqify_list(namelist)
-        try:
-            namelist.remove(pref_name)
-        except:
-            pass # Player with name "pref_name"  was removed from DB, but PlayerAccount stayed
-        namelist.insert(0, pref_name)
-        names += reduce(lambda x, y: x+" "+y, namelist)
-        return names.rstrip()
-
-    def get_preffered_name(self):
-        return self.get_primary_account().preffered_name
 
     def get_all_games(self):
         gametypes = Replay.objects.filter(player__account=self, player__spectator=False).values_list("gametype", flat=True)
@@ -474,8 +448,8 @@ def update_stats():
     maps     = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
     tp = list()
 
-    for pa in PlayerAccount.objects.filter(primary_account__isnull=True).exclude(accountid=0).order_by("accountid"): # exclude bots
-        nummatches =  Player.objects.filter(account__in=pa.get_all_accounts(), spectator=False, replay__unixTime__range=(start_date, now)).count()
+    for pa in PlayerAccount.objects.exclude(accountid=0).order_by("accountid"): # exclude bots
+        nummatches =  Player.objects.filter(account__in=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
         tp.append((nummatches, pa))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]

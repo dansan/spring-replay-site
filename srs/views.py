@@ -139,9 +139,8 @@ def replay(request, gameID):
     rh = list(RatingHistory.objects.filter(match=replay).values())
     for r in rh:
         playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount__in=playeraccount.get_all_accounts()).count()
+        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount=playeraccount).count()
         r["playeraccount"] = playeraccount
-        if replay.match_type() == "1v1 BA Tourney": r["tourney"] = True
 
     if replay.match_type() == "1v1":
         c["table"] = MatchRatingHistoryTable(rh)
@@ -313,18 +312,7 @@ def player(request, accountid):
     c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     c["playeraccount"] = pa
 
-#     accounts = pa.get_all_accounts()
-# 
-#     c["accounts"] = accounts
-#     c["all_names"] = accounts[0].get_all_names()
-#     wl = win_loss_calc(accounts)
-#     table_data = list()
-#     for t in ["1v1", "Team", "FFA", "TeamFFA"]:
-#         wl["at_"+t.lower()]["tag"] = t
-#         table_data.append(wl["at_"+t.lower()])
-#     wl["at_all"]["tag"] = "Total"
-#     table_data.append(wl["at_all"])
-#     c["winlosstable"] = WinLossTable(table_data, prefix="w-")
+    c["all_names"] = pa.get_names()
 
     ratings = list()
     if pa.accountid <=0:
@@ -483,15 +471,15 @@ def search_replays(query):
                         multi_and.append(Q(tags__id=qtag))
             elif key == 'player':
                 if query.has_key('spectator'):
-                    q &= Q(player__account__in=PlayerAccount.objects.get(id=query['player'][0]).get_all_accounts())
+                    q &= Q(player__account=PlayerAccount.objects.get(id=query['player'][0]))
                     if len(query['player']) > 1:
                         for qtag in query['player'][1:]:
-                            multi_and.append(Q(player__account__in=PlayerAccount.objects.get(id=qtag).get_all_accounts()))
+                            multi_and.append(Q(player__account=PlayerAccount.objects.get(id=qtag)))
                 else:
-                    q &= Q(player__account__in=PlayerAccount.objects.get(id=query['player'][0]).get_all_accounts(), player__spectator=False)
+                    q &= Q(player__account=PlayerAccount.objects.get(id=query['player'][0]), player__spectator=False)
                     if len(query['player']) > 1:
                         for qtag in query['player'][1:]:
-                            multi_and.append(Q(player__account__in=PlayerAccount.objects.get(id=qtag).get_all_accounts(), player__spectator=False))
+                            multi_and.append(Q(player__account=PlayerAccount.objects.get(id=qtag), player__spectator=False))
             elif key == 'spectator': pass # used in key == 'player'
             elif key == 'maps': q &= Q(map_info__id__in=query['maps'])
             elif key == 'game':
@@ -592,14 +580,14 @@ def search_replays(query):
 #         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
 #     if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
 #         # thow out duplicates and players with less than x matches in this game and category
-#         r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=PlayerAccount.objects.get(id=v["playeraccount_id"]).get_all_accounts()).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
+#         r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount=PlayerAccount.objects.get(id=v["playeraccount_id"])).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
 #     else:
 #         # thow out duplicates
 #         r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
 #     # add data needed for the table
 #     for r1 in r1v1:
 #         playeraccount = PlayerAccount.objects.get(id=r1["playeraccount_id"])
-#         r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount__in=playeraccount.get_all_accounts()).count()
+#         r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount=playeraccount).count()
 #         r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
 # 
 #     return r1v1
@@ -623,13 +611,13 @@ def hall_of_fame(request, abbreviation):
 #         rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
 #         if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
 #             # thow out players with less than x matches in this game and category
-#             rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=PlayerAccount.objects.get(id=rt["playeraccount_id"]).get_all_accounts()).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
+#             rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount=PlayerAccount.objects.get(id=rt["playeraccount_id"])).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
 #         else:
 #             rtype = list(rtype)
 #         # add data needed for the table
 #         for rt in rtype:
 #             playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
-#             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount__in=playeraccount.get_all_accounts()).count()
+#             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount=playeraccount).count()
 #             rt["playeraccount"] = playeraccount
 #             rt["playername"] = playeraccount.preffered_name
 #         c[mtl] = TSRatingTable(rtype, prefix=prefix)
