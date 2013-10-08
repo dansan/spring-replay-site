@@ -156,3 +156,59 @@ returns a map with only one key: status (int)
         return _query_sldb("setPref", accountid, pref, value)
     else:
         return _query_sldb("setPref", accountid, pref)
+
+def get_sldb_match_skills(gameIDs):
+    """
+    get_sldb_match_skills(["b70f1f270d5a828e24bd446828e0f133"]) ->
+    {'status': 0,
+     'results': [{'gameId': 'b70f1f270d5a828e24bd446828e0f133',
+                  'status': 0,
+                  'gameType': 'Duel',
+                  'players': [{'accountId': 123456,
+                               'privacyMode': 1,
+                               'skills': [[12.34, 1.00], [56.78, 2.00], [90.12, 3.00], [34.56, 4.00]],
+                               'account': PlayerAccount},
+                              {'accountId': 67890,
+                               'privacyMode': 1,
+                               'skills': [[12.34, 1.00], [56.78, 2.00], [90.12, 3.00], [34.56, 4.00]]
+                               'account': PlayerAccount}
+                             ]
+                 }
+                ]
+     }
+
+SLDB XmlRpc interface docu provided by bibim:
+
+"getMatchSkills" XmlRpc service takes the following parameters: login (string), password (string), gameIds (array of strings).
+It returns a map with following keys: status (int), results (array of maps).
+
+"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
+"results" is an array of maps having following keys: gameId (string), status (int), gameType (string), players (array of maps)
+    "status" values: 0: OK, 1: invalid gameId value, 2: unknown or unrated gameId (the "gameType" and "players" keys are only present if status=0)
+    "gameType" values: "Duel", "FFA", "Team", "TeamFFA"
+    "players" is an array of maps having following keys: accountId (int), privacyMode (int), skills (array of strings)
+        "skills" is an array of 4 strings containing skill data in following order:
+            muBefore|sigmaBefore , muAfter|sigmaAfter , globalMuBefore|globalSigmaBefore , globalMuAfter|globalSigmaAfter
+
+Only the ratings specific to the gameType of the gameId and the global ratings are provided, as other ratings don't change.
+    """
+    logger.debug("gameIDs: %s", gameIDs)
+    match_skills = _query_sldb("getMatchSkills", gameIDs)
+    if match_skills["status"] != 0:
+        errmsg = "getMatchSkills(..., %s) returned status %d, got: %s" %(gameIDs, match_skills["status"], match_skills)
+        logger.error(errmsg)
+        raise Exception(errmsg)
+    else:
+        for match in match_skills["results"]:
+            if match["status"] != 0:
+                logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
+            else:
+                for player in match["players"]:
+                    player["account"], created = PlayerAccount.objects.get_or_create(accountid=player["accountId"], defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": player["privacyMode"]})
+                    if created:
+                        logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", player["accountId"], player["account"].id)
+                    for i in range(4):
+                        mu = float(player["skills"][i].split("|")[0])
+                        si = float(player["skills"][i].split("|")[1])
+                        player["skills"][i] = [mu, si]
+    return match_skills
