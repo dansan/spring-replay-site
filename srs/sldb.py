@@ -281,3 +281,24 @@ The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returne
                     player["trustedSkill"] = float(player["trustedSkill"])
                     player["uncertainty"] = float(player["uncertainty"])
     return leaderboards
+
+def get_sldb_player_stats(game_abbr, accountid):
+    """
+    get_sldb_player_stats("BA", 130601) -> {'status': 0,
+                                            'results': {'Duel': [12, 34, 5],
+                                                        'TeamFFA': [67, 8, 9],
+                                                        'FFA': [10, 11, 12],
+                                                        'Team': [134, 567, 89]
+                                                        }
+                                            }
+
+SLDB XmlRpc interface docu provided by bibim:
+
+getPlayerStats XmlRpc service takes the following parameters: login (string), password (string), modShortName (string), accountId (int)
+It returns a map with following keys: status (int), results (hash of arrays).
+
+"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
+"results" is a hash indexed by gameType ("Duel", "FFA", "Team", "TeamFFA"), giving the following stats array for each one of these game types: nbOfGamesLost (int), nbOfGamesWon (int), nbOfGamesUndecided (int)
+    """
+    logger.debug("game_abbr: %s accountid: %d", game_abbr, accountid)
+    return _query_sldb("getPlayerStats", game_abbr, accountid)
