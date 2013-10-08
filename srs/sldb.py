@@ -15,6 +15,13 @@ from operator import methodcaller
 
 logger = logging.getLogger(__package__)
 
+class SLDBstatusException(Exception):
+    def __init__(self, service, status):
+        self.service = service
+        self.status = status
+
+    def __str__(self):
+        return "%s() returned status %d."%(self.service, self.status)
 
 rank2skill = {0: 10,
               1: 13,
@@ -24,6 +31,12 @@ rank2skill = {0: 10,
               5: 30,
               6: 35,
               7: 38}
+
+sldb_gametype2matchtype = {"Duel": "1",
+                           "FFA": "F",
+                           "Team": "T",
+                           "TeamFFA": "G"
+                           }
 
 def skill2rank(trueskill):
     mindiff = 99
@@ -44,28 +57,42 @@ def demoskill2float(skill):
     return float(num)
 
 def _query_sldb(service, *args, **kwargs):
+    """
+    May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
+    a problem with the data/request.
+    """
+    logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
+
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
     rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
     rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
-        rpc_skills = rpc(rpc_srv)
+        rpc_result = rpc(rpc_srv)
     except Exception, e:
         logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, e)
         raise e
+    else:
+        logger.debug("%s() returned: %s", service, rpc_result)
     finally:
         socket.setdefaulttimeout(socket_timeout)
-    return rpc_skills
+
+    if rpc_result["status"] != 0:
+        raise SLDBstatusException(service, rpc_result["status"])
+
+    if rpc_result.has_key("result"):
+        return rpc_result["result"]
+    else:
+        return rpc_result.get("results", "status")
 
 def _get_PlayerAccount(accountid, privacy_mode):
     account, created = PlayerAccount.objects.get_or_create(accountid=accountid, defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": privacy_mode})
     if created:
         logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
         if privacy_mode == -1:
-            pm = get_sldb_pref(accountid, "privacyMode")
-            if pm["status"] == 0:
-                account.sldb_privacy_mode = pm["result"]
-            else:
+            try:
+                account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
+            except:
                 account.sldb_privacy_mode = 1
             account.save()
     return account
@@ -79,8 +106,6 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
                if False exact values are returned regardless of privacyMode
                and user
 
-    May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
-    a problem with the data/request.
     If the overall request was OK, but one or more results are bad, no
     exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0] will be
     returned.
@@ -100,40 +125,31 @@ It returns a map with following keys: status (int), results (array of maps):
 
     rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
 
-    if rpc_skills["status"] != 0:
-        errmsg = "getSkill(..., %s, %s) returned status %d, got: %s" %(game_abbr, accountids, rpc_skills["status"], rpc_skills)
-        logger.error(errmsg)
-        raise Exception(errmsg)
-    else:
-        for pa_result in rpc_skills["results"]:
-            if pa_result["status"] != 0:
-                logger.error("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
-                pa_result["skills"] = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
+    for pa_result in rpc_skills:
+        for i in range(5):
+            mu = float(pa_result["skills"][i].split("|")[0])
+            si = float(pa_result["skills"][i].split("|")[1])
+            pa_result["skills"][i] = [0, 0]
+            if privatize:
+                if pa_result["privacyMode"] == 0:
+                    do_priv = False
+                else:
+                    if user:
+                        do_priv = user.get_profile().accountid != pa_result["accountId"]
+                    else:
+                        do_priv = True
             else:
-                for i in range(5):
-                    mu = float(pa_result["skills"][i].split("|")[0])
-                    si = float(pa_result["skills"][i].split("|")[1])
-                    pa_result["skills"][i] = [0, 0]
-                    if privatize:
-                        if pa_result["privacyMode"] == 0:
-                            do_priv = False
-                        else:
-                            if user:
-                                do_priv = user.get_profile().accountid != pa_result["accountId"]
-                            else:
-                                do_priv = True
-                    else:
-                        do_priv = False
+                do_priv = False
 
-                    if do_priv:
-                        pa_result["skills"][i][0] = privatize_skill(mu)
-                    else:
-                        pa_result["skills"][i][0] = mu
-                    pa_result["skills"][i][1] = si
-            pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], pa_result["privacyMode"])
+            if do_priv:
+                pa_result["skills"][i][0] = privatize_skill(mu)
+            else:
+                pa_result["skills"][i][0] = mu
+            pa_result["skills"][i][1] = si
+        pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], pa_result["privacyMode"])
 
-        logger.debug("returning: %s", rpc_skills["results"])
-        return rpc_skills["results"]
+        logger.debug("returning: %s", rpc_skills)
+        return rpc_skills
 
 def get_sldb_pref(accountid, pref):
     """
@@ -200,22 +216,18 @@ It returns a map with following keys: status (int), results (array of maps).
 Only the ratings specific to the gameType of the gameId and the global ratings are provided, as other ratings don't change.
     """
     logger.debug("gameIDs: %s", gameIDs)
+
     match_skills = _query_sldb("getMatchSkills", gameIDs)
-    if match_skills["status"] != 0:
-        errmsg = "getMatchSkills(..., %s) returned status %d, got: %s" %(gameIDs, match_skills["status"], match_skills)
-        logger.error(errmsg)
-        raise Exception(errmsg)
-    else:
-        for match in match_skills["results"]:
-            if match["status"] != 0:
-                logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
-            else:
-                for player in match["players"]:
-                    player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
-                    for i in range(4):
-                        mu = float(player["skills"][i].split("|")[0])
-                        si = float(player["skills"][i].split("|")[1])
-                        player["skills"][i] = [mu, si]
+    for match in match_skills:
+        if match["status"] != 0:
+            logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
+        else:
+            for player in match["players"]:
+                player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
+                for i in range(4):
+                    mu = float(player["skills"][i].split("|")[0])
+                    si = float(player["skills"][i].split("|")[1])
+                    player["skills"][i] = [mu, si]
     return match_skills
 
 def get_sldb_leaderboard(game_abbr, gametypes=["Duel", "FFA", "Team", "TeamFFA", "Global"]):
@@ -261,21 +273,17 @@ The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returne
 
     """
     logger.debug("game_abbr: %s gametypes: %s", game_abbr, gametypes)
+
     leaderboards = _query_sldb("getLeaderboards", game_abbr, gametypes)
-    if leaderboards["status"] != 0:
-        errmsg = "getLeaderboards(..., %s, %s) returned status %d, got: %s" %(game_abbr, gametypes, leaderboards["status"], leaderboards)
-        logger.error(errmsg)
-        raise Exception(errmsg)
-    else:
-        for leaderboard in leaderboards["results"]:
-            if leaderboard["status"] != 0:
-                logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)
-            else:
-                for player in leaderboard["players"]:
-                    player["account"] = _get_PlayerAccount(player["accountId"], -1)
-                    player["estimatedSkill"] = float(player["estimatedSkill"])
-                    player["trustedSkill"] = float(player["trustedSkill"])
-                    player["uncertainty"] = float(player["uncertainty"])
+    for leaderboard in leaderboards["results"]:
+        if leaderboard["status"] != 0:
+            logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)
+        else:
+            for player in leaderboard["players"]:
+                player["account"] = _get_PlayerAccount(player["accountId"], -1)
+                player["estimatedSkill"] = float(player["estimatedSkill"])
+                player["trustedSkill"] = float(player["trustedSkill"])
+                player["uncertainty"] = float(player["uncertainty"])
     return leaderboards
 
 def get_sldb_player_stats(game_abbr, accountid):

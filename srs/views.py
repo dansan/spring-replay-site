@@ -321,23 +321,22 @@ def player(request, accountid):
         for game in pa.get_all_games():
             if not game.sldb_name:
                 continue
+            user = request.user if request.user.is_authenticated() else None
             try:
-                user = request.user if request.user.is_authenticated() else None
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
+            except Exception, e:
+                logger.exception("Exception in/after get_sldb_playerskill(): %s", e)
+                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
+            else:
                 if pa != skills["account"]:
                     errmsg = "Requested (%s) and returned (%s) PlayerAccounts do not match!"%(pa, skills["account"])
                     logger.error(errmsg)
                     raise Exception(errmsg)
-                if skills["status"] == 0:
-                    # privacyMode and skills is only set by sldb if status==0
-                    if pa.sldb_privacy_mode != skills["privacyMode"]:
-                        pa.sldb_privacy_mode = skills["privacyMode"]
-                        pa.save()
-                    for mt, i in settings.SLDB_SKILL_ORDER:
-                        ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
-            except Exception, e:
-                logger.error("Exception in/after get_sldb_playerskill(): %s", e)
-                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
+                if pa.sldb_privacy_mode != skills["privacyMode"]:
+                    pa.sldb_privacy_mode = skills["privacyMode"]
+                    pa.save()
+                for mt, i in settings.SLDB_SKILL_ORDER:
+                    ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
 
     c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
 #     c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
@@ -744,13 +743,13 @@ def sldb_privacy_mode(request):
     c = all_page_infos(request)
 
     accountid = request.user.get_profile().accountid
-    sldb_pref = get_sldb_pref(accountid, "privacyMode")
-    if sldb_pref["status"] != 0:
-        logger.error("get_sldb_pref(%d, privacyMode) returned status=%d (user: %s)", accountid, sldb_pref["status"], request.user)
+    try:
+        sldb_pref = get_sldb_pref(accountid, "privacyMode")
+    except:
         c["current_privacy_mode"] = -1
     else:
         c["current_privacy_mode"] = int(sldb_pref["result"])
-        logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
+    logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
 
     if request.method == 'POST':
         #
@@ -761,13 +760,13 @@ def sldb_privacy_mode(request):
             c["in_post"] = True
             new_mode = int(form.cleaned_data["mode"])
             logger.debug("new_mode: %d (user: %s)", new_mode, request.user)
-            sldb_pref = set_sldb_pref(accountid, "privacyMode", str(new_mode))
-            if sldb_pref["status"] != 0:
-                logger.error("set_sldb_pref(%d, privacyMode, %d) returned status=%d (user: %s)", accountid, new_mode, sldb_pref["status"], request.user)
+            try:
+                sldb_pref = set_sldb_pref(accountid, "privacyMode", str(new_mode))
+            except:
                 c["new_privacy_mode"] = -1
             else:
                 c["new_privacy_mode"] = new_mode
-                logger.debug("new_privacy_mode: %d (user: %s)", new_mode, request.user)
+            logger.debug("new_privacy_mode: %d (user: %s)", new_mode, request.user)
     else:
         #
         # GET
