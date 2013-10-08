@@ -221,3 +221,63 @@ Only the ratings specific to the gameType of the gameId and the global ratings a
                         si = float(player["skills"][i].split("|")[1])
                         player["skills"][i] = [mu, si]
     return match_skills
+
+def get_sldb_leaderboard(game_abbr, gametypes=["Duel", "FFA", "Team", "TeamFFA", "Global"]):
+    """
+    get_sldb_leaderboard("BA") ->
+        {'status': 0,
+         'results': [{'gameType': 'Duel',
+                      'status': 0
+                      'players': [{'accountId': 17034,
+                                   'estimatedSkill': 36.27,
+                                   'inactivity': 5,
+                                   'name': 'Teddy',
+                                   'trustedSkill': 33.41,
+                                   'uncertainty': 0.95},
+                                  {...},
+                                 ],
+                     },
+                     {'gameType': 'FFA',
+                     'status': 0
+                     'players': [{...},
+                                ],
+                     }
+                     {'gameType': 'FFA' ...},
+                     {'gameType': 'TeamFFA' ...},
+                     {'gameType': 'Global' ...}
+                    ]
+        }
+
+SLDB XmlRpc interface docu provided by bibim:
+
+getLeaderboards XmlRpc service takes the following parameters: login (string), password (string), modShortName (string), gameTypes (array of strings)
+    allowed gameType values: "Duel", "FFA", "Team", "TeamFFA", "Global"
+It returns a map with following keys: status (int), results (array of maps).
+
+"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
+"results" is an array of maps having following keys: gameType (string), status (int), players (array of maps)
+    "status" values: 0: OK, 1: invalid gameType (the "players" key is only present if status=0)
+    "players" is an array of maps having following keys: accountId (int), name (string), inactivity (int), trustedSkill (string), estimatedSkill (string), uncertainty (string)
+        "trustedSkill", "estimatedSkill" and "uncertainty" are transmitted as strings to avoid rounding approximations when sent as floats.
+        "name" is provided in case you want to show the same names as SLDB
+
+The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returned players array can be of smaller size (and even empty for totally unrated mods), in case not enough players have been rated yet.
+
+    """
+    logger.debug("game_abbr: %s gametypes: %s", game_abbr, gametypes)
+    leaderboards = _query_sldb("getLeaderboards", game_abbr, gametypes)
+    if leaderboards["status"] != 0:
+        errmsg = "getLeaderboards(..., %s, %s) returned status %d, got: %s" %(game_abbr, gametypes, leaderboards["status"], leaderboards)
+        logger.error(errmsg)
+        raise Exception(errmsg)
+    else:
+        for leaderboard in leaderboards["results"]:
+            if leaderboard["status"] != 0:
+                logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)
+            else:
+                for player in leaderboard["players"]:
+                    player["account"] = _get_PlayerAccount(player["accountId"], -1)
+                    player["estimatedSkill"] = float(player["estimatedSkill"])
+                    player["trustedSkill"] = float(player["trustedSkill"])
+                    player["uncertainty"] = float(player["uncertainty"])
+    return leaderboards
