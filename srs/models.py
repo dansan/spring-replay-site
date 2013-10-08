@@ -449,7 +449,7 @@ def update_stats():
     tp = list()
 
     for pa in PlayerAccount.objects.exclude(accountid=0).order_by("accountid"): # exclude bots
-        nummatches =  Player.objects.filter(account__in=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
+        nummatches =  Player.objects.filter(account=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
         tp.append((nummatches, pa))
     tp.sort(key=operator.itemgetter(0), reverse=True)
     players  = [p[1] for p in tp[:20]]
