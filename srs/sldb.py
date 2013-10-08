@@ -61,6 +61,15 @@ def _query_sldb(service, *args, **kwargs):
         socket.setdefaulttimeout(socket_timeout)
     return rpc_skills
 
+def _get_PlayerAccount(accountid, privacy_mode):
+    account, created = PlayerAccount.objects.get_or_create(accountid=accountid, defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": privacy_mode})
+    if created:
+        logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
+        if privacy_mode == -1:
+            account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
+            account.save()
+    return account
+
 def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
     """
     game_abbr: "BA", "ZK" etc from Game.sldb_name
@@ -121,9 +130,7 @@ It returns a map with following keys: status (int), results (array of maps):
                     else:
                         pa_result["skills"][i][0] = mu
                     pa_result["skills"][i][1] = si
-            pa_result["account"], created = PlayerAccount.objects.get_or_create(accountid=pa_result["accountId"], defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": pa_result["privacyMode"]})
-            if created:
-                logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", pa_result["accountId"], pa_result["account"].id)
+            pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], pa_result["privacyMode"])
 
         logger.debug("returning: %s", rpc_skills["results"])
         return rpc_skills["results"]
@@ -204,9 +211,7 @@ Only the ratings specific to the gameType of the gameId and the global ratings a
                 logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
             else:
                 for player in match["players"]:
-                    player["account"], created = PlayerAccount.objects.get_or_create(accountid=player["accountId"], defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": player["privacyMode"]})
-                    if created:
-                        logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", player["accountId"], player["account"].id)
+                    player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
                     for i in range(4):
                         mu = float(player["skills"][i].split("|")[0])
                         si = float(player["skills"][i].split("|")[1])
