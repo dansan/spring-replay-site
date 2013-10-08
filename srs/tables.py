@@ -178,11 +178,15 @@ class RatingTable(tables.Table):
         else: return '%.2f' % value
 
 class WinLossTable(tables.Table):
-    tag   = tables.Column(orderable=False)
-    all = tables.Column(orderable=False, verbose_name="Total")
+    game_n_type   = tables.Column(orderable=False, verbose_name="Game")
+    total = tables.Column(orderable=False)
     win   = tables.Column(orderable=False)
     loss  = tables.Column(orderable=False)
-    ratio = tables.Column(orderable=False)
+    undecided  = tables.Column(orderable=False)
+    ratio = tables.Column(orderable=False, attrs={"td": {"style": "text-align:right;"}})
 
     class Meta:
         attrs    = {'class': 'paleblue'}
+
+    def render_ratio(self, value, record):
+        return '%3.0f'%value + " %"

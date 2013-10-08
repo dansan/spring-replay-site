@@ -31,7 +31,7 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref
+from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats
 
 logger = logging.getLogger(__package__)
 
@@ -315,17 +315,16 @@ def player(request, accountid):
     c["all_names"] = pa.get_names()
 
     ratings = list()
+    win_loss_data = list()
     if pa.accountid <=0:
         c["errmsg"] = "No rating for single player or bots."
     else:
-        for game in pa.get_all_games():
-            if not game.sldb_name:
-                continue
+        for game in pa.get_all_games().exclude(sldb_name=""):
             user = request.user if request.user.is_authenticated() else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
             except Exception, e:
-                logger.exception("Exception in/after get_sldb_playerskill(): %s", e)
+                logger.exception("Exception in get_sldb_playerskill(): %s", e)
                 c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
             else:
                 if pa != skills["account"]:
@@ -337,7 +336,31 @@ def player(request, accountid):
                     pa.save()
                 for mt, i in settings.SLDB_SKILL_ORDER:
                     ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
+            try:
+                player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
+            except Exception, e:
+                logger.exception("Exception in get_sldb_player_stats(): %s", e)
+                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
+            else:
+                for match_type in ["Duel", "Team", "FFA", "TeamFFA"]:
+                    total = reduce(lambda x, y: x+y, player_stats[match_type], 0)
+                    if total == 0:
+                        continue
+                    try:
+                        ratio = float(player_stats[match_type][1]*100)/float(total)
+                    except ZeroDivisionError:
+                        if player_stats[match_type][1] > 0:
+                            ratio = 1
+                        else:
+                            ratio = 0
+                    win_loss_data.append({"game_n_type": game.sldb_name+" "+match_type,
+                                          "total"      : total,
+                                          "win"        : player_stats[match_type][1],
+                                          "loss"       : player_stats[match_type][0],
+                                          "undecided"  : player_stats[match_type][2],
+                                          "ratio"      : ratio})
 
+    c["winlosstable"] = WinLossTable(win_loss_data, prefix="w-")
     c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
 #     c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
 #     RequestConfig(request, paginate={"per_page": 20}).configure(c["playerratinghistorytable"])
@@ -518,78 +541,6 @@ def search_replays(query):
         replays = Replay.objects.none()
 
     return replays
-
-# def win_loss_calc(playeraccounts):
-#     c = dict()
-# 
-#     players = Player.objects.filter(account__in=playeraccounts, spectator=False)
-# 
-#     ats = Allyteam.objects.filter(team__player__in=players)
-#     at_1v1 = ats.filter(replay__tags__name="1v1")
-#     at_team = ats.filter(replay__tags__name="Team")
-#     at_ffa = ats.filter(replay__tags__name="FFA")
-#     at_teamffa = ats.filter(replay__tags__name="TeamFFA")
-# 
-#     c["at_1v1"] = {"all": at_1v1.count(), "win": at_1v1.filter(winner=True).count(), "loss": at_1v1.filter(winner=False).count()}
-#     try:
-#         c["at_1v1"]["ratio"] = "%.02f"%(float(at_1v1.filter(winner=True).count())/at_1v1.filter(winner=False).count())
-#     except ZeroDivisionError:
-#         if at_1v1.count() == 0: c["at_1v1"]["ratio"] = "0.00"
-#         else: c["at_1v1"]["ratio"] = "1.00"
-# 
-#     c["at_team"] = {"all": at_team.count(), "win": at_team.filter(winner=True).count(), "loss": at_team.filter(winner=False).count()}
-#     try:
-#         c["at_team"]["ratio"] = "%.02f"%(float(at_team.filter(winner=True).count())/at_team.filter(winner=False).count())
-#     except ZeroDivisionError:
-#         if at_team.count() == 0: c["at_team"]["ratio"] = "0.00"
-#         else: c["at_team"]["ratio"] = "1.00"
-# 
-#     c["at_ffa"] = {"all": at_ffa.count(), "win": at_ffa.filter(winner=True).count(), "loss": at_ffa.filter(winner=False).count()}
-#     try:
-#         c["at_ffa"]["ratio"] = "%.02f"%(float(at_ffa.filter(winner=True).count())/at_ffa.filter(winner=False).count())
-#     except ZeroDivisionError:
-#         if at_ffa.count() == 0: c["at_ffa"]["ratio"] = "0.00"
-#         else: c["at_ffa"]["ratio"] = "1.00"
-# 
-#     c["at_teamffa"] = {"all": at_teamffa.count(), "win": at_teamffa.filter(winner=True).count(), "loss": at_teamffa.filter(winner=False).count()}
-#     try:
-#         c["at_teamffa"]["ratio"] = "%.02f"%(float(at_teamffa.filter(winner=True).count())/at_teamffa.filter(winner=False).count())
-#     except ZeroDivisionError:
-#         if at_teamffa.count() == 0: c["at_teamffa"]["ratio"] = "0.00"
-#         else: c["at_teamffa"]["ratio"] = "1.00"
-# 
-#     c["at_all"] = {"all": ats.count(), "win": ats.filter(winner=True).count(), "loss": ats.filter(winner=False).count()}
-#     try:
-#         c["at_all"]["ratio"] = "%.02f"%(float(ats.filter(winner=True).count())/ats.filter(winner=False).count())
-#     except ZeroDivisionError:
-#         if ats.count() == 0: c["at_all"]["ratio"] = "0.00"
-#         else: c["at_all"]["ratio"] = "1.00"
-# 
-#     return c
-
-# def collect1v1ratings(game, match_type, limitresults):
-#     if limitresults:
-#         # get ratings for top 20 players for each algorithm
-#         r1v1 = list(Rating.objects.filter(game=game, match_type=match_type, elo__gt=1500).order_by('-elo')[:20].values())
-#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, glicko__gt=1500).order_by('-glicko')[:20].values())
-#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type, trueskill_mu__gt=25).order_by('-trueskill_mu')[:20].values())
-#     else:
-#         r1v1 = list(Rating.objects.filter(game=game, match_type=match_type).order_by('-elo').values())
-#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-glicko').values())
-#         r1v1.extend(Rating.objects.filter(game=game, match_type=match_type).order_by('-trueskill_mu').values())
-#     if limitresults and game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
-#         # thow out duplicates and players with less than x matches in this game and category
-#         r1v1 = {v["playeraccount_id"]:v for v in r1v1 if RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount=PlayerAccount.objects.get(id=v["playeraccount_id"])).count() > settings.HALL_OF_FAME_MIN_MATCHES}.values()
-#     else:
-#         # thow out duplicates
-#         r1v1 = {v["playeraccount_id"]:v for v in r1v1}.values()
-#     # add data needed for the table
-#     for r1 in r1v1:
-#         playeraccount = PlayerAccount.objects.get(id=r1["playeraccount_id"])
-#         r1["num_matches"] = RatingHistory.objects.filter(game=game, match_type=match_type, playeraccount=playeraccount).count()
-#         r1["playeraccount"] = PlayerAccount.objects.get(id=r1["playeraccount_id"])
-# 
-#     return r1v1
 
 @cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):

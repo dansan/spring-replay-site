@@ -43,12 +43,9 @@ TODO: use AJAX, so page loads quicker, and stays responsive in case of network e
   {% if errmsg %}
         <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
   {% else %}
-      {% comment %}
 			{% render_table winlosstable %}
-      {% endcomment %}
-        <p>Currently under reconstruction (moving to SLDB provided values).</p>
-        <p><br/></p>
 
+        <p><br/></p>
         <h2>Rating history</h2>
       {% comment %}
             {% if playerratinghistorytable.data|length == 0 %}
