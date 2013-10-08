@@ -25,25 +25,13 @@ rank2skill = {0: 10,
               6: 35,
               7: 38}
 
-def skill2rank(ts):
-    if ts <25:
-        if ts >= 20:
-            return 3
-        elif ts >= 16:
-            return 2
-        elif ts >= 13:
-            return 1
-        else:
-            return 0
-    else:
-        if ts < 30:
-            return 4
-        elif ts < 35:
-            return 5
-        elif ts < 38:
-            return 6
-        else:
-            return 7
+def skill2rank(trueskill):
+    mindiff = 99
+    for rank,ts in rank2skill.items():
+        if abs(ts-trueskill) < mindiff:
+            mindiff = abs(ts-trueskill)
+            minrank = rank
+    return minrank
 
 def privatize_skill(ts):
     return rank2skill[skill2rank(ts)]
