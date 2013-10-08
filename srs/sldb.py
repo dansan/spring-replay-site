@@ -66,7 +66,11 @@ def _get_PlayerAccount(accountid, privacy_mode):
     if created:
         logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
         if privacy_mode == -1:
-            account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
+            pm = get_sldb_pref(accountid, "privacyMode")
+            if pm["status"] == 0:
+                account.sldb_privacy_mode = pm["result"]
+            else:
+                account.sldb_privacy_mode = 1
             account.save()
     return account
 
