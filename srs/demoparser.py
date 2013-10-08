@@ -1,3 +1,21 @@
+# This file is part of the "spring relay site / srs" program. It is published
+# under the GPLv3.
+#
+# Copyright (C) 2013 Daniel Troeder (daniel #at# admin-box #dot# com)
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#
+# The code in this file was originally part of the SpringLadder project
+# (https://github.com/renemilk/SpringLadder) by koshi/renemilk and
+# BrainDamage. SpringLadder is licensed as "Do What The Fuck You Want To
+# Public License, Version 2".
+#
+# Future modifications of the code as part of the "spring relay site" project
+# are licensed as GPLv3 (see above).
+#
+
 import sys
 import struct
 import zlib
