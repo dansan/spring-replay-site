@@ -29,7 +29,7 @@ from common import all_page_infos
 from forms import UploadFileForm, UploadMediaForm
 import parse_demo_file
 import spring_maps
-from sldb import get_sldb_playerskill
+from sldb import get_sldb_playerskill, get_sldb_match_skills, sldb_gametype2matchtype
 from srs.sldb import demoskill2float
 
 logger = logging.getLogger(__package__)
@@ -330,7 +330,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'countrycode': player["countrycode"], 'preffered_name': player["name"]})
-        if pa.preffered_name == "??":
+        if pa.preffered_name == "??" or pa.preffered_name == "":
             pa.preffered_name = player["name"]
             pa.save()
         if pa.countrycode == "??":
@@ -425,42 +425,46 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
 def rate_match(replay):
     game = replay.game()
-    if datetime.datetime.now(replay.unixTime.tzinfo) - replay.unixTime < datetime.timedelta(minutes=20):
-        # Workaround until getMatchSkills() is implemented by SLDB:
-        # fetch TS values for each player if match happend in the last 20min.
-        logger.debug("Detected recent upload, fetching TS values from SLDB.")
-        accountids = [int(i) for i in PlayerAccount.objects.filter(player__replay=replay, player__spectator=False).exclude(accountid__lte=0).values_list("accountid", flat=True)]
-        try:
-            sldb_skills = get_sldb_playerskill(game.sldb_name, accountids, None, False)
-            for sldb_skill in sldb_skills:
-                if sldb_skill["status"] != 0:
-                    logger.error("status = %d for accountid = %d", sldb_skill["status"], sldb_skill["accountId"])
-                    continue
-                if sldb_skill["account"].sldb_privacy_mode != sldb_skill["privacyMode"]:
-                    sldb_skill["account"].sldb_privacy_mode = sldb_skill["privacyMode"]
-                    sldb_skill["account"].save()
-                for mt, i in settings.SLDB_SKILL_ORDER:
-                    if mt == replay.match_type_short():
-                        pa_rating = sldb_skill["account"].get_rating(game, mt)
-                        pa_rating.trueskill_mu    = sldb_skill["skills"][i][0]
-                        pa_rating.trueskill_sigma = sldb_skill["skills"][i][1]
-                        pa_rating.save()
-                        RatingHistory.objects.get_or_create(playeraccount=sldb_skill["account"], match=replay, game=game, match_type=mt,
-                                                            defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
-        except Exception, e:
-            logger.error("Exception in/after get_sldb_playerskill(): %s", e)
-    else:
+
+    try:
+        match_skill = get_sldb_match_skills([replay.gameID])[0]
+        if match_skill["status"] != 0: raise Exception("SLDB returned status=%d -> 1: invalid gameID value, 2: unknown or unrated gameID"%match_skill["status"])
+    except Exception, e:
+        logger.exception("Exception in/after get_sldb_match_skills(): %s", e)
         # use "skill" tag from demo data if available
-        logger.debug("Trying to use skill tag from demofile")
+        logger.info("Trying to use skill tag from demofile")
         players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="").prefetch_related("account")
-        if not players.exists():
-            logger.debug(".. no skill tags found.")
         for player in players:
             pa_rating = player.account.get_rating(game, replay.match_type_short())
             pa_rating.trueskill_mu    = demoskill2float(player.skill)
             pa_rating.save()
             RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
-                                                defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma})
+                                                defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma, "playername": player.name})
+        else:
+            logger.info(".. no skill tags found.")
+        return
+
+    match_type = sldb_gametype2matchtype[match_skill["gameType"]]
+    for player in match_skill["players"]:
+        pa = player["account"]
+        if pa.sldb_privacy_mode != player["privacyMode"]:
+            pa.sldb_privacy_mode = player["privacyMode"]
+            pa.save()
+        muAfter      , sigmaAfter       = player["skills"][1]
+        globalMuAfter, globalSigmaAfter = player["skills"][3]
+
+        pa_rating = pa.get_rating(game, match_type)
+        pa_rating.trueskill_mu    = muAfter
+        pa_rating.trueskill_sigma = sigmaAfter
+        pa_rating.save()
+        RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type=match_type,
+                                            defaults={"trueskill_mu": muAfter, "trueskill_sigma": sigmaAfter, "playername": Player.objects.get(account=pa, replay=replay).name})
+        pa_rating = pa.get_rating(game, "L") # Global
+        pa_rating.trueskill_mu    = globalMuAfter
+        pa_rating.trueskill_sigma = globalSigmaAfter
+        pa_rating.save()
+        RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type="L",
+                                            defaults={"trueskill_mu": globalMuAfter, "trueskill_sigma": globalSigmaAfter, "playername": Player.objects.get(account=pa, replay=replay).name})
 
 def set_accountid(player):
     if player.has_key("lobbyid"):
