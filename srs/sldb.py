@@ -98,11 +98,11 @@ It returns a map with following keys: status (int), results (array of maps):
     else:
         for pa_result in rpc_skills["results"]:
             if pa_result["status"] != 0:
-                logger.info("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
+                logger.error("status: %d for accountId %d, got: %s", pa_result["status"], pa_result["accountId"], pa_result)
                 pa_result["skills"] = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
             else:
                 for i in range(5):
-                    ts = float(pa_result["skills"][i].split("|")[0])
+                    mu = float(pa_result["skills"][i].split("|")[0])
                     si = float(pa_result["skills"][i].split("|")[1])
                     pa_result["skills"][i] = [0, 0]
                     if privatize:
@@ -117,15 +117,14 @@ It returns a map with following keys: status (int), results (array of maps):
                         do_priv = False
 
                     if do_priv:
-                        pa_result["skills"][i][0] = privatize_skill(ts)
+                        pa_result["skills"][i][0] = privatize_skill(mu)
                     else:
-                        pa_result["skills"][i][0] = ts
+                        pa_result["skills"][i][0] = mu
                     pa_result["skills"][i][1] = si
-            try:
-                pa_result["account"] = PlayerAccount.objects.get(accountid=pa_result["accountId"])
-            except Exception, e:
-                logger.error("Unknown PlayerAccount(%d): %s", pa_result["accountId"], e)
-                pass
+            pa_result["account"], created = PlayerAccount.objects.get_or_create(accountid=pa_result["accountId"], defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": pa_result["privacyMode"]})
+            if created:
+                logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", pa_result["accountId"], pa_result["account"].id)
+
         logger.debug("returning: %s", rpc_skills["results"])
         return rpc_skills["results"]
 
