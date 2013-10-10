@@ -148,19 +148,26 @@ class PlayerRatingTable(tables.Table):
     def render_trueskill_mu(self, value):
         return '%.2f' % value
 
-class TSRatingTable(tables.Table):
-    playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])
-    trueskill_mu    = tables.Column(verbose_name="Trueskill")
-    num_matches     = tables.Column(verbose_name="# Matches")
+class HallOfFameTable(tables.Table):
+    rank            = tables.Column()
+    account         = tables.LinkColumn('player_detail', args=[A('account.accountid')], accessor=A("account.preffered_name"), verbose_name="player")
+    trusted_skill   = tables.Column()
+    estimated_skill = tables.Column()
+    uncertainty     = tables.Column(verbose_name="uncertainty")
+    inactivity      = tables.Column(verbose_name="inactivity")
 
     class Meta:
-        model = Rating
-        fields = ("playername", "trueskill_mu", "num_matches")
         attrs    = {'class': 'paleblue'}
-        order_by = "-trueskill_mu"
 
-    def render_trueskill_mu(self, value):
-        return '%.2f' % value
+    def render_player(self, value, record):
+        return record ["name"]
+
+    def render_trusted_skill(self, value):
+        return '%2.2f' % value
+    def render_estimated_skill(self, value):
+        return '%2.2f' % value
+    def render_uncertainty(self, value):
+        return '%2.2f' % value
 
 class RatingTable(tables.Table):
     playername      = tables.LinkColumn('player_detail', args=[A('playeraccount.accountid')])

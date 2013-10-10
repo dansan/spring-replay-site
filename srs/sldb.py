@@ -104,13 +104,16 @@ def _query_sldb(service, *args, **kwargs):
 def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
     account, created = PlayerAccount.objects.get_or_create(accountid=accountid, defaults={"countrycode": "??", "preffered_name": preffered_name, "sldb_privacy_mode": privacy_mode})
     if created:
-        logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
+        logger.info("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
         if privacy_mode == -1:
             try:
                 account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
                 account.save()
             except:
                 pass
+    if account.preffered_name == "" or account.preffered_name == "??":
+        account.preffered_name = preffered_name
+        account.save()
     return account
 
 def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):

@@ -9,48 +9,42 @@
         <div class="left">
   {% block search %}{% endblock %}
 
-{% if INITIAL_RATING %}
-            <h1>ATM the server is computing all ratings. Please come back in ~30 minutes.</h1>
-{% else %}
   {% block result_table %}
             <h2>{{ pagetitle }}</h2>
             <p><br/></p>
             <div class="bar">
 	            <ul>
-	              {% for game in games %}
+                  {% with games1=games|slice:":4" games2=games|slice:"4:" %}
+	              {% for game in games1 %}
 	                <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url srs.views.hall_of_fame game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
 	              {% endfor %}
-	            </ul>
+                </ul>
+                <p></p>
+                <ul>
+                  {% for game in games2 %}
+                    <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url srs.views.hall_of_fame game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
+                  {% endfor %}
+                  {% endwith %}
+                </ul>
 	        </div>
             <p><br/></p>
-            {% if intro_text %}{% for text in intro_text %}<p>{{ text }}</p>{% endfor %}{% endif %}
+            {% for text in intro_text %}<p><br/></p>
+            <p>{{ text|safe }}</p>{% endfor %}
             <p><br/></p>
 
-            <h3>Ranking 1v1</h3>
-{% if table_1v1.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
-{% else %}
-{% render_table table_1v1 %}
-{% endif %}
-            <h3>Ranking Team</h3>
-{% if table_team.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
-{% else %}
-{% render_table table_team %}
-{% endif %}
-            <h3>Ranking FFA</h3>
-{% if table_ffa.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
-{% else %}
-{% render_table table_ffa %}
-{% endif %}
-            <h3>Ranking TeamFFA</h3>
-{% if table_teamffa.data|length == 0 %}
-            <p><br/><b>No result.</b><br/></p>
-{% else %}
-{% render_table table_teamffa %}
-{% endif %}
+
+    {% for leaderboard,table in tables %}
+            <a name="{{ leaderboard.get_match_type_display }}"></a>
+            <p style="font:1.2em Arial, Helvetica, sans-serif;">
+            {% for ladder in ladders %}
+            {% if ladder == leaderboard.get_match_type_display %}<span style="color:#C3593C;">{{ ladder }}</span>{% else %}<a href="#{{ ladder }}">{{ ladder }}</a>{% endif %} &nbsp;&nbsp;&nbsp;
+            {% endfor %}
+            </p>
+            <p>Last update: {{ leaderboard.last_modified }}</p>
+        {% render_table table %}
+            <p><br/></p>
+            <p><br/></p>
+    {% endfor %}
   {% endblock %}
-{% endif %}
         </div>
 {% endblock %}

@@ -17,6 +17,7 @@ from django.views.decorators.cache import cache_control
 from django.db.models import Max
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.urlresolvers import reverse
+from django.utils.html import strip_tags
 
 from dajax.core import Dajax
 from dajaxice.decorators import dajaxice_register
@@ -31,7 +32,7 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats
+from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards
 
 logger = logging.getLogger(__package__)
 
@@ -197,7 +198,7 @@ def edit_replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except:
-        raise Http404
+        raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
 
     if request.user != replay.uploader:
         return render_to_response('edit_replay_wrong_user.html', c, context_instance=RequestContext(request))
@@ -545,7 +546,31 @@ def search_replays(query):
 @cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):
     c = all_page_infos(request)
-    return render_to_response("sldb_reconstr.html", c, context_instance=RequestContext(request))
+    game = get_object_or_404(Game, abbreviation=abbreviation)
+
+    if game.sldb_name != "":
+        try:
+            leaderboards = get_sldb_leaderboards(game)
+        except Exception, e:
+            logger.exception(e)
+            raise Http404(e)
+        else:
+            c["tables"] = list()
+            for leaderboard in leaderboards:
+                players = SldbLeaderboardPlayer.objects.filter(leaderboard=leaderboard)
+                c["tables"].append((leaderboard, HallOfFameTable(players, prefix=game.sldb_name+"-"+leaderboard.match_type)))
+
+    else:
+        c["errmsg"] = "No ratings available for this game."
+        logger.error("%s (%s)", c["errmsg"], game)
+
+    if abbreviation == "ZK":
+        c["intro_text"] = ['<b>The official Hall of Fame of Zero-K is at <a href="http://zero-k.info/Ladders">http://zero-k.info/Ladders</a>.</b>']
+    c['pagetitle'] = "Hall Of Fame ("+game.name+")"
+    c["games"] = Game.objects.exclude(sldb_name="")
+    c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
+    c["thisgame"] = game
+    return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 # 
 #     from django_tables2 import RequestConfig
 # 

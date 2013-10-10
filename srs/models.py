@@ -455,6 +455,9 @@ class SldbLeaderboardPlayer(models.Model):
     def __unicode__(self):
         return u"(%d) %s | %d | %s | %f"%(self.id, self.leaderboard, self.rank, self.account, self.trusted_skill)
 
+    class Meta:
+        ordering = ['rank']
+
 def get_owner_list(uploader):
     res = [uploader]
     res.extend(AdditionalReplayOwner.objects.filter(uploader=uploader))
