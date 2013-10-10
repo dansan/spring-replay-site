@@ -12,6 +12,7 @@ import logging
 import xmlrpclib
 import socket
 from operator import methodcaller
+import datetime
 
 logger = logging.getLogger(__package__)
 
@@ -23,6 +24,14 @@ class SLDBstatusException(Exception):
     def __str__(self):
         return "%s() returned status %d."%(self.service, self.status)
 
+class SLDBbadArgumentException(Exception):
+    def __init__(self, arg, val):
+        self.argument = arg
+        self.value = val
+
+    def __str__(self):
+        return "Bad argument '%s': %s"%(self.argument, self.value)
+
 rank2skill = {0: 10,
               1: 13,
               2: 16,
@@ -33,9 +42,16 @@ rank2skill = {0: 10,
               7: 38}
 
 sldb_gametype2matchtype = {"Duel": "1",
-                           "FFA": "F",
                            "Team": "T",
-                           "TeamFFA": "G"
+                           "FFA": "F",
+                           "TeamFFA": "G",
+                           "Global": "L"
+                           }
+matchtype2sldb_gametype = {"1": "Duel",
+                           "T": "Team",
+                           "F": "FFA",
+                           "G": "TeamFFA",
+                           "L": "Global"
                            }
 
 def skill2rank(trueskill):
@@ -85,16 +101,16 @@ def _query_sldb(service, *args, **kwargs):
     else:
         return rpc_result.get("results", "status")
 
-def _get_PlayerAccount(accountid, privacy_mode):
-    account, created = PlayerAccount.objects.get_or_create(accountid=accountid, defaults={"countrycode": "??", "preffered_name": "", "sldb_privacy_mode": privacy_mode})
+def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
+    account, created = PlayerAccount.objects.get_or_create(accountid=accountid, defaults={"countrycode": "??", "preffered_name": preffered_name, "sldb_privacy_mode": privacy_mode})
     if created:
         logger.error("Unknown PlayerAccount, accountId: %d, created new PA(%d)", accountid, account.id)
         if privacy_mode == -1:
             try:
                 account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
+                account.save()
             except:
-                account.sldb_privacy_mode = 1
-            account.save()
+                pass
     return account
 
 def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
@@ -230,31 +246,10 @@ Only the ratings specific to the gameType of the gameId and the global ratings a
                     player["skills"][i] = [mu, si]
     return match_skills
 
-def get_sldb_leaderboard(game_abbr, gametypes=["Duel", "FFA", "Team", "TeamFFA", "Global"]):
+def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     """
-    get_sldb_leaderboard("BA") ->
-        {'status': 0,
-         'results': [{'gameType': 'Duel',
-                      'status': 0
-                      'players': [{'accountId': 17034,
-                                   'estimatedSkill': 36.27,
-                                   'inactivity': 5,
-                                   'name': 'Teddy',
-                                   'trustedSkill': 33.41,
-                                   'uncertainty': 0.95},
-                                  {...},
-                                 ],
-                     },
-                     {'gameType': 'FFA',
-                     'status': 0
-                     'players': [{...},
-                                ],
-                     }
-                     {'gameType': 'FFA' ...},
-                     {'gameType': 'TeamFFA' ...},
-                     {'gameType': 'Global' ...}
-                    ]
-        }
+    get_sldb_leaderboards("BA") -> QuerySet of SldbLeaderboardGame for requested game and gametypes
+        Leaderboard data is requested only once per day from SLDB (cached for 1 day)!
 
 SLDB XmlRpc interface docu provided by bibim:
 
@@ -272,19 +267,63 @@ It returns a map with following keys: status (int), results (array of maps).
 The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returned players array can be of smaller size (and even empty for totally unrated mods), in case not enough players have been rated yet.
 
     """
-    logger.debug("game_abbr: %s gametypes: %s", game_abbr, gametypes)
+    logger.debug("game: %s match_types: %s", game, match_types)
+    # test args
+    if game.sldb_name == "":
+        raise SLDBbadArgumentException("game", game)
+    try:
+        [(matchtype2sldb_gametype[match_type], match_type) for match_type in match_types]
+    except:
+        raise SLDBbadArgumentException("match_types", match_types)
 
-    leaderboards = _query_sldb("getLeaderboards", game_abbr, gametypes)
-    for leaderboard in leaderboards["results"]:
-        if leaderboard["status"] != 0:
-            logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)
+    refresh_lbg = list()
+    for match_type in match_types:
+        lbg, created = SldbLeaderboardGame.objects.get_or_create(game=game, match_type=match_type)
+        if created or datetime.datetime.now(tz=lbg.last_modified.tzinfo) - lbg.last_modified > datetime.timedelta(1):
+            # new entry or older than 1 day -> refresh
+            logger.info("Leaderboard cache stale for %s", lbg)
+            refresh_lbg.append(lbg)
         else:
-            for player in leaderboard["players"]:
-                player["account"] = _get_PlayerAccount(player["accountId"], -1)
-                player["estimatedSkill"] = float(player["estimatedSkill"])
-                player["trustedSkill"] = float(player["trustedSkill"])
-                player["uncertainty"] = float(player["uncertainty"])
-    return leaderboards
+            logger.info("Leaderboard cache hit   for %s", lbg)
+    if refresh_lbg:
+        query_args = game.sldb_name, [matchtype2sldb_gametype[lbg.match_type] for lbg in refresh_lbg]
+        try:
+            leaderboards = _query_sldb("getLeaderboards", *query_args)
+        except Exception, e:
+            # problem fetching data from SLDB, mark existing data as stale, so it will be retried next website reload
+            logger.exception("Exception fetching data from SLDB for '%s': %s",  query_args, e)
+            for lbg in refresh_lbg:
+                lbg.last_modified = datetime.datetime(1970, 1, 1, tzinfo=lbg.last_modified.tzinfo)
+                lbg.save()
+            raise e
+        for leaderboard in leaderboards:
+            if leaderboard["status"] != 0:
+                logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)
+            else:
+                # find corresponding SldbLeaderboardGame
+                lbg = SldbLeaderboardGame.objects.get(game=game, match_type=sldb_gametype2matchtype[leaderboard["gameType"]])
+                rank = 0
+                for player in leaderboard["players"]:
+                    # save player infos
+                    rank += 1
+                    defaults = {"account": _get_PlayerAccount(player["accountId"], -1, player["name"]),
+                                "trusted_skill": float(player["trustedSkill"]),
+                                "estimated_skill": float(player["estimatedSkill"]),
+                                "uncertainty": float(player["uncertainty"]),
+                                "inactivity": player["inactivity"]}
+                    sldb_lb_player, created = SldbLeaderboardPlayer.objects.get_or_create(leaderboard=lbg, rank=rank, defaults=defaults)
+                    if not created:
+                        for k,v in defaults.items():
+                            setattr(sldb_lb_player, k, v)
+                        sldb_lb_player.save()
+                # remove unused ranks
+                SldbLeaderboardPlayer.objects.filter(leaderboard=lbg, rank__gt=rank).delete()
+                # update timestamp
+                lbg.last_modified = datetime.datetime.now(tz=lbg.last_modified.tzinfo)
+                lbg.save()
+    else:
+        pass
+    return SldbLeaderboardGame.objects.filter(game=game, match_type__in=match_types)
 
 def get_sldb_player_stats(game_abbr, accountid):
     """

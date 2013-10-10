@@ -50,6 +50,13 @@ class NewsItemAdmin(admin.ModelAdmin):
     list_display = ("post_date", "show", "text")
     search_fields = ["post_date", "text"]
 
+class SldbLeaderboardGameAdmin(admin.ModelAdmin):
+    list_display = ("last_modified", "game", "match_type")
+
+class SldbLeaderboardPlayerAdmin(admin.ModelAdmin):
+    list_display = ("leaderboard", "account", "rank", "trusted_skill", "estimated_skill", "uncertainty", "inactivity")
+    search_fields = ["leaderboard__game__name", "leaderboard__game__sldb_name", "account__preffered_name",  "account__accountid", "rank"]
+
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Map, MapAdmin)
 admin.site.register(MapImg, MapImgAdmin)
@@ -68,5 +75,7 @@ admin.site.register(Game)
 admin.site.register(GameRelease)
 admin.site.register(AdditionalReplayOwner, AdditionalReplayOwnerAdmin)
 admin.site.register(ExtraReplayMedia, ExtraReplayMediaAdmin)
+admin.site.register(SldbLeaderboardGame, SldbLeaderboardGameAdmin)
+admin.site.register(SldbLeaderboardPlayer, SldbLeaderboardPlayerAdmin)
 
 admin.site.register(UserProfile)

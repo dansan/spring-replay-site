@@ -435,6 +435,26 @@ class ExtraReplayMedia(models.Model):
     class Meta:
         ordering = ['-upload_date']
 
+class SldbLeaderboardGame(models.Model):
+    last_modified   = models.DateTimeField(auto_now_add=True)
+    game            = models.ForeignKey(Game)
+    match_type      = models.CharField(max_length=1, choices=RatingBase.MATCH_TYPE_CHOICES, db_index=True)
+
+    def __unicode__(self):
+        return u"(%d) %s | %s"%(self.id, self.game, self.match_type)
+
+class SldbLeaderboardPlayer(models.Model):
+    leaderboard     = models.ForeignKey(SldbLeaderboardGame)
+    account         = models.ForeignKey(PlayerAccount)
+    rank            = models.IntegerField()
+    trusted_skill   = models.FloatField()
+    estimated_skill = models.FloatField()
+    uncertainty     = models.FloatField()
+    inactivity      = models.IntegerField()
+
+    def __unicode__(self):
+        return u"(%d) %s | %d | %s | %f"%(self.id, self.leaderboard, self.rank, self.account, self.trusted_skill)
+
 def get_owner_list(uploader):
     res = [uploader]
     res.extend(AdditionalReplayOwner.objects.filter(uploader=uploader))
