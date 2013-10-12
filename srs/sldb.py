@@ -13,6 +13,7 @@ import xmlrpclib
 import socket
 from operator import methodcaller
 import datetime
+import cPickle
 
 logger = logging.getLogger(__package__)
 
@@ -236,18 +237,38 @@ Only the ratings specific to the gameType of the gameId and the global ratings a
     """
     logger.debug("gameIDs: %s", gameIDs)
 
-    match_skills = _query_sldb("getMatchSkills", gameIDs)
-    for match in match_skills:
-        if match["status"] != 0:
-            logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
+    # check cache
+    SldbMatchSkillsCache.purge_old()
+    cache_miss = dict()
+    result  = list()
+    for gameid in gameIDs:
+        cache_entry, created = SldbMatchSkillsCache.objects.get_or_create(gameID=gameid, defaults={"text": ""})
+        if created:
+            logger.info("MatchSkills cache miss for %s", gameid)
+            cache_miss[gameid] = cache_entry
         else:
-            for player in match["players"]:
-                player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
-                for i in range(4):
-                    mu = float(player["skills"][i].split("|")[0])
-                    si = float(player["skills"][i].split("|")[1])
-                    player["skills"][i] = [mu, si]
-    return match_skills
+            logger.info("MatchSkills cache hit  for %s", gameid)
+            sldbmatch_unpickled = cPickle.loads(str(cache_entry.text))
+            result.append(sldbmatch_unpickled)
+
+    if cache_miss:
+        match_skills = _query_sldb("getMatchSkills", cache_miss.keys())
+        for match in match_skills:
+            if match["status"] != 0:
+                logger.error("status: %d for match %s, got: %s", match["status"], match["gameId"], match)
+            else:
+                for player in match["players"]:
+                    player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
+                    for i in range(4):
+                        mu = float(player["skills"][i].split("|")[0])
+                        si = float(player["skills"][i].split("|")[1])
+                        player["skills"][i] = [mu, si]
+                dbentry = cache_miss[match["gameId"]]
+                dbentry.text = cPickle.dumps(match)
+                dbentry.save()
+                result.append(match)
+
+    return result
 
 def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     """

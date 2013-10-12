@@ -459,6 +459,18 @@ class SldbLeaderboardPlayer(models.Model):
     class Meta:
         ordering = ['rank']
 
+class SldbMatchSkillsCache(models.Model):
+    last_modified   = models.DateTimeField(auto_now_add=True)
+    gameID          = models.CharField(max_length=32, unique=True, db_index=True)
+    text            = models.TextField()
+
+    def __unicode__(self):
+        return u"(%d) %s | %d | %s | %f"%(self.id, self.leaderboard, self.rank, self.account, self.trusted_skill)
+
+    @staticmethod
+    def purge_old():
+        SldbMatchSkillsCache.objects.filter(last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)-datetime.timedelta(minutes=30)).delete()
+
 def get_owner_list(uploader):
     res = [uploader]
     res.extend(AdditionalReplayOwner.objects.filter(uploader=uploader))
