@@ -41,4 +41,4 @@ SLDB_URL         = ""
 SLDB_ACCOUNT     = ""
 SLDB_PASSWORD    = ""
 SLDB_SKILL_ORDER = [("1", 0,), ("F", 1), ("T", 2), ("G", 3), ("L", 4)]
-SLDB_TIMEOUT     = 5
+SLDB_TIMEOUT     = 10
