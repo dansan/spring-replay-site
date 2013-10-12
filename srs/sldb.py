@@ -298,7 +298,7 @@ The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returne
             for lbg in refresh_lbg:
                 lbg.last_modified = datetime.datetime(1970, 1, 1, tzinfo=lbg.last_modified.tzinfo)
                 lbg.save()
-            raise e
+            leaderboards = list()
         for leaderboard in leaderboards:
             if leaderboard["status"] != 0:
                 logger.error("status: %d for gameType %s, got: %s", leaderboard["status"], leaderboard["gameType"], leaderboard)

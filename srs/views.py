@@ -545,6 +545,8 @@ def search_replays(query):
 
 @cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):
+    from django_tables2 import RequestConfig
+
     c = all_page_infos(request)
     game = get_object_or_404(Game, abbreviation=abbreviation)
 
@@ -553,12 +555,14 @@ def hall_of_fame(request, abbreviation):
             leaderboards = get_sldb_leaderboards(game)
         except Exception, e:
             logger.exception(e)
-            raise Http404(e)
         else:
+            rc = RequestConfig(request)
             c["tables"] = list()
             for leaderboard in leaderboards:
                 players = SldbLeaderboardPlayer.objects.filter(leaderboard=leaderboard)
-                c["tables"].append((leaderboard, HallOfFameTable(players, prefix=game.sldb_name+"-"+leaderboard.match_type)))
+                table = HallOfFameTable(players, prefix=leaderboard.match_type+"-")
+                rc.configure(table)
+                c["tables"].append((leaderboard, table))
 
     else:
         c["errmsg"] = "No ratings available for this game."

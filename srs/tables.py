@@ -158,6 +158,7 @@ class HallOfFameTable(tables.Table):
 
     class Meta:
         attrs    = {'class': 'paleblue'}
+        order_by = ("rank")
 
     def render_player(self, value, record):
         return record ["name"]
