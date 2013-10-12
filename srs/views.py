@@ -151,7 +151,7 @@ def replay(request, gameID):
         else:
             # TrueSkill ratings
             for pa in playeraccounts:
-                if match_skills["status"] == 0:
+                if match_skills and match_skills["status"] == 0:
                     # use SLDB-provided values
                     def _get_players_skills(pa):
                         for pl in match_skills["players"]:
