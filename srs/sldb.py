@@ -243,7 +243,7 @@ Only the ratings specific to the gameType of the gameId and the global ratings a
     result  = list()
     for gameid in gameIDs:
         cache_entry, created = SldbMatchSkillsCache.objects.get_or_create(gameID=gameid, defaults={"text": ""})
-        if created:
+        if created or cache_entry.text == "":
             logger.info("MatchSkills cache miss for %s", gameid)
             cache_miss[gameid] = cache_entry
         else:

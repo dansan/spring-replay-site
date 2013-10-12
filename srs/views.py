@@ -94,12 +94,15 @@ def replay(request, gameID):
     match_type = replay.match_type_short()
 
     try:
-        match_skills = get_sldb_match_skills([replay.gameID])[0]
+        match_skills = get_sldb_match_skills([replay.gameID])
+        if match_skills:
+            match_skills = match_skills[0]
     except Exception, e:
         logger.exception("in get_sldb_match_skills(%s): %s", [replay.gameID], e)
+        match_skills = {"status": 3}
         # ignore, we'll just use the old values from the DB in the view
     else:
-        if match_skills["status"] == 0:
+        if match_skills and match_skills["status"] == 0:
             # update skill data in DB
             logger.debug("got match data from sldb")
             for player in match_skills["players"]:
