@@ -101,6 +101,7 @@ class Replay(models.Model):
     path            = models.CharField(max_length=256)
     download_count  = models.IntegerField(default=0)
     comment_count   = models.IntegerField(default=0)
+    rated           = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "("+str(self.pk)+") "+self.title+" "+self.unixTime.strftime("%Y-%m-%d")
@@ -545,20 +546,3 @@ def comment_del_callback(sender, instance, **kwargs):
 @receiver(post_save, sender=PlayerAccount)
 def playerAccount_save_callback(sender, instance, **kwargs):
     logger.debug("PlayerAccount.save(%d): accountid=%d preffered_name=%s", instance.pk, instance.accountid, instance.preffered_name)
-
-# set sorting info when a RatingHistory is saved
-@receiver(post_save, sender=RatingHistory)
-def ratinghistory_save_callback(sender, instance, **kwargs):
-    # check for new new Game[Release] object
-    if kwargs["created"]:
-        instance.playername = instance.playeraccount.preffered_name
-        instance.match_date = instance.match.unixTime
-        instance.save()
-
-# set sorting info when a RatingHistory is saved
-@receiver(post_save, sender=Rating)
-def rating_save_callback(sender, instance, **kwargs):
-    # check for new new Game[Release] object
-    if kwargs["created"]:
-        instance.playername = instance.playeraccount.preffered_name
-        instance.save()

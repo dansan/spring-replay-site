@@ -32,7 +32,7 @@ from models import *
 from common import all_page_infos
 from tables import *
 from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards
+from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards, get_sldb_match_skills
 
 logger = logging.getLogger(__package__)
 
@@ -88,37 +88,88 @@ def replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except:
-        raise Http404
+        raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
 
-    allyteams = Allyteam.objects.filter(replay=replay)
     game = replay.game_release().game
     match_type = replay.match_type_short()
+
+    try:
+        match_skills = get_sldb_match_skills([replay.gameID])[0]
+    except Exception, e:
+        logger.exception("in get_sldb_match_skills(%s): %s", [replay.gameID], e)
+        # ignore, we'll just use the old values from the DB in the view
+    else:
+        if match_skills["status"] == 0:
+            # update skill data in DB
+            logger.debug("got match data from sldb")
+            for player in match_skills["players"]:
+                pa = player["account"]
+                pa_skill = pa.get_rating(game, match_type)
+                mu, si = player["skills"][1]
+                if pa_skill.trueskill_mu != mu or pa_skill.trueskill_sigma != si:
+                    playername = Player.objects.get(account=pa, replay=replay).name
+                    pa_skill.trueskill_mu = mu
+                    pa_skill.trueskill_sigma = si
+                    if pa_skill.playername == "" or pa_skill.playername == "??":
+                        pa_skill.playername = playername
+                    pa_skill.save()
+                    defaults = {"match_date": replay.unixTime, "playername": playername, "trueskill_mu": mu, "trueskill_sigma": si}
+                    rh, created = RatingHistory.objects.get_or_create(match=replay, game=game, match_type=match_type, playeraccount=pa, defaults=defaults)
+                    if not created:
+                        for k,v in defaults.items():
+                            setattr(rh, k, v)
+                        rh.save()
+                if pa.sldb_privacy_mode != player["privacyMode"]:
+                    pa.sldb_privacy_mode = player["privacyMode"]
+                    pa.save()
+                if replay.rated == False:
+                    replay.rated = True
+                    replay.save()
+        else:
+            # ignore, we'll just use the old values from the DB in the view
+            logger.debug("no match data from SLDB")
+            pass
+
+    # fill cache prefetching all entries from DB in one call
+    all_players = Player.objects.filter(replay=replay)
+    allyteams = Allyteam.objects.filter(replay=replay)
     c["allyteams"] = []
     for at in allyteams:
         playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at)
         teams = Team.objects.filter(allyteam=at)
-        players = Player.objects.filter(account__in=playeraccounts, replay=replay).order_by("name")
+        players = all_players.filter(account__in=playeraccounts).order_by("name")
         players_w_rating = list()
         old_rating = 0
         new_rating = 0
         lobby_rank_sum = 0
-        if replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or Player.objects.filter(account__accountid=0, replay=replay).exists():
-            # notcomplete, no SLDB rating or bot present - no rating
+        if replay.rated == False or replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or all_players.filter(account__accountid=0).exists():
+            # notcomplete, no SLDB rating or bot present -> no rating
             players_w_rating = [(player, None, None) for player in players]
         else:
             # TrueSkill ratings
             for pa in playeraccounts:
-                try:
-                    pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
-                except:
-                    # no rating on this replay
-                    pl_new = None
-                try:
-                    # find previous TS value
-                    pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__unixTime__lt=replay.unixTime,).order_by("-match__unixTime")[0].trueskill_mu
-                except:
-                    pl_old = None
+                if match_skills["status"] == 0:
+                    # use SLDB-provided values
+                    def _get_players_skills(pa):
+                        for pl in match_skills["players"]:
+                            if pl["account"] == pa: return pl
+                    pl = _get_players_skills(pa)
+                    pl_new = pl["skills"][1][0]
+                    pl_old = pl["skills"][0][0]
+                else:
+                    # use old method of DB lookups for currect and previous matchs DB entries
+                    try:
+                        pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
+                    except:
+                        # no rating on this replay
+                        pl_new = None
+                    try:
+                        # find previous TS value
+                        pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__unixTime__lt=replay.unixTime,).order_by("-match__unixTime")[0].trueskill_mu
+                    except:
+                        pl_old = None
 
+                # privatize?
                 if playeraccounts.count() > 2 or pa.sldb_privacy_mode == 0:
                     new_rating += pl_new if pl_new else 0
                     old_rating += pl_old if pl_old else 0
@@ -131,25 +182,14 @@ def replay(request, gameID):
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
                         pl_old = privatize_skill(pl_old)
-                players_w_rating.append((Player.objects.get(account=pa, replay=replay), pl_old, pl_new))
+                players_w_rating.append((all_players.get(account=pa), pl_old, pl_new))
 
         if teams:
-            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in Player.objects.filter(replay=replay, team__allyteam=at)], 0)
+            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in all_players.filter(team__allyteam=at)], 0)
             c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
-    rh = list(RatingHistory.objects.filter(match=replay).values())
-    for r in rh:
-        playeraccount = PlayerAccount.objects.get(id=r["playeraccount_id"])
-        r["num_matches"] = RatingHistory.objects.filter(game__id=r["game_id"], match_type=r["match_type"], playeraccount=playeraccount).count()
-        r["playeraccount"] = playeraccount
-
-    if replay.match_type() == "1v1":
-        c["table"] = MatchRatingHistoryTable(rh)
-    else:
-        c["table"] = TSMatchRatingHistoryTable(rh)
-
     c["has_bot"] = replay.tags.filter(name="Bot").exists()
-    c["specs"] = Player.objects.filter(replay=replay, spectator=True).order_by("name")
+    c["specs"] = all_players.filter(replay=replay, spectator=True).order_by("name")
     c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
@@ -635,7 +675,7 @@ def see_user(request, accountid):
     try:
         user = User.objects.get(last_name=accountid)
     except:
-        raise Http404
+        raise Http404("No user with accountID '"+ strip_tags(accountid)+"' found.")
     replays = Replay.objects.filter(uploader=user)
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)

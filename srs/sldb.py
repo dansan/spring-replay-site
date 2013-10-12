@@ -111,7 +111,7 @@ def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
                 account.save()
             except:
                 pass
-    if account.preffered_name == "" or account.preffered_name == "??":
+    if (account.preffered_name == "" or account.preffered_name == "??") and preffered_name:
         account.preffered_name = preffered_name
         account.save()
     return account

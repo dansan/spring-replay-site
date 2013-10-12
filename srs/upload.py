@@ -437,16 +437,30 @@ def rate_match(replay):
         for player in players:
             pa_rating = player.account.get_rating(game, replay.match_type_short())
             pa_rating.trueskill_mu    = demoskill2float(player.skill)
+            if pa_rating.playername == "" or pa_rating.playername == "??":
+                pa_rating.playername = player.name
             pa_rating.save()
-            RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(),
-                                                defaults={"trueskill_mu": pa_rating.trueskill_mu, "trueskill_sigma": pa_rating.trueskill_sigma, "playername": player.name})
+            defaults = {"trueskill_mu": pa_rating.trueskill_mu,
+                        "trueskill_sigma": pa_rating.trueskill_sigma,
+                        "playername": player.name,
+                        "match_date": replay.unixTime}
+            rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(), defaults=defaults)
+            if not created:
+                for k,v in defaults.items():
+                    setattr(rh, k, v)
+                rh.save()
+            replay.rated = True
+            replay.save()
         else:
             logger.info(".. no skill tags found.")
+            replay.rated = False
+            replay.save()
         return
 
     match_type = sldb_gametype2matchtype[match_skill["gameType"]]
     for player in match_skill["players"]:
         pa = player["account"]
+        playername = Player.objects.get(account=pa, replay=replay).name
         if pa.sldb_privacy_mode != player["privacyMode"]:
             pa.sldb_privacy_mode = player["privacyMode"]
             pa.save()
@@ -456,15 +470,34 @@ def rate_match(replay):
         pa_rating = pa.get_rating(game, match_type)
         pa_rating.trueskill_mu    = muAfter
         pa_rating.trueskill_sigma = sigmaAfter
+        if pa_rating.playername == "" or pa_rating.playername == "??":
+                pa_rating.playername = playername
         pa_rating.save()
-        RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type=match_type,
-                                            defaults={"trueskill_mu": muAfter, "trueskill_sigma": sigmaAfter, "playername": Player.objects.get(account=pa, replay=replay).name})
+        defaults = {"trueskill_mu": muAfter,
+                    "trueskill_sigma": sigmaAfter,
+                    "playername": playername,
+                    "match_date": replay.unixTime}
+        rh, created = RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type=match_type, defaults=defaults)
+        if not created:
+            for k,v in defaults.items():
+                setattr(rh, k, v)
+            rh.save()
         pa_rating = pa.get_rating(game, "L") # Global
         pa_rating.trueskill_mu    = globalMuAfter
         pa_rating.trueskill_sigma = globalSigmaAfter
         pa_rating.save()
-        RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type="L",
-                                            defaults={"trueskill_mu": globalMuAfter, "trueskill_sigma": globalSigmaAfter, "playername": Player.objects.get(account=pa, replay=replay).name})
+        defaults = {"trueskill_mu": globalMuAfter,
+                    "trueskill_sigma": globalSigmaAfter,
+                    "playername": playername,
+                    "match_date": replay.unixTime}
+        rh, created = RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type="L", defaults=defaults)
+        if not created:
+            for k,v in defaults.items():
+                setattr(rh, k, v)
+            rh.save()
+    replay.rated = True
+    replay.save()
+    logger.info("Replay(%d) %s rated with values from SLDB.", replay.id, replay.gameID)
 
 def set_accountid(player):
     if player.has_key("lobbyid"):
