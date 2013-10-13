@@ -7,3 +7,7 @@ Disallow: /player/
 Disallow: /upload_date/
 Disallow: /user/
 Disallow: /xmlrpc/
+
+user-agent: AhrefsBot
+disallow: /
+
