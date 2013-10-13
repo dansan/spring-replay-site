@@ -7,7 +7,7 @@
                         <col width="390"/>
                     </colgroup>
                     <tr>
-                        <td>Date</td><td><a href="{% url srs.views.match_date replay.unixTime|date:'Y-m-d' %}">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}</td>
+                        <td>Date</td><td itemprop="datePublished" content="{{ replay.unixTime|date:'Y-m-d\TH:i:s' }}"><a href="{% url srs.views.match_date replay.unixTime|date:'Y-m-d' %}">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}</td>
                     </tr>
                     <tr>
                         <td>Game</td><td><a href="{% url srs.views.gamerelease replay.gametype %}">{{ replay.gametype }}</a> (engine {{ replay.versionString }})</td>
@@ -22,7 +22,7 @@
                         <td>Tags</td><td>{% for tag in replay.tags.all %} <a href="{{ tag.get_absolute_url }}">{{ tag }}</a>{% endfor %}</td>
                     </tr>
                     <tr>
-                        <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{{ replay.uploader.username }}</a>{% if replay.autohostname %} from <a href="{% url srs.views.autohost replay.autohostname %}">{{ replay.autohostname }}</a>{% endif %} on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</td>
+                        <td>Upload</td><td>by <a href="{{ replay.uploader.get_absolute_url }}">{% if not replay.autohostname %}<span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{% if not replay.autohostname %}</span></span>{% endif %}{{ replay.uploader.username }}{% endif %}</a>{% if replay.autohostname %} from <a href="{% url srs.views.autohost replay.autohostname %}"><span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ replay.autohostname }}</span></span></a>{% endif %} on <a href="{% url srs.views.upload_date replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</td>
                     </tr>
                     <tr>
                         <td>Downloads</td><td>{{ replay.download_count }}</td>

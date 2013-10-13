@@ -44,10 +44,10 @@
 
 <!-- REPLAY_BOX -->
 
-        <div class="left">
+        <div itemscope itemtype="http://schema.org/Article" class="left">
             <div class="lt"></div>
             <div class="lbox" style="height:200px;">
-                <p><big><b>{{ replay.title }}</b></big></p>
+                <p itemprop="name" style="font-size: larger; font-weight: bold;">{{ replay.title }}</p>
 {% include "replay_box.html" %}
             </div>
 
@@ -59,7 +59,7 @@
             {% if user.is_staff %}<a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a>{% endif %}
 {% cache 600 replay replay.pk %}
             <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner and rating changes.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
-	        <img src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
+	        <img itemprop="image" src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
 	        <p><br/></p>
             <div class="footer"></div>
 
