@@ -110,7 +110,10 @@ def replay(request, gameID):
                 pa_skill = pa.get_rating(game, match_type)
                 mu, si = player["skills"][1]
                 if pa_skill.trueskill_mu != mu or pa_skill.trueskill_sigma != si:
-                    playername = Player.objects.get(account=pa, replay=replay).name
+                    try:
+                        playername = Player.objects.get(account=pa, replay=replay).name
+                    except:
+                        playername = "??"
                     pa_skill.trueskill_mu = mu
                     pa_skill.trueskill_sigma = si
                     if pa_skill.playername == "" or pa_skill.playername == "??":
@@ -771,7 +774,11 @@ def sldb_privacy_mode(request):
     except:
         c["current_privacy_mode"] = -1
     else:
-        c["current_privacy_mode"] = int(sldb_pref["result"])
+        if type(sldb_pref) == dict:
+            c["current_privacy_mode"] = int(sldb_pref["result"])
+        else:
+            logger.error("what is this?: sldb_pref: %s", sldb_pref)
+            c["current_privacy_mode"] = -1
     logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
 
     if request.method == 'POST':
