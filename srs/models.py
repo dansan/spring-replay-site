@@ -201,6 +201,21 @@ class Replay(models.Model):
         except:
             return "?v?"
 
+    def match_end(self):
+        length  = self.wallclockTime.split(":")
+        try:
+            length2 = datetime.timedelta(seconds=int(length[2]), minutes=int(length[1]), hours=int(length[0]))
+        except:
+            return self.unixTime
+        return self.unixTime + length2
+
+    def duration_ISO_8601(self):
+        length  = self.wallclockTime.split(":")
+        try:
+            return "PT"+length[0]+"H"+length[1]+"M"+length[2]+"S"
+        except:
+            return self.wallclockTime
+
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
     startrectbottom = models.FloatField(blank=True, null = True)

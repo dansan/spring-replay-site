@@ -1,8 +1,6 @@
 {% extends 'lists.html' %}
 {% load render_table from django_tables2 %}
 
-{% block searchheader %}    <meta name="ROBOTS" content="NOINDEX">{% endblock %}
-
 {% block rating %}
     {% if all_names|length > 1 %}
         <p>Aliases:

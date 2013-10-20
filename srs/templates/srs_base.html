@@ -60,7 +60,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <p>Who needs a VCR?</p>
         </div>
 
-        <div class="search_field">
+        <div class="search_field" itemprop="breadcrumb">
             <form method="get" action="{% url srs.views.search %}">
                 <p><input type="submit" value="Search Replays" class="button" /></p>
             </form>
@@ -84,26 +84,43 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
                 {% for comm in latest_comments %}<a href="{% get_comment_permalink comm %}" title="{{ comm.submit_date|date:'Y-m-d H:i' }}">{{ comm.user.username|truncatechars:12 }} | {{ comm.content_object.title|truncatechars:30 }}</a><br/>{% endfor %}</p>
             </div>
             <div class="rt"></div>
-            <div class="right_articles">
-                <p><b><a href="{% url srs.views.hall_of_fame "BA" %}">Hall of fame</a></b></p>
-                <p><b>Tags (<a href="{% url srs.views.tags %}">All</a>)</b><br /><a href="{% url srs.views.tag '1v1' %}">1v1</a> <a href="{% url srs.views.tag '2v2' %}">2v2</a> <a href="{% url srs.views.tag '3v3' %}">3v3</a> <a href="{% url srs.views.tag '6v6' %}">6v6</a> <a href="{% url srs.views.tag '8v8' %}">8v8</a> <a href="{% url srs.views.tag 'Tourney' %}">Tourney</a><br />Top {{ top_tags|length }} in last 30 days: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
-                <p><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps|length }} in last 30 days: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
-                <p><b>Players (<a href="{% url srs.views.players %}">All</a>)</b><br />{{ top_players|length }} most active in last 30 days: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
-                <p><b>Games (<a href="{% url srs.views.games %}">All</a>)</b><br />{% for game in all_games %}<a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a> {% endfor %}</p>
-                <p><b><a href="{% url srs.views.autohosts %}">Autohosts</a></b></p>
-                <p><b><a href="{% url srs.views.users %}">Uploaders</a></b></p>
-                <p><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>
+            <div class="right_articles" itemscope itemtype="http://schema.org/WebPage">
+                <p itemprop="breadcrumb"><b><a href="{% url srs.views.hall_of_fame "BA" %}">Hall of fame</a></b></p>
+                <p itemprop="breadcrumb"><b>Tags (<a href="{% url srs.views.tags %}">All</a>)</b><br /><a href="{% url srs.views.tag '1v1' %}">1v1</a> <a href="{% url srs.views.tag '2v2' %}">2v2</a> <a href="{% url srs.views.tag '3v3' %}">3v3</a> <a href="{% url srs.views.tag '6v6' %}">6v6</a> <a href="{% url srs.views.tag '8v8' %}">8v8</a> <a href="{% url srs.views.tag 'Tourney' %}">Tourney</a><br />Top {{ top_tags|length }} in last 30 days: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
+                <p itemprop="breadcrumb"><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps|length }} in last 30 days: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
+                <p itemprop="breadcrumb"><b>Players (<a href="{% url srs.views.players %}">All</a>)</b><br />{{ top_players|length }} most active in last 30 days: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
+                <p itemprop="breadcrumb"><b>Games (<a href="{% url srs.views.games %}">All</a>)</b><br />{% for game in all_games %}<a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a> {% endfor %}</p>
+                <p itemprop="breadcrumb"><b><a href="{% url srs.views.autohosts %}">Autohosts</a></b></p>
+                <p itemprop="breadcrumb"><b><a href="{% url srs.views.users %}">Uploaders</a></b></p>
+                <p itemprop="breadcrumb"><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>
+                <meta itemprop="name" content="SpringRTS replay site"/>
+                <meta itemprop="genre" content="game"/>
+                <meta itemprop="isBasedOnUrl" content="https://github.com/dansan/spring-replay-site"/>
+                <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+                    <meta itemprop="name" content="Dansan"/>
+                    <meta itemprop="url" content="https://github.com/dansan/spring-replay-site/"/>
+                </span>
             </div>
             <div class="rt"></div>
             <div class="right_articles">
-                <p><b>Links</b><br /><a href="http://springrts.com/">SpringRTS</a><br />
+                <p><b>Links</b><br />
+                <div itemscope itemtype="http://schema.org/SoftwareApplication">
+                    <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)" />
+                    <a href="http://springrts.com/" itemprop="url"><span itemprop="name">SpringRTS</span></a><br />
+                    <meta itemprop="name" content="SpringRTS"/>
+                    <meta itemprop="image" content="http://springrts.com/images/logo.png"/>
+                    <meta itemprop="description" content="RTS game engine"/>
+                    <meta itemprop="genre" content="game"/>
+                    <meta itemprop="applicationCategory" content="game"/>
+                    <meta itemprop="applicationSubCategory" content="Real Time Strategy"/>
+                </div>
                 <a href="http://springfiles.com/">SpringFiles</a><br />
                 <a href="http://replays.springrts.com/piwik/index.php?module=CoreAdminHome&action=optOut&language=en">Privacy | Tracking opt out</a></p>
             </div>
         </div>
 {% endblock %}
-        <div class="footer">
-            <p>If you have requests, complaints, praise or want to contribute code please contact Dansan in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/">GitHub</a>.</p>
+        <div class="footer" itemscope itemtype="http://schema.org/WebPage">
+            <p>If you have requests, complaints, praise or want to contribute code please contact <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Dansan</span> in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/" itemprop="url">GitHub</a></span>.</p>
         </div>
     </div>
     <!-- Piwik -->

@@ -21,19 +21,19 @@
             </div>
 {% for replay in newest_replays %}
 			<div class="lt"></div>
-			<div class="lbox">
-                <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
+			<div class="lbox" itemscope itemtype="http://schema.org/PlayAction">
+                <p><big><b><a href="{{ replay.get_absolute_url }}"><span itemprop="name" >{{ replay.title }}</span></a></b></big></p>
                 <div class="thumb">
                     <!--  hackish way to center an image vertically... -->
                     <table cellspacing="0" cellpadding="0" style="height:100px; width: 150px;"><tbody><tr><td style="padding: 0px; spacing: 0px; text-align:center; vertical-align:middle;">
-					   <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/></a>
+					   <a itemprop="url" href="{{ replay.get_absolute_url }}"><img itemprop="image" src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/></a>
 					</td></tr></tbody></table>
                 </div>
 {% include "replay_box.html" %}
             </div>
 {% endfor %}
 
-            <h2><a href="{% url srs.views.replays %}">more...</a></h2>
+            <h2 itemprop="breadcrumb"><a href="{% url srs.views.replays %}">more...</a></h2>
 		</div>
 {% endblock %}
 {% endcache %}

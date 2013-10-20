@@ -44,7 +44,13 @@
 
 <!-- REPLAY_BOX -->
 
-        <div itemscope itemtype="http://schema.org/Article" class="left">
+        <div class="left" itemscope itemtype="http://schema.org/PlayAction">
+            <meta itemprop="url" content="{{ replay.get_absolute_url }}"/>
+            <div itemprop="audience" itemscope itemtype="http://schema.org/Audience">
+                <meta itemprop="name" content="gamers">
+                <meta itemprop="url" content="http://springrts.com/">
+                <meta itemprop="sameAs" content="http://en.wikipedia.org/wiki/Spring_(game_engine)">
+            </div>
             <div class="lt"></div>
             <div class="lbox" style="height:200px;">
                 <p itemprop="name" style="font-size: larger; font-weight: bold;">{{ replay.title }}</p>
@@ -111,9 +117,9 @@
 <!-- RATING -->
 
 	    <div class="left players" style="width: 240px; padding: 0;">
-	        {% if replay.notcomplete %}<p style="color:maroon;"><b>Replay is incomplete or length of match less than 2 minutes. Not rated.</b></p>{% endif %}
-            {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was a draw!</div>{% endif %}
-            {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold">The match was stopped!</div>{% endif %}
+	        {% if replay.notcomplete %}<p style="color:maroon;"><b><span itemprop="result">Replay is incomplete or length of match less than 2 minutes. Not rated.</span></b></p>{% endif %}
+            {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><span itemprop="result">The match was a draw!</span></div>{% endif %}
+            {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><span itemprop="result">The match was stopped!</span></div>{% endif %}
 	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
                 <colgroup>
                     <col />
@@ -169,7 +175,7 @@
 	            </tr>
     {% for p, pl_old, pl_new in players %}
                 <tr class="body linehl bold" style="color: #{{ p.team.rgbcolor }};">
-                    <td>{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</td>
+                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}<span itemprop="name">{{ p.name }}</span>{% endif %}{% if not is_draw and at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% endif %}</td>
                     <td style="">{{ p.team.side|ljust:"4" }}</td>
       {% if has_bot %}
                     <td></td>
@@ -191,10 +197,11 @@
 		            <td class="body" style="padding-bottom:5px"><b>Spectators</b></td>
 	                <td></td><td></td><td></td><td></td><td></td>
                 </tr>
+<!-- SPECS -->
 	{% if specs|length > 0 %}
         {% for s in specs %}
                 <tr>
-	                <td class="body">{{ s.name }}</td>
+	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person"><meta itemprop="additionalType" content="http://schema.org/WatchAction"/><span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"></td>
 	                <td></td><td></td><td></td><td></td><td></td>
 	            </tr>
         {% endfor %}
@@ -217,39 +224,44 @@
   {% endif %}
   {% if extra_media %}
     {% for media in extra_media %}
-
+          <div itemscope itemtype="http://schema.org/MediaObject">
       {% if media.image %}
-            <p><b>{{ media.image_basename }}</b> (Click to open picture maximized.)</p>
-            <p><a href="{{ media.image.url }}" title="Click to open picture maximized."><img src="{{ media.image.url }}" alt="User-supplied image." style="max-width:100%; max-height:250px;"/></a></p>
+            <p><b><span itemprop="name">{{ media.image_basename }}</span></b> (Click to open picture maximized.)</p>
+            <p><a href="{{ media.image.url }}" title="Click to open picture maximized." itemprop="image"><img src="{{ media.image.url }}" alt="User-supplied image." style="max-width:100%; max-height:250px;" itemprop="thumbnailUrl"/></a></p>
       {% endif %}
       {% if media.media %}
-            <p><b>{{ media.media_basename }}:</b> {{ media.media_magic_text }} ({{ media.media_magic_mime }})</p>
+            <p><b><span itemprop="name">{{ media.media_basename }}</span>:</b> {{ media.media_magic_text }} (<span itemprop="encodingFormat">{{ media.media_magic_mime }}</span>)</p>
         {% if media.media_magic_mime in known_video_formats %}
-            <div data-swf="{{ STATIC_URL }}flowplayer_5.4.3.swf" class="flowplayer">
+            <div data-swf="{{ STATIC_URL }}flowplayer_5.4.3.swf" class="flowplayer" itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
                 <video>
-                    <source type="{{ media.media_magic_mime }}" src="{{ media.media.url }}"/>
+                    <source type="{{ media.media_magic_mime }}" src="{{ media.media.url }}" itemprop="contentUrl" content="{{ media.media.url }}"/>
                 </video>
             </div>
         {% else %}
-            <p style="font-weight:bold"><a href="{% url srs.views.media media.id %}" target="_blank">Click to open "{{ media.media_basename }}" in a new window.</a></p>
+            <span itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
+                <p style="font-weight:bold"><a href="{% url srs.views.media media.id %}" target="_blank"  itemprop="contentUrl" content="{% url srs.views.media media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a></p>
+            </span>
         {% endif %}
       {% endif %}
-            <p><b>Comment: </b>{{ media.comment }}</p>
-            <p><b>Uploaded by</b> {{ media.uploader }} on {{ media.upload_date }}</p>
+            <p><b>Comment: </b><span itemprop="about">{{ media.comment }}</span></p>
+            <p><b>Uploaded by</b> <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ media.uploader }}</span></span> on <span itemprop="uploadDate" content="{{ media.upload_date.isoformat }}">{{ media.upload_date }}</span></p>
             <div class="footer"></div>
+          </div>
     {% endfor %}
   {% endif %}
        </div>
 
 <!-- COMMENTS -->
 
-	   <div class="left">
+	   <div class="left" itemscope itemtype="http://schema.org/WebPage">
             {% get_comment_count for replay as comment_count %}
 	        <h3>Comments ({{ comment_count }}):</h3>
 	        {% get_comment_list for replay as comment_list %}
 			{% for comment in comment_list %}
+            <span itemprop="comment" itemscope itemtype="http://schema.org/UserComments">
 				<p><a name="c{{ comment.id }}"></a>
-				<b>Comment by "{{ comment.user.username }}" on {{ comment.submit_date }}</b> <a href="{% get_comment_permalink comment %}">(link)</a>: {{ comment.comment }}</p>
+				<b>Comment by "<span itemprop="creator" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ comment.user.username }}</span></span>" on <span itemprop="commentTime" content="{{ comment.submit_date.isoformat }}">{{ comment.submit_date }}</span></b> <a href="{% get_comment_permalink comment %}" itemprop="url">(link)</a>: <span itemprop="commentText">{{ comment.comment }}</span></p>
+            </span>
 			{% endfor %}
 	        <a name="afterlastcomment"></a>
 

@@ -1,11 +1,5 @@
 User-agent: *
 Disallow: /admin/
-Disallow: /download/
-Disallow: /mapmodlinks/
-Disallow: /match_date/
-Disallow: /player/
-Disallow: /upload_date/
-Disallow: /user/
 Disallow: /xmlrpc/
 
 user-agent: AhrefsBot
