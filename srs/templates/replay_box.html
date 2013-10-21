@@ -24,7 +24,7 @@
                         <td>Map </td><td itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{{ replay.map_info.get_absolute_url }}" itemprop="sameAs"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="image" content="{{ replay.map_img.get_absolute_url }}"/><meta itemprop="thumbnailUrl" content="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg"/></td>
                     </tr>
                     <tr>
-                        <td>Length </td><td itemprop="event" itemscope itemtype="http://schema.org/Event"><span itemprop="duration" content="{{ replay.duration_ISO_8601 }}">{{ replay.wallclockTime }}</span></td>
+                        <td>Length </td><td>{{ replay.wallclockTime }}</td>
                     </tr>
                     <tr>
                         <td>Tags </td><td itemscope itemtype="http://schema.org/ItemPage">{% for tag in replay.tags.all %} <span itemprop="isPartOf" itemscope itemtype="http://schema.org/CollectionPage"><a href="{{ tag.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ tag }}</span></a></span>{% endfor %}</td>
