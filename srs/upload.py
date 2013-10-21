@@ -23,6 +23,7 @@ from django.db.models import Min
 import django.contrib.auth
 from django.forms.formsets import formset_factory
 from django.utils import timezone
+from django.contrib.sitemaps import ping_google
 
 from models import *
 from common import all_page_infos
@@ -89,8 +90,13 @@ def upload(request):
                             rate_match(replay)
                         except Exception, e:
                             logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
-        #            except Exception, e:
-        #                return HttpResponse("The was a problem with the upload: %s<br/>Please retry or contact the administrator.<br/><br/><a href="/">Home</a>"%e)
+
+                        try:
+                            ping_google()
+                        except Exception, e:
+                            logger.exception("ping_google(): %s", e)
+                            pass
+
         if len(replays) == 0:
             logger.error("no replay created, this shouldn't happen")
         elif len(replays) == 1:
@@ -166,6 +172,13 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         rate_match(replay)
     except Exception, e:
         logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
+
+    try:
+        ping_google()
+    except Exception:
+        logger.exception("ping_google(): %s", e)
+        pass
+
     return '0 received %d bytes, replay at "%s"'%(written_bytes, replay.get_absolute_url())
 
 def save_uploaded_file(ufile, filename):

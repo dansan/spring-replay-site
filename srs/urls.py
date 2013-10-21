@@ -4,14 +4,18 @@ from ajax_select import urls as ajax_select_urls
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
+from sitemap import *
 
 admin.autodiscover()
 
 from dajaxice.core import dajaxice_autodiscover, dajaxice_config
 dajaxice_autodiscover()
 
+sitemaps = {"replays": ReplaySitemap, "players": PlayerAccountSitemap, "hall of fame": HofSitemap, "games": GameSitemap}
+
 urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
+    url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     url(r'^upload/$', 'srs.upload.upload'),
     url(r'^upload_media/(?P<gameID>[0-9,a-f]+)/$', 'srs.upload.upload_media'),
     url(r'^media/(?P<mediaid>[0-9]+)/$', 'srs.views.media'),
