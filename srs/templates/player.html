@@ -1,6 +1,17 @@
 {% extends 'lists.html' %}
 {% load render_table from django_tables2 %}
 
+{% block schema4title %}
+        <span itemscope href="http://schema.org/WebPage">
+          <link itemprop="additionalType" href="http://schema.org/ProfilePage"/>
+          <span itemscope itemprop="about" href="http://schema.org/Person">
+            <h1 itemprop="name">{{ pagetitle }}</h1>
+            <meta itemprop="url" content="{{ selfurl }}"/>
+          </span>
+          <meta itemprop="genre" content="game"/>
+        </span>
+{% endblock %}
+
 {% block rating %}
     {% if all_names|length > 1 %}
         <p>Aliases:

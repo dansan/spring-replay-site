@@ -10,6 +10,16 @@
 
 {% block pagetitle %}Search{% endblock %}
 
+{% block schema4title %}
+        <span itemscope href="http://schema.org/WebPage">
+          <span itemscope itemprop="about" href="http://schema.org/SearchResultsPage">
+            <h1 itemprop="name">{{ pagetitle }}</h1>
+            <meta itemprop="url" content="{{ selfurl }}"/>
+          </span>
+          <meta itemprop="genre" content="game"/>
+        </span>
+{% endblock %}
+
 {% block search %}
 {% if not showadvsearch %}
 <p class="clickme_advsearch" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show advanced search options.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>

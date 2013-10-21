@@ -175,7 +175,7 @@
 	            </tr>
     {% for p, pl_old, pl_new in players %}
                 <tr class="body linehl bold" style="color: #{{ p.team.rgbcolor }};">
-                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}<span itemprop="name">{{ p.name }}</span>{% endif %}{% if not is_draw and at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% endif %}</td>
+                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person">{% if p.account.accountid != 0 %}<a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}<span itemprop="name">{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
                     <td style="">{{ p.team.side|ljust:"4" }}</td>
       {% if has_bot %}
                     <td></td>
@@ -201,7 +201,7 @@
 	{% if specs|length > 0 %}
         {% for s in specs %}
                 <tr>
-	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person"><meta itemprop="additionalType" content="http://schema.org/WatchAction"/><span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"></td>
+	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"><link itemprop="additionalType" content="http://schema.org/WatchAction"/></td>
 	                <td></td><td></td><td></td><td></td><td></td>
 	            </tr>
         {% endfor %}

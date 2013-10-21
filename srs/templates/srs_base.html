@@ -85,14 +85,14 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             </div>
             <div class="rt"></div>
             <div class="right_articles" itemscope itemtype="http://schema.org/WebPage">
-                <p itemprop="breadcrumb"><b><a href="{% url srs.views.hall_of_fame "BA" %}">Hall of fame</a></b></p>
-                <p itemprop="breadcrumb"><b>Tags (<a href="{% url srs.views.tags %}">All</a>)</b><br /><a href="{% url srs.views.tag '1v1' %}">1v1</a> <a href="{% url srs.views.tag '2v2' %}">2v2</a> <a href="{% url srs.views.tag '3v3' %}">3v3</a> <a href="{% url srs.views.tag '6v6' %}">6v6</a> <a href="{% url srs.views.tag '8v8' %}">8v8</a> <a href="{% url srs.views.tag 'Tourney' %}">Tourney</a><br />Top {{ top_tags|length }} in last 30 days: {% for tag in top_tags %}<a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a> {% endfor %}</p>
-                <p itemprop="breadcrumb"><b>Maps (<a href="{% url srs.views.maps %}">All</a>)</b><br />Top {{ top_maps|length }} in last 30 days: {% for map in top_maps %}<a href="{{ map.get_absolute_url }}">{{ map.name }}</a> {% endfor %}</p>
-                <p itemprop="breadcrumb"><b>Players (<a href="{% url srs.views.players %}">All</a>)</b><br />{{ top_players|length }} most active in last 30 days: {% for player in top_players %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> {% endfor %}</p>
-                <p itemprop="breadcrumb"><b>Games (<a href="{% url srs.views.games %}">All</a>)</b><br />{% for game in all_games %}<a href="{{ game.get_absolute_url }}">{{ game.abbreviation }}</a> {% endfor %}</p>
-                <p itemprop="breadcrumb"><b><a href="{% url srs.views.autohosts %}">Autohosts</a></b></p>
-                <p itemprop="breadcrumb"><b><a href="{% url srs.views.users %}">Uploaders</a></b></p>
-                <p itemprop="breadcrumb"><b><a href="{% url srs.views.replays %}">All {{ total_replays }} Replays</a></b></p>
+                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url srs.views.hall_of_fame 'BA' %}" itemprop="url"><span itemprop="name">Hall of fame</span></a></b></p>
+                <p><b>Tags (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tags %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br /><span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag '1v1' %}" itemprop="url"><span itemprop="name">1v1</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag '2v2' %}" itemprop="url"><span itemprop="name">2v2</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag '3v3' %}" itemprop="url"><span itemprop="name">3v3</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag '6v6' %}" itemprop="url"><span itemprop="name">6v6</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag '8v8' %}" itemprop="url"><span itemprop="name">8v8</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.tag 'Tourney' %}" itemprop="url"><span itemprop="name">Tourney</span></a></span><br />Top {{ top_tags|length }} in last 30 days: {% for tag in top_tags %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ tag.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ tag.name }}</span></a></span> {% endfor %}</p>
+                <p><b>Maps (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.maps %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />Top {{ top_maps|length }} in last 30 days: {% for map in top_maps %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ map.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ map.name }}</span></a></span> {% endfor %}</p>
+                <p><b>Players (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.players %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />{{ top_players|length }} most active in last 30 days: {% for player in top_players %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ player.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ player.preffered_name }}</span></a></span> {% endfor %}</p>
+                <p><b>Games (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url srs.views.games %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />{% for game in all_games %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ game.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ game.abbreviation }}</span></a></span> {% endfor %}</p>
+                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url srs.views.autohosts %}" itemprop="url"><span itemprop="name">Autohosts</span></a></b></p>
+                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url srs.views.users %}" itemprop="url"><span itemprop="name">Uploaders</span></a></b></p>
+                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url srs.views.replays %}" itemprop="url"><span itemprop="name">All {{ total_replays }} Replays</span></a></b></p>
                 <meta itemprop="name" content="SpringRTS replay site"/>
                 <meta itemprop="genre" content="game"/>
                 <meta itemprop="isBasedOnUrl" content="https://github.com/dansan/spring-replay-site"/>
@@ -105,8 +105,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <div class="right_articles">
                 <p><b>Links</b><br />
                 <div itemscope itemtype="http://schema.org/SoftwareApplication">
-                    <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)" />
-                    <a href="http://springrts.com/" itemprop="url"><span itemprop="name">SpringRTS</span></a><br />
+                    <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)"/>
+                    <a href="http://springrts.com/" itemprop="url"><span itemprop="name">SpringRTS</span></a><br/>
                     <meta itemprop="name" content="SpringRTS"/>
                     <meta itemprop="image" content="http://springrts.com/images/logo.png"/>
                     <meta itemprop="description" content="RTS game engine"/>
@@ -120,6 +120,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
         </div>
 {% endblock %}
         <div class="footer" itemscope itemtype="http://schema.org/WebPage">
+            <link itemprop="additionalType" href="http://schema.org/WPFooter"/>
             <p>If you have requests, complaints, praise or want to contribute code please contact <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Dansan</span> in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/" itemprop="url">GitHub</a></span>.</p>
         </div>
     </div>
