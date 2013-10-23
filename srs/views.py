@@ -409,38 +409,10 @@ def player(request, accountid):
 
     c["winlosstable"] = WinLossTable(win_loss_data, prefix="w-")
     c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
-#     c["playerratinghistorytable"] = PlayerRatingHistoryTable(RatingHistory.objects.filter(playeraccount__in=accounts), prefix="h-")
-#     RequestConfig(request, paginate={"per_page": 20}).configure(c["playerratinghistorytable"])
 
-    replay_table_data = list()
-    replays = Replay.objects.filter(player__account=pa).order_by("unixTime")
-    for replay in replays:
-        replay_dict = dict()
-        replay_table_data.append(replay_dict)
-
-        replay_dict["title"] = replay.title
-        replay_dict["unixTime"] = replay.unixTime
-        player = Player.objects.filter(replay=replay, account=pa)[0] # not using get() for the case of a spec-cheater
-        replay_dict["playername"] = player.name
-        try:
-            replay_dict["game"] = replay.game_release().game.abbreviation
-        except:
-            replay_dict["game"] = replay.game_release()[:12]
-        replay_dict["match_type"] = replay.match_type()
-        try:
-            team = Team.objects.get(replay=replay, teamleader=player)
-            if team.allyteam.winner:
-                replay_dict["result"] = "won"
-            else:
-                replay_dict["result"] = "lost"
-            replay_dict["side"] = team.side
-        except:
-            replay_dict["result"] = "spec"
-            replay_dict["side"] = "spec"
-        replay_dict["gameID"] = replay.gameID
-        replay_dict["accountid"] = PlayerAccount.objects.get(player=player).accountid
-
-    c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime")
+    replay_table_data = Replay.objects.filter(player__account=pa).order_by("unixTime")
+    c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime", _pa=pa)
+    c['table']._pa = pa
     RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
 
     return render_to_response("player.html", c, context_instance=RequestContext(request))

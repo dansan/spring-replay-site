@@ -8,9 +8,7 @@
 
 import django_tables2 as tables
 from django_tables2 import A
-from django.utils.safestring import mark_safe
-from models import Rating, PlayerAccount
-
+from models import Rating, Replay
 
 class ReplayTable(tables.Table):
     title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
@@ -26,15 +24,35 @@ class ReplayTable(tables.Table):
 class PlayersReplayTable(tables.Table):
     title          = tables.LinkColumn('replay_detail', args=[A('gameID')])
     unixTime       = tables.Column(verbose_name="Date")
-    playername     = tables.LinkColumn('player_detail', args=[A('accountid')])
-    game           = tables.Column()
+    playername     = tables.Column(orderable=False)
+    game           = tables.Column(orderable=False)
     match_type     = tables.Column()
-    result         = tables.Column()
-    side           = tables.Column()
+    result         = tables.Column(orderable=False)
+    faction        = tables.Column(orderable=False)
+
+    _pa            = None
+
+    def __init__(self, *args, **kwargs):
+        self._pa = kwargs.pop("_pa")
+        return super(PlayersReplayTable, self).__init__(*args, **kwargs)
 
     class Meta:
+        model    = Replay
+        fields   = ("title", "unixTime", "playername", "game", "match_type", "result", "faction")
         attrs    = {'class': 'paleblue'}
-        order_by = "-match_date"
+        order_by = "-unixTime"
+
+    def render_playername(self, value, record):
+        return record._playername(self._pa)
+
+    def render_game(self, value, record):
+        return record.game_release().game.abbreviation
+
+    def render_result(self, value, record):
+        return record._result(self._pa)
+
+    def render_faction(self, value, record):
+        return record._faction(self._pa)
 
 class AutoHostTable(tables.Table):
     name           = tables.LinkColumn('autohost_detail', args=[A('name')])

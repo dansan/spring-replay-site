@@ -216,6 +216,45 @@ class Replay(models.Model):
         except:
             return self.wallclockTime
 
+    playername = "N/A" # something must exists, or PlayersReplayTable will always have an empty column
+    def _playername(self, playeraccount):
+        player = Player.objects.filter(replay=self, account=playeraccount)[0] # not using get() for the case of a spec-cheater
+        return player.name
+
+    def _faction_result(self, playeraccount):
+        """
+        Create cached entries, so this function (and the DB queries) runs only once per line in PlayersReplayTable.
+        """
+        try:
+            player = Player.objects.get(replay=self, account=playeraccount)
+            team = Team.objects.get(replay=self, teamleader=player)
+            if team.allyteam.winner:
+                self._result_cache = (playeraccount, "won")
+            else:
+                self._result_cache = (playeraccount, "lost")
+            self._faction_cache = (playeraccount, team.side)
+        except:
+            self._result_cache = (playeraccount, "spec")
+            self._faction_cache = (playeraccount, "spec")
+
+    faction = "N/A" # something must exists, or PlayersReplayTable will always have an empty column
+    def _faction(self, playeraccount):
+        """
+        This is used by PlayersReplayTable
+        """
+        if not hasattr(self, "_faction_cache") or not self._faction_cache[0] == playeraccount:
+            self._faction_result(playeraccount)
+        return self._faction_cache[1]
+
+    result = "N/A" # something must exists, or PlayersReplayTable will always have an empty column
+    def _result(self, playeraccount):
+        """
+        This is used by PlayersReplayTable
+        """
+        if not hasattr(self, "_result_cache") or not self._result_cache[0] == playeraccount:
+            self._faction_result(playeraccount)
+        return self._result_cache[1]
+
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
     startrectbottom = models.FloatField(blank=True, null = True)
