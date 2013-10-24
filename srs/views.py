@@ -18,6 +18,7 @@ from django.db.models import Max
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.urlresolvers import reverse
 from django.utils.html import strip_tags
+from django.contrib.contenttypes.models import ContentType
 
 from dajax.core import Dajax
 from dajaxice.decorators import dajaxice_register
@@ -90,8 +91,8 @@ def replay(request, gameID):
     except:
         raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
 
-    game = replay.game_release().game
-    match_type = replay.match_type_short()
+    game = replay.game_release.game
+    match_type = replay.match_type_short
 
     try:
         match_skills = get_sldb_match_skills([replay.gameID])
@@ -148,7 +149,7 @@ def replay(request, gameID):
         old_rating = 0
         new_rating = 0
         lobby_rank_sum = 0
-        if replay.rated == False or replay.notcomplete or not players.exists() or not replay.game_release().game.sldb_name or all_players.filter(account__accountid=0).exists():
+        if replay.rated == False or replay.notcomplete or not players.exists() or not replay.game_release.game.sldb_name or all_players.filter(account__accountid=0).exists():
             # notcomplete, no SLDB rating or bot present -> no rating
             players_w_rating = [(player, None, None) for player in players]
         else:
@@ -202,7 +203,7 @@ def replay(request, gameID):
     c["replay_details"] = True
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
     c["is_draw"] = allyteams.filter(winner=True).count() > 1
-    c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players(), replay.match_type(), replay.game_release().game.name, replay.map_info.name, replay.unixTime)
+    c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players, replay.match_type, replay.game_release.game.name, replay.map_info.name, replay.unixTime)
     c["replay_owners"] = get_owner_list(replay.uploader)
     c["extra_media"] = ExtraReplayMedia.objects.filter(replay=replay)
     c["known_video_formats"] = ["video/webm", "video/mp4", "video/ogg", "video/x-flv", "application/ogg"]
@@ -257,7 +258,7 @@ def edit_replay(request, gameID):
             tags = request.POST['tags']
 
             for tag in replay.tags.all():
-                if tag.replay_count() == 1 and tag.pk > 10:
+                if tag.replay_count == 1 and tag.pk > 10:
                     # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
                     tag.delete()
             replay.tags.clear()
@@ -319,7 +320,7 @@ def autohost(request, hostname):
     return replay_table(request, replays, "%d replays on autohost '%s'"%(replays.count(), hostname))
 
 def tags(request):
-    table = TagTable([{"name": tag.name, "count": tag.replay_count()} for tag in Tag.objects.all()])
+    table = TagTable([{"name": tag.name, "count": tag.replay_count} for tag in Tag.objects.all()])
     intro_text = ["Click on a tag to see a list of matches tagged with it."]
     return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count(), intro_text=intro_text)
 
@@ -331,7 +332,7 @@ def tag(request, reqtag):
     return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag), ext=ext)
 
 def maps(request):
-    table = MapTable([{"name": rmap.name, "count": rmap.replay_count()} for rmap in Map.objects.all()])
+    table = MapTable([{"name": rmap.name, "count": rmap.replay_count} for rmap in Map.objects.all()])
     intro_text = ["Click on a map name to see a list of matches played on that map."]
     return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count(), intro_text=intro_text)
 
@@ -728,11 +729,11 @@ def media(request, mediaid):
     else:
         try:
             response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
-            response['Content-Disposition'] = 'attachment; filename="%s"'%media.media_basename()
+            response['Content-Disposition'] = 'attachment; filename="%s"'%media.media_basename
             return response
         except IOError, e:
-            logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" %(media.id, media.replay.id, media.media_basename(), str(e)))
-            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum."%media.media_basename())
+            logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" %(media.id, media.replay.id, media.media_basename, str(e)))
+            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum."%media.media_basename)
 
 @login_required
 @never_cache

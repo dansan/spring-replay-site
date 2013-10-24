@@ -68,7 +68,7 @@ def upload(request):
 
                     try:
                         replay = Replay.objects.get(gameID=demofile.header["gameID"])
-                        if replay.was_succ_uploaded():
+                        if replay.was_succ_uploaded:
                             logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
                             form._errors = {'file': [u'Uploaded replay already exists: "%s"'%replay.title]}
                             replays.append((False, 'Uploaded replay already exists: <a href="%s">%s</a>.'%(replay.get_absolute_url(), replay.title)))
@@ -144,7 +144,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
 
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
-        if replay.was_succ_uploaded():
+        if replay.was_succ_uploaded:
             logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
             try:
                 os.remove(path)
@@ -437,7 +437,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     return replay
 
 def rate_match(replay):
-    game = replay.game()
+    game = replay.game
 
     try:
         match_skill = get_sldb_match_skills([replay.gameID])
@@ -455,7 +455,7 @@ def rate_match(replay):
         if players.exists():
             replay.rated = True
             for player in players:
-                pa_rating = player.account.get_rating(game, replay.match_type_short())
+                pa_rating = player.account.get_rating(game, replay.match_type_short)
                 demo_skill = demoskill2float(player.skill)
                 if pa_rating.trueskill_mu != demo_skill:
                     pa_rating.trueskill_mu = demo_skill
@@ -467,7 +467,7 @@ def rate_match(replay):
                             "trueskill_sigma": pa_rating.trueskill_sigma,
                             "playername": player.name,
                             "match_date": replay.unixTime}
-                rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short(), defaults=defaults)
+                rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game, match_type=replay.match_type_short, defaults=defaults)
                 if not created:
                     save_it = False
                     for k,v in defaults.items():
@@ -484,7 +484,7 @@ def rate_match(replay):
     try:
         match_type = sldb_gametype2matchtype[match_skill["gameType"]]
     except:
-        match_type = replay.match_type_short()
+        match_type = replay.match_type_short
     for player in match_skill["players"]:
         pa = player["account"]
         try:
@@ -601,7 +601,7 @@ def save_tags(replay, tags):
             replay.tags.add(t_obj)
 
 def set_autotag(replay):
-    autotag = replay.match_type()
+    autotag = replay.match_type
 
     tag, created = Tag.objects.get_or_create(name = autotag, defaults={})
     if created:
@@ -611,7 +611,7 @@ def set_autotag(replay):
             replay.tags.add(tag)
 
     if autotag != "1v1":
-        num_tag = replay.num_players()
+        num_tag = replay.num_players
         tag, created = Tag.objects.get_or_create(name = num_tag, defaults={})
         if created:
             replay.tags.add(tag)
@@ -625,9 +625,9 @@ def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
     if not short:
-        short = "%s on %s"%(replay.match_type(), replay.map_info.name)
-        if replay.match_type() != "1v1":
-            short = replay.num_players() + " " + short
+        short = "%s on %s"%(replay.match_type, replay.map_info.name)
+        if replay.match_type != "1v1":
+            short = replay.num_players + " " + short
         replay.title = short
     else:
         logger.debug("short")
@@ -636,7 +636,7 @@ def save_desc(replay, short, long_text, autotag):
         else:
             replay.title = autotag+" "+short
 
-    num_tag = replay.num_players()
+    num_tag = replay.num_players
     if num_tag not in short.split():
         replay.title = num_tag+" "+short
 

@@ -14,7 +14,6 @@ import datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.comments import Comment
-from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.db.models import Count
@@ -47,6 +46,7 @@ class Tag(models.Model):
     def get_absolute_url(self):
         return ('srs.views.tag', [self.name])
 
+    @property
     def replay_count(self):
         return Replay.objects.filter(tags=self).count()
 
@@ -63,6 +63,7 @@ class Map(models.Model):
     def get_absolute_url(self):
         return ('srs.views.rmap', [self.name])
 
+    @property
     def replay_count(self):
         return Replay.objects.filter(map_info=self).count()
 
@@ -110,6 +111,7 @@ class Replay(models.Model):
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
 
+    @property
     def was_succ_uploaded(self):
         return not UploadTmp.objects.filter(replay=self).exists()
 
@@ -117,9 +119,11 @@ class Replay(models.Model):
         get_latest_by = 'upload_date'
         ordering = ['-upload_date']
 
+    @property
     def game(self):
-        return self.game_release().game
+        return self.game_release.game
 
+    @property
     def game_release(self):
         gr_name = self.gametype
         try:
@@ -149,6 +153,7 @@ class Replay(models.Model):
             game, _ = Game.objects.get_or_create(name=game_name, defaults={"abbreviation": reduce(lambda x,y: x+y, [gn[0].upper() for gn in game_name.split()])})
             return GameRelease.objects.create(name=gr_name, game=game, version=version)
 
+    @property
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA'"""
         # quick and dirty using tags
@@ -186,11 +191,13 @@ class Replay(models.Model):
 
         raise Exception("Could not determine match_type for replay(%d) %s."%(self.id, self.gameID))
 
+    @property
     def match_type_short(self):
         """returns string (from match_type()): 1 / T / F / G"""
-        if self.match_type() == "TeamFFA": return "G"
-        else: return self.match_type()[0]
+        if self.match_type == "TeamFFA": return "G"
+        else: return self.match_type[0]
 
+    @property
     def num_players(self):
         """returns string (from counting players): 1v1 / 1v5 / 6v6 / 2v2v2v2 / ..."""
         try:
@@ -201,6 +208,7 @@ class Replay(models.Model):
         except:
             return "?v?"
 
+    @property
     def match_end(self):
         length  = self.wallclockTime.split(":")
         try:
@@ -209,6 +217,7 @@ class Replay(models.Model):
             return self.unixTime
         return self.unixTime + length2
 
+    @property
     def duration_ISO_8601(self):
         length  = self.wallclockTime.split(":")
         try:
@@ -280,8 +289,10 @@ class PlayerAccount(models.Model):
     def get_absolute_url(self):
         return ('srs.views.player', [self.accountid])
 
+    @property
     def replay_count(self):
         return Player.objects.filter(account__in=self).count()
+    @property
     def spectator_count(self):
         return Player.objects.filter(account__in=self, spectator=True).count()
 
@@ -431,6 +442,7 @@ class RatingBase(models.Model):
     trueskill_mu       = models.FloatField(default=25.0)
     trueskill_sigma    = models.FloatField(default=25.0/3)
 
+    @property
     def skilluncertainty(self):
         # from spads_0.11.9.pl - sendPlayerSkill()
         if   self.trueskill_sigma > 3  : return 3
@@ -478,9 +490,11 @@ class ExtraReplayMedia(models.Model):
     media_magic_text = models.CharField(max_length=1024, blank=True, null=True)
     media_magic_mime = models.CharField(max_length=128, blank=True, null=True)
 
+    @property
     def media_basename(self):
         return basename(self.media.name)
 
+    @property
     def image_basename(self):
         return basename(self.image.name)
 
@@ -589,7 +603,7 @@ Comment.comment_short = lambda self: self.comment[:50]+"..."
 def replay_save_callback(sender, instance, **kwargs):
     logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
     # check for new new Game[Release] object
-    if kwargs["created"]: instance.game_release()
+    if kwargs["created"]: instance.game_release
     update_stats()
 
 # automatically refresh statistics when a replay is deleted

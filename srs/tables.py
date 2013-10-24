@@ -46,7 +46,7 @@ class PlayersReplayTable(tables.Table):
         return record._playername(self._pa)
 
     def render_game(self, value, record):
-        return record.game_release().game.abbreviation
+        return record.game_release.game.abbreviation
 
     def render_result(self, value, record):
         return record._result(self._pa)
