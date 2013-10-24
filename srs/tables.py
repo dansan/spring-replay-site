@@ -26,7 +26,7 @@ class PlayersReplayTable(tables.Table):
     unixTime       = tables.Column(verbose_name="Date")
     playername     = tables.Column(orderable=False)
     game           = tables.Column(orderable=False)
-    match_type     = tables.Column()
+    match_type     = tables.Column(orderable=False)
     result         = tables.Column(orderable=False)
     faction        = tables.Column(orderable=False)
 
