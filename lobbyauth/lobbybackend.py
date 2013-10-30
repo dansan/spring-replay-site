@@ -31,6 +31,7 @@ class LobbyBackend():
         accountinfo = self.soap_getaccountinfo(username, password)
         logger.debug("accountinfo returned by soap: '%s'", accountinfo)
         if not accountinfo == None:
+            logger.info("Login success for username: %s", username)
             try:
                 user = User.objects.get(last_name=str(accountinfo.LobbyID))
             except:
