@@ -5,8 +5,10 @@
         <span itemscope href="http://schema.org/WebPage">
           <link itemprop="additionalType" href="http://schema.org/ProfilePage"/>
           <span itemscope itemprop="about" href="http://schema.org/Person">
-            <h1 itemprop="name">{{ pagetitle }}</h1>
+            <h1>Player <span itemprop="name">{{ playeraccount.preffered_name }}</span></h1>
             <meta itemprop="url" content="{{ selfurl }}"/>
+            {% if all_names|length > 1 %}{% with all_names|slice:"1:" as aliases %}{% for alias in aliases %}
+            <meta itemprop="additionalName" content="{{ alias }}"/>{% endfor %}{% endwith %}{% endif %}
           </span>
           <meta itemprop="genre" content="game"/>
         </span>
