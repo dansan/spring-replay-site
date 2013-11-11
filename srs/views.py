@@ -368,6 +368,8 @@ def player(request, accountid):
         c["errmsg"] = "No rating for single player or bots."
     else:
         for game in pa.get_all_games().exclude(sldb_name=""):
+            if not Rating.objects.filter(game=game, playeraccount=pa).exists():
+                continue
             user = request.user if request.user.is_authenticated() else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]

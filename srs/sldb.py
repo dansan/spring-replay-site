@@ -127,6 +127,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
                and user
 
     If the overall request was OK, but one or more results are bad, no
+    exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0, 0.0] will be
     exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0] will be
     returned.
 
