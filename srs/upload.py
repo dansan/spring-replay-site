@@ -198,6 +198,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     Store all data about this replay in the database
     """
     replay = Replay()
+    replay.published = False
     replay.uploader = user
     replay.title = short # temp
 
@@ -431,6 +432,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # save descriptions
     save_desc(replay, short, long_text, autotag)
 
+    replay.published = True
     replay.save()
     uploadtmp.delete()
 

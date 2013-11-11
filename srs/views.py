@@ -40,7 +40,7 @@ logger = logging.getLogger(__package__)
 @cache_control(must_revalidate=True, max_age=60)
 def index(request):
     c = all_page_infos(request)
-    c["newest_replays"] = Replay.objects.all().order_by("-unixTime")[:10]
+    c["newest_replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[:10]
     c["news"] = NewsItem.objects.filter(show=True).order_by('-pk')[:6]
     c["replay_details"] = False
     c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["newest_replays"]])
@@ -90,6 +90,9 @@ def replay(request, gameID):
         c["replay"] = replay
     except:
         raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
+
+    if not replay.published:
+        return render_to_response('replay_unpublished.html', c, context_instance=RequestContext(request))
 
     game = replay.game_release.game
     match_type = replay.match_type_short
