@@ -372,7 +372,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                     pplayer.save()
 
         if player.has_key("team"):
-            teams.append((players[pnum], str(player["team"]))) # [(Player, "2"), ...]
+            teams.append((players[pnum], player["team"])) # [(Player, "2"), ...]
         else:
             # this must be a spectator
             if not player["spectator"] == 1:
@@ -387,9 +387,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         team = Team()
         for k,v in val.items():
             if k == "allyteam":
-                team.allyteam = allyteams[str(v)]
+                team.allyteam = allyteams[v]
             elif k == "teamleader":
-                team.teamleader = players[str(v)]
+                team.teamleader = players[v]
             elif k =="rgbcolor":
                 team.rgbcolor = floats2rgbhex(v)
             else:

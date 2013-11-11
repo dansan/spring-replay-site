@@ -16,8 +16,7 @@
 # are licensed as GPLv3 (see above).
 #
 
-import io
-from ConfigParser import RawConfigParser as CfgParser
+import re
 from collections import defaultdict
 
 class Result():
@@ -60,19 +59,59 @@ class Result():
 			return'Result: team(%s) died(%d) quit(%d) '%(
 				self.team,self.died,self.quit)
 
-class ScriptPlayer(object):
-	def __init__(self,config,section):
-		self.num = int(section[6:])
-		self.name = config.get(section, 'Name')
-		self.rank = int(config.get(section, 'Rank'))
+def try_make_numeric(val):
+	if val.isdigit():
+		return int(val)
+	else:
 		try:
-			self.team = int(config.get(section, 'Team'))
-			self.spectator = False
-		except:
-			self.spectator = True
+			return float(val)
+		except Exception:
+			pass
+	return val
+
+class ScriptObject(object):
+
+	def __init__(self, section, data):
+		if not section in ["mapoptions", "modoptions", "restrict", "game_setup_host"]:
+			_i = 0
+			while not section[_i].isdigit():
+				_i += 1
+			self.num = int(section[_i:])
+
+		kvs = re.findall('(?P<key>.*?)=(?P<value>.*?);', data.strip(), re.DOTALL)
+		for key, value in kvs:
+			setattr(self, key, try_make_numeric(value))
+
+		if self.req_keys and not any([hasattr(self, key) for key in self.req_keys]):
+			raise Exception("Missing required key in section '%s'."%section)
+
+class ScriptPlayer(ScriptObject):
+	req_keys = ["countrycode", "spectator"]
+
+	def __init__(self, config, section):
+		super(ScriptPlayer, self).__init__(config, section)
+
+		if hasattr(self, "accountid"):
+			pass
+		elif hasattr(self, "lobbyid"):
+			# demofile from zero-k
+			self.accountid = self.lobbyid
+		else:
+			raise Exception("Missing required key 'lobbyid' or 'accountid' in section '%s'."%section)
+
+		if hasattr(self, "rank"):
+			pass
+		elif hasattr(self, "lobbyrank"):
+			# demofile from zero-k
+			self.accountid = self.lobbyrank
+		else:
+			raise Exception("Missing required key 'rank' or 'lobbyrank' in section '%s'."%section)
+
+		if not hasattr(self, "team"):
 			self.team = None
-		self.ally = -1
-		
+
+		self.ally = -1 # don't know if really needed, but I'll let it here for now
+
 	def result(self):
 		r = Result()
 		r.ally = self.ally
@@ -80,70 +119,37 @@ class ScriptPlayer(object):
 		#if r.team < 0:
 		#	raise Exception('djiepo')
 		return r
-	
-	
-class ScriptAI(object):
-	def __init__(self,config,section):
-		self.num = int(section[2:])
-		self.team = config.get(section, 'Team')
-		self.name = config.get(section, 'Name')
-		self.shortname = config.get(section, 'ShortName')
-		self.ally = -1
 
+class ScriptAI(ScriptObject):
+	req_keys = ["host", "shortname", "team"]
 
-class ScriptAlly(object):		
-	def __init__(self,config,section):
-		self.num = int(section[8:])
-		self.team = config.get(section, 'Team')
-		self.name = config.get(section, 'Name')
-		self.shortname = config.get(section, 'ShortName')
-		self.ally = -1
-		
-		
-class ScriptTeam(object):		
-	def __init__(self,config,section):
-		self.num = int(section[4:])
-		self.leader = config.get(section, 'TeamLeader')
-		self.side = config.get(section, 'Side')
-		self.shortname = config.get(section, 'ShortName')
-		self.ally = config.get(section, 'AllyTeam')
-		
-		
+class ScriptAlly(ScriptObject):
+	req_keys = ["numallies"]
+
+class ScriptTeam(ScriptObject):
+	req_keys = ["allyteam", "handicap", "rgbcolor", "side", "teamleader"]
+
+class ScriptRestrictions(ScriptObject):
+	req_keys = []
+
+class ScriptMapoptions(ScriptObject):
+	req_keys = []
+
+class ScriptModoptions(ScriptObject):
+	req_keys = []
+
+class ScriptGamesetup(ScriptObject):
+	req_keys = []
+
 class Script(object):
-	def __init__(self,script):
-		config = CfgParser({'team':None})
-		script = script.replace('}','').replace('{','').replace(';','')
-		config.readfp(io.BytesIO(script))
+	def __init__(self):
 		self.restrictions = dict()
-		self.mapoptions = dict() 
+		self.mapoptions = dict()
 		self.modoptions = dict()
 		self.players = defaultdict(Result)
 		self.bots = dict()
 		self.spectators = defaultdict(Result)
-		self.teams = [] 
-		self.allies = []
+		self.teams = list()
+		self.allies = list()
 		self.other = dict()
-		for section in config.sections():
-			if section.startswith('player'):
-				player = ScriptPlayer(config,section)
-				if player.spectator:
-					self.spectators[player.name] = player.result()
-				else:
-					self.players[player.name] = player.result()
-			elif section.startswith('AI'):
-				bot = ScriptAI(config,section)
-				self.bots[bot.name] = bot
-			elif section.startswith('ALLYTEAM'):
-				self.allies.append(ScriptAlly(config,section))
-			elif section.startswith('TEAM'):
-				self.teams.append(ScriptTeam(config,section))
-			elif section == 'restrict':
-				self.restrictions = dict(config.items(section))
-			elif section == 'mapoptions':
-				self.mapoptions = dict(config.items(section))
-			elif section == 'modoptions':
-				self.modoptions = dict(config.items(section))
-			if config.has_option(section, 'mapname'):
-				self.other['mapname'] = config.get(section, 'mapname')
-			if config.has_option(section, 'gametype'):
-				self.other['modname'] = config.get(section, 'gametype')
+		self.players_script = list()

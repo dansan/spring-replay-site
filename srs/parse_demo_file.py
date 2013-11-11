@@ -16,7 +16,7 @@ from datetime import timedelta
 import pprint
 import magic
 import gzip
-
+from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, ScriptRestrictions, ScriptTeam
 
 class Parse_demo_file():
     def __init__(self, filename):
@@ -52,6 +52,7 @@ class Parse_demo_file():
         self.header['magic'] = self.read_blob(0, 16)
         if not self.header['magic'].startswith("spring demofile"):
             raise Exception("Not a spring demofile.")
+        self.demofile.close()
 
     def parse(self):
         """
@@ -111,7 +112,6 @@ class Parse_demo_file():
 #            i += 1
 
 
-
         self.demofile.close()
 
         self.header['magic']         = str(self.header['magic']).partition("\x00")[0]
@@ -121,114 +121,62 @@ class Parse_demo_file():
         self.header['gameTime']      = "%s" % str(timedelta(seconds=self.header['gameTime']))
         self.header['wallclockTime'] = "%s" % str(timedelta(seconds=self.header['wallclockTime']))
 
-    #
-    # script looks like this:
-    #
-    #  [game]
-    #  {
-    #    [allyteam0]
-    #    {
-    #      numallies=0;
-    #      ..
-    #    }
-    #    [allyteam1]
-    #    {
-    #      numallies=0;
-    #      ..
-    #    }
-    #    [mapoptions]
-    #    {
-    #      alt=0;
-    #      ..
-    #    }
-    #    [modoptions]
-    #    {
-    #      deathmode=com;
-    #      ..
-    #    }
-    #    [player0]
-    #    {
-    #      accountid=216416;
-    #      ..
-    #    }
-    #    [player1]
-    #      ..
-    #    }
-    #    [restrict]
-    #    {
-    #    }
-    #    []
-    #    {
-    #      allyteam=0;
-    #      ..
-    #    }
-    #    [team1]
-    #    {
-    #      ..
-    #    {
-    #    autohostaccountid=210171;
-    #    startpostype=2;
-    #  }
-    #
-
-    #
-    # pythonized:
-    #
-    #  -->  # game_setup["team"]["0"]["side"] = "ARM"
-    #
-    #  -->  # game_setup["modoptions"]["deathmode"] = "com"
-    #
-
-        self.game_setup = {
-			'allyteam': {},
-			'mapoptions': {},
-			'modoptions': {},
-			'player': {},
-			'restrict': {},
-			'team': {},
-			'host': {}
-			}
+        self.game_setup = {'ai': {},
+                           'allyteam': {},
+                           'mapoptions': {},
+                           'modoptions': {},
+                           'player': {},
+                           'restrict': {},
+                           'team': {},
+                           'host': {}
+                           }
 
         game = re.match('^\[game\]\n\{(?P<data>.*)\}\n', script, re.DOTALL).groupdict()
-        section_iter = re.finditer('\[(?P<name>.*?)\]\n\{(?P<data>.*?)\}\n', game['data'], re.DOTALL)
+        game_data = game['data'].replace('\n', '').replace('[options]{}', '')
+        section_iter = re.finditer('\[(?P<name>.*?)\]\{(?P<data>.*?)\}', game_data, re.DOTALL)
+
+        self.script = Script()
 
         while True:
             try:
                 section_ = section_iter.next()
-                section = section_.groupdict()
-                if section and section['data'].strip():
-                    # these have subentries (for each team)
-                    for sec in ["allyteam", "player", "team"]:
-                        if section['name'].startswith(sec):
-                            subsec = section['name'].split(sec)[1]
-                            if not subsec in self.game_setup[sec]:
-                                self.game_setup[sec][subsec] = {}
-                            for data in section['data'].strip().split(";\n"):
-                                if data.strip():
-                                    nam, val = data.split('=', 1)
-                                    if nam:
-                                        if val:
-                                            if val[-1] == ";": val = val[:-1]
-                                            val = self.make_numeric(val.strip())
-                                        self.game_setup[sec][subsec][nam] = val
-                    # these are "flat"
-                    for sec in ["mapoptions", "modoptions", "restrict"]:
-                        if section['name'] == sec:
-                            for data in section['data'].strip().split(";\n"):
-                                if data.strip():
-                                    nam, val = data.split('=', 1)
-                                    if val[-1] == ";": val = val[:-1]
-                                    val = self.make_numeric(val.strip())
-                                    self.game_setup[sec][nam] = val
             except StopIteration:
                 break
-
-        for data in game['data'].split("}")[-1:][0].strip().split(";"):
-            if data:
-                self.game_setup['host'][data.split("=", 1)[0].strip()] = data.split("=", 1)[1].strip()
-        for k,v in self.game_setup['host'].items():
-            self.game_setup['host'][k] = self.make_numeric(v)
-
+            section = section_.groupdict()
+            if section and section['data'].strip():
+                if section['name'].startswith('player'):
+                    player = ScriptPlayer(section['name'], section['data'])
+                    if player.spectator:
+                        self.script.spectators[player.name] = player.result()
+                    else:
+                        self.script.players[player.name] = player.result()
+                    self.script.players_script.append(player)
+                    self.game_setup["player"][player.num] = player.__dict__
+                elif section['name'].startswith('ai'):
+                    bot = ScriptAI(section['name'], section['data'])
+                    self.script.bots[bot.name][section['name']] = bot.__dict__
+                    self.game_setup["ai"] = self.script.bots
+                elif section['name'].startswith('allyteam'):
+                    ally = ScriptAlly(section['name'], section['data'])
+                    self.script.allies.append(ally)
+                    self.game_setup["allyteam"][ally.num] = ally.__dict__
+                elif section['name'].startswith('team'):
+                    team = ScriptTeam(section['name'], section['data'])
+                    self.script.teams.append(team)
+                    self.game_setup["team"][team.num] = team.__dict__
+                elif section['name'] == 'restrict':
+                    self.script.restrictions = ScriptRestrictions(section['name'], section['data'])
+                    self.game_setup["restrict"] = self.script.restrictions
+                elif section['name'] == 'mapoptions':
+                    self.script.mapoptions = ScriptMapoptions(section['name'], section['data'])
+                    self.game_setup["mapoptions"] = self.script.mapoptions.__dict__
+                elif section['name'] == 'modoptions':
+                    self.script.modoptions = ScriptModoptions(section['name'], section['data'])
+                    self.game_setup["modoptions"] = self.script.modoptions.__dict__
+        game_txt = game['data'].split("}")[-1:][0].replace('\n','')
+        self.game_setup['host'] = ScriptGamesetup("game_setup_host", game_txt).__dict__
+        self.script.other['mapname'] = self.game_setup['host']['mapname']
+        self.script.other['modname'] = self.game_setup['host']['gametype']
 
 def main(argv=None):
     if argv is None:
