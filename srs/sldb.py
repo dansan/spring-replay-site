@@ -127,9 +127,9 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
                and user
 
     If the overall request was OK, but one or more results are bad, no
-    exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0, 0.0] will be
-    exception will be raised, but instead skills=[0.0, 0.0, 0.0, 0.0] will be
-    returned.
+    exception will be raised, but instead
+    skills=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]] will
+    be returned for that accountid.
 
 SLDB XmlRpc interface docu provided by bibim:
 
@@ -147,6 +147,10 @@ It returns a map with following keys: status (int), results (array of maps):
     rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
 
     for pa_result in rpc_skills:
+        pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], privacy_mode=-1)
+        if pa_result["status"] != 0:
+            pa_result["skills"] = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+            continue
         for i in range(5):
             mu = float(pa_result["skills"][i].split("|")[0])
             si = float(pa_result["skills"][i].split("|")[1])
@@ -167,10 +171,9 @@ It returns a map with following keys: status (int), results (array of maps):
             else:
                 pa_result["skills"][i][0] = mu
             pa_result["skills"][i][1] = si
-        pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], pa_result["privacyMode"])
 
-        logger.debug("returning: %s", rpc_skills)
-        return rpc_skills
+    logger.debug("returning: %s", rpc_skills)
+    return rpc_skills
 
 def get_sldb_pref(accountid, pref):
     """

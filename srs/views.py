@@ -381,11 +381,12 @@ def player(request, accountid):
                     errmsg = "Requested (%s) and returned (%s) PlayerAccounts do not match!"%(pa, skills["account"])
                     logger.error(errmsg)
                     raise Exception(errmsg)
-                if pa.sldb_privacy_mode != skills["privacyMode"]:
-                    pa.sldb_privacy_mode = skills["privacyMode"]
-                    pa.save()
-                for mt, i in settings.SLDB_SKILL_ORDER:
-                    ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
+                if skills["status"] == 0:
+                    if pa.sldb_privacy_mode != skills["privacyMode"]:
+                        pa.sldb_privacy_mode = skills["privacyMode"]
+                        pa.save()
+                    for mt, i in settings.SLDB_SKILL_ORDER:
+                        ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
             try:
                 player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
             except Exception, e:
