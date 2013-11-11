@@ -103,6 +103,7 @@ class Replay(models.Model):
     download_count  = models.IntegerField(default=0)
     comment_count   = models.IntegerField(default=0)
     rated           = models.BooleanField(default=False)
+    published       = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "("+str(self.pk)+") "+self.title+" "+self.unixTime.strftime("%Y-%m-%d")
@@ -133,7 +134,7 @@ class Replay(models.Model):
             version = str()
             in_version = False
             for gr_name_part in gr_name.split():
-                version_start =  ["v", "V", "b"]
+                version_start =  ["v", "V", "b", "("]
                 version_start.extend(map(str, range(10)))
                 if in_version or gr_name_part.startswith("test-")or gr_name_part.startswith("RC") or gr_name_part[0] in version_start:
                     in_version = True
@@ -263,6 +264,15 @@ class Replay(models.Model):
         if not hasattr(self, "_result_cache") or not self._result_cache[0] == playeraccount:
             self._faction_result(playeraccount)
         return self._result_cache[1]
+
+class AdditionalReplayInfo(models.Model):
+    """
+    Infos that are only relevant to a few Replay objects are not worth their
+    own attribute in the Replay class.
+    """
+    replay          = models.ForeignKey(Replay)
+    key             = models.CharField(max_length=32)
+    value           = models.CharField(max_length=512)
 
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
