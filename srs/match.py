@@ -49,24 +49,29 @@ def ParseSpringOutput(self):
 		return name not in self.spectators and name not in self.players
 
 	with open(self.replay, 'rb') as demofile:
-		parser = demoparser.DemoParser(demofile)
-		open('/tmp/sc.txt', 'w').write(parser.getScript())
-		script = Script(parser.getScript())
-		self.players = script.players
-		self.spectators = script.spectators
-		self.bots = script.bots
-		self.teams = script.teams
-		self.allies = script.allies
-		self.options = dict(script.modoptions.items() 
-						+ script.other.items() + script.mapoptions.items())
-		self.restrictions = script.restrictions
+		self.parser = demoparser.DemoParser(demofile)
+		self.parser.check_magic()
+		self.parser.parse_script()
+		script_str = self.parser.getScript()
+		open('/tmp/sc.txt', 'w').write(script_str)
+		self.script = Script()
+		self.script.parse(script_str)
+		self.players = self.script.players
+		self.players_script = self.script.players_script
+		self.spectators = self.script.spectators
+		self.bots = self.script.bots
+		self.teams = self.script.teams
+		self.allies = self.script.allies
+		self.options = dict(self.script.modoptions.items()
+						+ self.script.other.items() + self.script.mapoptions.items())
+		self.restrictions = self.script.restrictions
 		self.gameid = 'no game id found'
 		packet = True
 		currentFrame = 0
 		playerIDToName = {}
 		kop = open('/tmp/msg.data','w')
 		while packet:
-			packet = parser.readPacket()
+			packet = self.parser.readPacket()
 			try:
 				messageData = demoparser.parsePacket(packet)
 				kop.write(str(messageData))
@@ -88,7 +93,6 @@ def ParseSpringOutput(self):
 					elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
 						self.game_started = True
 					elif messageData['cmd'] == 'gameover':
-						print ('GAMEOVER')
 						if not self.game_started:
 							logger.error( 'game not started on gameover found', 'Match.py' )
 						else:
@@ -106,7 +110,7 @@ def ParseSpringOutput(self):
 						if messageData['bIntended'] == 2:
 							_save_playerinfo(playername, "kicked", True)
 					elif messageData['cmd'] == 'team':
-						if clean_name in script.spectators.keys():
+						if clean_name in self.script.spectators.keys():
 							continue
 						if messageData['action'] == 'team_died': #team died event
 							deadTeam = messageData['param']

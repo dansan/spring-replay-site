@@ -118,6 +118,9 @@ class ScriptPlayer(ScriptObject):
 		r.team = self.team
 		#if r.team < 0:
 		#	raise Exception('djiepo')
+		for key, value in self.__dict__.items():
+			if not key == "result":
+				setattr(r, key, value)
 		return r
 
 class ScriptAI(ScriptObject):
@@ -152,4 +155,3 @@ class Script(object):
 		self.teams = list()
 		self.allies = list()
 		self.other = dict()
-		self.players_script = list()
