@@ -17,10 +17,76 @@ import pprint
 import magic
 import gzip
 from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, ScriptRestrictions, ScriptTeam
+import demoparser
+import struct
+import logging
+import settings
+
+logging.basicConfig(level=logging.DEBUG,
+                    format=settings.DEBUG_FORMAT,
+                    datefmt=settings.LOG_DATETIME_FORMAT,
+                    filename=settings.LOG_PATH+'/parse_debug.log',
+                    filemode='w+')
+
+logger = logging.getLogger()
+# ro = logging.FileHandler(settings.LOG_PATH+'/root_debug.log')
+# ro.setLevel(logging.DEBUG)
+# ro.setFormatter(logging.Formatter(fmt=settings.DEBUG_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT))
+# logger.addHandler(ro)
+
+
+
+#
+# From rts/System/LoadSave/demofile.h
+#
+#  * Demo file layout is like this:
+#  *
+#  * - DemoFileHeader
+#  *   - Data chunks:
+#  *     - Startscript (scriptSize)
+#  *     - Demo stream (demoStreamSize)
+#  *     - Player statistics, one PlayerStatistic for each player
+#  *     - Team statistics, consisting of:
+#  *       - Array of numTeams dwords indicating the number of
+#  *         CTeam::Statistics for each team.
+#  *       - Array of all CTeam::Statistics (total number of items is the
+#  *         sum of the elements in the array of dwords).
+#  *
+#  * The header is designed to be extensible: it contains a version field and a
+#  * headerSize field to support this. The version field is a major version number
+#  * of the file format, if this changes, anything may have changed in the file.
+#  * It is not supposed to change often (if at all). The headerSize field is a
+#  * minor version number, which happens to be equal to sizeof(DemoFileHeader).
+#  *
+#  * If Spring did not cleanup properly (crashed), the demoStreamSize is 0 and it
+#  * can be assumed the demo stream continues until the end of the file.
+#
+#
+#  * The demo stream layout is as follows:
+#  *
+#  * - DemoStreamChunkHeader
+#  * - length bytes raw data from network stream
+#  * - DemoStreamChunkHeader
+#  * - length bytes raw data from network stream
+#  * - ...
+#
+
 
 class Parse_demo_file():
     def __init__(self, filename):
         self.filename = filename
+        self.demofile = None
+        self.header = dict()
+        self.game_setup = {'ai': {},
+                           'allyteam': {},
+                           'mapoptions': {},
+                           'modoptions': {},
+                           'player': {},
+                           'restrict': {},
+                           'team': {},
+                           'host': {}
+                           }
+        self.additional = {"gameover_frame": False}
 
     def read_blob(self, seek_size, blob_size):
         self.demofile.seek(seek_size)
@@ -29,30 +95,21 @@ class Parse_demo_file():
     def read_blob_into_int(self, seek_size, blob_size):
         return unpack('i', self.read_blob(seek_size, blob_size))
 
-    def make_numeric(self, val):
-        if val.isdigit():
-            return int(val)
-        else:
-            try:
-                return float(val)
-            except Exception:
-                pass
-        return val
-
     def check_magic(self):
         """
         - may raise IOError when opening a file to read
+        - may raise Exception when file is not a spring demofile
         """
         filemagic = magic.from_file(self.filename, mime=True)
         if filemagic.endswith("gzip"):
-            self.demofile = gzip.open(self.filename, 'rb')
+            demofile = gzip.open(self.filename, 'rb')
         else:
-            self.demofile = open(self.filename, "rb")
-        self.header = {}
-        self.header['magic'] = self.read_blob(0, 16)
-        if not self.header['magic'].startswith("spring demofile"):
+            demofile = open(self.filename, "rb")
+        demofile.seek(0)
+        _magic = demofile.read(16)
+        if not _magic.startswith("spring demofile"):
             raise Exception("Not a spring demofile.")
-        self.demofile.close()
+        demofile.close()
 
     def parse(self):
         """
@@ -66,10 +123,17 @@ class Parse_demo_file():
         else:
             self.demofile = open(self.filename, "rb")
 
+        self.parse_header()
+        self.parse_winningAllyTeams()
+        self.parse_script()
+        self.parse_demostream()
+
+        self.demofile.close()
+
+    def parse_header(self):
         #
         # struct DemoFileHeader from rts/System/LoadSave/demofile.h
         #
-        self.header = {}
         self.header['magic'] = self.read_blob(0, 16)                             # char magic[16]; ///< DEMOFILE_MAGIC
         if not self.header['magic'].startswith("spring demofile"):
             raise Exception("Not a spring demofile.")
@@ -93,26 +157,12 @@ class Parse_demo_file():
 
 #        self.header['void_swab']            = self.read_blob(352, self.header['headerSize']-352)    # lol?
 
-        script = self.read_blob(self.header['headerSize'], self.header['scriptSize'])
-
-        self.winningAllyTeams = []
-        winnning_team = 0
-        self.demofile.seek(self.header['headerSize']+self.header['scriptSize']+self.header['demoStreamSize'])
-        while winnning_team < self.header['winningAllyTeamsSize']:
-            team = unpack('B', self.read_blob(self.demofile.tell(), 1))
-            self.winningAllyTeams.append(team[0])
-            winnning_team += 1
-
-
 #        demo_stream = self.read_blob(self.demofile.tell(), self.header['demoStreamSize'])
 #        i = 0
 #        player_stats = []
 #        while i < self.header['numPlayers']:
 #            player_stats[i] = self.read_blob(self.demofile.tell(), self.header['playerStatElemSize'])
 #            i += 1
-
-
-        self.demofile.close()
 
         self.header['magic']         = str(self.header['magic']).partition("\x00")[0]
         self.header['versionString'] = str(self.header['versionString']).partition("\x00")[0]
@@ -121,16 +171,17 @@ class Parse_demo_file():
         self.header['gameTime']      = "%s" % str(timedelta(seconds=self.header['gameTime']))
         self.header['wallclockTime'] = "%s" % str(timedelta(seconds=self.header['wallclockTime']))
 
-        self.game_setup = {'ai': {},
-                           'allyteam': {},
-                           'mapoptions': {},
-                           'modoptions': {},
-                           'player': {},
-                           'restrict': {},
-                           'team': {},
-                           'host': {}
-                           }
+    def parse_winningAllyTeams(self):
+        self.winningAllyTeams = []
+        winnning_team = 0
+        self.demofile.seek(self.header['headerSize']+self.header['scriptSize']+self.header['demoStreamSize'])
+        while winnning_team < self.header['winningAllyTeamsSize']:
+            team = unpack('B', self.read_blob(self.demofile.tell(), 1))
+            self.winningAllyTeams.append(team[0])
+            winnning_team += 1
 
+    def parse_script(self):
+        script = self.read_blob(self.header['headerSize'], self.header['scriptSize'])
         game = re.match('^\[game\]\n\{(?P<data>.*)\}\n', script, re.DOTALL).groupdict()
         game_data = game['data'].replace('\n', '').replace('[options]{}', '')
         section_iter = re.finditer('\[(?P<name>.*?)\]\{(?P<data>.*?)\}', game_data, re.DOTALL)
@@ -150,12 +201,11 @@ class Parse_demo_file():
                         self.script.spectators[player.name] = player.result()
                     else:
                         self.script.players[player.name] = player.result()
-                    self.script.players_script.append(player)
                     self.game_setup["player"][player.num] = player.__dict__
                 elif section['name'].startswith('ai'):
                     bot = ScriptAI(section['name'], section['data'])
-                    self.script.bots[bot.name][section['name']] = bot.__dict__
-                    self.game_setup["ai"] = self.script.bots
+                    self.script.bots[bot.name] = bot
+                    self.game_setup["ai"][bot.name] = bot.__dict__
                 elif section['name'].startswith('allyteam'):
                     ally = ScriptAlly(section['name'], section['data'])
                     self.script.allies.append(ally)
@@ -178,6 +228,130 @@ class Parse_demo_file():
         self.script.other['mapname'] = self.game_setup['host']['mapname']
         self.script.other['modname'] = self.game_setup['host']['gametype']
 
+    def _read(self, length):
+        return self.demofile.read(length)
+
+    def _tell(self): return self.demofile.tell()
+
+    def _readPacket(self):
+        maxSize = (self.header['demoStreamSize'] or sys.maxint)
+        if maxSize:
+            modGameTime, length = struct.unpack('<fI', self._read(8))
+            if self._tell()+length - self.header['headerSize'] - self.header['scriptSize'] == maxSize:
+                return False
+            data = self._read(length)
+        if not data:
+            return False
+        return {'modGameTime':modGameTime, 'length':length, 'data':data}
+
+    def parse_demostream(self):
+        def _save_playerinfo(playername, key, value):
+            if playername in self.players:
+                setattr(self.players[playername], key, value)
+            else:
+                setattr(self.spectators[playername], key, value)
+
+        def _invalidPlayer(name):
+            return name not in self.spectators and name not in self.players
+
+        def _dictify(obj):
+            if type(obj) == dict:
+                return obj
+            else:
+                return obj.__dict__
+
+        self.players = self.script.players
+        self.spectators = self.script.spectators
+        self.bots = self.script.bots
+        self.teams = self.script.teams
+        self.allies = self.script.allies
+        self.options = dict(_dictify(self.script.modoptions).items()
+                        + _dictify(self.script.other).items() + _dictify(self.script.mapoptions).items())
+        self.restrictions = self.script.restrictions
+        self.gameid = self.header['gameID']
+
+        self.demofile.seek(self.header['headerSize']+self.header['scriptSize'])
+        packet = True
+        currentFrame = 0
+        playerIDToName = {}
+        kop = open('/tmp/msg.data','w')
+        while packet:
+            packet = self._readPacket()
+            try:
+                messageData = demoparser.parsePacket(packet)
+                kop.write(str(messageData)+'\n')
+                def clean(name):
+                    return name.replace('\x00','')
+                if messageData:
+                    try:
+                        clean_name = clean(messageData['playerName'])
+                    except:
+                        pass
+                    if messageData['cmd'] == 'keyframe':
+                        currentFrame = messageData['framenum']
+                    elif messageData['cmd'] == 'setplayername':
+                        if _invalidPlayer(clean_name):
+                            continue
+                        playerIDToName[messageData['playerNum']] = clean_name
+                        _save_playerinfo(clean_name, "connected", True)
+                    elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
+                        self.game_started = True
+                    elif messageData['cmd'] == 'gameover':
+                        if not self.game_started:
+                            logger.error('game not started on gameover found')
+                        else:
+                            self.game_over = currentFrame
+                            self.additional["gameover_frame"] = currentFrame
+                    elif messageData['cmd'] == 'gameid':
+                        logger.debug("messageData['gameID']: %s, self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
+                        if self.header['gameID'] != messageData['gameID']:
+                            self.gameid = messageData['gameID']
+                            logger.error("messageData['gameID']: %s != self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
+                    elif messageData['cmd'] == 'playerleft':
+                        playername = clean(messageData['playerName'])
+                        if _invalidPlayer(clean_name):
+                            continue
+                        if messageData['bIntended'] == 0:
+                            _save_playerinfo(playername, "timeout", True)
+                        if messageData['bIntended'] == 1:
+                            _save_playerinfo(playername, "quit", True)
+                        if messageData['bIntended'] == 2:
+                            _save_playerinfo(playername, "kicked", True)
+                    elif messageData['cmd'] == 'team':
+                        if clean_name in self.script.spectators.keys():
+                            continue
+                        if messageData['action'] == 'team_died': #team died event
+                            deadTeam = messageData['param']
+                            for name,rank in self.players.iteritems():
+                                if rank.team == deadTeam:
+                                    self.players[name].died = currentFrame
+                        elif messageData['action'] == 'giveaway':
+                            #giving everything away == death
+                            self.players[clean_name].died = currentFrame
+                    elif messageData["cmd"] == "startpos":
+                        if messageData["ready"] == 1:
+                            playername = clean(messageData['playerName'])
+                            if _invalidPlayer(playername):
+                                continue
+                            self.game_setup["player"][self.players[playername].num]["start_pos_x"] = messageData["x"]
+                            self.game_setup["player"][self.players[playername].num]["start_pos_y"] = messageData["y"]
+                            self.game_setup["player"][self.players[playername].num]["start_pos_z"] = messageData["z"]
+                    elif messageData["cmd"] == "luamsg":
+                        if struct.unpack("<B", messageData["msg"][0])[0] == 138:
+                            # faction change
+                            playername = clean(messageData['playerName'])
+                            if _invalidPlayer(playername):
+                                continue
+                            faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
+                            logger.debug("%s changed faction to '%s'", playername, faction)
+                            print " *** %s changed faction to '%s'" % (playername, faction)
+            except Exception, e:
+                logger.error("Exception parsing packet '%s': %s", packet, e)
+                raise e
+
+        kop.close()
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -195,6 +369,8 @@ def main(argv=None):
         pp.pprint(replay.game_setup)
         print "############### winningAllyTeams #####################"
         pp.pprint(replay.winningAllyTeams)
+        print "################## additional ########################"
+        pp.pprint(replay.additional)
         return 0
 
 if __name__ == "__main__":

@@ -16,118 +16,20 @@
 # are licensed as GPLv3 (see above).
 #
 
-import sys
 import struct
 import zlib
 import logging
 
 logger = logging.getLogger(__package__)
 
-class DemoParser:
-	DEMOFILE_MAGIC = 'spring demofile'
-	# header version -> header size mapping
-	DEMOFILE_HEADERSIZES = { 4:112, 5:352 }
 
-	headerTemplate = [
-		'magic',
-		'version',
-		'headerSize',
-		'versionString',
-		'gameID',
-		'unixTime',
-		'scriptSize',
-		'demoStreamSize',
-		'gameTime',
-		'wallclockTime',
-		'numPlayers',
-		'playerStatSize',
-		'playerStatElemSize',
-		'numTeams',
-		'teamStatSize',
-		'teamStatElemSize',
-		'teamStatPeriod',
-		'winningAllyTeam'
-		]
-
-	def __init__(self, handle):
-		self.reference = {'header':0}
-		self.header = {}
-		self.handle = handle
-
-		handle.seek(0)
-		firstRead = 24
-		magic, version, headerSize = struct.unpack('<16s2i', handle.read(firstRead))
-		magic = magic.strip('\0')
-		if magic != self.DEMOFILE_MAGIC or version not in self.DEMOFILE_HEADERSIZES.keys() or self.DEMOFILE_HEADERSIZES[version] != headerSize:
-			print 'DemoParser Error: Header (size %d) version (%d)  mismatch or corrupt demo.' %(headerSize,version)
-			return
-		
-		if version < 5:
-			header = dict(zip(self.headerTemplate, (magic, version, headerSize) + struct.unpack('<16s16sQ12i', handle.read(headerSize-firstRead))))
-		else:
-			header = dict(zip(self.headerTemplate, (magic, version, headerSize) + struct.unpack('<256s16sQ12i', handle.read(headerSize-firstRead))))
-
-		lll = struct.unpack('<2Q', header['gameID']) # gameID is a long long long, which struct can't unpack :)
-		header['gameID'] = (lll[0] << 8) + lll[1]
-
-		for key in header: # strip null chars from unpacked strings
-			value = header[key]
-			if type(value) == str:
-				header[key] = value.strip('\0')
-
-		self.header = header
-		self.reference['script'] = handle.tell()
-		self.script = handle.read(header['scriptSize'])
-
-		self.reference['demoStream'] = handle.tell()
-
-		if not header['demoStreamSize']: return # game didn't actually end, so no stats.
-
-
-		# should probably parse stats a little more
-		playerStatSize = header['playerStatSize']
-		teamStatSize = header['teamStatSize']
-		handle.seek(-(playerStatSize+teamStatSize), 2)
-
-		self.reference['playerStats'] = handle.tell()
-		self.playerStats = handle.read(playerStatSize)
-
-		self.reference['teamStats'] = handle.tell()
-		self.teamStats = handle.read(teamStatSize)
-
-		self._seek('demoStream')
-
-	def _read(self, length):
-		return self.handle.read(length)
-
-	def _seek(self, location):
-		if type(location) == str:
-			self.handle.seek(self.reference[location])
-		else: self.handle.seek(location)
-
-	def _tell(self): return self.handle.tell()
-
-	def getHeader(self): return self.header
-	def getScript(self): return self.script
-	def getPlayerStats(self): return self.playerStats
-	def getTeamStats(self): return self.teamStats
-
-	def readPacket(self):
-		maxSize = (self.header['demoStreamSize'] or sys.maxint)
-		if maxSize:
-			modGameTime, length = struct.unpack('<fI', self._read(8))
-			if self._tell()+length - self.reference['demoStream'] == maxSize: return False
-			data = self._read(length)
-		if not data: return False
-		return {'modGameTime':modGameTime, 'length':length, 'data':data}
-
-def write(vars, *keys):
+def write(varis, *keys):
 #	blacklist = ('newframe', 'playerinfo', 'luamsg', 'mapdraw', 'aicommand', 'playerstat')
 	blacklist = ('newframe', 'playerinfo', 'mapdraw', 'aicommand')
 	returnval = dict()
-	if vars['cmd'] in blacklist: return
+	if varis['cmd'] in blacklist: return
 	for key in keys:
-		item = vars[key]
+		item = varis[key]
 		returnval[key] = item
 	return returnval
 
@@ -180,8 +82,7 @@ def parsePacket(packet):
 		return write(locals(), 'cmd', 'randSeed')
 	elif cmd == 9:
 		cmd = 'gameid'
-		lll = struct.unpack('<2Q', data) # gameID is a long long long, which struct can't unpack :)
-		gameID = (lll[0] << 8) + lll[1]
+		gameID = "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x" % struct.unpack("16B", data)
 		return write(locals(), 'cmd', 'gameID')
 	elif cmd == 11:
 		cmd = 'command'
