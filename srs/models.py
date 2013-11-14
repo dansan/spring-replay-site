@@ -555,31 +555,36 @@ def get_owner_list(uploader):
     return res
 
 def update_stats():
-    replays  = Replay.objects.count()
-    now = datetime.datetime.now(timezone.get_current_timezone())
-    start_date = now - datetime.timedelta(days=30)
-    tags     = Tag.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    maps     = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-    tp = list()
+    """
+    update only once per day
+    """
+    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': "", 'tags': "", 'maps': "", 'players': "", 'comments': ""})
+    if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0:
+        # update stats
+        replays  = Replay.objects.count()
+        now = datetime.datetime.now(timezone.get_current_timezone())
+        start_date = now - datetime.timedelta(days=30)
+        tags     = Tag.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+        maps     = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
+        tp = list()
 
-    for pa in PlayerAccount.objects.exclude(accountid=0).order_by("accountid"): # exclude bots
-        nummatches =  Player.objects.filter(account=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
-        tp.append((nummatches, pa))
-    tp.sort(key=operator.itemgetter(0), reverse=True)
-    players  = [p[1] for p in tp[:20]]
-    comments = Comment.objects.reverse()[:5]
+        # This takes an insane amount of time. It is the reason stats are updated only once per day.
+        for pa in PlayerAccount.objects.exclude(accountid=0).order_by("accountid"): # exclude bots
+            nummatches =  Player.objects.filter(account=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
+            tp.append((nummatches, pa))
+        tp.sort(key=operator.itemgetter(0), reverse=True)
+        players  = [p[1] for p in tp[:20]]
+        comments = Comment.objects.reverse()[:5]
 
-    if tags.exists():     tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
-    else:                 tags_s     = ""
-    if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
-    else:                 maps_s     = ""
-    if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
-    else:                 players_s  = ""
-    if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
-    else:                 comments_s = ""
+        if tags.exists():     tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
+        else:                 tags_s     = ""
+        if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
+        else:                 maps_s     = ""
+        if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
+        else:                 players_s  = ""
+        if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
+        else:                 comments_s = ""
 
-    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays':replays, 'tags':tags_s, 'maps':maps_s, 'players':players_s, 'comments':comments_s})
-    if not created:
         sist.replays = replays
         sist.tags = tags_s
         sist.maps = maps_s

@@ -14,6 +14,7 @@ from tempfile import mkstemp
 import datetime
 import gzip
 import magic
+import operator
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -35,8 +36,30 @@ from srs.sldb import demoskill2float
 
 logger = logging.getLogger(__package__)
 
+timer = None
+
+class UploadTiming(object):
+    def __init__(self):
+        self.times = dict()
+        self.counter = 0
+
+    def start(self, name):
+        self.times[name] = (self.counter, datetime.datetime.now(), name)
+        self.counter += 1
+
+    def stop(self, name):
+        self.times[name] = (self.times[name][0], datetime.datetime.now() - self.times[name][1], name)
+
+    @property
+    def sorted_list(self):
+        return sorted(self.times.values(), key=operator.itemgetter(0))
+
+    def __str__(self):
+        return "\n".join([t[2]+": "+str(t[1].seconds)+"."+str(t[1].microseconds/100000) for t in self.sorted_list])
+
 @login_required
 def upload(request):
+    global timer
     c = all_page_infos(request)
     UploadFormSet = formset_factory(UploadFileForm, extra=5)
     if request.method == 'POST':
@@ -51,20 +74,27 @@ def upload(request):
                     short = form.cleaned_data['short']
                     long_text = form.cleaned_data['long_text']
                     tags = form.cleaned_data['tags']
+                    timer = UploadTiming()
+                    timer.start("upload()")
                     (path, written_bytes) = save_uploaded_file(ufile.read(), ufile.name)
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
         #            try:
                     if written_bytes != ufile.size:
                         return HttpResponse("Could not store the replay file. Please contact the administrator.")
 
+                    timer.start("Parse_demo_file()")
                     demofile = parse_demo_file.Parse_demo_file(path)
+                    timer.stop("Parse_demo_file()")
                     try:
                         demofile.check_magic()
                     except:
                         form._errors = {'file': [u'Not a spring demofile: %s.'%ufile.name]}
                         replays.append((False, 'Not a spring demofile: %s.'%ufile.name))
                         continue
+
+                    timer.start("parse()")
                     demofile.parse()
+                    timer.stop("parse()")
 
                     try:
                         replay = Replay.objects.get(gameID=demofile.header["gameID"])
@@ -82,20 +112,31 @@ def upload(request):
                         newpath = settings.REPLAYS_PATH+"/"+new_filename
                         shutil.move(path, newpath)
                         os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
+                        timer.start("store_demofile_data()")
                         replay = store_demofile_data(demofile, tags, newpath, ufile.name, short, long_text, request.user)
+                        timer.stop("store_demofile_data()")
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
 
                         try:
+                            timer.start("rate_match()")
                             rate_match(replay)
                         except Exception, e:
                             logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
+                        finally:
+                            timer.stop("rate_match()")
 
                         try:
+                            timer.start("ping_google()")
                             ping_google()
                         except Exception, e:
                             logger.exception("ping_google(): %s", e)
                             pass
+                        finally:
+                            timer.stop("ping_google()")
+
+                    timer.stop("upload()")
+                    logger.info("timings:\n%s", timer)
 
         if len(replays) == 0:
             logger.error("no replay created, this shouldn't happen")
@@ -116,6 +157,7 @@ def upload(request):
     return render_to_response('upload.html', c, context_instance=RequestContext(request))
 
 def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
+    global timer
     logger.info("username='%s' password=xxxxxx filename='%s' subject='%s' comment='%s' tags='%s' owner='%s'", username, filename, subject, comment, tags, owner)
 
     # authenticate uploader
@@ -134,13 +176,19 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         logger.info("Owner '%s' unknown on replays site, abort.", owner)
         return "2 Unknown or inactive owner account, please log in via web interface once."
 
+    timer = UploadTiming()
+    timer.start("xmlrpc_upload()")
     # this is code double from upload() :(
     (path, written_bytes) = save_uploaded_file(demofile.data, filename)
     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", username, path, subject)
 
+    timer.start("parse_demo_file.Parse_demo_file()")
     demofile = parse_demo_file.Parse_demo_file(path)
+    timer.stop("parse_demo_file.Parse_demo_file()")
     demofile.check_magic()
+    timer.start("parse()")
     demofile.parse()
+    timer.stop("parse()")
 
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
@@ -162,22 +210,34 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     shutil.move(path, newpath)
     os.chmod(newpath, stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IWGRP|stat.S_IROTH)
     try:
+        timer.start("store_demofile_data()")
         replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, owner_ac)
     except Exception, e:
         logger.error("Error in store_demofile_data(): %s", e)
         return "4 server error, please try again later, or contact admin"
+    finally:
+        timer.stop("store_demofile_data()")
 
     logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
     try:
+        timer.start("rate_match()")
         rate_match(replay)
     except Exception, e:
         logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
+    finally:
+        timer.stop("rate_match()")
 
     try:
+        timer.start("ping_google()")
         ping_google()
     except Exception:
         logger.exception("ping_google(): %s", e)
         pass
+    finally:
+        timer.stop("ping_google()")
+
+    timer.stop("xmlrpc_upload()")
+    logger.info("timings:\n%s", timer)
 
     return '0 received %d bytes, replay at "%s"'%(written_bytes, replay.get_absolute_url())
 
@@ -220,6 +280,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     logger.debug("replay(%d) gameID='%s' unixTime='%s' created", replay.pk, replay.gameID, replay.unixTime)
 
     # save AllyTeams
+    timer.start("  allyteams")
     allyteams = {}
     for num,val in demofile.game_setup['allyteam'].items():
         allyteam = Allyteam()
@@ -229,12 +290,14 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         allyteam.replay = replay
         allyteam.winner = int(num) in demofile.winningAllyTeams
         allyteam.save()
+    timer.stop("  allyteams")
 
     logger.debug("replay(%d) allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
 
     # if match is <2 min long, don't rate it
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
 
+    timer.start("  map creation")
     # get / create map infos
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
@@ -319,6 +382,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
         raise Exception("startpostype '%d' not supported"%startpos)
 
+    timer.stop("  map creation")
+
     # save tags
     save_tags(replay, tags)
 
@@ -328,6 +393,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if len(str(v)) > 512: v = "string to long, sorry"
         return k, v
 
+    timer.start("  map+modoptions")
     for k,v in demofile.game_setup['mapoptions'].items():
         k,v = truncate_option(k, v)
         MapOption.objects.create(name=k, value=v, replay=replay)
@@ -335,10 +401,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for k,v in demofile.game_setup['modoptions'].items():
         k,v = truncate_option(k, v)
         ModOption.objects.create(name=k, value=v, replay=replay)
+    timer.stop("  map+modoptions")
 
     logger.debug("replay(%d) added tags (%s), mapoptions and modoptions", replay.pk, replay.tags.all().values_list("name"))
 
     # save players and their accounts
+    timer.start("  players and playeraccounts")
     players = {}
     teams = []
     for pnum,player in demofile.game_setup['player'].items():
@@ -378,11 +446,18 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
 
+        if player.has_key("startposx") and player.has_key("startposy") and player.has_key("startposz"):
+            players[pnum].startposx = player["startposx"]
+            players[pnum].startposy = player["startposy"]
+            players[pnum].startposz = player["startposz"]
+            players[pnum].save()
+    timer.stop("  players and playeraccounts")
     logger.debug("replay(%d) teams=%s", replay.pk, teams)
 
     logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
 
     # save teams
+    timer.start("  teams")
     for tnum,val in demofile.game_setup['team'].items():
         team = Team()
         for k,v in val.items():
@@ -417,7 +492,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if demofile.game_setup["host"].has_key("hostip") and demofile.game_setup["host"]["hostip"] == "" and demofile.game_setup["host"]["ishost"] == 1:
                 sptag, _ = Tag.objects.get_or_create(name = "Single Player", defaults={})
                 replay.tags.add(sptag)
-
+    timer.stop("  teams")
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
 
     # work around Zero-Ks usage of useless AllyTeams
@@ -426,16 +501,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.debug("replay(%d) deleting useless AllyTeams:%s", replay.pk, ats)
         ats.delete()
 
+    timer.start("  tags + descriptions")
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
 
     # save descriptions
     save_desc(replay, short, long_text, autotag)
+    timer.stop("  tags + descriptions")
 
     replay.published = True
     replay.save()
     uploadtmp.delete()
-
     return replay
 
 def rate_match(replay):
