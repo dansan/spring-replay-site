@@ -274,6 +274,9 @@ class AdditionalReplayInfo(models.Model):
     key             = models.CharField(max_length=32)
     value           = models.CharField(max_length=512)
 
+    def __unicode__(self):
+        return u"%s : '%s'='%s'"%(self.replay.__unicode__(), self.key, self.value)
+
 class Allyteam(models.Model):
     numallies       = models.IntegerField()
     startrectbottom = models.FloatField(blank=True, null = True)
@@ -340,6 +343,9 @@ class Player(models.Model):
     spectator       = models.BooleanField()
     team            = models.ForeignKey("Team", blank=True, null = True)
     replay          = models.ForeignKey(Replay)
+    startposx       = models.FloatField(blank=True, null = True)
+    startposy       = models.FloatField(blank=True, null = True)
+    startposz       = models.FloatField(blank=True, null = True)
 
     def __unicode__(self):
         return self.name
@@ -548,6 +554,25 @@ class SldbMatchSkillsCache(models.Model):
     @staticmethod
     def purge_old():
         SldbMatchSkillsCache.objects.filter(last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)-datetime.timedelta(minutes=30)).delete()
+
+class BAwards(models.Model):
+    replay            = models.ForeignKey(Replay)
+    ecoKillAward1st   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoKillAward2nd   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoKillAward3rd   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward1st   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward2nd   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward3rd   = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    cowAward          = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoAward          = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    dmgRecAward       = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    sleepAward        = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+
+    def __unicode__(self):
+        return u"(%d) Replay: %d EcoKill: %s,%s,%s FightKill: %s,%s,%s EffKill: %s,%s,%s Cow: %s Eco: %s DmgRec: %s Sleep: %s"%(self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd, self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st, self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
 
 def get_owner_list(uploader):
     res = [uploader]

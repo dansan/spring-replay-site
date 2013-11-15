@@ -509,6 +509,31 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
 
+    # store if demofile doesn't contain the GAMEOVER msg, because of the spring94.1 bug:
+    # http://springrts.com/mantis/view.php?id=3950
+    # http://springrts.com/mantis/view.php?id=3804
+    if not demofile.additional["gameover_frame"]:
+        logger.debug("replay(%d) has no GAMEOVER msg", replay.pk)
+        AdditionalReplayInfo.objects.create(replay=replay, key="gameover", value="")
+
+    if demofile.additional.has_key("awards"):
+        ba_awards = BAwards(replay=replay)
+        demo_awards = demofile.additional["awards"]
+        for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward", "sleepAward"]:
+            if type(demo_awards[award_name]) == tuple:
+                aw1, aw2, aw3 = demo_awards[award_name]
+                if aw1 > -1:
+                    setattr(ba_awards, award_name+"1st", players[aw1])
+                if aw2 > -1:
+                    setattr(ba_awards, award_name+"2nd", players[aw2])
+                if aw3 > -1:
+                    setattr(ba_awards, award_name+"3rd", players[aw3])
+            else:
+                if demo_awards[award_name] > -1:
+                    setattr(ba_awards, award_name, players[demo_awards[award_name]])
+        ba_awards.save()
+        logger.debug("replay(%d) has BAwards(%d): %s", replay.pk, ba_awards.pk, ba_awards)
+
     replay.published = True
     replay.save()
     uploadtmp.delete()

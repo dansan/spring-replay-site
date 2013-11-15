@@ -86,7 +86,9 @@ class Parse_demo_file():
                            'team': {},
                            'host': {}
                            }
-        self.additional = {"gameover_frame": False}
+        self.additional = {"gameover_frame": False,
+                           "chat": list(),
+                           "faction_change": dict()}
 
     def read_blob(self, seek_size, blob_size):
         self.demofile.seek(seek_size)
@@ -204,6 +206,8 @@ class Parse_demo_file():
                     self.game_setup["player"][player.num] = player.__dict__
                 elif section['name'].startswith('ai'):
                     bot = ScriptAI(section['name'], section['data'])
+                    if not hasattr(bot, "name"):
+                        bot.name = section['name']
                     self.script.bots[bot.name] = bot
                     self.game_setup["ai"][bot.name] = bot.__dict__
                 elif section['name'].startswith('allyteam'):
@@ -303,7 +307,6 @@ class Parse_demo_file():
                             self.game_over = currentFrame
                             self.additional["gameover_frame"] = currentFrame
                     elif messageData['cmd'] == 'gameid':
-                        logger.debug("messageData['gameID']: %s, self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
                         if self.header['gameID'] != messageData['gameID']:
                             self.gameid = messageData['gameID']
                             logger.error("messageData['gameID']: %s != self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
@@ -333,24 +336,49 @@ class Parse_demo_file():
                             playername = clean(messageData['playerName'])
                             if _invalidPlayer(playername):
                                 continue
-                            self.game_setup["player"][self.players[playername].num]["start_pos_x"] = messageData["x"]
-                            self.game_setup["player"][self.players[playername].num]["start_pos_y"] = messageData["y"]
-                            self.game_setup["player"][self.players[playername].num]["start_pos_z"] = messageData["z"]
+                            self.game_setup["player"][self.players[playername].num]["startposx"] = messageData["x"]
+                            self.game_setup["player"][self.players[playername].num]["startposy"] = messageData["y"]
+                            self.game_setup["player"][self.players[playername].num]["startposz"] = messageData["z"]
+                    elif messageData["cmd"] == "chat":
+                        self.additional["chat"].append({"fromID": messageData["fromID"],
+                                                        "playerName": messageData["playerName"],
+                                                        "toID": messageData["toID"],
+                                                        "message": messageData["message"][:-1]})
                     elif messageData["cmd"] == "luamsg":
-                        if struct.unpack("<B", messageData["msg"][0])[0] == 138:
+                        (msgid,) = struct.unpack("<B", messageData["msg"][0])
+                        if msgid == 138:
                             # faction change
                             playername = clean(messageData['playerName'])
                             if _invalidPlayer(playername):
                                 continue
                             faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
-                            logger.debug("%s changed faction to '%s'", playername, faction)
-                            print " *** %s changed faction to '%s'" % (playername, faction)
+                            logger.debug("%s(%d) changed faction to '%s'", playername, messageData['playerNum'], faction)
+                            self.additional["faction_change"][messageData['playerNum']] = (playername, faction)
+                        elif msgid == 161:
+                            # BA Awards
+                            # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=1850#L351
+                            try:
+                                awards_data = struct.unpack("<"+"Bc"*(len(messageData["msg"])/2), messageData["msg"])
+                                awards_data = [int(ad) for ad in awards_data]
+                                logger.debug("awards_data (len=%d): %s",  len(awards_data), awards_data)
+                                awards = {"ecoKillAward": (awards_data[1]-1, awards_data[3]-1, awards_data[5]-1),
+                                          "fightKillAward": (awards_data[7]-1, awards_data[9]-1, awards_data[11]-1),
+                                          "effKillAward": (awards_data[13]-1, awards_data[15]-1, awards_data[17]-1),
+                                          "cowAward": awards_data[19]-1,
+                                          "ecoAward": awards_data[21]-1,
+                                          "dmgRecAward": awards_data[23]-1,
+                                          "sleepAward": awards_data[25]-1}
+                                logger.debug("awards: %s", awards)
+                                self.additional["awards"] = awards
+                            except Exception, e:
+                                logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, e)
+                        else:
+                            pass
             except Exception, e:
-                logger.error("Exception parsing packet '%s': %s", packet, e)
+                logger.exception("Exception parsing packet '%s': %s", packet, e)
                 raise e
 
         kop.close()
-
 
 def main(argv=None):
     if argv is None:
@@ -370,6 +398,8 @@ def main(argv=None):
         print "############### winningAllyTeams #####################"
         pp.pprint(replay.winningAllyTeams)
         print "################## additional ########################"
+        if replay.additional["chat"]:
+            replay.additional["chat"] = "chat removed for shorter output"
         pp.pprint(replay.additional)
         return 0
 

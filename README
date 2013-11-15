@@ -13,7 +13,7 @@ Latest source code can be found here: https://github.com/dansan/spring-replay-si
 The software is licensed as GPLv3, see COPYING.
 
 Needs
-* PIL: http://www.pythonware.com/products/pil/ (dev-python/imaging / python-imaging / etc)
+* Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 * DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 * django_tables2: https://github.com/bradleyayers/django-tables2
 * suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)

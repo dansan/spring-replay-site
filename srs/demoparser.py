@@ -84,6 +84,9 @@ def parsePacket(packet):
 		cmd = 'gameid'
 		gameID = "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x" % struct.unpack("16B", data)
 		return write(locals(), 'cmd', 'gameID')
+	elif cmd == 10:
+		cmd = "NETMSG_PATH_CHECKSUM"
+		return write(locals(), "cmd")
 	elif cmd == 11:
 		cmd = 'command'
 		size, playerNum, cmdID, options = struct.unpack('<hBiB', data[:8])
@@ -227,6 +230,21 @@ def parsePacket(packet):
 		readableIntended = {0: 'lost connection', 1: 'left', 2:'forced (kicked)'}[bIntended]
 		playerName = players[playerNum] or ''
 		return write(locals(), 'cmd', 'playerNum', 'playerName', 'bIntended', 'readableIntended')
+	elif cmd == 41:
+		cmd = "NETMSG_SD_CHKREQUEST"
+		return write(locals(), "cmd")
+	elif cmd == 42:
+		cmd = "NETMSG_SD_CHKRESPONSE"
+		return write(locals(), "cmd")
+	elif cmd == 43:
+		cmd = "NETMSG_SD_BLKREQUEST"
+		return write(locals(), "cmd")
+	elif cmd == 44:
+		cmd = "NETMSG_SD_BLKRESPONSE"
+		return write(locals(), "cmd")
+	elif cmd == 45:
+		cmd = "NETMSG_SD_RESET"
+		return write(locals(), "cmd")
 	elif cmd == 50:
 		cmd = 'luamsg'
 		size, playerNum, script, mode = struct.unpack('<HBHB', data[:6])
@@ -301,5 +319,26 @@ def parsePacket(packet):
 		cmd = 'teamstat'
 		data = 'unparsed'
 		return write(locals(), 'cmd', 'data')
+	elif cmd == 65:
+		cmd = "NETMSG_ATTEMPTCONNECT"
+		return write(locals(), "cmd")
+	elif cmd == 70:
+		cmd = "NETMSG_AI_CREATED"
+		return write(locals(), "cmd")
+	elif cmd == 71:
+		cmd = "NETMSG_AI_STATE_CHANGED"
+		return write(locals(), "cmd")
+	elif cmd == 72:
+		cmd = "NETMSG_REQUEST_TEAMSTAT"
+		return write(locals(), "cmd")
+	elif cmd == 75:
+		cmd = "NETMSG_CREATE_NEWPLAYER"
+		return write(locals(), "cmd")
+	elif cmd == 76:
+		cmd = "NETMSG_AICOMMAND_TRACKED"
+		return write(locals(), "cmd")
+	elif cmd == 77:
+		cmd = "NETMSG_GAME_FRAME_PROGRESS"
+		return write(locals(), "cmd")
 	else:
 		logger.error("Unknown cmd found. packet: %s cmd: %s data: %s", packet, cmd, data)

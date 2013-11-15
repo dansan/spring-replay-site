@@ -12,7 +12,11 @@ import sys
 from xmlrpclib import ServerProxy
 import pprint
 import urllib
+import random
 from PIL import Image, ImageChops, ImageFont, ImageDraw
+
+from django.conf import settings
+from models import Allyteam
 
 class Spring_maps():
     def __init__(self, mapname):
@@ -44,14 +48,10 @@ class Spring_maps():
         """
         fetches map image from api.springfiles.com
         """
-        import settings
-
         urllib.urlretrieve (self.map_info[0]['mapimages'][0], settings.MAPS_PATH+self.mapname+".jpg")
         return self.mapname+".jpg"
 
     def make_home_thumb(self):
-        import settings
-
         image = Image.open(settings.MAPS_PATH+self.mapname+".jpg")
         size = settings.thumbnail_sizes["home"]
         image.thumbnail(size, Image.ANTIALIAS)
@@ -74,8 +74,6 @@ def create_map_with_positions(smap):
     """
     create a map picture with start positions
     """
-    import settings
-
     img  = Image.open(settings.MAPS_PATH+smap.name+".jpg")
     img.thumbnail(settings.thumbnail_sizes["replay"], Image.ANTIALIAS)
     draw = ImageDraw.Draw(img)
@@ -94,15 +92,10 @@ def create_map_with_boxes(replay):
     """
     create a map picture with start boxes
     """
-    import settings
-
-    from models import Allyteam
-
     img  = Image.open(settings.MAPS_PATH+replay.map_info.name+".jpg")
     colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # 6 defined colors
     if len(Allyteam.objects.filter(replay=replay)) > 6:
         # colors for up to 32 AllyTeams
-        import random
         for _ in range(0, 26):
             colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     c_count  = 0
