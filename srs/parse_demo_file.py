@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.DEBUG,
                     filename=settings.LOG_PATH+'/parse_debug.log',
                     filemode='w+')
 
-logger = logging.getLogger()
+logger = logging.getLogger("srs")
 # ro = logging.FileHandler(settings.LOG_PATH+'/root_debug.log')
 # ro.setLevel(logging.DEBUG)
 # ro.setFormatter(logging.Formatter(fmt=settings.DEBUG_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT))
@@ -200,9 +200,9 @@ class Parse_demo_file():
                 if section['name'].startswith('player'):
                     player = ScriptPlayer(section['name'], section['data'])
                     if player.spectator:
-                        self.script.spectators[player.name] = player.result()
+                        self.script.spectators[player.name] = player
                     else:
-                        self.script.players[player.name] = player.result()
+                        self.script.players[player.name] = player
                     self.game_setup["player"][player.num] = player.__dict__
                 elif section['name'].startswith('ai'):
                     bot = ScriptAI(section['name'], section['data'])
@@ -336,9 +336,12 @@ class Parse_demo_file():
                             playername = clean(messageData['playerName'])
                             if _invalidPlayer(playername):
                                 continue
-                            self.game_setup["player"][self.players[playername].num]["startposx"] = messageData["x"]
-                            self.game_setup["player"][self.players[playername].num]["startposy"] = messageData["y"]
-                            self.game_setup["player"][self.players[playername].num]["startposz"] = messageData["z"]
+                            if playername in self.players:
+                                self.game_setup["player"][self.players[playername].num]["startposx"] = messageData["x"]
+                                self.game_setup["player"][self.players[playername].num]["startposy"] = messageData["y"]
+                                self.game_setup["player"][self.players[playername].num]["startposz"] = messageData["z"]
+                            else:
+                                logger.debug("playername '%s' not in self.players: '%s'", playername, self.players)
                     elif messageData["cmd"] == "chat":
                         self.additional["chat"].append({"fromID": messageData["fromID"],
                                                         "playerName": messageData["playerName"],
@@ -376,7 +379,7 @@ class Parse_demo_file():
                             pass
             except Exception, e:
                 logger.exception("Exception parsing packet '%s': %s", packet, e)
-                raise e
+                #raise e
 
         kop.close()
 
@@ -398,7 +401,7 @@ def main(argv=None):
         print "############### winningAllyTeams #####################"
         pp.pprint(replay.winningAllyTeams)
         print "################## additional ########################"
-        if replay.additional["chat"]:
+        if len(replay.additional["chat"]) > 4:
             replay.additional["chat"] = "chat removed for shorter output"
         pp.pprint(replay.additional)
         return 0

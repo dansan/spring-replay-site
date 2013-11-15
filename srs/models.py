@@ -348,7 +348,7 @@ class Player(models.Model):
     startposz       = models.FloatField(blank=True, null = True)
 
     def __unicode__(self):
-        return self.name
+        return "(%d) %s"%(self.id, self.name)
 
     @models.permalink
     def get_absolute_url(self):

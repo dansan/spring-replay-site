@@ -31,9 +31,9 @@ class Result():
         self.connected    = False
         self.quit        = False
         self.kicked        = False
-        self.start_pos_x= -1
-        self.start_pos_y= -1
-        self.start_pos_z= -1
+        self.startposx = -1
+        self.startposy = -1
+        self.startposz = -1
 
     def __cmp__(self,other):
         assert isinstance(other,Result)
@@ -89,6 +89,9 @@ class ScriptPlayer(ScriptObject):
     req_keys = ["countrycode", "spectator"]
 
     def __init__(self, section, data):
+        self.team = None
+        self.ally = -1
+
         super(ScriptPlayer, self).__init__(section, data)
 
         if hasattr(self, "accountid"):
@@ -108,21 +111,16 @@ class ScriptPlayer(ScriptObject):
         else:
             raise Exception("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."%(section, data))
 
-        if not hasattr(self, "team"):
-            self.team = None
-
-        self.ally = -1 # don't know if really needed, but I'll let it here for now
-
-    def result(self):
-        r = Result()
-        r.ally = self.ally
-        r.team = self.team
-        #if r.team < 0:
-        #    raise Exception('djiepo')
-        for key, value in self.__dict__.items():
-            if not key == "result":
-                setattr(r, key, value)
-        return r
+#     def result(self):
+#         r = Result()
+#         r.ally = self.ally
+#         r.team = self.team
+#         #if r.team < 0:
+#         #    raise Exception('djiepo')
+#         for key, value in self.__dict__.items():
+#             if not key == "result":
+#                 setattr(r, key, value)
+#         return r
 
 class ScriptAI(ScriptObject):
     req_keys = ["host", "shortname"]

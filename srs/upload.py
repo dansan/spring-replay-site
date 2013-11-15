@@ -115,6 +115,7 @@ def upload(request):
                         timer.start("store_demofile_data()")
                         replay = store_demofile_data(demofile, tags, newpath, ufile.name, short, long_text, request.user)
                         timer.stop("store_demofile_data()")
+                        demofile = tags = newpath = ufile = short = long_text = None
                         replays.append((True, replay))
                         logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
 
@@ -296,6 +297,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     # if match is <2 min long, don't rate it
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
+    demofile.header = None
 
     timer.start("  map creation")
     # get / create map infos
@@ -439,18 +441,21 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                     pplayer.account = pa
                     pplayer.save()
 
-        if player.has_key("team"):
+        if player.has_key("team") and player["team"] != None:
             teams.append((players[pnum], player["team"])) # [(Player, "2"), ...]
+
+            if player.has_key("startposx") and player.has_key("startposy") and player.has_key("startposz"):
+                players[pnum].startposx = player["startposx"]
+                players[pnum].startposy = player["startposy"]
+                players[pnum].startposz = player["startposz"]
+                players[pnum].save()
+            else:
+                logger.error("player has no start coords. player: %s players[%d]: %s", player, pnum, players[pnum])
         else:
             # this must be a spectator
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
 
-        if player.has_key("startposx") and player.has_key("startposy") and player.has_key("startposz"):
-            players[pnum].startposx = player["startposx"]
-            players[pnum].startposy = player["startposy"]
-            players[pnum].startposz = player["startposz"]
-            players[pnum].save()
     timer.stop("  players and playeraccounts")
     logger.debug("replay(%d) teams=%s", replay.pk, teams)
 

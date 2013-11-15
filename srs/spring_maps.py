@@ -53,7 +53,7 @@ class Spring_maps():
 
     def make_home_thumb(self):
         image = Image.open(settings.MAPS_PATH+self.mapname+".jpg")
-        size = settings.thumbnail_sizes["home"]
+        size = settings.THUMBNAIL_SIZES["home"]
         image.thumbnail(size, Image.ANTIALIAS)
         image.save(settings.MAPS_PATH+self.mapname+"_home.jpg", "JPEG")
         return self.mapname+"_home.jpg"
@@ -75,7 +75,7 @@ def create_map_with_positions(smap):
     create a map picture with start positions
     """
     img  = Image.open(settings.MAPS_PATH+smap.name+".jpg")
-    img.thumbnail(settings.thumbnail_sizes["replay"], Image.ANTIALIAS)
+    img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
     draw = ImageDraw.Draw(img)
 #    font = ImageFont.truetype(settings.FONTS_PATH+"VeraMono.ttf", 14)
 #    i = 1
@@ -110,7 +110,7 @@ def create_map_with_boxes(replay):
                                                int(at.startrectbottom*y)))
             c_count += 1
     img = ImageChops.multiply(img, team_layer)
-    img.thumbnail(settings.thumbnail_sizes["replay"], Image.ANTIALIAS)
+    img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
     filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
     img.save(settings.MAPS_PATH+filename, "JPEG")
     return filename
