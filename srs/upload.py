@@ -361,7 +361,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # look for replays with the same map and start boxes
         replay_same_map_n_boxes = Replay.objects.filter(map_info__name=replay.map_info.name).exclude(id=replay.id)
         for at in Allyteam.objects.filter(replay=replay):
-            replay_same_map_n_boxes = replay_same_map_n_boxes.filter(allyteam__startrectbottom=at.startrectbottom, allyteam__startrectleft=at.startrectleft, allyteam__startrectright=at.startrectright, allyteam__startrecttop=at.startrecttop)
+            if at.startrectbottom != None and at.startrectleft != None and at.startrectright != None and at.startrecttop != None:
+                replay_same_map_n_boxes = replay_same_map_n_boxes.filter(allyteam__startrectbottom=at.startrectbottom, allyteam__startrectleft=at.startrectleft, allyteam__startrectright=at.startrectright, allyteam__startrecttop=at.startrecttop)
+            else:
+                replay_same_map_n_boxes = Replay.objects.none()
         if replay_same_map_n_boxes.exists():
             # found at least one replay with the same map and the same boxes
             # make sure the number of boxes match
