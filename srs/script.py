@@ -111,17 +111,6 @@ class ScriptPlayer(ScriptObject):
         else:
             raise Exception("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."%(section, data))
 
-#     def result(self):
-#         r = Result()
-#         r.ally = self.ally
-#         r.team = self.team
-#         #if r.team < 0:
-#         #    raise Exception('djiepo')
-#         for key, value in self.__dict__.items():
-#             if not key == "result":
-#                 setattr(r, key, value)
-#         return r
-
 class ScriptAI(ScriptObject):
     req_keys = ["host", "shortname"]
 

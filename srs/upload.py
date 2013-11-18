@@ -15,6 +15,7 @@ import datetime
 import gzip
 import magic
 import operator
+import pprint
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -453,7 +454,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 players[pnum].startposz = player["startposz"]
                 players[pnum].save()
             else:
-                logger.error("player has no start coords. player: %s players[%d]: %s", player, pnum, players[pnum])
+                logger.info("player has no start coords. (quit/kicked/not connected?) player: %s players[%d]: %s", player, pnum, players[pnum])
         else:
             # this must be a spectator
             if not player["spectator"] == 1:
@@ -541,6 +542,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                     setattr(ba_awards, award_name, players[demo_awards[award_name]])
         ba_awards.save()
         logger.debug("replay(%d) has BAwards(%d): %s", replay.pk, ba_awards.pk, ba_awards)
+
+    pp = pprint.PrettyPrinter(depth=6)
+    for k, v in demofile.additional.items():
+        if k == "chat": v = "chat removed for shorter output"
+        logger.info("demofile.additional[%s]: %s", k, pp.pformat(v))
 
     replay.published = True
     replay.save()

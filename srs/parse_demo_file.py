@@ -17,7 +17,7 @@ import pprint
 import magic
 import gzip
 from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, ScriptRestrictions, ScriptTeam
-import demoparser
+from demoparser import Demoparser
 import struct
 import logging
 import settings
@@ -88,7 +88,11 @@ class Parse_demo_file():
                            }
         self.additional = {"gameover_frame": False,
                            "chat": list(),
-                           "faction_change": dict()}
+                           "faction_change": dict(),
+                           "not_connected": dict(),
+                           "quit": dict(),
+                           "kicked": dict(),
+                           "timeout": dict()}
 
     def read_blob(self, seek_size, blob_size):
         self.demofile.seek(seek_size)
@@ -252,6 +256,8 @@ class Parse_demo_file():
         def _save_playerinfo(playername, key, value):
             if playername in self.players:
                 setattr(self.players[playername], key, value)
+                if key in ("quit", "kicked", "timeout"):
+                    self.additional[key][playername] = self.players[playername]
             else:
                 setattr(self.spectators[playername], key, value)
 
@@ -279,6 +285,7 @@ class Parse_demo_file():
         currentFrame = 0
         playerIDToName = {}
         kop = open('/tmp/msg.data','w')
+        demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
             try:
@@ -340,8 +347,6 @@ class Parse_demo_file():
                                 self.game_setup["player"][self.players[playername].num]["startposx"] = messageData["x"]
                                 self.game_setup["player"][self.players[playername].num]["startposy"] = messageData["y"]
                                 self.game_setup["player"][self.players[playername].num]["startposz"] = messageData["z"]
-                            else:
-                                logger.debug("playername '%s' not in self.players: '%s'", playername, self.players)
                     elif messageData["cmd"] == "chat":
                         self.additional["chat"].append({"fromID": messageData["fromID"],
                                                         "playerName": messageData["playerName"],
@@ -356,7 +361,7 @@ class Parse_demo_file():
                                 continue
                             faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
                             logger.debug("%s(%d) changed faction to '%s'", playername, messageData['playerNum'], faction)
-                            self.additional["faction_change"][messageData['playerNum']] = (playername, faction)
+                            self.additional["faction_change"][playername] = (self.players[playername], faction)
                         elif msgid == 161:
                             # BA Awards
                             # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=1850#L351
@@ -382,6 +387,11 @@ class Parse_demo_file():
                 #raise e
 
         kop.close()
+
+        for pnum, player in self.players.items():
+            if not hasattr(player, "connected"):
+                self.additional["not_connected"][pnum] = player
+
 
 def main(argv=None):
     if argv is None:
