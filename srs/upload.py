@@ -128,14 +128,15 @@ def upload(request):
                         finally:
                             timer.stop("rate_match()")
 
-                        try:
-                            timer.start("ping_google()")
-                            ping_google()
-                        except Exception, e:
-                            logger.exception("ping_google(): %s", e)
-                            pass
-                        finally:
-                            timer.stop("ping_google()")
+                        if not settings.DEBUG:
+                            try:
+                                timer.start("ping_google()")
+                                ping_google()
+                            except Exception, e:
+                                logger.exception("ping_google(): %s", e)
+                                pass
+                            finally:
+                                timer.stop("ping_google()")
 
                     timer.stop("upload()")
                     logger.info("timings:\n%s", timer)
@@ -219,6 +220,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         return "4 server error, please try again later, or contact admin"
     finally:
         timer.stop("store_demofile_data()")
+    demofile = None
 
     logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
     try:
@@ -229,14 +231,15 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     finally:
         timer.stop("rate_match()")
 
-    try:
-        timer.start("ping_google()")
-        ping_google()
-    except Exception:
-        logger.exception("ping_google(): %s", e)
-        pass
-    finally:
-        timer.stop("ping_google()")
+    if not settings.DEBUG:
+        try:
+            timer.start("ping_google()")
+            ping_google()
+        except Exception:
+            logger.exception("ping_google(): %s", e)
+            pass
+        finally:
+            timer.stop("ping_google()")
 
     timer.stop("xmlrpc_upload()")
     logger.info("timings:\n%s", timer)
@@ -257,12 +260,26 @@ def save_uploaded_file(ufile, filename):
 
 def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     """
-    Store all data about this replay in the database
+    Store all data about this replay in the database,
+    if replay exists, all argument except 'demofile' are ignored
     """
-    replay = Replay()
+    global timer
+    if not timer: timer = UploadTiming()
+#     pp = pprint.PrettyPrinter(depth=6)
+#     logger.debug("demofile.__dict__: %s",pp.pformat(demofile.__dict__))
+    try:
+        replay = Replay.objects.get(gameID=demofile.header["gameID"])
+        reparsing = True
+        logger.debug("reparsing existing Replay(%d) %s (%s)", replay.id, replay, replay.gameID)
+    except:
+        replay = Replay()
+        reparsing = False
+        logger.debug("new Replay: gameID: %s", demofile.header["gameID"])
+
     replay.published = False
-    replay.uploader = user
-    replay.title = short # temp
+    if not reparsing:
+        replay.uploader = user
+        replay.title = short # temp
 
     # copy match infos 
     for key in ["versionString", "gameID", "wallclockTime"]:
@@ -272,33 +289,38 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
-    replay.filename       = os.path.basename(path)
-    replay.path           = os.path.dirname(path)
-    replay.download_count = 0
+    if not reparsing:
+        replay.filename       = os.path.basename(path)
+        replay.path           = os.path.dirname(path)
+        replay.download_count = 0
 
-    replay.save()
-    uploadtmp = UploadTmp.objects.create(replay=replay)
+        replay.save()
+        uploadtmp = UploadTmp.objects.create(replay=replay)
 
-    logger.debug("replay(%d) gameID='%s' unixTime='%s' created", replay.pk, replay.gameID, replay.unixTime)
+        logger.debug("replay(%d) gameID='%s' unixTime='%s' created", replay.pk, replay.gameID, replay.unixTime)
 
     # save AllyTeams
     timer.start("  allyteams")
     allyteams = {}
-    for num,val in demofile.game_setup['allyteam'].items():
-        allyteam = Allyteam()
-        allyteams[num] = allyteam
-        for k,v in val.items():
-            allyteam.__setattr__(k, v)
-        allyteam.replay = replay
-        allyteam.winner = int(num) in demofile.winningAllyTeams
-        allyteam.save()
+    at_depr = Allyteam.objects.filter(replay=replay, num=-1)
+    if at_depr.exists():
+        logger.info("removing deprecated Allyteams: %s", at_depr.values_list('id'))
+        at_depr.delete()
+    for anum,val in demofile.game_setup['allyteam'].items():
+        defaults = {"numallies": val["numallies"], "winner": int(anum) in demofile.winningAllyTeams,
+                    "startrectbottom": getattr(val, "startrectbottom", None), "startrectleft": getattr(val, "startrectleft", None), "startrectright": getattr(val, "startrectright", None), "startrecttop": getattr(val, "startrecttop", None)}
+        allyteam, created = Allyteam.objects.get_or_create(replay=replay, num=anum, defaults=defaults)
+        if not created:
+            for k,v in defaults.items():
+                setattr(allyteam, k, v)
+            allyteam.save()
+        allyteams[anum] = allyteam
     timer.stop("  allyteams")
 
-    logger.debug("replay(%d) allyteams=%s", replay.pk, [a.pk for a in allyteams.values()])
+    logger.debug("replay(%d) allyteams: %s", replay.pk, [a.pk for a in allyteams.values()])
 
     # if match is <2 min long, don't rate it
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
-    demofile.header = None
 
     timer.start("  map creation")
     # get / create map infos
@@ -332,7 +354,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width)
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
-
+    replay.save()
     #
     # startpostype = 0: Fixed            |
     # startpostype = 1: Random           |
@@ -352,11 +374,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         # fixed start positions
         try:
             replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
-            logger.debug("replay(%d) using existing map_img.pk=%d", replay.pk, replay.map_img.pk)
+            logger.debug("replay(%d) using existing map_img(%d)", replay.pk, replay.map_img.pk)
         except:
             mapfile = spring_maps.create_map_with_positions(replay.map_info)
             replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
-            logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
+            logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
     elif startpos == 2:
         # start boxes
         # look for replays with the same map and start boxes
@@ -372,7 +394,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             for replay_smnb in replay_same_map_n_boxes:
                 if replay_smnb.allyteam_set.count() == replay.allyteam_set.count():
                     replay.map_img = replay_smnb.map_img
-                    logger.debug("replay(%d) using existing map_img(%d) from replay(pk=%d, gameID=%s)", replay.pk, replay_smnb.map_img.pk, replay_smnb.pk, replay_smnb.gameID)
+                    logger.debug("replay(%d) using existing map_img(%d) from replay(%d, %s)", replay.pk, replay_smnb.map_img.pk, replay_smnb.pk, replay_smnb.gameID)
                     break
         if not replay.map_img:
             # didn't find an existing map_img before
@@ -383,11 +405,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 mapfile = "error creating map img"
 
             replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
-            logger.debug("replay(%d) created new map_img.pk=%d", replay.pk, replay.map_img.pk)
+            logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
     else:
         logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
         raise Exception("startpostype '%d' not supported"%startpos)
-
+    replay.save()
     timer.stop("  map creation")
 
     # save tags
@@ -402,19 +424,19 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     timer.start("  map+modoptions")
     for k,v in demofile.game_setup['mapoptions'].items():
         k,v = truncate_option(k, v)
-        MapOption.objects.create(name=k, value=v, replay=replay)
+        MapOption.objects.get_or_create(name=k, value=v, replay=replay)
 
     for k,v in demofile.game_setup['modoptions'].items():
         k,v = truncate_option(k, v)
-        ModOption.objects.create(name=k, value=v, replay=replay)
+        ModOption.objects.get_or_create(name=k, value=v, replay=replay)
     timer.stop("  map+modoptions")
 
-    logger.debug("replay(%d) added tags (%s), mapoptions and modoptions", replay.pk, replay.tags.all().values_list("name"))
+    logger.debug("replay(%d) added mapoptions, modoptions and tags: %s", replay.pk, replay.tags.all().values_list("name"))
 
     # save players and their accounts
     timer.start("  players and playeraccounts")
-    players = {}
-    teams = []
+    players = dict()
+    teams = list()
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'countrycode': player["countrycode"], 'preffered_name': player["name"]})
@@ -432,13 +454,20 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             skilluncertainty = player["skilluncertainty"]
         except:
             skilluncertainty = -1
-        players[pnum] = Player.objects.create(account=pa, name=player["name"], rank=player["rank"], skill=skill, skilluncertainty=skilluncertainty, spectator=bool(player["spectator"]), replay=replay)
+
+        defaults = {"name": player["name"], "rank": player["rank"], "skill": skill,
+                    "skilluncertainty": skilluncertainty, "spectator": bool(player["spectator"])}
+        players[pnum], created = Player.objects.get_or_create(replay=replay, account=pa, defaults=defaults)
+        if not created:
+            for k,v in defaults.items():
+                setattr(players[pnum], k, v)
+
         if pa.accountid > 0:
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
             pac = Player.objects.filter(name=player["name"], account__accountid__lt=0)
             if pac.exists():
-                logger.info("replay(%d) found matching name-account info for previously accountless player(s):", replay.pk)
+                logger.info("replay(%d) found matching name-account info for previously accountless Player(s):", replay.pk)
                 logger.info("replay(%d) PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
                 for pplayer in pac:
                     pplayer.account.delete()
@@ -452,34 +481,35 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 players[pnum].startposx = player["startposx"]
                 players[pnum].startposy = player["startposy"]
                 players[pnum].startposz = player["startposz"]
-                players[pnum].save()
             else:
                 logger.info("player has no start coords. (quit/kicked/not connected?) player: %s players[%d]: %s", player, pnum, players[pnum])
         else:
             # this must be a spectator
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
-
+        players[pnum].save()
     timer.stop("  players and playeraccounts")
-    logger.debug("replay(%d) teams=%s", replay.pk, teams)
 
-    logger.debug("replay(%d) saved Players(%s) and PlayerAccounts", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
+    logger.debug("replay(%d) saved PlayerAccounts and Players: %s", replay.pk, Player.objects.filter(replay=replay).values_list('id', 'name'))
 
     # save teams
     timer.start("  teams")
+    team_depr = Team.objects.filter(replay=replay, num=-1)
+    if team_depr.exists():
+        logger.info("removing deprecated Teams: %s", team_depr.values_list('id'))
+        team_depr.delete()
     for tnum,val in demofile.game_setup['team'].items():
-        team = Team()
-        for k,v in val.items():
-            if k == "allyteam":
-                team.allyteam = allyteams[v]
-            elif k == "teamleader":
-                team.teamleader = players[v]
-            elif k =="rgbcolor":
-                team.rgbcolor = floats2rgbhex(v)
-            else:
-                team.__setattr__(k, v)
-        team.replay = replay
-        team.save()
+        defaults = {"allyteam": allyteams[val["allyteam"]], "handicap": val["handicap"], "rgbcolor": floats2rgbhex(val["rgbcolor"]),
+                    "side": val["side"], "teamleader": players[val["teamleader"]]}
+        if val.has_key("startposx") and val.has_key("startposy") and val.has_key("startposz"):
+            defaults["startposx"] = val["startposx"]
+            defaults["startposy"] = val["startposy"]
+            defaults["startposz"] = val["startposz"]
+        team, created = Team.objects.get_or_create(replay=replay, num=tnum, defaults=defaults)
+        if not created:
+            for k,v in defaults.items():
+                setattr(team, k, v)
+            team.save()
 
         # find Players for this Team
         teamplayers = [t[0] for t in teams if t[1] == tnum]
@@ -494,12 +524,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             Player.objects.create(account=bot_pa, name="Bot (of "+team.teamleader.name+")", rank=1, spectator=False, team=team, replay=replay)
 
             # add a "Bot" tag
-            bottag, _ = Tag.objects.get_or_create(name = "Bot", defaults={})
+            bottag, _ = Tag.objects.get_or_create(name = "Bot")
             replay.tags.add(bottag)
 
             # detect single player and add tag
             if demofile.game_setup["host"].has_key("hostip") and demofile.game_setup["host"]["hostip"] == "" and demofile.game_setup["host"]["ishost"] == 1:
-                sptag, _ = Tag.objects.get_or_create(name = "Single Player", defaults={})
+                sptag, _ = Tag.objects.get_or_create(name = "Single Player")
                 replay.tags.add(sptag)
     timer.stop("  teams")
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
@@ -507,15 +537,16 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # work around Zero-Ks usage of useless AllyTeams
     ats = Allyteam.objects.filter(replay=replay, team__isnull=True)
     if ats.exists():
-        logger.debug("replay(%d) deleting useless AllyTeams:%s", replay.pk, ats)
+        logger.debug("replay(%d) deleting useless AllyTeams: %s", replay.pk, ats)
         ats.delete()
 
     timer.start("  tags + descriptions")
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
 
-    # save descriptions
-    save_desc(replay, short, long_text, autotag)
+    if not reparsing:
+        # save descriptions
+        save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
 
     # store if demofile doesn't contain the GAMEOVER msg, because of the spring94.1 bug:
@@ -523,23 +554,31 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # http://springrts.com/mantis/view.php?id=3804
     if not demofile.additional["gameover_frame"]:
         logger.debug("replay(%d) has no GAMEOVER msg", replay.pk)
-        AdditionalReplayInfo.objects.create(replay=replay, key="gameover", value="")
+        AdditionalReplayInfo.objects.get_or_create(replay=replay, key="gameover", value="")
 
     if demofile.additional.has_key("awards"):
-        ba_awards = BAwards(replay=replay)
+        ba_awards, _ = BAwards.objects.get_or_create(replay=replay)
         demo_awards = demofile.additional["awards"]
         for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward", "sleepAward"]:
             if type(demo_awards[award_name]) == tuple:
                 aw1, aw2, aw3 = demo_awards[award_name]
                 if aw1 > -1:
                     setattr(ba_awards, award_name+"1st", players[aw1])
+                else:
+                    setattr(ba_awards, award_name+"1st", None)
                 if aw2 > -1:
                     setattr(ba_awards, award_name+"2nd", players[aw2])
+                else:
+                    setattr(ba_awards, award_name+"2nd", None)
                 if aw3 > -1:
                     setattr(ba_awards, award_name+"3rd", players[aw3])
+                else:
+                    setattr(ba_awards, award_name+"3rd", None)
             else:
                 if demo_awards[award_name] > -1:
                     setattr(ba_awards, award_name, players[demo_awards[award_name]])
+                else:
+                    setattr(ba_awards, award_name, None)
         ba_awards.save()
         logger.debug("replay(%d) has BAwards(%d): %s", replay.pk, ba_awards.pk, ba_awards)
 
@@ -550,7 +589,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     replay.published = True
     replay.save()
-    uploadtmp.delete()
+    if not reparsing:
+        uploadtmp.delete()
     return replay
 
 def rate_match(replay):
@@ -568,7 +608,7 @@ def rate_match(replay):
         logger.debug("in/after get_sldb_match_skills(): %s", e)
         # use "skill" tag from demo data if available
         logger.info("Trying to use skill tag from demofile")
-        players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="").prefetch_related("account")
+        players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="")
         if players.exists():
             replay.rated = True
             for player in players:
@@ -821,3 +861,19 @@ def upload_media(request, gameID):
         formset = UploadMediaFormSet()
     c["formset"] = formset
     return render_to_response('upload_media.html', c, context_instance=RequestContext(request))
+
+def reparse(replay):
+    """
+    Update data from stored demofile (to use new features)
+    """
+    path = replay.path+"/"+replay.filename
+    try:
+        demofile = parse_demo_file.Parse_demo_file(path)
+        demofile.check_magic()
+        demofile.parse()
+    except Exception, e:
+        logger.exception("Error opening or parsing demofile '%s'.", path)
+        raise e
+    if not replay.gameID == demofile.header["gameID"]:
+        raise Exception("self.gameID(%s) != demofile.header[gameID](%s)"%(replay.gameID, demofile.header["gameID"]))
+    store_demofile_data(demofile, None, None, None, None, None, None)

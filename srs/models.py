@@ -265,6 +265,7 @@ class Replay(models.Model):
             self._faction_result(playeraccount)
         return self._result_cache[1]
 
+
 class AdditionalReplayInfo(models.Model):
     """
     Infos that are only relevant to a few Replay objects are not worth their
@@ -285,6 +286,7 @@ class Allyteam(models.Model):
     startrecttop    = models.FloatField(blank=True, null = True)
     winner          = models.BooleanField()
     replay          = models.ForeignKey(Replay)
+    num             = models.SmallIntegerField()
 
     def __unicode__(self):
         return str(self.id)+u" win:"+str(self.winner)
@@ -367,9 +369,10 @@ class Team(models.Model):
     startposz       = models.IntegerField(blank=True, null = True)
     teamleader      = models.ForeignKey(Player, related_name="+")
     replay          = models.ForeignKey(Replay)
+    num             = models.SmallIntegerField()
 
     def __unicode__(self):
-        return self.side
+        return "(%d) %s"%(self.pk, self.teamleader.name)
 
 class MapModOption(models.Model):
     name            = models.CharField(max_length=128)
