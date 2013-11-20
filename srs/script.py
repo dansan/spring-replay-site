@@ -86,7 +86,7 @@ class ScriptObject(object):
             raise Exception("Missing required key in section '%s'."%section)
 
 class ScriptPlayer(ScriptObject):
-    req_keys = ["countrycode", "spectator"]
+    req_keys = ["spectator"]
 
     def __init__(self, section, data):
         self.team = None
@@ -111,6 +111,12 @@ class ScriptPlayer(ScriptObject):
         else:
             print "Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."%(section, data)
             self.rank = None
+
+        if hasattr(self, "countrycode"):
+            pass
+        else:
+            print "Missing required key 'countrycode' in section '%s': '%s'."%(section, data)
+            self.countrycode = None
 
 class ScriptAI(ScriptObject):
     req_keys = ["host", "shortname"]

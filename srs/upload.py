@@ -440,6 +440,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     teams = list()
     for pnum,player in demofile.game_setup['player'].items():
         set_accountid(player)
+        if player["countrycode"] == None:
+            player["countrycode"] = "??"
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"], defaults={'countrycode': player["countrycode"], 'preffered_name': player["name"]})
         if pa.preffered_name == "??" or pa.preffered_name == "":
             pa.preffered_name = player["name"]
