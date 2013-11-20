@@ -107,9 +107,10 @@ class ScriptPlayer(ScriptObject):
             pass
         elif hasattr(self, "lobbyrank"):
             # demofile from zero-k
-            self.accountid = self.lobbyrank
+            self.rank = self.lobbyrank
         else:
-            raise Exception("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."%(section, data))
+            print "Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."%(section, data)
+            self.rank = None
 
 class ScriptAI(ScriptObject):
     req_keys = ["host", "shortname"]

@@ -456,7 +456,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         except:
             skilluncertainty = -1
 
-        defaults = {"name": player["name"], "rank": player["rank"], "skill": skill,
+        if player["rank"] == None:
+            try:
+                rank = Player.objects.filter(account=pa).order_by("-id")[0].rank
+            except:
+                rank = 0
+        defaults = {"name": player["name"], "rank": rank, "skill": skill,
                     "skilluncertainty": skilluncertainty, "spectator": bool(player["spectator"])}
         players[pnum], created = Player.objects.get_or_create(replay=replay, account=pa, defaults=defaults)
         if not created:
