@@ -729,15 +729,15 @@ def set_accountid(player):
         # game was on springie
         player["accountid"] = player["lobbyid"]
 
-    if not player.has_key("accountid"):
-        logger.debug("v.has_key(accountid)==False")
+    if not player.has_key("accountid") or player["accountid"] == None:
+        logger.debug("v.has_key(accountid)==False or player[accountid] == None")
         # single player - we still need a unique accountid. Either we find an
         # existing player/account, or we create a temporary account.
         player["accountid"] = PlayerAccount.objects.filter(player__name=player["name"], accountid__gt=0).aggregate(Min("accountid"))['accountid__min']
         if player["accountid"]:
-            logger.debug("v.has_key(accountid)==False -> found Player with same name -> accountid=%d", player["accountid"])
+            logger.debug("  --> found Player with same name -> accountid=%d", player["accountid"])
         else:
-            logger.debug("v.has_key(accountid)==False -> did NOT find Player with same name")
+            logger.debug("  --> did NOT find Player with same name")
             # didn't find an existing one, so make a temp one
             #
             # I make the accountid negative, so if the same Player pops up
