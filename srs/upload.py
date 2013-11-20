@@ -106,6 +106,7 @@ def upload(request):
                         else:
                             logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
                             del_replay(replay)
+                            UploadTmp.objects.filter(replay=replay).delete()
                             replays.append((False, "Error while uploading."))
                         continue
                     except:
@@ -205,6 +206,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         else:
             logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
             del_replay(replay)
+            UploadTmp.objects.filter(replay=replay).delete()
     except:
         pass
 
@@ -269,16 +271,16 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 #     logger.debug("demofile.__dict__: %s",pp.pformat(demofile.__dict__))
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
-        reparsing = True
+        replay.download_count = 0
         logger.debug("reparsing existing Replay(%d) %s (%s)", replay.id, replay, replay.gameID)
     except:
         replay = Replay()
-        reparsing = False
         logger.debug("new Replay: gameID: %s", demofile.header["gameID"])
 
     replay.published = False
-    if not reparsing:
+    if user != None:
         replay.uploader = user
+    if short != None:
         replay.title = short # temp
 
     # copy match infos 
@@ -289,13 +291,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
-    if not reparsing:
+    if path != None:
         replay.filename       = os.path.basename(path)
         replay.path           = os.path.dirname(path)
-        replay.download_count = 0
 
         replay.save()
-        uploadtmp = UploadTmp.objects.create(replay=replay)
+        UploadTmp.objects.create(replay=replay)
 
         logger.debug("replay(%d) gameID='%s' unixTime='%s' created", replay.pk, replay.gameID, replay.unixTime)
 
@@ -544,7 +545,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
 
-    if not reparsing:
+    if short != None and long_text != None:
         # save descriptions
         save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
@@ -589,8 +590,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     replay.published = True
     replay.save()
-    if not reparsing:
-        uploadtmp.delete()
+    UploadTmp.objects.filter(replay=replay).delete()
     return replay
 
 def rate_match(replay):
