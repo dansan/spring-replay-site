@@ -94,22 +94,32 @@ def create_map_with_boxes(replay):
     """
     img  = Image.open(settings.MAPS_PATH+replay.map_info.name+".jpg")
     colors   = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200,200,0), (200, 0, 200), (0, 200, 200)] # 6 defined colors
-    if len(Allyteam.objects.filter(replay=replay)) > 6:
-        # colors for up to 32 AllyTeams
-        for _ in range(0, 26):
+    if Allyteam.objects.filter(replay=replay).count() > 6:
+        # random colors for the remaining AllyTeams
+        for _ in range(0, Allyteam.objects.filter(replay=replay).count()-6):
             colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     c_count  = 0
-    team_layer = Image.new('RGB', img.size, (256,256,256))
     x,y = img.size
     for at in Allyteam.objects.filter(replay=replay):
         # work around bugged replays (startpostype=2, but has no boxes)
         if at.startrectleft != None and at.startrecttop != None and at.startrectright != None and at.startrectbottom != None:
-            team_layer.paste(colors[c_count], (int(at.startrectleft*x),
-                                               int(at.startrecttop*y),
-                                               int(at.startrectright*x),
-                                               int(at.startrectbottom*y)))
+            # transparency mask
+            team_layer = Image.new('RGBA',
+                                   (int(at.startrectright*x)-int(at.startrectleft*x),
+                                    int(at.startrectbottom*y)-int(at.startrecttop*y)),
+                                   (256,256,256,96))
+            # draw border of box (no transparency)
+            draw = ImageDraw.Draw(team_layer)
+            tl_x, tl_y = team_layer.size
+            for i in range(4): # 4px border
+                draw.rectangle([(0+i,0+i), (tl_x-i, tl_y-i)], fill=None, outline=(256,256,256,256))
+            del draw
+            # overlay map with partly transparent box
+            img.paste(colors[c_count], box=(int(at.startrectleft*x),
+                                                   int(at.startrecttop*y),
+                                                   int(at.startrectright*x),
+                                                   int(at.startrectbottom*y)), mask=team_layer)
             c_count += 1
-    img = ImageChops.multiply(img, team_layer)
     img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
     filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
     img.save(settings.MAPS_PATH+filename, "JPEG")
@@ -137,4 +147,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     sys.exit(main())
-
