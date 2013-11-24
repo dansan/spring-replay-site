@@ -323,96 +323,6 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # if match is <2 min long, don't rate it
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
 
-    timer.start("  map creation")
-    # get / create map infos
-    try:
-        replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
-        logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
-    except:
-        # 1st time upload for this map: fetch info and full map, create thumb
-        # for index page
-        smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
-        smap.fetch_info()
-        if smap.map_info:
-            startpos = str()
-            for coord in smap.map_info[0]["metadata"]["StartPos"]:
-                startpos += "%f,%f|"%(coord["x"], coord["z"])
-            startpos = startpos[:-1]
-            height   = smap.map_info[0]["metadata"]["Height"]
-            width    = smap.map_info[0]["metadata"]["Width"]
-            full_img = smap.fetch_img()
-        else:
-            # no result - either api.springfiles.com is down or it didn't find the map
-            err = "No map info from api.springfiles.com, using empty img for map '%s'."%demofile.game_setup["host"]["mapname"]
-            logger.error(err)
-            startpos = ""
-            height   = 170
-            width    = 340
-            shutil.copy(settings.MAPS_PATH+"__no_map_img.jpg", settings.MAPS_PATH+smap.mapname+".jpg")
-            full_img = settings.MAPS_PATH+smap.mapname+".jpg"
-
-        smap.make_home_thumb()
-        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width)
-        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
-        logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
-    replay.save()
-    #
-    # startpostype = 0: Fixed            |
-    # startpostype = 1: Random           |
-    # startpostype = 2: ChooseInGame     | allyteam { .. startrectbottom, ... }
-    # startpostype = 3: ChooseBeforeGame | team { startposx, startposz } ...
-    #
-    # relayhoststartpostype = 0 --> startpostype = 3
-    # relayhoststartpostype = 1 --> startpostype = 3
-    # relayhoststartpostype = 2 --> startpostype = 2
-    # relayhoststartpostype = 3 --> startpostype = 3
-    #
-
-    # get / create map thumbs
-    startpos = demofile.game_setup["host"]["startpostype"]
-    logger.debug("replay(%d) startpostype=%d", replay.pk, startpos)
-    if startpos == 0 or startpos == 1 or startpos == 3:
-        # fixed start positions
-        try:
-            replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
-            logger.debug("replay(%d) using existing map_img(%d)", replay.pk, replay.map_img.pk)
-        except:
-            mapfile = spring_maps.create_map_with_positions(replay.map_info)
-            replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
-            logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
-    elif startpos == 2:
-        # start boxes
-        # look for replays with the same map and start boxes
-        replay_same_map_n_boxes = Replay.objects.filter(map_info__name=replay.map_info.name).exclude(id=replay.id)
-        for at in Allyteam.objects.filter(replay=replay):
-            if at.startrectbottom != None and at.startrectleft != None and at.startrectright != None and at.startrecttop != None:
-                replay_same_map_n_boxes = replay_same_map_n_boxes.filter(allyteam__startrectbottom=at.startrectbottom, allyteam__startrectleft=at.startrectleft, allyteam__startrectright=at.startrectright, allyteam__startrecttop=at.startrecttop)
-            else:
-                replay_same_map_n_boxes = Replay.objects.none()
-        if replay_same_map_n_boxes.exists():
-            # found at least one replay with the same map and the same boxes
-            # make sure the number of boxes match
-            for replay_smnb in replay_same_map_n_boxes:
-                if replay_smnb.allyteam_set.count() == replay.allyteam_set.count():
-                    replay.map_img = replay_smnb.map_img
-                    logger.debug("replay(%d) using existing map_img(%d) from replay(%d, %s)", replay.pk, replay_smnb.map_img.pk, replay_smnb.pk, replay_smnb.gameID)
-                    break
-        if not replay.map_img:
-            # didn't find an existing map_img before
-            try:
-                mapfile = spring_maps.create_map_with_boxes(replay)
-            except Exception, e:
-                logger.error("error creating map img: %s", e)
-                mapfile = "error creating map img"
-
-            replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
-            logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
-    else:
-        logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
-        raise Exception("startpostype '%d' not supported"%startpos)
-    replay.save()
-    timer.stop("  map creation")
-
     # save tags
     save_tags(replay, tags)
 
@@ -543,6 +453,80 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 replay.tags.add(sptag)
     timer.stop("  teams")
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
+
+    timer.start("  map creation")
+    # get / create map infos
+    try:
+        replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
+        logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
+    except:
+        # 1st time upload for this map: fetch info and full map, create thumb
+        # for index page
+        smap = spring_maps.Spring_maps(demofile.game_setup["host"]["mapname"])
+        smap.fetch_info()
+        if smap.map_info:
+            startpos = str()
+            for coord in smap.map_info[0]["metadata"]["StartPos"]:
+                startpos += "%f,%f|"%(coord["x"], coord["z"])
+            startpos = startpos[:-1]
+            height   = smap.map_info[0]["metadata"]["Height"]
+            width    = smap.map_info[0]["metadata"]["Width"]
+            full_img = smap.fetch_img()
+        else:
+            # no result - either api.springfiles.com is down or it didn't find the map
+            err = "No map info from api.springfiles.com, using empty img for map '%s'."%demofile.game_setup["host"]["mapname"]
+            logger.error(err)
+            startpos = ""
+            height   = 170
+            width    = 340
+            shutil.copy(settings.MAPS_PATH+"__no_map_img.jpg", settings.MAPS_PATH+smap.mapname+".jpg")
+            full_img = settings.MAPS_PATH+smap.mapname+".jpg"
+
+        smap.make_home_thumb()
+        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width)
+        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
+        logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
+    replay.save()
+    #
+    # startpostype = 0: Fixed            |
+    # startpostype = 1: Random           |
+    # startpostype = 2: ChooseInGame     | allyteam { .. startrectbottom, ... }
+    # startpostype = 3: ChooseBeforeGame | team { startposx, startposz } ...
+    #
+    # relayhoststartpostype = 0 --> startpostype = 3
+    # relayhoststartpostype = 1 --> startpostype = 3
+    # relayhoststartpostype = 2 --> startpostype = 2
+    # relayhoststartpostype = 3 --> startpostype = 3
+    #
+
+    # get / create map thumbs
+    startpos = demofile.game_setup["host"]["startpostype"]
+    logger.debug("replay(%d) startpostype=%d", replay.pk, startpos)
+    if startpos == 0 or startpos == 1 or startpos == 3:
+        # fixed start positions
+        try:
+            replay.map_img = MapImg.objects.get(map_info = replay.map_info, startpostype=1)
+            logger.debug("replay(%d) using existing map_img(%d)", replay.pk, replay.map_img.pk)
+        except:
+            mapfile = spring_maps.create_map_with_positions(replay.map_info)
+            replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=1, map_info=replay.map_info)
+            logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
+    elif startpos == 2:
+        # start boxes
+        # always make new img, as players will never choose exact same startpos
+        try:
+            mapfile = spring_maps.create_map_with_boxes(replay)
+        except Exception, e:
+            logger.error("error creating map img: %s", e)
+            mapfile = "error creating map img"
+
+        replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
+        logger.debug("replay(%d) created new map_img(%d)", replay.pk, replay.map_img.pk)
+    else:
+        logger.debug("replay(%d) startpostype '%d' not supported", replay.pk, startpos)
+        raise Exception("startpostype '%d' not supported"%startpos)
+    replay.save()
+    timer.stop("  map creation")
 
     # work around Zero-Ks usage of useless AllyTeams
     ats = Allyteam.objects.filter(replay=replay, team__isnull=True)

@@ -13,10 +13,10 @@ from xmlrpclib import ServerProxy
 import pprint
 import urllib
 import random
-from PIL import Image, ImageChops, ImageFont, ImageDraw
+from PIL import Image, ImageChops, ImageFont, ImageDraw, ImageColor
 
 from django.conf import settings
-from models import Allyteam
+from models import Allyteam, Player
 
 class Spring_maps():
     def __init__(self, mapname):
@@ -120,6 +120,36 @@ def create_map_with_boxes(replay):
                                                    int(at.startrectright*x),
                                                    int(at.startrectbottom*y)), mask=team_layer)
             c_count += 1
+    # draw players actual start positions
+    draw = ImageDraw.Draw(img)
+    font = ImageFont.truetype(settings.FONTS_PATH+"VeraMono.ttf", 28)
+    # map positions for players are in pixel
+    # map pixel size = Spring Map Size (like 16x16) * 512
+    # from: http://springrts.com/wiki/Mapdev:diffuse#Image_File
+    if replay.map_info.width > 128:
+        map_px_x = replay.map_info.width
+        map_px_y = replay.map_info.height
+    else:
+        map_px_x = replay.map_info.width * 512
+        map_px_y = replay.map_info.height * 512
+    map_img_mult_x = map_px_x / x
+    map_img_mult_y = map_px_y / y
+    for player in Player.objects.filter(replay=replay, spectator=False, startposx__isnull=False, startposz__isnull=False):
+        pl_img_pos_x = player.startposx / map_img_mult_x
+        pl_img_pos_y = player.startposz / map_img_mult_y   # z is in spring what y is in img
+        team_color = ImageColor.getrgb("#"+player.team.rgbcolor)
+        # center number and circle above startpoint --> move up and left by text-size/2
+        text_w, text_h = font.getsize(str(player.team.num))
+        if player.team.num > 9:
+            w = 15
+        else:
+            w = 0
+        draw.ellipse((pl_img_pos_x-12-text_w/2, pl_img_pos_y-12-text_h/2, pl_img_pos_x+30+w-text_w/2,pl_img_pos_y+32-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x-11-text_w/2, pl_img_pos_y-11-text_h/2, pl_img_pos_x+29+w-text_w/2,pl_img_pos_y+31-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x-10-text_w/2, pl_img_pos_y-10-text_h/2, pl_img_pos_x+28+w-text_w/2,pl_img_pos_y+30-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x- 9-text_w/2, pl_img_pos_y- 9-text_h/2, pl_img_pos_x+27+w-text_w/2,pl_img_pos_y+29-text_h/2), outline=team_color, fill="black")
+        draw.text((pl_img_pos_x-text_w/2, pl_img_pos_y-text_h/2), str(player.team.num), font=font)
+    del draw
     img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
     filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
     img.save(settings.MAPS_PATH+filename, "JPEG")
