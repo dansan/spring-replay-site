@@ -144,10 +144,10 @@ def create_map_with_boxes(replay):
             w = 15
         else:
             w = 0
-        draw.ellipse((pl_img_pos_x-12-text_w/2, pl_img_pos_y-12-text_h/2, pl_img_pos_x+30+w-text_w/2,pl_img_pos_y+32-text_h/2), outline=team_color, fill=None)
-        draw.ellipse((pl_img_pos_x-11-text_w/2, pl_img_pos_y-11-text_h/2, pl_img_pos_x+29+w-text_w/2,pl_img_pos_y+31-text_h/2), outline=team_color, fill=None)
-        draw.ellipse((pl_img_pos_x-10-text_w/2, pl_img_pos_y-10-text_h/2, pl_img_pos_x+28+w-text_w/2,pl_img_pos_y+30-text_h/2), outline=team_color, fill=None)
-        draw.ellipse((pl_img_pos_x- 9-text_w/2, pl_img_pos_y- 9-text_h/2, pl_img_pos_x+27+w-text_w/2,pl_img_pos_y+29-text_h/2), outline=team_color, fill="black")
+        draw.ellipse((pl_img_pos_x-12-text_w/2, pl_img_pos_y-8-text_h/2, pl_img_pos_x+30+w-text_w/2,pl_img_pos_y+36-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x-11-text_w/2, pl_img_pos_y-7-text_h/2, pl_img_pos_x+29+w-text_w/2,pl_img_pos_y+35-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x-10-text_w/2, pl_img_pos_y-6-text_h/2, pl_img_pos_x+28+w-text_w/2,pl_img_pos_y+34-text_h/2), outline=team_color, fill=None)
+        draw.ellipse((pl_img_pos_x- 9-text_w/2, pl_img_pos_y-5-text_h/2, pl_img_pos_x+27+w-text_w/2,pl_img_pos_y+33-text_h/2), outline=team_color, fill="black")
         draw.text((pl_img_pos_x-text_w/2, pl_img_pos_y-text_h/2), str(player.team.num), font=font)
     del draw
     img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
