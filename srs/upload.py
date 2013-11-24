@@ -309,7 +309,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         at_depr.delete()
     for anum,val in demofile.game_setup['allyteam'].items():
         defaults = {"numallies": val["numallies"], "winner": int(anum) in demofile.winningAllyTeams,
-                    "startrectbottom": getattr(val, "startrectbottom", None), "startrectleft": getattr(val, "startrectleft", None), "startrectright": getattr(val, "startrectright", None), "startrecttop": getattr(val, "startrecttop", None)}
+                    "startrectbottom": val.get("startrectbottom"), "startrectleft": val.get("startrectleft"), "startrectright": val.get("startrectright"), "startrecttop": val.get("startrecttop")}
         allyteam, created = Allyteam.objects.get_or_create(replay=replay, num=anum, defaults=defaults)
         if not created:
             for k,v in defaults.items():
