@@ -30,11 +30,11 @@ class Spring_maps():
         proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
         searchstring = {
         "category" : "map",
-        "logical" : "or",
-        "tag" : self.mapname,
-        "filename" : self.mapname,
+#         "logical" : "or",
+#         "tag" : self.mapname,
+#         "filename" : self.mapname,
         "springname" : self.mapname,
-        "torrent" : True,
+        "torrent" : False,
         "metadata" : True,
         "nosensitive" : True,
         "images" : True}
