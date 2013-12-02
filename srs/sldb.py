@@ -17,6 +17,12 @@ import cPickle
 
 logger = logging.getLogger(__package__)
 
+
+#
+# SLDB is a service provided by a lobby bot written by Bibim: https://github.com/Yaribz/SLDB
+# It has a XMLRPC interface that the website uses: https://github.com/Yaribz/SLDB/blob/master/XMLRPC
+#
+
 class SLDBstatusException(Exception):
     def __init__(self, service, status):
         self.service = service
@@ -131,16 +137,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
     skills=[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]] will
     be returned for that accountid.
 
-SLDB XmlRpc interface docu provided by bibim:
-
-getSkills parameters: login (string), password (string), modShortName (string), accountIds (array of ints)
-    modShortName: BA,EVO,KP,NOTA,S1944,TA,XTA,ZK
-It returns a map with following keys: status (int), results (array of maps):
-"status"   values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
-"results"  is an array of maps having following keys: accountId (int), status (int), privacyMode (int), skills (array)
-  "status"   values: 0: OK, 1: invalid accountId, 2: unknown skill (user not rated yet) (the privacyMode and skills keys are only present if status=0)
-  "skills"   is an array of 5 strings containing skill data in following order:
-                 Duel.mu|Duel.sigma , Ffa.mu|Ffa.sigma , Team.mu|Team.sigma , TeamFfa.mu|TeamFfa.sigma , Global.mu|Global.sigma
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L1
     """
     logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
 
@@ -179,11 +176,7 @@ def get_sldb_pref(accountid, pref):
     """
     get_sldb_pref(130601, "privacyMode") -> {'status': 0, 'result': '0'}
 
-SLDB XmlRpc interface docu provided by bibim:
-
-getPref parameters: login (string), password (string), accountId (int), prefName (string)
-returns a map with following keys: status (int), result (string)
-   "status" values: 0: OK, 1: authentication failed, 2: invalid params (the "result" key is only present if status=0)
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L30
     """
     return _query_sldb("getPref", accountid, pref)
 
@@ -192,12 +185,7 @@ def set_sldb_pref(accountid, pref, value=None):
     set_sldb_pref(130601, "privacyMode", "0") -> {'status': 0}
     "value" is optional, if not provided the preference is set back to default value in SLDB.
 
-SLDB XmlRpc interface docu provided by bibim:
-
-setPref parameters: login (string), password (string), accountId (int), prefName (string) [, value (string)]
-   "value" is optional, if not provided the preference is set back to default value in SLDB.
-returns a map with only one key: status (int)
-   "status" values are the same as for getPref (the preference is only updated if status=0)
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L45
     """
     if value:
         return _query_sldb("setPref", accountid, pref, value)
@@ -224,20 +212,7 @@ def get_sldb_match_skills(gameIDs):
                 ]
      }
 
-SLDB XmlRpc interface docu provided by bibim:
-
-"getMatchSkills" XmlRpc service takes the following parameters: login (string), password (string), gameIds (array of strings).
-It returns a map with following keys: status (int), results (array of maps).
-
-"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
-"results" is an array of maps having following keys: gameId (string), status (int), gameType (string), players (array of maps)
-    "status" values: 0: OK, 1: invalid gameId value, 2: unknown or unrated gameId (the "gameType" and "players" keys are only present if status=0)
-    "gameType" values: "Duel", "FFA", "Team", "TeamFFA"
-    "players" is an array of maps having following keys: accountId (int), privacyMode (int), skills (array of strings)
-        "skills" is an array of 4 strings containing skill data in following order:
-            muBefore|sigmaBefore , muAfter|sigmaAfter , globalMuBefore|globalSigmaBefore , globalMuAfter|globalSigmaAfter
-
-Only the ratings specific to the gameType of the gameId and the global ratings are provided, as other ratings don't change.
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L60
     """
     logger.debug("gameIDs: %s", gameIDs)
 
@@ -279,21 +254,7 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     get_sldb_leaderboards("BA") -> QuerySet of SldbLeaderboardGame for requested game and gametypes
         Leaderboard data is requested only once per day from SLDB (cached for 1 day)!
 
-SLDB XmlRpc interface docu provided by bibim:
-
-getLeaderboards XmlRpc service takes the following parameters: login (string), password (string), modShortName (string), gameTypes (array of strings)
-    allowed gameType values: "Duel", "FFA", "Team", "TeamFFA", "Global"
-It returns a map with following keys: status (int), results (array of maps).
-
-"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
-"results" is an array of maps having following keys: gameType (string), status (int), players (array of maps)
-    "status" values: 0: OK, 1: invalid gameType (the "players" key is only present if status=0)
-    "players" is an array of maps having following keys: accountId (int), name (string), inactivity (int), trustedSkill (string), estimatedSkill (string), uncertainty (string)
-        "trustedSkill", "estimatedSkill" and "uncertainty" are transmitted as strings to avoid rounding approximations when sent as floats.
-        "name" is provided in case you want to show the same names as SLDB
-
-The leaderboard size is 20, as when saying !leaderboard to SLDB. But the returned players array can be of smaller size (and even empty for totally unrated mods), in case not enough players have been rated yet.
-
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#93
     """
     logger.debug("game: %s match_types: %s", game, match_types)
     # test args
@@ -363,13 +324,7 @@ def get_sldb_player_stats(game_abbr, accountid):
                                                         }
                                             }
 
-SLDB XmlRpc interface docu provided by bibim:
-
-getPlayerStats XmlRpc service takes the following parameters: login (string), password (string), modShortName (string), accountId (int)
-It returns a map with following keys: status (int), results (hash of arrays).
-
-"status" values: 0: OK, 1: authentication failed, 2: invalid params (the "results" key is only present if status=0)
-"results" is a hash indexed by gameType ("Duel", "FFA", "Team", "TeamFFA"), giving the following stats array for each one of these game types: nbOfGamesLost (int), nbOfGamesWon (int), nbOfGamesUndecided (int)
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#124
     """
     logger.debug("game_abbr: %s accountid: %d", game_abbr, accountid)
     return _query_sldb("getPlayerStats", game_abbr, accountid)
