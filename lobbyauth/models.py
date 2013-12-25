@@ -17,4 +17,4 @@ class UserProfile(models.Model):
     country   = models.CharField(max_length=2)
 
     def __unicode__(self):
-        return "profile for %s"%self.user.username
+        return "profile for %s (accID: %s | %d)"%(self.user.username, self.user.last_name, self.accountid)
