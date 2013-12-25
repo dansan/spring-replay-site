@@ -37,8 +37,8 @@ class LobbyBackend():
                 user = User.objects.get(last_name=str(accountid))
             except:
                 logger.info("New account for username: %s. Accountinfo returned by soap: '%s'", username, accountinfo)
-                user_with_name = User.objects.filter(username=username)
-                if user_with_name.exists():
+                try:
+                    user_with_name = User.objects.get(username=username)
                     # a user already exists that has a username that another
                     # account with a differnt accountID (once) had -> modify
                     # username
@@ -48,6 +48,9 @@ class LobbyBackend():
                     while User.objects.filter(username=username+"_"+str(counter)).exists():
                         counter += 1
                     username = username+"_"+str(counter)
+                except:
+                    # no user already exists that has the same username
+                    pass
                 user = User.objects.create_user(username=username, email="django@needs.this", password="NoNeedToStoreEvenHashedPasswords") # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
@@ -81,6 +84,8 @@ class LobbyBackend():
                 if not s_a in up_aliases:
                     if len(userprofile.aliases) > 0: userprofile.aliases += ","
                     userprofile.aliases += s_a
+            userprofile.country = country
+            userprofile.timerank = timerank
             userprofile.save()
 
             return user
