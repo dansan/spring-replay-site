@@ -300,6 +300,7 @@ class Parse_demo_file():
                     elif messageData['cmd'] == 'setplayername':
                         playerIDToName[messageData['playerNum']] = clean_name
                         _save_playerinfo(clean_name, "connected", True)
+                        _save_playerinfo(clean_name, "playerNum", messageData['playerNum'])
                     elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
                         self.game_started = True
                     elif messageData['cmd'] == 'gameover':

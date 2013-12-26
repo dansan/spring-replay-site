@@ -346,6 +346,50 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     # save players and their accounts
     timer.start("  players and playeraccounts")
+    # add late-connected spectators
+    # TODO: add /joinas players
+    for late_spec_name, late_spec_val in demofile.spectators.items():
+        if (hasattr(late_spec_val, "connected") and
+            late_spec_val.connected and
+            hasattr(late_spec_val, "playerNum") and
+            late_spec_val.playerNum not in demofile.game_setup['player'].keys()):
+            # found a spec that connected, but was not in the start script
+            # -> late-connected
+            # To add it, the problem is that we don't have the required
+            # data for a proper Player object (we have only the name). We
+            # try to find the correct Player[Account] by looking at existing
+            # Players from previous Replays:
+            players_w_late_spec_name = Player.objects.filter(name=late_spec_name, replay__id__lt=replay.id).order_by("-id")
+            if players_w_late_spec_name.exists():
+                player_w_late_spec_name = players_w_late_spec_name[0]
+                accid = player_w_late_spec_name.account.accountid
+                cc = player_w_late_spec_name.account.countrycode
+                rank = player_w_late_spec_name.rank
+                skill = player_w_late_spec_name.skill
+                skilluncertainty = player_w_late_spec_name.skilluncertainty
+            else:
+                accid = None
+                cc = "??"
+                rank = 0
+                skill = ""
+                skilluncertainty = -1
+
+            # add spectator to list of players from script
+            demofile.game_setup['player'][late_spec_val.playerNum] = {
+                'accountid': accid,
+                'ally': -1,
+                'connected': True,
+                'countrycode': cc,
+                'name': late_spec_name,
+                'num': late_spec_val.playerNum,
+                'password': '',
+                'rank': rank,
+                'skill': skill,
+                'skilluncertainty': skilluncertainty,
+                'spectator': 1
+                }
+            logger.debug("added late-spec %s", late_spec_name)
+
     players = dict()
     teams = list()
     for pnum,player in demofile.game_setup['player'].items():
@@ -711,7 +755,7 @@ def set_accountid(player):
         logger.debug("v.has_key(accountid)==False or player[accountid] == None")
         # single player - we still need a unique accountid. Either we find an
         # existing player/account, or we create a temporary account.
-        player["accountid"] = PlayerAccount.objects.filter(player__name=player["name"], accountid__gt=0).aggregate(Min("accountid"))['accountid__min']
+        player["accountid"] = PlayerAccount.objects.filter(player__name=player["name"], accountid__gt=0).order_by("-id").aggregate(Min("accountid"))['accountid__min']
         if player["accountid"]:
             logger.debug("  --> found Player with same name -> accountid=%d", player["accountid"])
         else:

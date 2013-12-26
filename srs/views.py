@@ -368,7 +368,7 @@ def player(request, accountid):
     ratings = list()
     win_loss_data = list()
     if pa.accountid <=0:
-        c["errmsg"] = "No rating for single player or bots."
+        c["errmsg"] = "No rating for single player, bots or spectators-only."
     else:
         for game in pa.get_all_games().exclude(sldb_name=""):
             if not Rating.objects.filter(game=game, playeraccount=pa).exists():
