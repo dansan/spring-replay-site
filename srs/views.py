@@ -145,9 +145,9 @@ def replay(request, gameID):
     allyteams = Allyteam.objects.filter(replay=replay)
     c["allyteams"] = []
     for at in allyteams:
-        playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at)
+        playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at).order_by("player__team__num")
         teams = Team.objects.filter(allyteam=at)
-        players = all_players.filter(account__in=playeraccounts).order_by("name")
+        players = all_players.filter(account__in=playeraccounts)
         players_w_rating = list()
         old_rating = 0
         new_rating = 0
@@ -199,7 +199,7 @@ def replay(request, gameID):
             c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
     c["has_bot"] = replay.tags.filter(name="Bot").exists()
-    c["specs"] = all_players.filter(replay=replay, spectator=True).order_by("name")
+    c["specs"] = all_players.filter(replay=replay, spectator=True).order_by("id")
     c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")

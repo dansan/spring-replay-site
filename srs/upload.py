@@ -386,13 +386,15 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 'rank': rank,
                 'skill': skill,
                 'skilluncertainty': skilluncertainty,
-                'spectator': 1
+                'spectator': 1,
+                'startposx': -1
                 }
             logger.debug("added late-spec %s", late_spec_name)
 
     players = dict()
     teams = list()
-    for pnum,player in demofile.game_setup['player'].items():
+    for pnum in sorted(demofile.game_setup['player'].keys()):
+        player = demofile.game_setup['player'][pnum]
         set_accountid(player)
         if player["countrycode"] == None:
             player["countrycode"] = "??"
@@ -426,9 +428,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             for k,v in defaults.items():
                 setattr(players[pnum], k, v)
 
-        if pa.accountid > 0:
+        if pa.accountid > 0 and not (player['spectator'] == 1 and player.has_key('startposx') and player['startposx'] == -1):
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
+            # exclude freshly created players from late-join
             pac = Player.objects.filter(name=player["name"], account__accountid__lt=0)
             if pac.exists():
                 logger.info("replay(%d) found matching name-account info for previously accountless Player(s):", replay.pk)
@@ -451,6 +454,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             # this must be a spectator
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
+            if player.has_key("startposx"):
+                # late-join spec
+                players[pnum].startposx = player["startposx"]
         players[pnum].save()
     timer.stop("  players and playeraccounts")
 
@@ -750,9 +756,10 @@ def set_accountid(player):
     if player.has_key("lobbyid"):
         # game was on springie
         player["accountid"] = player["lobbyid"]
+        return
 
     if not player.has_key("accountid") or player["accountid"] == None:
-        logger.debug("v.has_key(accountid)==False or player[accountid] == None")
+        logger.info("no accountid for player '%s'", player["name"])
         # single player - we still need a unique accountid. Either we find an
         # existing player/account, or we create a temporary account.
         player["accountid"] = PlayerAccount.objects.filter(player__name=player["name"], accountid__gt=0).order_by("-id").aggregate(Min("accountid"))['accountid__min']
@@ -769,7 +776,7 @@ def set_accountid(player):
             logger.debug("min_acc_id = %d", min_acc_id)
             if not min_acc_id or min_acc_id > 0: min_acc_id = 0
             player["accountid"] = min_acc_id-1
-            logger.debug("v[accountid] = %d", player["accountid"])
+        logger.info("set accountid: %d for player %s", player["accountid"], player["name"])
 
 def save_tags(replay, tags):
     if tags:

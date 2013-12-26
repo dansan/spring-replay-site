@@ -201,7 +201,7 @@
 	{% if specs|length > 0 %}
         {% for s in specs %}
                 <tr>
-	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"><link itemprop="additionalType" content="http://schema.org/WatchAction"/></td>
+	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person">{% if s.startposx == -1 %}+ {% endif %}<span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"><link itemprop="additionalType" content="http://schema.org/WatchAction"/></td>
 	                <td></td><td></td><td></td><td></td><td></td>
 	            </tr>
         {% endfor %}
