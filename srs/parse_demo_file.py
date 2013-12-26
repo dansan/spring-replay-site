@@ -261,9 +261,6 @@ class Parse_demo_file():
             else:
                 setattr(self.spectators[playername], key, value)
 
-        def _invalidPlayer(name):
-            return name not in self.spectators and name not in self.players
-
         def _dictify(obj):
             if type(obj) == dict:
                 return obj
@@ -301,8 +298,6 @@ class Parse_demo_file():
                     if messageData['cmd'] == 'keyframe':
                         currentFrame = messageData['framenum']
                     elif messageData['cmd'] == 'setplayername':
-                        if _invalidPlayer(clean_name):
-                            continue
                         playerIDToName[messageData['playerNum']] = clean_name
                         _save_playerinfo(clean_name, "connected", True)
                     elif messageData['cmd'] == 'startplaying' and messageData['countdown'] == 0:
@@ -319,8 +314,6 @@ class Parse_demo_file():
                             logger.error("messageData['gameID']: %s != self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
                     elif messageData['cmd'] == 'playerleft':
                         playername = clean(messageData['playerName'])
-                        if _invalidPlayer(clean_name):
-                            continue
                         if messageData['bIntended'] == 0:
                             _save_playerinfo(playername, "timeout", True)
                         if messageData['bIntended'] == 1:
@@ -341,8 +334,6 @@ class Parse_demo_file():
                     elif messageData["cmd"] == "startpos":
                         if messageData["ready"] == 1:
                             playername = clean(messageData['playerName'])
-                            if _invalidPlayer(playername):
-                                continue
                             if playername in self.players:
                                 self.game_setup["player"][self.players[playername].num]["startposx"] = messageData["x"]
                                 self.game_setup["player"][self.players[playername].num]["startposy"] = messageData["y"]
@@ -357,8 +348,6 @@ class Parse_demo_file():
                         if msgid == 138:
                             # faction change
                             playername = clean(messageData['playerName'])
-                            if _invalidPlayer(playername):
-                                continue
                             faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
                             logger.debug("%s(%d) changed faction to '%s'", playername, messageData['playerNum'], faction)
                             self.additional["faction_change"][playername] = (self.players[playername], faction)
