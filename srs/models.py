@@ -575,7 +575,7 @@ class BAwards(models.Model):
     sleepAward        = models.ForeignKey(Player, blank=True, null=True, related_name="+")
 
     def __unicode__(self):
-        return u"(%d) Replay: %d EcoKill: %s,%s,%s FightKill: %s,%s,%s EffKill: %s,%s,%s Cow: %s Eco: %s DmgRec: %s Sleep: %s"%(self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd, self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st, self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
+        return u"(%d) Replay: %d | EcoKill: %s,%s,%s | FightKill: %s,%s,%s | EffKill: %s,%s,%s | Cow: %s | Eco: %s | DmgRec: %s | Sleep: %s"%(self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd, self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st, self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
 
 def get_owner_list(uploader):
     res = [uploader]

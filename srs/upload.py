@@ -609,11 +609,11 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 else:
                     setattr(ba_awards, award_name, None)
         ba_awards.save()
-        logger.debug("replay(%d) has BAwards(%d): %s", replay.pk, ba_awards.pk, ba_awards)
 
     pp = pprint.PrettyPrinter(depth=6)
     for k, v in demofile.additional.items():
         if k == "chat": v = "chat removed for shorter output"
+        elif k == "awards": v = ba_awards
         logger.info("demofile.additional[%s]: %s", k, pp.pformat(v))
 
     replay.published = True

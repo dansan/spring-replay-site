@@ -354,19 +354,37 @@ class Parse_demo_file():
                             self.additional["faction_change"][playername] = (self.players[playername], faction)
                         elif msgid == 161:
                             # BA Awards
-                            # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=1850#L351
+                            # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=1998#L389
                             try:
-                                awards_data = struct.unpack("<"+"Bc"*(len(messageData["msg"])/2), messageData["msg"])
-                                awards_data = [int(ad) for ad in awards_data]
-                                logger.debug("awards_data (len=%d): %s",  len(awards_data), awards_data)
+                                # unfortunately numbers in this sequence were encoded differently, so parsing
+                                # is a little tricky, example:
+                                # (len: 31): '\xa17\xa15\xa16\xa25\xa215\xa23\xa33\xa312\xa315\xa40\xa510\xa615\xa74'
+                                # (unpack'B'): (161, 55, 161, 53, 161, 54, 162, 53, 162, 49, 53, 162, 51, 163, 51, 163, 49, 50, 163, 49, 53, 164, 48, 165, 49, 48, 166, 49, 53, 167, 52)
+                                # (unpack'c'): ('\xa1', '7', '\xa1', '5', '\xa1', '6', '\xa2', '5', '\xa2', '1', '5', '\xa2', '3', '\xa3', '3', '\xa3', '1', '2', '\xa3', '1', '5', '\xa4', '0', '\xa5', '1', '0', '\xa6', '1', '5', '\xa7', '4')
+                                # award markers are ints 161-167 encoded in one unsigned char, but the
+                                # player numbers are ints 0-31 encoded each digit as a single char
+                                str_B = struct.unpack("B"*len(messageData["msg"]), messageData["msg"])
+                                str_c = struct.unpack("c"*len(messageData["msg"]), messageData["msg"])
+                                start = end = 0
+                                awards_data = list()
+                                for pos in range(1, len(str_B)):
+                                    if str_B[pos] > 160:
+                                        end = pos
+                                        awards_data.append(str_B[start])
+                                        awards_data.append(int("".join(str_c[start+1:end])))
+                                        start = end
+                                # Substract 1 from each players number.
+                                # It was added in gadget to make all numbers positive.
                                 awards = {"ecoKillAward": (awards_data[1]-1, awards_data[3]-1, awards_data[5]-1),
                                           "fightKillAward": (awards_data[7]-1, awards_data[9]-1, awards_data[11]-1),
                                           "effKillAward": (awards_data[13]-1, awards_data[15]-1, awards_data[17]-1),
                                           "cowAward": awards_data[19]-1,
                                           "ecoAward": awards_data[21]-1,
-                                          "dmgRecAward": awards_data[23]-1,
-                                          "sleepAward": awards_data[25]-1}
-                                logger.debug("awards: %s", awards)
+                                          "dmgRecAward": awards_data[23]-1}
+                                if len(awards_data) > 24:
+                                    awards["sleepAward"] = awards_data[25]-1
+                                else:
+                                    awards["sleepAward"] = -1
                                 self.additional["awards"] = awards
                             except Exception, e:
                                 logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, e)
