@@ -373,6 +373,9 @@ class Parse_demo_file():
                                         awards_data.append(str_B[start])
                                         awards_data.append(int("".join(str_c[start+1:end])))
                                         start = end
+                                else:
+                                    awards_data.append(str_B[start])
+                                    awards_data.append(int("".join(str_c[start+1:])))
                                 # Substract 1 from each players number.
                                 # It was added in gadget to make all numbers positive.
                                 awards = {"ecoKillAward": (awards_data[1]-1, awards_data[3]-1, awards_data[5]-1),
