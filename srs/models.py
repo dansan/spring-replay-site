@@ -265,6 +265,12 @@ class Replay(models.Model):
             self._faction_result(playeraccount)
         return self._result_cache[1]
 
+    @property
+    def bawards(self):
+        try:
+            return BAwards.objects.get(replay=self)
+        except:
+            return None
 
 class AdditionalReplayInfo(models.Model):
     """

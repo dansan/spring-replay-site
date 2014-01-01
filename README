@@ -12,6 +12,8 @@ Latest source code can be found here: https://github.com/dansan/spring-replay-si
 
 The software is licensed as GPLv3, see COPYING.
 
+Images under srs/static/img may have different copyright. To lazy to check now, please ask before using any!
+
 Needs
 * Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 * DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc

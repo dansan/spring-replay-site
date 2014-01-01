@@ -69,6 +69,97 @@
 	        <p><br/></p>
             <div class="footer"></div>
 
+<!-- BA Awards -->
+{% if replay.bawards %}
+            <center><img itemprop="image" class="clickme_winner" src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" title="Click to show BA awards, winner and rating changes." width="128"/></center>
+            <div class="blind_winner" style="display:none;">
+              <table>
+                  <colgroup>
+                          <col width="64"/>
+                          <col width="270"/>
+                      </colgroup>
+    {% if replay.bawards.ecoKillAward1st %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Destroying enemy resource production</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward1st" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.ecoKillAward1st.name }}</b>{% if replay.bawards.ecoKillAward2nd %},<br/>{{ replay.bawards.ecoKillAward2nd.name }}{% endif %}{% if replay.bawards.ecoKillAward3rd %},<br/>{{ replay.bawards.ecoKillAward3rd.name }}{% endif %}
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.fightKillAward1st %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Destroying enemy units and defences</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward1st" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.fightKillAward1st.name }}</b>{% if replay.bawards.fightKillAward2nd %},<br/>{{ replay.bawards.fightKillAward2nd.name }}{% endif %}{% if replay.bawards.fightKillAward3rd %},<br/>{{ replay.bawards.fightKillAward3rd.name }}{% endif %}
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.effKillAward1st %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Effective use of resources</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="fightKillAward1st" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.effKillAward1st.name }}</b>{% if replay.bawards.effKillAward2nd %},<br/>{{ replay.bawards.effKillAward2nd.name }}{% endif %}{% if replay.bawards.effKillAward3rd %},<br/>{{ replay.bawards.effKillAward3rd.name }}{% endif %}
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.cowAward %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Doing everything</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.cowAward.name }}</b>
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.ecoAward %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Produced the most resources</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/eco.png" alt="cowAward" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.ecoAward.name }}</b>
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.dmgRecAward %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Took the most damage</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/damage.png" alt="cowAward" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.dmgRecAward.name }}</b>
+                          </td>
+                      </tr>
+    {% endif %}
+    {% if replay.bawards.sleepAward %}
+                      <tr>
+                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Slept longest</h4></td>
+                      </tr>
+                      <tr>
+                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="cowAward" width="64"/></td>
+                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
+                              <b>{{ replay.bawards.sleepAward.name }}</b>
+                          </td>
+                      </tr>
+    {% endif %}
+              </table>
+            </div>
+            <div class="footer"></div>
+{% endif %}
+
 <!-- UPLOAD COMMENT -->
 
             <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
