@@ -85,7 +85,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward1st" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.ecoKillAward1st.name }}</b>{% if replay.bawards.ecoKillAward2nd %},<br/>{{ replay.bawards.ecoKillAward2nd.name }}{% endif %}{% if replay.bawards.ecoKillAward3rd %},<br/>{{ replay.bawards.ecoKillAward3rd.name }}{% endif %}
+                              <span style="font-weight:bold; color: #{{ replay.bawards.ecoKillAward1st.team.rgbcolor }};">{{ replay.bawards.ecoKillAward1st.name }}</span>{% if replay.bawards.ecoKillAward2nd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward2nd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.ecoKillAward3rd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward3rd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward3rd.name }}</span>{% endif %}
                           </td>
                       </tr>
     {% endif %}
@@ -96,7 +96,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward1st" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.fightKillAward1st.name }}</b>{% if replay.bawards.fightKillAward2nd %},<br/>{{ replay.bawards.fightKillAward2nd.name }}{% endif %}{% if replay.bawards.fightKillAward3rd %},<br/>{{ replay.bawards.fightKillAward3rd.name }}{% endif %}
+                              <span style="font-weight:bold; color: #{{ replay.bawards.fightKillAward1st.team.rgbcolor }};">{{ replay.bawards.fightKillAward1st.name }}</span>{% if replay.bawards.fightKillAward2nd %},<br/><span style="color: #{{ replay.bawards.fightKillAward2nd.team.rgbcolor }};">{{ replay.bawards.fightKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.fightKillAward3rd %},<br/><span style="color: #{{ replay.bawards.fightKillAward3rd.team.rgbcolor }};">{{ replay.bawards.fightKillAward3rd.name }}</span>{% endif %}
                           </td>
                       </tr>
     {% endif %}
@@ -107,7 +107,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="fightKillAward1st" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.effKillAward1st.name }}</b>{% if replay.bawards.effKillAward2nd %},<br/>{{ replay.bawards.effKillAward2nd.name }}{% endif %}{% if replay.bawards.effKillAward3rd %},<br/>{{ replay.bawards.effKillAward3rd.name }}{% endif %}
+                              <span style="font-weight:bold; color: #{{ replay.bawards.effKillAward1st.team.rgbcolor }};">{{ replay.bawards.effKillAward1st.name }}</span>{% if replay.bawards.effKillAward2nd %},<br/><span style="color: #{{ replay.bawards.effKillAward2nd.team.rgbcolor }};">{{ replay.bawards.effKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.effKillAward3rd %},<br/><span style="color: #{{ replay.bawards.effKillAward3rd.team.rgbcolor }};">{{ replay.bawards.effKillAward3rd.name }}</span>{% endif %}
                           </td>
                       </tr>
     {% endif %}
@@ -118,7 +118,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.cowAward.name }}</b>
+                              <span style="font-weight:bold; color: #{{ replay.bawards.cowAward.team.rgbcolor }};">{{ replay.bawards.cowAward.name }}</span>
                           </td>
                       </tr>
     {% endif %}
@@ -129,7 +129,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/eco.png" alt="cowAward" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.ecoAward.name }}</b>
+                              <span style="font-weight:bold; color: #{{ replay.bawards.ecoAward.team.rgbcolor }};">{{ replay.bawards.ecoAward.name }}</span>
                           </td>
                       </tr>
     {% endif %}
@@ -140,7 +140,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/damage.png" alt="cowAward" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.dmgRecAward.name }}</b>
+                              <span style="font-weight:bold; color: #{{ replay.bawards.dmgRecAward.team.rgbcolor }};">{{ replay.bawards.dmgRecAward.name }}</span>
                           </td>
                       </tr>
     {% endif %}
@@ -151,7 +151,7 @@
                       <tr>
                           <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="cowAward" width="64"/></td>
                           <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <b>{{ replay.bawards.sleepAward.name }}</b>
+                              <span style="font-weight:bold; color: #{{ replay.bawards.sleepAward.team.rgbcolor }};">{{ replay.bawards.sleepAward.name }}</span>
                           </td>
                       </tr>
     {% endif %}
