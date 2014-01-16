@@ -281,13 +281,15 @@ class Parse_demo_file():
         packet = True
         currentFrame = 0
         playerIDToName = {}
-        kop = open('/tmp/msg.data','w')
+        if settings.DEBUG:
+            kop = open('/tmp/msg.data','w')
         demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
             try:
                 messageData = demoparser.parsePacket(packet)
-                kop.write(str(messageData)+'\n')
+                if settings.DEBUG:
+                    kop.write(str(messageData)+'\n')
                 def clean(name):
                     return name.replace('\x00','')
                 if messageData:
@@ -422,8 +424,8 @@ class Parse_demo_file():
             except Exception, e:
                 logger.exception("Exception parsing packet '%s': %s", packet, e)
                 #raise e
-
-        kop.close()
+        if settings.DEBUG:
+            kop.close()
 
         for pnum, player in self.players.items():
             if not hasattr(player, "connected"):
