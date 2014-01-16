@@ -591,21 +591,25 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward", "sleepAward"]:
             if type(demo_awards[award_name]) == tuple:
                 aw1, aw2, aw3 = demo_awards[award_name]
-                if aw1 > -1:
-                    setattr(ba_awards, award_name+"1st", players[aw1])
+                if aw1[0] > -1:
+                    setattr(ba_awards, award_name+"1st", players[aw1[0]])
+                    setattr(ba_awards, award_name+"1stScore", aw1[1])
                 else:
                     setattr(ba_awards, award_name+"1st", None)
-                if aw2 > -1:
-                    setattr(ba_awards, award_name+"2nd", players[aw2])
+                if aw2[0] > -1:
+                    setattr(ba_awards, award_name+"2nd", players[aw2[0]])
+                    setattr(ba_awards, award_name+"2ndScore", aw2[1])
                 else:
                     setattr(ba_awards, award_name+"2nd", None)
-                if aw3 > -1:
-                    setattr(ba_awards, award_name+"3rd", players[aw3])
+                if aw3[0] > -1:
+                    setattr(ba_awards, award_name+"3rd", players[aw3[0]])
+                    setattr(ba_awards, award_name+"3rdScore", aw3[1])
                 else:
                     setattr(ba_awards, award_name+"3rd", None)
             else:
-                if demo_awards[award_name] > -1:
-                    setattr(ba_awards, award_name, players[demo_awards[award_name]])
+                if demo_awards[award_name][0] > -1:
+                    setattr(ba_awards, award_name, players[demo_awards[award_name][0]])
+                    setattr(ba_awards, award_name+"Score", demo_awards[award_name][1])
                 else:
                     setattr(ba_awards, award_name, None)
         ba_awards.save()

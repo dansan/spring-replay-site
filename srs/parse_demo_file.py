@@ -354,40 +354,66 @@ class Parse_demo_file():
                             self.additional["faction_change"][playername] = (self.players[playername], faction)
                         elif msgid == 161:
                             # BA Awards
-                            # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=1998#L389
+                            # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=2070#L389
+                            # history:
+                            # r1786: start sending data from awards gadget to replay site using luauimsg
+                            # r1846: use luamsg, change msg numbers from 150-156 to 161-167
+                            # r1850: use luarulesmsg, add 1 to each team# to have always positive numbers
+                            # r2043: the scores of each award are appended to the team#, separated by ':' (BA 7.91).
+                            # r2070: fix typo causing fightKillAward2ndScore to always be 'nil'
                             try:
                                 # unfortunately numbers in this sequence were encoded differently, so parsing
                                 # is a little tricky, example:
-                                # (len: 31): '\xa17\xa15\xa16\xa25\xa215\xa23\xa33\xa312\xa315\xa40\xa510\xa615\xa74'
+                                # r1850: (len:  31): '\xa17\xa15\xa16\xa25\xa215\xa23\xa33\xa312\xa315\xa40\xa510\xa615\xa74'
+                                # r2043: (len: 124): '\xa11:1147\xa10:0\xa10:0\xa21:946348\xa23:nil\xa22:102684\xa33:1.317666888237\xa31:1.2887364625931\xa32:0.75686019659042\xa40\xa51:6590859\xa63:56526.171875\xa70:0'
                                 # (unpack'B'): (161, 55, 161, 53, 161, 54, 162, 53, 162, 49, 53, 162, 51, 163, 51, 163, 49, 50, 163, 49, 53, 164, 48, 165, 49, 48, 166, 49, 53, 167, 52)
                                 # (unpack'c'): ('\xa1', '7', '\xa1', '5', '\xa1', '6', '\xa2', '5', '\xa2', '1', '5', '\xa2', '3', '\xa3', '3', '\xa3', '1', '2', '\xa3', '1', '5', '\xa4', '0', '\xa5', '1', '0', '\xa6', '1', '5', '\xa7', '4')
                                 # award markers are ints 161-167 encoded in one unsigned char, but the
                                 # player numbers are ints 0-31 encoded each digit as a single char
+                                # ':' is 58 in str_B (and ':' in str_c)
                                 str_B = struct.unpack("B"*len(messageData["msg"]), messageData["msg"])
                                 str_c = struct.unpack("c"*len(messageData["msg"]), messageData["msg"])
                                 start = end = 0
                                 awards_data = list()
                                 for pos in range(1, len(str_B)):
-                                    if str_B[pos] > 160:
+                                    if int(str_B[pos]) > 160:
+                                        def f_(s):
+                                            if s.find(".") >= 0:
+                                                return float(s)
+                                            else:
+                                                return int(s)
                                         end = pos
                                         awards_data.append(str_B[start])
-                                        awards_data.append(int("".join(str_c[start+1:end])))
+                                        s_ = "".join(str_c[start+1:end]).split(":")
+                                        try:
+                                            awards_data.append([int(s_[0])-1, f_(s_[1])])
+                                        except IndexError:
+                                            # gadget version < r2043 has no ':score' after the teamID
+                                            awards_data.append([int(s_[0])-1, -1])
+                                        except ValueError:
+                                            # beware typo in gadget: http://imolarpg.dyndns.org/trac/balatest/changeset/2070
+                                            awards_data.append([int(s_[0])-1, -2])
                                         start = end
                                 else:
                                     awards_data.append(str_B[start])
-                                    awards_data.append(int("".join(str_c[start+1:])))
+                                    s_ = "".join(str_c[start+1:]).split(":")
+                                    try:
+                                        awards_data.append([int(s_[0])-1, f_(s_[1])])
+                                    except IndexError:
+                                            # gadget version < r2043 has no ':score' after the teamID
+                                            awards_data.append([int(s_[0])-1, -1])
                                 # Substract 1 from each players number.
                                 # It was added in gadget to make all numbers positive.
-                                awards = {"ecoKillAward": (awards_data[1]-1, awards_data[3]-1, awards_data[5]-1),
-                                          "fightKillAward": (awards_data[7]-1, awards_data[9]-1, awards_data[11]-1),
-                                          "effKillAward": (awards_data[13]-1, awards_data[15]-1, awards_data[17]-1),
-                                          "cowAward": awards_data[19]-1,
-                                          "ecoAward": awards_data[21]-1,
-                                          "dmgRecAward": awards_data[23]-1}
+                                awards = {"ecoKillAward": (awards_data[1], awards_data[3], awards_data[5]),    #161
+                                          "fightKillAward": (awards_data[7], awards_data[9], awards_data[11]), #162
+                                          "effKillAward": (awards_data[13], awards_data[15], awards_data[17]), #163
+                                          "cowAward": awards_data[19],     #164
+                                          "ecoAward": awards_data[21],     #165
+                                          "dmgRecAward": awards_data[23]}  #166
                                 if len(awards_data) > 24:
-                                    awards["sleepAward"] = awards_data[25]-1
+                                    awards["sleepAward"] = awards_data[25] #167
                                 else:
-                                    awards["sleepAward"] = -1
+                                    awards["sleepAward"] = [-1, -1]
                                 self.additional["awards"] = awards
                             except Exception, e:
                                 logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, e)
