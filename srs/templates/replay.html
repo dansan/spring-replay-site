@@ -266,7 +266,7 @@
 	            </tr>
     {% for p, pl_old, pl_new in players %}
                 <tr class="body linehl bold">
-                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }}</span> <a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}<span itemprop="name">{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
+                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }}</span> <a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}</span><span itemprop="name">{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
                     <td style="">{{ p.team.side|ljust:"4" }}</td>
       {% if has_bot %}
                     <td></td>
