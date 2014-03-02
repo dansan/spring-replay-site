@@ -749,15 +749,9 @@ def sldb_privacy_mode(request):
 
     accountid = request.user.get_profile().accountid
     try:
-        sldb_pref = get_sldb_pref(accountid, "privacyMode")
+        c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
     except:
         c["current_privacy_mode"] = -1
-    else:
-        if type(sldb_pref) == dict:
-            c["current_privacy_mode"] = int(sldb_pref["result"])
-        else:
-            logger.error("what is this?: sldb_pref: %s", sldb_pref)
-            c["current_privacy_mode"] = -1
     logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
 
     if request.method == 'POST':
