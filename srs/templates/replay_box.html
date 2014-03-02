@@ -39,7 +39,7 @@
                         <td>Comments <br/>&nbsp;</td><td>{{ replay.comments }}</td>
                     </tr>
                     <tr>
-                        <td>Download </td><td><span itemscope itemtype="http://schema.org/DataDownload"><a href="{% url "srs.views.download" "replay.gameID" %}" itemprop="contentUrl">replay</a></span> | <a href="/mapmodlinks/{{ replay.gameID }}/">map and game</a></td>
+                        <td>Download </td><td><span itemscope itemtype="http://schema.org/DataDownload"><a href="{% url "srs.views.download" replay.gameID %}" itemprop="contentUrl">replay</a></span> | <a href="/mapmodlinks/{{ replay.gameID }}/">map and game</a></td>
                     </tr>
                 </table>
 {% else %}
