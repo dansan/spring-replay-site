@@ -40,10 +40,10 @@ TODO: use AJAX, so page loads quicker, and stays responsive in case of network e
   {% else %}
         <p>The following values are provided by SLDB, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
     {% if playeraccount.sldb_privacy_mode != 0 %}
-        <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url srs.views.login %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
+        <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url "srs.views.login" %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
     {% endif %}
     {% if playeraccount.sldb_privacy_mode != 0 %}
-        <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url srs.views.sldb_privacy_mode %}">click to change your privacy setting</a></b>.</p>
+        <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></b>.</p>
     {% endif %}
 		    {% if playerratingtable.data|length == 0 %}
         <p><br/><b>No result.</b><br/></p>

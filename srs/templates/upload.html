@@ -13,9 +13,9 @@
             <div class="left_articles">
                 <h2>Upload</h2>
                 <p>Please supply a Spring Demo File (*.sdf), a short subject, a comment and tags.</p>
-                <p>Please check the <a href="{% url srs.views.tags %}">list of existing tags</a> first!
+                <p>Please check the <a href="{% url "srs.views.tags" %}">list of existing tags</a> first!
                 Note that a tag for the team size (1v1, 2v2, 8v8) is added automatically if not present.
-                Please do not use <a href="{% url srs.views.maps %}">map names</a> or <a href="{% url srs.views.players %}">player names</a>, as they are categorized separately.</p>
+                Please do not use <a href="{% url "srs.views.maps" %}">map names</a> or <a href="{% url "srs.views.players" %}">player names</a>, as they are categorized separately.</p>
             </div>
             <form action="." method="post" enctype="multipart/form-data">
             {{ formset.management_form }}

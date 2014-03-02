@@ -61,7 +61,7 @@
 
         <div class="left" style="width: 350px;">
             {% if upload_broken %}<p style="text-align:center; color:red; font-weight:bold;">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
-            {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.views.edit_replay replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
+            {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
             {% if user.is_staff %}<a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a>{% endif %}
 {% cache 600 replay replay.pk %}
             <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner and rating changes.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
@@ -225,10 +225,10 @@
                     <td colspan="6">Want to see <b>exact TrueSkill</b> values?</td>
                 </tr>
                 <tr class="body">
-                    <td colspan="6">* <u><a href="{% url srs.views.login %}?next={{ selfurl }}">Log in</a></u> to see yours.</td>
+                    <td colspan="6">* <u><a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a></u> to see yours.</td>
                 </tr>
                 <tr class="body">
-                    <td colspan="6">* To let others see your TrueSkill, <u><a href="{% url srs.views.sldb_privacy_mode %}">click to change your privacy setting</a></u>.</td>
+                    <td colspan="6">* To let others see your TrueSkill, <u><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></u>.</td>
                 </tr>
                 <tr class="body">
                     <td colspan="6">* To see other players exact skills, tell them to do so too.</td>
@@ -310,7 +310,7 @@
 
        <div class="left" style="width: 580px; padding: 0;">
   {% if user in replay_owners %}
-            <p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url srs.upload.upload_media replay.gameID %}">Upload media files.</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
+            <p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url "srs.upload.upload_media" replay.gameID %}">Upload media files.</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
             <div class="footer"></div>
   {% endif %}
   {% if extra_media %}
@@ -330,7 +330,7 @@
             </div>
         {% else %}
             <span itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
-                <p style="font-weight:bold"><a href="{% url srs.views.media media.id %}" target="_blank"  itemprop="contentUrl" content="{% url srs.views.media media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a></p>
+                <p style="font-weight:bold"><a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a></p>
             </span>
         {% endif %}
       {% endif %}
@@ -361,7 +361,7 @@
             <h3>Post a comment:</h3>
 {% render_comment_form for replay %}
 			{% else %}
-			<h3>To post a comment you have to <a href="{% url srs.views.login %}?next={{ selfurl }}">log in</a>.</h3>
+			<h3>To post a comment you have to <a href="{% url "srs.views.login" %}?next={{ selfurl }}">log in</a>.</h3>
             {% endif %}
         </div>
         </div>

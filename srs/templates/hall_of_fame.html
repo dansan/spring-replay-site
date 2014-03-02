@@ -16,13 +16,13 @@
 	            <ul>
                   {% with games1=games|slice:":4" games2=games|slice:"4:" %}
 	              {% for game in games1 %}
-	                <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url srs.views.hall_of_fame game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
+	                <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url "srs.views.hall_of_fame game.abbreviation" %}">{{ game.name }}</a>{% endif %}</li>
 	              {% endfor %}
                 </ul>
                 <p></p>
                 <ul>
                   {% for game in games2 %}
-                    <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url srs.views.hall_of_fame game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
+                    <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url "srs.views.hall_of_fame game.abbreviation" %}">{{ game.name }}</a>{% endif %}</li>
                   {% endfor %}
                   {% endwith %}
                 </ul>

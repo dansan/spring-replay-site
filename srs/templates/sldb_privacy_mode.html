@@ -18,6 +18,7 @@ td, th {
       {% if in_post %}
         {% if new_privacy_mode >= 0 %}
     <p style="color: red; font-weight:bold;">Your privacy setting has been set to {{ new_privacy_mode }}.</p>
+    <p>0: Privacy disabled<br/>1: Basic privacy (default)<br/>2: Full privacy</p>
         {% else %}
     <p style="color: red; font-weight:bold;">There was an error changing your privacy setting, please retry later or contact "Dansan" in the SpringRTS forums.</p>
         {% endif %}

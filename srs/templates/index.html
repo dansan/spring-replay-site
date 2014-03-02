@@ -7,7 +7,7 @@
 {% block maincontent%}
 		<div class="left">
 			<div class="left_articles">
-				<h2>Latest {{ newest_replays|length }} uploads (<a href="{% url srs.views.replays %}">of {{ total_replays }} total</a>)</h2>
+				<h2>Latest {{ newest_replays|length }} uploads (<a href="{% url "srs.views.replays" %}">of {{ total_replays }} total</a>)</h2>
 				<p>The web site owner is not responsible for the foul language of some players in the offered game replays.</p>
                 <h3>News</h3>
                 {% block adminlink %}
@@ -33,7 +33,7 @@
             </div>
 {% endfor %}
 
-            <h2 itemprop="breadcrumb"><a href="{% url srs.views.replays %}">more...</a></h2>
+            <h2 itemprop="breadcrumb"><a href="{% url "srs.views.replays" %}">more...</a></h2>
 		</div>
 {% endblock %}
 {% endcache %}
