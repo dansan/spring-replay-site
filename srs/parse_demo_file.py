@@ -438,6 +438,7 @@ def main(argv=None):
         if len(argv) == 1:
             print "Usage: %s demofile" % (argv[0])
             return 1
+        settings.DEBUG = True # command line use is always dev intended
         replay = Parse_demo_file(argv[1])
         replay.parse()
 
