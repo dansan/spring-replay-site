@@ -291,6 +291,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if demofile.game_setup["host"].has_key(key):
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
+    # if match is <2 min long, don't rate it
+    replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
+
     if path != None:
         replay.filename       = os.path.basename(path)
         replay.path           = os.path.dirname(path)
@@ -319,9 +322,6 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     timer.stop("  allyteams")
     logger.debug("replay(%d) allyteams: %s", replay.pk, [a.pk for a in allyteams.values()])
-
-    # if match is <2 min long, don't rate it
-    replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith("0:01:")
 
     # save tags
     save_tags(replay, tags)

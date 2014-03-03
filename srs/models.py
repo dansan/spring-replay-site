@@ -136,7 +136,7 @@ class Replay(models.Model):
             for gr_name_part in gr_name.split():
                 version_start =  ["v", "V", "b", "("]
                 version_start.extend(map(str, range(10)))
-                if in_version or gr_name_part.startswith("test-")or gr_name_part.startswith("RC") or gr_name_part[0] in version_start:
+                if in_version or gr_name_part.upper().startswith("TEST") or gr_name_part.upper().startswith("RC") or gr_name_part[0] in version_start:
                     in_version = True
                     version += gr_name_part+" "
                 else:
