@@ -157,7 +157,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
                     do_priv = False
                 else:
                     if user:
-                        do_priv = user.get_profile().accountid != pa_result["accountId"]
+                        do_priv = user.userprofile.accountid != pa_result["accountId"]
                     else:
                         do_priv = True
             else:

@@ -6,26 +6,28 @@ running on the SpringRTS engine (http://springrts.com).
 
 Runs on Django / Python (https://www.djangoproject.com/).
 
-Development is done using Django 1.4 and Python 2.7, but it will probably run
-(with minor modifications?) with Django 1.2 and Python 2.6.
+Development is done using Django 1.6 and Python 2.7. It may or may not run with other versions.
 Latest source code can be found here: https://github.com/dansan/spring-replay-site/
 
 The software is licensed as GPLv3, see COPYING.
-
 Images under srs/static/img may have different copyright. To lazy to check now, please ask before using any!
 
-Needs
+Dependencies:
 * Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 * DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 * django_tables2: https://github.com/bradleyayers/django-tables2
 * suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
   - I applied https://fedorahosted.org/suds/ticket/359 (1/2 hunks succeeded -> fixed) 
 * django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc
-* skills/PythonSkills 0.2.0: http://pypi.python.org/pypi/skills | https://github.com/McLeopold/PythonSkills
 * python-magic: http://pypi.python.org/pypi/python-magic/
 * timezone defs: dev-python/pytz | python-tz
 * django-ajax-selects 1.2.5: https://github.com/crucialfelix/django-ajax-selects/
 * django-dajaxice & django-dajax: http://www.dajaxproject.com/ (pip/easy_install django-dajaxice ; pip/easy_install django-dajax)
+
+$ virtualenv srs
+$ . srs/bin/activate
+(srs) $ pip install --compile Django Pillow MySQL-python django_tables2 suds django-xmlrpc python-magic pytz django-dajaxice django-dajax django-ajax-selects
+
 * jQuery UI: http://jqueryui.com/
 * flowplayer: http://flowplayer.org/
 

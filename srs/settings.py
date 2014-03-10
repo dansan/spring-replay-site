@@ -24,7 +24,6 @@ SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
 AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
-AUTH_PROFILE_MODULE = 'lobbyauth.UserProfile'
 
 LOG_PATH        = realpath(dirname(__file__))+'/log'
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
@@ -106,6 +105,13 @@ STATIC_ROOT = SRS_FILE_ROOT+'/static_collect/'
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
+
+#JQUERY_JS_URL    = STATIC_URL + "js/jquery-1.8.3.min.js"
+JQUERY_JS_URL    = STATIC_URL + "js/jquery-1.11.0.js"
+#JQUERYUI_CSS_URL = STATIC_URL + "css/smoothness/jquery-ui-1.9.2.custom.min.css"
+JQUERYUI_CSS_URL = STATIC_URL + "css/ui-darkness/jquery-ui-1.10.4.custom.css"
+#JQUERYUI_JS_URL  = STATIC_URL + "js/jquery-ui-1.9.2.custom.min.js"
+JQUERYUI_JS_URL  = STATIC_URL + "js/jquery-ui-1.10.4.custom.js"
 
 # Additional locations of static files
 STATICFILES_DIRS = (

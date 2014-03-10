@@ -105,5 +105,5 @@ class LobbyBackend():
             client = Client(url)
             return client.service.GetAccountInfo(username, password)
         except Exception, e:
-            logger.error("Exception while using SOAP to check username/password: %s", e)
+            logger.exception("Exception while using SOAP to check username/password: %s", e)
             return None

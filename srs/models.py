@@ -92,7 +92,7 @@ class Replay(models.Model):
     title           = models.CharField(max_length=256, db_index=True)
     short_text      = models.CharField(max_length=50, db_index=True)
     long_text       = models.CharField(max_length=513, db_index=True)
-    notcomplete     = models.BooleanField()
+    notcomplete     = models.BooleanField(default=True)
     map_info        = models.ForeignKey(Map, blank=True, null = True)
     map_img         = models.ForeignKey(MapImg, blank=True, null = True)
     tags            = models.ManyToManyField(Tag)
@@ -290,7 +290,7 @@ class Allyteam(models.Model):
     startrectleft   = models.FloatField(blank=True, null = True)
     startrectright  = models.FloatField(blank=True, null = True)
     startrecttop    = models.FloatField(blank=True, null = True)
-    winner          = models.BooleanField()
+    winner          = models.BooleanField(default=False)
     replay          = models.ForeignKey(Replay)
     num             = models.SmallIntegerField()
 
@@ -348,7 +348,7 @@ class Player(models.Model):
     rank            = models.SmallIntegerField()
     skill           = models.CharField(max_length=16, blank=True)
     skilluncertainty= models.SmallIntegerField(default=-1, blank=True)
-    spectator       = models.BooleanField()
+    spectator       = models.BooleanField(default=False)
     team            = models.ForeignKey("Team", blank=True, null = True)
     replay          = models.ForeignKey(Replay)
     startposx       = models.FloatField(blank=True, null = True)
@@ -640,7 +640,7 @@ def update_stats():
         sist.save()
 
 # TODO: use a proxy model for this
-User.get_absolute_url = lambda self: "/user/"+str(self.get_profile().accountid)+"/"
+User.get_absolute_url = lambda self: "/user/"+str(self.userprofile.accountid)+"/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
 
 # TODO: use a proxy model for this

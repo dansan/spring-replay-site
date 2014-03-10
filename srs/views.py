@@ -187,7 +187,7 @@ def replay(request, gameID):
                     new_rating += privatize_skill(pl_new) if pl_new else 0
                     old_rating += privatize_skill(pl_old) if pl_old else 0
 
-                if pa.sldb_privacy_mode != 0 and (not request.user.is_authenticated() or pa.accountid != request.user.get_profile().accountid):
+                if pa.sldb_privacy_mode != 0 and (not request.user.is_authenticated() or pa.accountid != request.user.userprofile.accountid):
                     if pl_new:
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
@@ -695,7 +695,7 @@ def login(request):
         if form.is_valid():
             user = form.get_user()
             django.contrib.auth.login(request, user)
-            logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.get_profile().aliases)
+            logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.userprofile.aliases)
             # TODO: "next" is never passed...
             if nexturl:
                 dest = nexturl
@@ -747,7 +747,7 @@ def sldb_privacy_mode(request):
     from forms import SLDBPrivacyForm
     c = all_page_infos(request)
 
-    accountid = request.user.get_profile().accountid
+    accountid = request.user.userprofile.accountid
     try:
         c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
     except:
