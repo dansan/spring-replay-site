@@ -1,37 +1,71 @@
 {% extends 'srs_base.html' %}
 
-{% block uploadheader %}    <link rel="stylesheet" type="text/css" href="{{ JQUERYUI_CSS_URL }}" />
-    <script type="text/javascript" src="{{ JQUERY_JS_URL }}"></script>
-    <script type="text/javascript" src="{{ JQUERYUI_JS_URL }}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/srs_upload.js"></script>
-{% endblock %}
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
 
 {% block pagetitle %}Upload{% endblock %}
 
 {% block maincontent%}
-        <div class="left">
-            <div class="left_articles">
-                <h2>Upload</h2>
-                <p>Please supply a Spring Demo File (*.sdf), a short subject, a comment and tags.</p>
-                <p>Please check the <a href="{% url "srs.views.tags" %}">list of existing tags</a> first!
-                Note that a tag for the team size (1v1, 2v2, 8v8) is added automatically if not present.
-                Please do not use <a href="{% url "srs.views.maps" %}">map names</a> or <a href="{% url "srs.views.players" %}">player names</a>, as they are categorized separately.</p>
+    <div class="row">
+      <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+        <h1 class="page-header">Upload</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-8 col-sm-offset-2">
+        <div class="panel panel-info">
+          <div class="panel-heading">
+            <h3 class="panel-title">Readme</h3>
+          </div>
+          <div class="panel-body">
+            <p>Please supply a Spring Demo File (*.sdf), a short subject, a comment and tags.</p>
+            <p>Regarding tagging: Please note that a tag for the team size (1v1, 2v2, 8v8) is added automatically if not present.</p>
+            <p>Please <u>do not use map names or player names as tags</u>, as they are categorized separately.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-8 col-sm-offset-2">
+        <form class="form-horizontal" action="." method="POST" enctype="multipart/form-data" role="form">
+        {{ formset.management_form }}
+  {% for form in formset %}
+    {% if not forloop.first %}
+          <div class="blind" style="display:none;">
+    {% endif %}
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+                <h3 class="panel-title">Upload a replay</h3>
+              </div>
+              <div class="panel-body">
+                  <div class="">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                  </div>
+                  <div class="">
+                    <div class="col-lg-8 col-lg-offset-2">
+                      <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                  </div>
+              </div>
             </div>
-            <form action="." method="post" enctype="multipart/form-data">
-            {{ formset.management_form }}
-			{% for form in formset %}
-	            <div class="lt"></div>
-	            <div class="lbox" style="height:260px;">
-	                    {% csrf_token %}
-	                    {{ form.as_p }}
-	                    <input type="submit" value="Submit" />
-	            </div>
-	            {% if forloop.first %}
-	            <p class="clickme" style="color: #4A8EBC; text-align: center;"><big><b>&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me for multi-upload.&nbsp;&nbsp;&laquo;&laquo;&laquo;</b></big><br/>&nbsp;</p>
-                <div class="blind" style="display:none;">
-                {% endif %}
-            {% endfor %}
-                </div>
-            </form>
-        </div>    
+    {% if not forloop.first %}
+          </div>
+    {% endif %}
+  {% endfor %}
+        </form>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-8 col-sm-offset-2">
+        <button class="clickme btn btn-default">Click me for multi-upload</button>
+      </div>
+    </div>
+{% endblock %}
+
+{% block page_js %}
+  {% js "js/srs_upload.js" %}
 {% endblock %}

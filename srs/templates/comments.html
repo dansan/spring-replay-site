@@ -1,0 +1,51 @@
+{% extends 'srs_base.html' %}
+{% load eztables %}
+
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+
+{% block page_css %}
+    {% datatables_bootstrap_css %}
+{% endblock %}
+
+{% block pagetitle %}All comments{% endblock %}
+
+{% block maincontent%}
+<div class="row">
+  <div class="col-xs-12">
+    <div class="table-responsive">
+      <table id="comments-table" class="display table table-hover table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Links</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6" class="dataTables_empty">Loading data from server</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Date</th>
+            <th>Links</th>
+            <th>Comment</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+  {% datatables_js %}
+  {% datatables_bootstrap_js %}
+  {% js_lib "moment.min.js" %}
+  {% js "js/srs_comments.js" %}
+{% endblock %}

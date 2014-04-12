@@ -1,64 +1,155 @@
-{% extends 'lists.html' %}
-{% load render_table from django_tables2 %}
+{% extends 'srs_base.html' %}
+{% load eztables %}
 
-{% block schema4title %}
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+
+{% block page_css %}
+    {% datatables_bootstrap_css %}
+    <meta name="accountid" content="{{ playeraccount.accountid }}"/>
+{% endblock %}
+
+{% block pagetitle %}Player {{ playeraccount.preffered_name }}{% endblock %}
+
+{% block maincontent %}
+    <div class="row">
+      <div class="col-xs-12">
         <span itemscope href="http://schema.org/WebPage">
           <link itemprop="additionalType" href="http://schema.org/ProfilePage"/>
           <span itemscope itemprop="about" href="http://schema.org/Person">
-            <h1>Player <span itemprop="name">{{ playeraccount.preffered_name }}</span></h1>
+            <h1 class="page-header">Player <span itemprop="name">{{ playeraccount.preffered_name }}</span> 
+  {% if all_names|length > 1 %}<small>Aliases:
+    {% with all_names|slice:"1:" as aliases %}
+      {% for alias in aliases %} {{ alias }},{% endfor %}
+    {% endwith %}
+        </small>
+  {% endif %}</h1>
             <meta itemprop="url" content="{{ selfurl }}"/>
-            {% if all_names|length > 1 %}{% with all_names|slice:"1:" as aliases %}{% for alias in aliases %}
-            <meta itemprop="additionalName" content="{{ alias }}"/>{% endfor %}{% endwith %}{% endif %}
+  {% if all_names|length > 1 %}
+    {% with all_names|slice:"1:" as aliases %}
+      {% for alias in aliases %}
+            <meta itemprop="additionalName" content="{{ alias }}"/>
+      {% endfor %}
+    {% endwith %}
+  {% endif %}
           </span>
           <meta itemprop="genre" content="game"/>
         </span>
+  {% if user.is_staff %}
+        <p><a href="/admin/srs/playeraccount/{{ playeraccount.pk }}/">{{ playeraccount.preffered_name }} @admin site</a></p>
+  {% endif %}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="well">
+  {% if errmsg %}
+          <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
+  {% else %}
+          <p>The following values are provided by <a href="https://github.com/Yaribz/SLDB">SLDB</a>, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
+    {% if playeraccount.sldb_privacy_mode != 0 %}
+          <p><b>If you wish to see <i>your</i> exact <a href="https://research.microsoft.com/en-us/projects/trueskill/">TrueSkill</a> values</b>, you must <b><a href="{% url "srs.views.login" %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
+    {% endif %}
+    {% if playeraccount.sldb_privacy_mode != 0 %}
+          <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></b>.</p>
+    {% endif %}
+        </div>
+  {% endif %}
+      </div>
+    </div>
+
+  {% if not errmsg %}
+    <div class="row">
+      <div class="col-xs-12 col-sm-5">
+        <div class="panel panel-default">
+          <div class="panel-heading">Rating</div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table id="playerrating-table" class="display table table-hover table-striped table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Game</th>
+                      <th>Match type</th>
+                      <th>Trueskill</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="3" class="dataTables_empty">Loading data from server</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="col-xs-12 col-sm-7">
+        <div class="panel panel-default">
+          <div class="panel-heading">Win/loss</div>
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table id="winloss-table" class="display table table-hover table-striped table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Game</th>
+                      <th>Match type</th>
+                      <th>Total</th>
+                      <th>Win</th>
+                      <th>Loss</th>
+                      <th>Undecided</th>
+                      <th>Ratio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="6" class="dataTables_empty">Loading data from server</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
+  {% endif %}
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Replays</h2>
+      </div>
+      <div class="col-xs-12">
+        <div class="table-responsive">
+          <table id="playerreplays-table" class="display table table-hover table-striped table-condensed">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Playername</th>
+                <th>Game</th>
+                <th>Match Type</th>
+                <th>Result</th>
+                <th>Faction</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="dataTables_empty">Loading data from server</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 {% endblock %}
 
-{% block rating %}
-    {% if all_names|length > 1 %}
-        <p>Aliases:
-    {% with all_names|slice:"1:" as aliases %}
-    {% for alias in aliases %} {{ alias }},{% endfor %}
-    {% endwith %}
-        </p>
-    {% endif %}
-        <p> </p>
-    {% block adminlink %}{% endblock %}
-    {% if user.is_staff %}
-      {% for acc in accounts %}
-        <p><a href="/admin/srs/playeraccount/{{ acc.pk }}/">{{ acc.preffered_name }} @admin site</a></p>
-      {% endfor %}
-    {% endif %}
-        <h2>Rating</h2>
-<!--
-
-TODO: use AJAX, so page loads quicker, and stays responsive in case of network error
-
- -->
-  {% if errmsg %}
-        <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
-  {% else %}
-        <p>The following values are provided by SLDB, a service that autohosts use to calculate team balancing.{% if playeraccount.sldb_privacy_mode != 0 %} The values are rounded to protect the players privacy.{% endif %}</p>
-    {% if playeraccount.sldb_privacy_mode != 0 %}
-        <p><b>If you wish to see <i>your</i> exact TrueSkill values</b>, you must <b><a href="{% url "srs.views.login" %}?next={{ selfurl }}">login</a></b> to the website using your lobby account.</p>
-    {% endif %}
-    {% if playeraccount.sldb_privacy_mode != 0 %}
-        <p><b>If you wish to <i>allow other players</i> to see your exact TrueSkill values</b>, <b><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></b>.</p>
-    {% endif %}
-		    {% if playerratingtable.data|length == 0 %}
-        <p><br/><b>No result.</b><br/></p>
-		    {% else %}
-		      {% render_table playerratingtable %}
-		    {% endif %}
-  {% endif %}
-        <p><br/></p>
-        <h2>Win/loss</h2>
-  {% if errmsg %}
-        <h3 style="text-align:left; color:red; font-weight:bold;">{{ errmsg }}</h3>
-  {% else %}
-			{% render_table winlosstable %}
-  {% endif %}
-        <p><br/></p>
-
-        <h2>Replays</h2>
+{% block page_js %}
+  {% datatables_js %}
+  {% datatables_bootstrap_js %}
+  {% js_lib "moment.min.js" %}
+  {% js "js/srs_player.js" %}
 {% endblock %}

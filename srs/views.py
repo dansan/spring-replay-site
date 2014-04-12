@@ -6,90 +6,61 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache, cache_page
+from django.views.decorators.cache import never_cache
 from django.http import Http404, HttpResponse
-from django.contrib.comments import Comment
-from django.views.decorators.cache import cache_control
 from django.db.models import Max
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.urlresolvers import reverse
 from django.utils.html import strip_tags
 from django.contrib.contenttypes.models import ContentType
+from django.template import add_to_builtins
 
-from dajax.core import Dajax
-from dajaxice.decorators import dajaxice_register
+import MySQLdb
 
 import logging
 from types import StringTypes
-import datetime
 import gzip
 import magic
 
-from models import *
-from common import all_page_infos
-from tables import *
-from upload import save_tags, set_autotag, save_desc
-from sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards, get_sldb_match_skills
+from srs.models import *
+from srs.common import all_page_infos
+from srs.upload import save_tags, set_autotag, save_desc
+from srs.sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards, get_sldb_match_skills
+from srs.ajax_views import replay_filter
 
+add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger(__package__)
 
-@cache_control(must_revalidate=True, max_age=60)
 def index(request):
     c = all_page_infos(request)
-    c["newest_replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[:10]
+    c["replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[:settings.INDEX_REPLAY_RANGE]
+    c["range"] = settings.INDEX_REPLAY_RANGE
+    c["range_end"] = settings.INDEX_REPLAY_RANGE
+    c["popular_replays"] = Replay.objects.order_by("-download_count")[:8]
     c["news"] = NewsItem.objects.filter(show=True).order_by('-pk')[:6]
     c["replay_details"] = False
-    c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["newest_replays"]])
+    c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["replays"]])
+    c["latest_comments"] = Comment.objects.order_by("-submit_date")[:5]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
-def replays(request):
-    replays = Replay.objects.all()
-    return replay_table(request, replays, "List of all %d matches"%Replay.objects.count(), ext={"pagedescription": "list of all replays."})
-
-def replay_table(request, replays, title, template="lists.html", form=None, ext=None, order_by=None):
-    from django_tables2 import RequestConfig
-
+def index_replay_range(request, range_end):
     c = all_page_infos(request)
-    if ext:
-        for k,v in ext.items():
-            c[k] = v
+    c["range"] = settings.INDEX_REPLAY_RANGE
+    c["range_end"] = int(range_end) + settings.INDEX_REPLAY_RANGE
+    c["replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[int(range_end):c["range_end"]]
+    return render_to_response('replay_index_boxes.html', c, context_instance=RequestContext(request))
 
-    replays = replays.select_related('uploader').order_by("-upload_date")
-
-    if order_by:
-        table = ReplayTable(replays, prefix="r-", order_by=order_by)
-    else:
-        table = ReplayTable(replays, prefix="r-")
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = title
-    if form: c['form'] = form
-    if not c.has_key("pagedescription"): c["pagedescription"] = title
-    return render_to_response(template, c, context_instance=RequestContext(request))
-
-def all_of_a_kind_table(request, table, title, template="lists.html", intro_text=None):
-    from django_tables2 import RequestConfig
-
-    c = all_page_infos(request)
-    RequestConfig(request, paginate={"per_page": 50}).configure(table)
-    c['table'] = table
-    c['pagetitle'] = title
-    c['intro_text'] = intro_text
-    c["pagedescription"] = title
-    return render_to_response(template, c, context_instance=RequestContext(request))
-
-@cache_page(3600 * 1)
 def replay(request, gameID):
     c = all_page_infos(request)
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except:
-        raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
+        raise Http404("No replay with gameID '"+ strip_tags(gameID)+"' found.")
 
     if not replay.published:
         return render_to_response('replay_unpublished.html', c, context_instance=RequestContext(request))
@@ -211,32 +182,43 @@ def replay(request, gameID):
     c["extra_media"] = ExtraReplayMedia.objects.filter(replay=replay)
     c["known_video_formats"] = ["video/webm", "video/mp4", "video/ogg", "video/x-flv", "application/ogg"]
     c["has_video"] = c["extra_media"].filter(media_magic_mime__in=c["known_video_formats"]).exists()
+    c["metadata"] = list()
+    if replay.map_info.width > 128:
+        # api.springfiles.com returnd pixel size
+        map_px_x = replay.map_info.width / 512
+        map_px_y = replay.map_info.height / 512
+    else:
+        # api.springfiles.com returnd Spring Map Size
+        map_px_x = replay.map_info.width
+        map_px_y = replay.map_info.height
+    try:
+        c["metadata"].append(("Size", "%d x %d"%(map_px_x, map_px_y)))
+        c["metadata"].append(("Wind", "%d - %d"%(replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
+        c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
+        for k,v in replay.map_info.metadata["metadata"].items():
+            if type(v) == str and not v.strip():
+                continue
+            elif type(v) == list and not v:
+                continue
+            elif k.strip() in ["", "Width", "TidalStrength", "MapFileName", "MapMinHeight", "Type", "MapMaxHeight", "Resources", "Height", "MinWind", "MaxWind", "StartPos"]:
+                continue
+            else:
+                c["metadata"].append((k.strip(), v))
+        if replay.map_info.metadata.has_key("version") and replay.map_info.metadata["version"]:
+            c["metadata"].append(("Version", replay.map_info.metadata["version"]))
+    except Exception, e:
+        c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
+        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id, replay.map_info.metadata)
+        logger.exception("Exception: %s", e)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
-def mapmodlinks(request, gameID):
-    c = all_page_infos(request)
-
-    replay = get_object_or_404(Replay, gameID=gameID)
-    gamename = replay.gametype
-    mapname  = replay.map_info.name
-
-    from xmlrpclib import ServerProxy
+def replay_by_id(request, replayid):
     try:
-        proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
-
-        searchstring = {"springname" : gamename.replace(" ", "*"), "category" : "game",
-                        "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
-        c['game_info'] = proxy.springfiles.search(searchstring)
-
-        searchstring = {"springname" : mapname.replace(" ", "*"), "category" : "map",
-                        "torrent" : False, "metadata" : False, "nosensitive" : True, "images" : False}
-        c['map_info'] = proxy.springfiles.search(searchstring)
+        r = Replay.objects.get(id=replayid)
+        return HttpResponseRedirect(r.get_absolute_url())
     except:
-        c['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: <a href=\"http://springfiles.com/finder/1/%s\">game</a>  <a href=\"http://springfiles.com/finder/1/%s\">map</a>."%(gamename, mapname)
-
-    c["pagedescription"] = "Download links for game %s and map %s."%(gamename, mapname)
-    return render_to_response('mapmodlinks.html', c, context_instance=RequestContext(request))
+        raise Http404("No replay with ID '"+ strip_tags(replayid)+"' found.")
 
 @login_required
 @never_cache
@@ -305,342 +287,45 @@ def download(request, gameID):
     response['Content-Disposition'] = 'attachment; filename="%s"'%filename
     return response
 
-def autohosts(request):
-    hosts = dict()
-    for host in Replay.objects.values_list("autohostname", flat=True):
-        if host:
-            try:
-                hosts[host] += 1
-            except:
-                hosts[host] = 0
-
-    table = AutoHostTable([{"name": name, "count": count} for name, count in hosts.items()])
-    intro_text = ["Click on a hostname to see a list of matches played on that host."]
-    return all_of_a_kind_table(request, table, "List of all %d autohosts"%Map.objects.count(), intro_text=intro_text)
-
-def autohost(request, hostname):
-    replays = Replay.objects.filter(autohostname=hostname)
-    return replay_table(request, replays, "%d replays on autohost '%s'"%(replays.count(), hostname))
-
-def tags(request):
-    table = TagTable([{"name": tag.name, "count": tag.replay_count} for tag in Tag.objects.all()])
-    intro_text = ["Click on a tag to see a list of matches tagged with it."]
-    return all_of_a_kind_table(request, table, "List of all %d tags"%Tag.objects.count(), intro_text=intro_text)
-
-def tag(request, reqtag):
-    tag = get_object_or_404(Tag, name=reqtag)
-    ext = {"adminurl": "tag", "obj": tag}
-
-    replays = Replay.objects.filter(tags=tag)
-    return replay_table(request, replays, "%d replays with tag '%s'"%(replays.count(), reqtag), ext=ext)
-
-def maps(request):
-    table = MapTable([{"name": rmap.name, "count": rmap.replay_count} for rmap in Map.objects.all()])
-    intro_text = ["Click on a map name to see a list of matches played on that map."]
-    return all_of_a_kind_table(request, table, "List of all %d maps"%Map.objects.count(), intro_text=intro_text)
-
-def rmap(request, mapname):
-    rmap = get_object_or_404(Map, name=mapname)
-    ext = {"adminurl": "map", "obj": rmap}
-
-    replays = Replay.objects.filter(map_info=rmap)
-    return replay_table(request, replays, "%d replays on map '%s'"%(len(replays), mapname), ext=ext)
-
-@cache_page(3600 * 2)
-def players(request):
-    c = all_page_infos(request)
-
-    c["playerlist"] = PlayerAccount.objects.order_by("preffered_name").values_list("accountid", "preffered_name")
-    c["pagedescription"] = "List of all known player accounts"
-    return render_to_response('all_players.html', c, context_instance=RequestContext(request))
-
 def player(request, accountid):
-    from django_tables2 import RequestConfig
     c = all_page_infos(request)
-
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
     c['pagetitle'] = "Player "+pa.preffered_name
     c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     c["playeraccount"] = pa
-
+    c["PA"] = pa
     c["all_names"] = pa.get_names()
-
-    ratings = list()
-    win_loss_data = list()
-    if pa.accountid <=0:
-        c["errmsg"] = "No rating for single player, bots or spectators-only."
-    else:
-        for game in pa.get_all_games().exclude(sldb_name=""):
-            if not Rating.objects.filter(game=game, playeraccount=pa).exists():
-                continue
-            user = request.user if request.user.is_authenticated() else None
-            try:
-                skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
-            except Exception, e:
-                logger.exception("Exception in get_sldb_playerskill(): %s", e)
-                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
-            else:
-                if pa != skills["account"]:
-                    errmsg = "Requested (%s) and returned (%s) PlayerAccounts do not match!"%(pa, skills["account"])
-                    logger.error(errmsg)
-                    raise Exception(errmsg)
-                if skills["status"] == 0:
-                    if pa.sldb_privacy_mode != skills["privacyMode"]:
-                        pa.sldb_privacy_mode = skills["privacyMode"]
-                        pa.save()
-                    for mt, i in settings.SLDB_SKILL_ORDER:
-                        ratings.append(Rating(game=game, match_type=mt, playeraccount=pa, trueskill_mu=skills["skills"][i][0], trueskill_sigma=skills["skills"][i][1]))
-            try:
-                player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
-            except Exception, e:
-                logger.exception("Exception in get_sldb_player_stats(): %s", e)
-                c["errmsg"] = "There was an error receiving the skill data. Please inform 'dansan' in the springrts forums."
-            else:
-                for match_type in ["Duel", "Team", "FFA", "TeamFFA"]:
-                    total = reduce(lambda x, y: x+y, player_stats[match_type], 0)
-                    if total == 0:
-                        continue
-                    try:
-                        ratio = float(player_stats[match_type][1]*100)/float(total)
-                    except ZeroDivisionError:
-                        if player_stats[match_type][1] > 0:
-                            ratio = 1
-                        else:
-                            ratio = 0
-                    win_loss_data.append({"game_n_type": game.sldb_name+" "+match_type,
-                                          "total"      : total,
-                                          "win"        : player_stats[match_type][1],
-                                          "loss"       : player_stats[match_type][0],
-                                          "undecided"  : player_stats[match_type][2],
-                                          "ratio"      : ratio})
-
-    c["winlosstable"] = WinLossTable(win_loss_data, prefix="w-")
-    c["playerratingtable"] = PlayerRatingTable(ratings, prefix="p-")
-
-    replay_table_data = Replay.objects.filter(player__account=pa).order_by("unixTime")
-    c['table'] = PlayersReplayTable(replay_table_data, prefix="r-", order_by="-unixTime", _pa=pa)
-    c['table']._pa = pa
-    RequestConfig(request, paginate={"per_page": 20}).configure(c["table"])
-
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
-def game(request, name):
-    game = get_object_or_404(Game, name=name)
-    gr_list = [{'name': gr.name, 'count': Replay.objects.filter(gametype=gr.name).count()} for gr in GameRelease.objects.filter(game=game)]
-    table = GameTable(gr_list)
-    return all_of_a_kind_table(request, table, "List of all %d versions of game %s"%(len(gr_list), game.name))
-
-def games(request):
-    games = []
-    for gt in list(set(Replay.objects.values_list('gametype', flat=True))):
-        games.append({'name': gt,
-                      'count': Replay.objects.filter(gametype=gt).count()})
-    table = GameTable(games)
-    intro_text = ["Click on a game name to see a list of matches played."]
-    return all_of_a_kind_table(request, table, "List of all %d games"%len(games), intro_text=intro_text)
-
-def gamerelease(request, gametype):
-    replays = Replay.objects.filter(gametype=gametype)
-    return replay_table(request, replays, "%d replays of game '%s'"%(len(replays), gametype))
-
-@never_cache
-def search(request):
-    from forms import AdvSearchForm
-
-    form_fields = ['text', 'comment', 'tag', 'player', 'spectator', 'maps', 'game', 'matchdate', 'uploaddate', 'uploader', 'autohost']
-    query = {}
-    ext = {}
-
-    if request.method == 'POST':
-        # did we come from the adv search page, or from a search in the top menu?
-        if request.POST.has_key("search"):
-            # top menu -> search everywhere
-            ext["showadvsearch"] = False
-
-            st = request.POST["search"].strip()
-            if st:
-                for f in form_fields:
-                    if f not in ['spectator','matchdate', 'uploaddate']:
-                        query[f] = st
-                form = AdvSearchForm(query)
-            else:
-                # empty search field in top menu
-                ext["showadvsearch"] = True
-
-                query = None
-                form = AdvSearchForm()
-        else:
-            # advSearch was used
-            ext["showadvsearch"] = True
-
-            form = AdvSearchForm(request.POST)
-            if form.is_valid():
-                for f in form_fields:
-                    if isinstance(form.cleaned_data[f], StringTypes):
-                        # strip() strings, use only non-empty ones
-                        if form.cleaned_data[f].strip():
-                            query[f] = form.cleaned_data[f].strip()
-                    elif form.cleaned_data[f]:
-                        query[f] = form.cleaned_data[f]
-            else:
-                query = None
-    else:
-        # request.method == GET (display advSearch)
-        ext["showadvsearch"] = True
-
-        query = None
-        form = AdvSearchForm()
-
-    replays = search_replays(query)
-    ext["pagedescription"] = "Search replays"
-    return replay_table(request, replays, "%d replays matching your search"%len(replays), "search.html", form, ext)
-
-def search_replays(query):
-    """
-    I love django Q!!!
-    """
-    from django.db.models import Q
-
-    if query:
-        q = Q()
-        multi_and = list()
-
-        for key in query.keys():
-            if   key == 'text': q &= Q(Q(title__icontains=query['text']) | Q(long_text__icontains=query['text']))
-            elif key == 'comment':
-                ct = ContentType.objects.get_for_model(Replay)
-                comments = Comment.objects.filter(content_type=ct, comment__icontains=query['comment'])
-                c_pks = [c.object_pk for c in comments]
-                q &= Q(pk__in=c_pks)
-            elif key == 'tag':
-                q &= Q(tags__id=query['tag'][0])
-                if len(query['tag']) > 1:
-                    for qtag in query['tag'][1:]:
-                        multi_and.append(Q(tags__id=qtag))
-            elif key == 'player':
-                if query.has_key('spectator'):
-                    q &= Q(player__account=PlayerAccount.objects.get(id=query['player'][0]))
-                    if len(query['player']) > 1:
-                        for qtag in query['player'][1:]:
-                            multi_and.append(Q(player__account=PlayerAccount.objects.get(id=qtag)))
-                else:
-                    q &= Q(player__account=PlayerAccount.objects.get(id=query['player'][0]), player__spectator=False)
-                    if len(query['player']) > 1:
-                        for qtag in query['player'][1:]:
-                            multi_and.append(Q(player__account=PlayerAccount.objects.get(id=qtag), player__spectator=False))
-            elif key == 'spectator': pass # used in key == 'player'
-            elif key == 'maps': q &= Q(map_info__id__in=query['maps'])
-            elif key == 'game':
-                qg = Q()
-                for g_id in query['game']:
-                    qg |= Q(gametype__icontains=Game.objects.get(id=g_id).name)
-                q &= qg
-            elif key == 'matchdate':
-                start_date = query['matchdate']-datetime.timedelta(1)
-                end_date   = query['matchdate']+datetime.timedelta(1)
-                q &= Q(unixTime__range=(start_date, end_date))
-            elif key == 'uploaddate':
-                start_date = query['uploaddate']-datetime.timedelta(1)
-                end_date   = query['uploaddate']+datetime.timedelta(1)
-                q &= Q(upload_date__range=(start_date, end_date))
-            elif key == 'uploader':
-                q &= Q(uploader__id__in=query['uploader'])
-            elif key == 'autohost':
-                try:
-                    hostnames = Replay.objects.filter(id__in=query['autohost']).values_list("autohostname", flat=True)
-                    logger.debug("hostnames=%s", hostnames)
-                    q &= Q(autohostname__in=hostnames)
-                except:
-                    pass
-            else:
-                logger.error("Unknown query key: query[%s]=%s",key, query[key])
-                raise Exception("Unknown query key: query[%s]=%s"%(key, query[key]))
-
-        if len(q.children):
-            replays = Replay.objects.filter(q).distinct()
-            for and_query in multi_and:
-                replays = replays.filter(and_query).distinct()
-        else:
-            replays = Replay.objects.none()
-    else:
-        # GET or empty/bad search query
-        replays = Replay.objects.none()
-
-    return replays
-
-@cache_page(3600 / 2)
 def hall_of_fame(request, abbreviation):
-    from django_tables2 import RequestConfig
-
     c = all_page_infos(request)
     game = get_object_or_404(Game, abbreviation=abbreviation)
 
     if game.sldb_name != "":
         try:
-            leaderboards = get_sldb_leaderboards(game)
+            c["leaderboards"] = get_sldb_leaderboards(game)
         except Exception, e:
             logger.exception(e)
-        else:
-            rc = RequestConfig(request)
-            c["tables"] = list()
-            for leaderboard in leaderboards:
-                players = SldbLeaderboardPlayer.objects.filter(leaderboard=leaderboard)
-                table = HallOfFameTable(players, prefix=leaderboard.match_type+"-")
-                rc.configure(table)
-                c["tables"].append((leaderboard, table))
-
     else:
         c["errmsg"] = "No ratings available for this game."
         logger.error("%s (%s)", c["errmsg"], game)
 
     if abbreviation == "ZK":
         c["intro_text"] = ['<b>The official Hall of Fame of Zero-K is at <a href="http://zero-k.info/Ladders">http://zero-k.info/Ladders</a>.</b>']
-    c['pagetitle'] = "Hall Of Fame ("+game.name+")"
     c["games"] = Game.objects.exclude(sldb_name="")
     c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
+    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
+    if game in games_with_bawards:
+        try:
+            sist = SiteStats.objects.get(id=1)
+        except:
+            update_stats()
+            sist = SiteStats.objects.get(id=1)
+
+        c["bawards"] = sist.bawards
+        c["bawards_lu"] = sist.last_modified
     c["thisgame"] = game
     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
-# 
-#     from django_tables2 import RequestConfig
-# 
-#     c = all_page_infos(request)
-# 
-#     game = get_object_or_404(Game, abbreviation=abbreviation)
-# 
-#     r1v1 = collect1v1ratings(game, "1", limitresults=True)
-#     c["table_1v1"]     = RatingTable(r1v1, prefix="1-")
-# 
-#     for mt, mtl, prefix in [("T", "table_team", "t-"), ("F", "table_ffa", "f-"), ("G", "table_teamffa", "g-")]:
-#         # get ratings for top 100 players
-#         rtype = Rating.objects.filter(game=game, match_type=mt, trueskill_mu__gt=25).order_by('-trueskill_mu').values()
-#         if game.abbreviation == "BA": # only for BA, because ATM the other games do not have enough matches
-#             # thow out players with less than x matches in this game and category
-#             rtype = [rt for rt in rtype if RatingHistory.objects.filter(game=game, match_type=mt, playeraccount=PlayerAccount.objects.get(id=rt["playeraccount_id"])).count() >= settings.HALL_OF_FAME_MIN_MATCHES][:50]
-#         else:
-#             rtype = list(rtype)
-#         # add data needed for the table
-#         for rt in rtype:
-#             playeraccount = PlayerAccount.objects.get(id=rt["playeraccount_id"])
-#             rt["num_matches"] = RatingHistory.objects.filter(game=game, match_type=mt, playeraccount=playeraccount).count()
-#             rt["playeraccount"] = playeraccount
-#             rt["playername"] = playeraccount.preffered_name
-#         c[mtl] = TSRatingTable(rtype, prefix=prefix)
-# 
-#     rc = RequestConfig(request, paginate={"per_page": 20})
-#     rc.configure(c["table_1v1"])
-#     rc.configure(c["table_team"])
-#     rc.configure(c["table_ffa"])
-#     rc.configure(c["table_teamffa"])
-# 
-#     c["intro_text"]    = ["Ratings are calculated separately for 1v1, Team, FFA and TeamFFA and also separately for each game. Change the diplayed game by clicking the link above this text.", "Everyone starts with Elo=1500 (k-factor=30), Glicko=1500 (RD=350) and Trueskill(mu)=25 (sigma=25/3).", "Elo and Glicko (v1) are calculated only for 1v1. Glickos rating period is not used atm."]
-#     if game.abbreviation == "BA":
-#         c["intro_text"].append("Only players with at least %d matches will be listed here."%settings.HALL_OF_FAME_MIN_MATCHES)
-#     c['pagetitle'] = "Hall Of Fame ("+game.name+")"
-#     c["games"] = [g for g in Game.objects.all() if RatingHistory.objects.filter(game=g).exists()]
-#     c["thisgame"] = game
-#     c["INITIAL_RATING"] = settings.INITIAL_RATING
-#     c["pagedescription"] = "Hall Of Fame for "+game.name
-#     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
 
 @login_required
 @never_cache
@@ -650,37 +335,9 @@ def user_settings(request):
     c["pagedescription"] = "User settings"
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
-def users(request):
-    users = [user for user in User.objects.all() if user.replays_uploaded() > 0]
-    table = UserTable([{"name": user.username, "count": user.replays_uploaded(), "accountid": user.last_name} for user in users])
-    intro_text = ["Click on a username to see a list of matches uploaded by that user."]
-    return all_of_a_kind_table(request, table, "List of all %d uploaders"%len(users), intro_text=intro_text)
-
-def see_user(request, accountid):
-    try:
-        user = User.objects.get(last_name=accountid)
-    except:
-        raise Http404("No user with accountID '"+ strip_tags(accountid)+"' found.")
-    replays = Replay.objects.filter(uploader=user)
-    try:
-        pa = PlayerAccount.objects.get(accountid=accountid)
-        txt = 'to see the users player page, <a href="'+pa.get_absolute_url()+'">click here</a>'
-    except:
-        txt = 'the user has no player page.'
-    ext = {"intro_text": ['This page shows the users UPLOADS, '+txt]}
-    return replay_table(request, replays=replays, title="%d replays uploaded by '%s'"%(len(replays), user.username), ext=ext)
-
-def match_date(request, shortdate):
-    replays = Replay.objects.filter(unixTime__startswith=shortdate)
-    return replay_table(request, replays, "%d replays played on '%s'"%(len(replays), shortdate))
-
-def upload_date(request, shortdate):
-    replays = Replay.objects.filter(upload_date__startswith=shortdate)
-    return replay_table(request, replays, "%d replays uploaded on '%s'"%(len(replays), shortdate))
-
 def all_comments(request):
-    table = CommentTable(Comment.objects.all())
-    return all_of_a_kind_table(request, table, "List of all %d comments"%Comment.objects.count())
+    c = all_page_infos(request)
+    return render_to_response('comments.html', c, context_instance=RequestContext(request))
 
 @never_cache
 def login(request):
@@ -752,7 +409,7 @@ def sldb_privacy_mode(request):
         c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
     except:
         c["current_privacy_mode"] = -1
-    logger.debug("current_privacy_mode: %d (user: %s)", c["current_privacy_mode"], request.user)
+    logger.debug("current_privacy_mode: %s (user: %s)", str(c["current_privacy_mode"]), request.user)
 
     if request.method == 'POST':
         #
@@ -779,3 +436,87 @@ def sldb_privacy_mode(request):
     c['form'] = form
 
     return render_to_response('sldb_privacy_mode.html', c, context_instance=RequestContext(request))
+
+def browse_archive(request, bfilter):
+    c = all_page_infos(request)
+
+    for browse_filter in ["t_today", "t_yesterday", "t_this_month", "t_last_month", "t_this_year", "t_last_year", "t_ancient"]:
+        c[browse_filter] = replay_filter(Replay.objects.all(), "date " + browse_filter)
+
+    try:
+        sist = SiteStats.objects.get(id=1)
+    except:
+        update_stats()
+        sist = SiteStats.objects.get(id=1)
+
+    tags              = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
+    c["top_tags"]     = list()
+    for t in range(0, 12, 3):
+        if t+2 > len(tags): break
+        c["top_tags"].append((tags[t], tags[t+1], tags[t+2]))
+    maps              = map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|'))
+    c["top_maps"]     = list()
+    for r in range(0, 8, 2):
+        if r+1 > len(maps): break
+        c["top_maps"].append((maps[r], maps[r+1]))
+    c["top_players"]  = map(lambda x: (PlayerAccount.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.active_players.split('|'))
+    c["all_games"]    = map(lambda x: (Game.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.games.split('|'))
+    c["replays_num"]  = Replay.objects.count()
+    c["gr_all"]       = GameRelease.objects.all()
+    c["tags_all"]     = Tag.objects.all()
+    c["maps_all"]     = Map.objects.all()
+    c["pa_num"]       = PlayerAccount.objects.exclude(accountid__lte=0).count()
+    c["ah_num"]       = Replay.objects.values("autohostname").distinct().count()
+    c["user_num"]     = len([user for user in User.objects.all() if user.replays_uploaded() > 0])
+    c["first_replay"] = Replay.objects.first()
+    c["last_replay"]  = Replay.objects.last()
+    hosts = dict()
+    for host in Replay.objects.values_list("autohostname", flat=True):
+        if host:
+            try:
+                hosts[host] += 1
+            except:
+                hosts[host] = 0
+    c["autohosts"]    = [(name, count) for name, count in hosts.items() if count > 0]
+    c["autohosts"].sort(key=operator.itemgetter(1), reverse=True)
+    c["uploaders"]    = [(user.username, user.replays_uploaded()) for user in User.objects.all() if user.replays_uploaded() > 0]
+    c["uploaders"].sort(key=operator.itemgetter(1), reverse=True)
+
+    if bfilter and bfilter.strip():
+        bfilter = str(MySQLdb.escape_string(bfilter))
+        args = bfilter.split("/")
+        filters_ = map(lambda x: x.split("="), args)
+        # only accept "date=1224/tag=8v8" etc
+        c["filters"] = list()
+        have = list()
+        for filter_ in filters_:
+            if len(filter_) == 2 and filter_[1].strip() and filter_[0] in ["date", "map", "tag", "game", "gameversion", "player", "autohost", "uploader" ] and filter_[0] not in have:
+                try:
+                    if filter_[0] == "date":
+                        pass
+                    elif filter_[0] == "map":
+                        c["map_name"] = Map.objects.get(id=filter_[1]).name
+                    elif filter_[0] == "tag":
+                        Tag.objects.get(id=filter_[1])
+                    elif filter_[0] == "game":
+                        Game.objects.get(id=filter_[1])
+                    elif filter_[0] == "gameversion":
+                        gr = GameRelease.objects.get(id=filter_[1])
+                        c["game_abbreviation"] = gr.game.abbreviation + " " + gr.version
+                    elif filter_[0] == "player":
+                        PlayerAccount.objects.get(id=filter_[1])
+                    elif filter_[0] == "autohost":
+                        Replay.objects.filter(autohostname=filter_[1])[0]
+                    elif filter_[0] == "uploader":
+                        Replay.objects.filter(uploader__username=filter_[1])[0]
+                    else:
+                        raise Exception("unknown filter type '%s'"%filter_[0])
+                    # all fine, add filter
+                    c["filters"].append((filter_[0], filter_[1]))
+                    have.append(filter_[0])
+                except Exception, e:
+                    # object doesnt exist
+                    logger.debug("invalid filter_: '%s' Exception: %s", filter_, e)
+    else:
+        c["filters"] = ""
+    return render_to_response('browse_archive.html', c, context_instance=RequestContext(request))

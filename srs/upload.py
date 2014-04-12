@@ -540,7 +540,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             full_img = settings.MAPS_PATH+smap.mapname+".jpg"
 
         smap.make_home_thumb()
-        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width)
+        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos, height=height, width=width, metadata=smap.map_info[0])
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
         replay.save()

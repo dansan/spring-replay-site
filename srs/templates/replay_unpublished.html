@@ -1,16 +1,24 @@
 {% extends 'srs_base.html' %}
 
-{% block replayheader %}    <script type="text/javascript" src="{{ JQUERY_JS_URL }}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/srs_replay_unpublished.js"></script>
-{% endblock %}
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
 
 {% block pagetitle %}Not yet there{% endblock %}
 
 {% block maincontent%}
-      <div class="left">
+    <div class="row">
+      <div class="col-md-12">
         <h2>Almost there...</h2>
         <p><br/></p>
         <p style="color:maroon; font-weight:bold;">The server has not yet finished analizing this replay.</p>
         <p style="color:maroon; font-weight:bold;">Please wait 10 seconds, and it will reload on its own (or press <a href="{{ selfurl }}">reload</a> yourself).</p>
       </div>
+    </div>
+{% endblock %}
+
+{% block page_js %}
+  {% js "js/srs_replay_unpublished.js" %}
 {% endblock %}

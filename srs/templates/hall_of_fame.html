@@ -1,50 +1,214 @@
 {% extends 'srs_base.html' %}
-{% load render_table from django_tables2 %}
+{% load eztables %}
+{% load cache %}
 
-{% block listheader %}    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}django_tables2/themes/paleblue/css/screen.css" />{% endblock %}
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
 
-{% block pagetitle %}{{ pagetitle }}{% endblock %}
+{% block page_css %}
+    {% datatables_bootstrap_css %}
+  <link rel="stylesheet" type="text/css" href="{{ DJ_TABLES_CSS_URL }}"/>
+{% endblock %}
+
+{% block pagetitle %}Hall of Fame{% endblock %}
 
 {% block maincontent %}
-        <div class="left">
   {% block search %}{% endblock %}
-
-  {% block result_table %}
-            <h2>{{ pagetitle }}</h2>
-            <p><br/></p>
-            <div class="bar">
-	            <ul>
-                  {% with games1=games|slice:":4" games2=games|slice:"4:" %}
-	              {% for game in games1 %}
-	                <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url "srs.views.hall_of_fame" game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
-	              {% endfor %}
-                </ul>
-                <p></p>
-                <ul>
-                  {% for game in games2 %}
-                    <li{% if game.name == thisgame.name %} class="active">{{ game.name }}{% else %}><a href="{% url "srs.views.hall_of_fame" game.abbreviation %}">{{ game.name }}</a>{% endif %}</li>
-                  {% endfor %}
-                  {% endwith %}
-                </ul>
-	        </div>
-            <p><br/></p>
-            {% for text in intro_text %}<p><br/></p>
-            <p>{{ text|safe }}</p>{% endfor %}
-            <p><br/></p>
-
-
-    {% for leaderboard,table in tables %}
-            <a name="{{ leaderboard.get_match_type_display }}"></a>
-            <p style="font:1.2em Arial, Helvetica, sans-serif;">
-            {% for ladder in ladders %}
-            {% if ladder == leaderboard.get_match_type_display %}<span style="color:#C3593C;">{{ ladder }}</span>{% else %}<a href="#{{ ladder }}">{{ ladder }}</a>{% endif %} &nbsp;&nbsp;&nbsp;
-            {% endfor %}
-            </p>
-            <p>Last update: {{ leaderboard.last_modified }}</p>
-        {% render_table table %}
-            <p><br/></p>
-            <p><br/></p>
-    {% endfor %}
-  {% endblock %}
+    <div class="row">
+      <div class="col-xs-12">
+        <h1 class="page-header">Hall of Fame <small>{{ thisgame.name }}</small></h1>        
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-3 col-lg-2">
+        <ul class="nav nav-pills nav-stacked">
+  {% for game in games %}
+          <li{% if game.name == thisgame.name %} class="active"{% endif %}><a href="{% url "srs.views.hall_of_fame" game.abbreviation %}">{{ game.name }}</a></li>
+  {% endfor %}
+        </ul>
+      </div>
+      <div class="col-sm-9 col-lg-10" role="main">
+    {% for text in intro_text %}
+        <div class="row">
+          <div class="col-md-12">
+            <div class="alert alert-dismissable alert-info">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              {{ text|safe }}
+            </div>
+          </div>
         </div>
+    {% endfor %}
+
+    {% if bawards %}
+<!-- BA Awards -->
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-xs-12">
+                    <center><img src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
+                    <hr style="margin-top: 7px; margin-bottom: 12px;">
+                  </div>
+                </div> <!-- row -->
+                <div class="row">
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Destroying enemy resource production</h4>
+                        <p><b>1st:</b> {% for player,count in bawards.ecoKillAward1st %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>2nd:</b> {% for player,count in bawards.ecoKillAward2nd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>3rd:</b> {% for player,count in bawards.ecoKillAward3rd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Destroying enemy units and defences</h4>
+                        <p><b>1st:</b> {% for player,count in bawards.fightKillAward1st %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>2nd:</b> {% for player,count in bawards.fightKillAward2nd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>3rd:</b> {% for player,count in bawards.fightKillAward3rd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="effKillAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Effective use of resources</h4>
+                        <p><b>1st:</b> {% for player,count in bawards.effKillAward1st %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>2nd:</b> {% for player,count in bawards.effKillAward2nd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                        <p><b>3rd:</b> {% for player,count in bawards.effKillAward3rd %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Doing everything</h4>
+                        <p>{% for player,count in bawards.cowAward %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/eco.png" alt="ecoAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Produced the most resources</h4>
+                        <p>{% for player,count in bawards.ecoAward %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/damage.png" alt="dmgRecAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Took the most damage</h4>
+                        <p>{% for player,count in bawards.dmgRecAward %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6" style="margin-bottom: 15px;">
+                    <div class="media">
+                      <div class="pull-left">
+                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="sleepAward" width="64">
+                      </div>
+                      <div class="media-body">
+                        <h4 class="media-heading">Slept longest</h4>
+                        <p>{% for player,count in bawards.sleepAward %}<a href="{{ player.get_absolute_url }}">{{ player.preffered_name }}</a> ({{ count }}), {% endfor %}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div> <!-- row -->
+                <div class="row">
+                  <div class="col-xs-12">
+                    <p class="pull-right">Last update: {{ bawards_lu }}</p>
+                  </div>
+                </div>
+              </div> <!-- panel-body -->
+            </div> <!-- panel -->
+          </div> <!-- col-xs-12 -->
+        </div> <!-- row -->
+    {% endif %}
+        <div class="row">
+    {% for lb in leaderboards %}
+      {% cache 3600 leaderboard lb.id %}
+          <div class="col-xs-12 col-lg-6" id="{{ lb.get_match_type_display }}">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-xs-12">
+                    <p style="font:1.2em Arial, Helvetica, sans-serif;">
+                {% for ladder in ladders %}
+                      {% if ladder == lb.get_match_type_display %}<span style="color:#C3593C;">{{ ladder }}</span>{% else %}<a href="#{{ ladder }}">{{ ladder }}</a>{% endif %} &nbsp;&nbsp;&nbsp;
+                {% endfor %}
+                    </p>
+                    <hr style="margin-top: 7px; margin-bottom: 12px;">
+                  </div>
+                </div> <!-- row -->
+                <div class="row">
+                  <div class="col-xs-12">
+                    <div class="table-responsive">
+                      <table id="lbtable-{{ lb.id }}" class="display table table-hover table-striped table-condensed">
+                        <thead>
+                          <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Trusted Skill</th>
+                            <th>Estimated Skill</th>
+                            <th>Uncertainty</th>
+                            <th>Inactivity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td colspan="3" class="dataTables_empty">Loading data from server</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              <div class="row">
+                <div class="col-xs-12">
+                  <p class="pull-right">Last update: {{ lb.last_modified }}</p>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        {% if forloop.counter|divisibleby:2 %}
+          <div class="clearfix visible-lg"></div>
+        {% endif %}
+      {% endcache %}
+    {% endfor %}
+        </div>
+      </div> <!-- col-sm-9 col-lg-10-->
+    </div> <!-- row -->
+{% endblock %}
+
+{% block page_js %}
+  {% datatables_js %}
+  {% datatables_bootstrap_js %}
+  {% js "js/srs_halloffame.js" %}
 {% endblock %}

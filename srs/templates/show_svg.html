@@ -1,18 +1,28 @@
 {% extends 'srs_base.html' %}
-{% block replayheader %}
-<style>
-.content {
-        width: 1024px;
-}
-.search_field {
-        width: 757px;
-}
-</style>
+
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+
+{% block page_css %}
+  <style>
+  .content {
+          width: 1024px;
+  }
+  .search_field {
+          width: 757px;
+  }
+  </style>
 {% endblock %}
 
 {% block pagetitle %}{{ media.media_basename }}{% endblock %}
 
 {% block maincontent%}
-        <p><img src="{{ media.media.url }}" style="max-width: 100%;" /></p>
+    <div class="row">
+      <div class="col-md-12">
+        <img src="{{ media.media.url }}" style="max-width: 100%;" />
+      </div>
+    </div>
 {% endblock %}
-{% block rightside %}{% endblock %}

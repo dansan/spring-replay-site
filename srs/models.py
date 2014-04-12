@@ -19,7 +19,8 @@ from django.dispatch import receiver
 from django.db.models import Count
 from django.utils import timezone
 
-import settings
+from django.conf import settings
+from picklefield.fields import PickledObjectField
 
 logger = logging.getLogger(__package__)
 
@@ -55,6 +56,7 @@ class Map(models.Model):
     startpos        = models.CharField(max_length=1024, blank=True, null = True)
     height          = models.IntegerField()
     width           = models.IntegerField()
+    metadata        = PickledObjectField(blank=True, null = True)
 
     def __unicode__(self):
         return self.name
@@ -413,12 +415,15 @@ class UploadTmp(models.Model):
 
 # not the most beautiful model, but efficient
 class SiteStats(models.Model):
+    last_modified   = models.DateTimeField(auto_now=True)
     replays         = models.IntegerField()
     tags            = models.CharField(max_length=1000)
     maps            = models.CharField(max_length=1000)
-    players         = models.CharField(max_length=1000)
+    active_players  = models.CharField(max_length=1000)
+    all_players     = PickledObjectField()
     comments        = models.CharField(max_length=1000)
-    last_modified   = models.DateTimeField(auto_now=True)
+    games           = models.CharField(max_length=1000)
+    bawards         = PickledObjectField()
 
 
 class Game(models.Model):
@@ -448,6 +453,10 @@ class GameRelease(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.gamerelease', [self.name])
+
+    @property
+    def replay_count(self):
+        return Replay.objects.filter(gametype=self.name).count()
 
     class Meta:
         ordering = ['name', 'version']
@@ -603,41 +612,96 @@ def get_owner_list(uploader):
 
 def update_stats():
     """
-    update only once per day
+    some very expensive operations -> this runs only once per day
     """
-    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': "", 'tags': "", 'maps': "", 'players': "", 'comments': ""})
+    # statistics like most played maps, most used tags etc. (sed in the browse and all_players views)
+    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': 0, 'tags': "", 'maps': "", "active_players": "", 'all_players': "", 'comments': "", "games": "", "bawards": ""})
     if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0:
         # update stats
-        replays  = Replay.objects.count()
-        now = datetime.datetime.now(timezone.get_current_timezone())
-        start_date = now - datetime.timedelta(days=30)
-        tags     = Tag.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-        maps     = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:20]
-        tp = list()
+        from upload import UploadTiming
+        timer = UploadTiming()
+        timer.start("update_stats()")
+        replays      = Replay.objects.count()
+        now          = datetime.datetime.now(timezone.get_current_timezone())
+        start_date   = now - datetime.timedelta(days=30)
+        default_tags = Tag.objects.filter(name__in=["1v1", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8", "Team", "FFA", "TeamFFA", "Tourney"])
+        tags         = default_tags.annotate(num_replay=Count('replay'))
+        maps         = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:10]
 
-        # This takes an insane amount of time. It is the reason stats are updated only once per day.
-        for pa in PlayerAccount.objects.exclude(accountid=0).order_by("accountid"): # exclude bots
+        # statistic on number of matches of each game (for browse page)
+        timer.start("games")
+        games        = list()
+        for game in Game.objects.all():
+            games.append((game.id, Replay.objects.filter(gametype__in=game.gamerelease_set.values_list("name", flat=True)).count()))
+        games.sort(key=operator.itemgetter(1), reverse=True)
+        timer.stop("games")
+
+        # most active players in the last 30 days (for browse page)
+        timer.start("active_players")
+        active_players = list()
+        for pa in PlayerAccount.objects.exclude(accountid__lte=0).order_by("accountid"): # exclude bots
             nummatches =  Player.objects.filter(account=pa, spectator=False, replay__unixTime__range=(start_date, now)).count()
-            tp.append((nummatches, pa))
-        tp.sort(key=operator.itemgetter(0), reverse=True)
-        players  = [p[1] for p in tp[:20]]
+            active_players.append((nummatches, pa))
+        active_players.sort(key=operator.itemgetter(0), reverse=True)
+        timer.stop("active_players")
+
+        # newest comments (for index page)
         comments = Comment.objects.reverse()[:5]
 
-        if tags.exists():     tags_s     = reduce(lambda x, y: str(x)+"|%d"%y, [t.id for t in tags])
+        # encode stats into strings
+        timer.start("strings")
+        if tags.exists():     tags_s     = reduce(lambda x, y: x+y, ["|%d.%d"%(t.id, t.num_replay) for t in tags])[1:]
         else:                 tags_s     = ""
-        if maps.exists():     maps_s     = reduce(lambda x, y: str(x)+"|%d"%y, [m.id for m in maps])
+        if maps.exists():     maps_s     = reduce(lambda x, y: x+y, ["|%d.%d / %d"%(m.id, m.num_replay, Replay.objects.filter(map_info=m).count()) for m in maps])[1:]
         else:                 maps_s     = ""
-        if players:           players_s  = reduce(lambda x, y: str(x)+"|%d"%y, [p.id for p in players])
-        else:                 players_s  = ""
+        if active_players:    act_pls_s  = reduce(lambda x, y: x+y, ["|%d.%d"%(pa.id, nummatches) for nummatches,pa in active_players[:20]])[1:]
+        else:                 act_pls_s  = ""
         if comments.exists(): comments_s = reduce(lambda x, y: str(x)+"|%d"%y, [c.id for c in comments])
         else:                 comments_s = ""
+        if games:             games_s    = reduce(lambda x, y: x+y, ["|%d.%d"%g for g in games])[1:]
+        else:                 games_s  = ""
+        timer.stop("strings")
 
+        #  player names and urls (for all_players page)
+        timer.start("all_players")
+        unique_names = set()
+        aplayers = list()
+        for pa in PlayerAccount.objects.exclude(accountid__lte=0):
+            for pl in pa.player_set.values_list("name", flat=True):
+                if pl not in unique_names:
+                    unique_names.add(pl)
+                    aplayers.append((pa.get_absolute_url(), pl))
+        aplayers_sorted = sorted(aplayers, key=operator.itemgetter(1))
+        timer.stop("all_players")
+
+        # BAwards statistics (for hall of fame)
+        timer.start("bawards")
+        bawards_fields = [field for field in BAwards._meta.get_all_field_names() if "Award" in field and not "Score" in field]
+        bawards_stats  = dict([(field, {}) for field in bawards_fields])
+        for field in bawards_fields:
+            for player_id in BAwards.objects.values_list(field, flat=True):
+                if not player_id: continue
+                try:
+                    bawards_stats[field][PlayerAccount.objects.get(player__id=player_id)] += 1
+                except:
+                    bawards_stats[field][PlayerAccount.objects.get(player__id=player_id)] = 1
+            # converting dict to list, sort, keep only top 10
+            bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
+        timer.stop("bawards")
+
+        timer.start("save()")
         sist.replays = replays
         sist.tags = tags_s
         sist.maps = maps_s
-        sist.players = players_s
+        sist.active_players = act_pls_s
+        sist.all_players = aplayers_sorted
         sist.comments = comments_s
+        sist.games = games_s
+        sist.bawards = bawards_stats
         sist.save()
+        timer.stop("save()")
+        timer.stop("update_stats()")
+        logger.info("timings:\n%s", timer)
 
 # TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/user/"+str(self.userprofile.accountid)+"/"

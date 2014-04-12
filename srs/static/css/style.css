@@ -1,368 +1,148 @@
 /*
-WEB DESIGN BASED ON:
-            Luka Cvrk (www.solucija.com)
-            Open Source Web Design
-            http://www.oswd.org/design/preview/id/3115
-*/
+ * This file is part of the "spring relay site / srs" program. It is published
+ * under the GPLv3.
+ * 
+ * Copyright (C) 2014 Daniel Troeder (daniel #at# admin-box #dot# com)
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-/* project: internet music template
-   author: luka cvrk (www.solucija.com) */
-
-
-/* default styles
-   -------------- */
-
-body {
-	padding: 0;
-	margin: 0;
-	font: 0.74em Arial, Helvetica, sans-serif;
-	line-height: 1.5em;
-	background: #fff;
-	color: #454545;
+footer {
+	margin: 3em 0;
+	border-top: 1px solid #1c1e22;
+	padding-top: 12px;
 }
 
-a {
-	color: #4A8EBC;
-	background: inherit;
-}
-
-a:hover {
-	color: #C3593C;
-	background: inherit;
-}
-
-a.title {
-	color: #FE6700;
-	background: #FFF;
-}
-
-h1 {
-	font: bold 2em "Trebuchet MS", Arial, Helvetica, sans-serif;
-	letter-spacing: -1px;
-	padding: 2px 0 0 0px;
-	margin: 0;
-	color: #464548;
-	background: inherit;
-}
-
-h1 a, h2 a {
-	text-decoration: none;
-	color: #464548;
-	background: inherit;
-}
-
-h1 a:hover, h2 a:hover {
-	color: #C3593C;
-	background: #FFF;
-}
-
-h1 .red{
-	color: #C3593C;
-	background: inherit;
-}
-
-
-h2 {
-	margin: 0 0 5px 0;
-	padding: 0;
-	font: bold 1.5em Arial, Helvetica, sans-serif;
-	letter-spacing: -1px;
-	color: #000;
-	background: inherit;
-}
-
-h2 .yellow{
-	color: #FFFCD1;
-	background: inherit;
-}
-
-p {	margin: 0 0 5px 0; }
-
-ul {
-	margin: 0;
-	padding : 0;
-	list-style : none;
-}
-
-form {
-	margin: 0;
-}
-
-input.search {
-	width: 145px;
-	height: 22px;
-	border: none;
-	background: #fff url("/static/img/input.gif") no-repeat;
-	padding: 5px 10px 0 25px;
-	color: #808080;
-}
-
-input.button {
-	border: 0;
-	height: 27px;
-	width: 128px;
-	background: #ABC43C url("/static/img/button.gif") no-repeat;
-	color: #FFF;
-	font: bold 1.1em Arial, Helvetica, Sans-Serif;
-}
-
-input.login {
-	width: 150px;
-	border: none;
-	background: url("/static/img/logininput.gif");
-	padding: 4px;
-}
-
-/* layout
-   ------ */
-
-.content {
-	margin: 10px auto;
-	width: 860px;
-}
-
-.logo {
+footer li {
 	float: left;
-	width: 180px;
-	padding: 10px 0 11px 10px;
+	margin-right: 1.5em;
+	margin-bottom: 1.5em;
 }
 
-.header_right {
-	float: right;
-	width: 550px;
-	height: 72px;
+footer p {
+	clear: left;
+	margin-bottom: 0;
 }
 
-.logo p {
-	font-size: 0.9em;
-	color: #808080;
-	padding: 0 0 0 7px;
-	background: inherit;
+in-panel hr {
+	margin-top: 7px;
+	margin-bottom: 7px;
 }
 
+.flowplayer { width: 80%; background-color: #222; background-size: cover; max-width: 800px; }
+.flowplayer .fp-controls { background-color: rgba(0, 0, 0, 0.4)}
+.flowplayer .fp-timeline { background-color: rgba(0, 0, 0, 0.5)}
+.flowplayer .fp-progress { background-color: rgba(219, 0, 0, 1)}
+.flowplayer .fp-buffer { background-color: rgba(249, 249, 249, 1)}
+.flowplayer { background-image: url(/static/img/flvbackground.jpg)}
+  
+/* 
+Left, Right and Below tabs were removed from Bootstrap 3, but you can add custom CSS to achieve this..
 
-.top_info {
-	width: 540px;
-	margin: 12px 0 5px 0;
-	padding: 0 5px 5px 0;
-	text-align: right;
-	background: #FFF url("/static/img/dot.gif") repeat-x bottom;
-	color: #444;
+http://stackoverflow.com/questions/18432577/stacked-tabs-in-bootstrap-3
+ */
+.tabs-below > .nav-tabs,
+.tabs-right > .nav-tabs,
+.tabs-left > .nav-tabs {
+  border-bottom: 0;
 }
 
-
-.slogan {
-	text-align: right;
-	width: 160px;
+.tab-content > .tab-pane,
+.pill-content > .pill-pane {
+  display: none;
 }
 
-
-.bar {
-	text-align: center;
-	font-size: 2em;
-	height: 30px;
+.tab-content > .active,
+.pill-content > .active {
+  display: block;
 }
 
-	.bar li {
-		padding: 0px 10px 8px 10px;
-		color: #808080;
-		background: #FFF;
-		display: inline;
-	}
-
-	.bar li.active {
-		background: #FFF url("/static/img/bar.gif") no-repeat center bottom;
-		color: #C3593C;
-		font-weight: bold;
-		padding-bottom: 8px;
-	}
-
-	.bar a {
-		font-weight: bold;
-		color: #4A8EBC;
-		background: inherit;
-	}
-
-.search_field {
-	text-align: right;
-	float: right;
-	width: 590px;
-	height: 38px;
-	background: #464548 url("/static/img/searchbg.gif") no-repeat top right;
-	color: #000;
-	clear: both;
-	padding: 10px 10px 0 0;
+.tabs-below > .nav-tabs {
+  border-top: 1px solid transparent;
 }
 
-.grey {
-	font-size: 1.2em;
-	font-weight: bold;
-	color: #ccc;
-	background: inherit;
+.tabs-below > .nav-tabs > li {
+  margin-top: -1px;
+  margin-bottom: 0;
 }
 
-.search {
-	font-size: 1.2em;
-	font-weight: bold;
-	color: #FFF;
-	background: inherit;
+.tabs-below > .nav-tabs > li > a {
+  -webkit-border-radius: 0 0 4px 4px;
+     -moz-border-radius: 0 0 4px 4px;
+          border-radius: 0 0 4px 4px;
 }
 
-.newsletter {
-	float: left;
-	height: 33px;
-	padding: 15px 0 0 15px;
-	width: 242px;
-	background: #6E6E6E url("/static/img/newsletterbg.gif") no-repeat;
-	color: #FFF;
-	margin: 0 0 3px 0;
+.tabs-below > .nav-tabs > li > a:hover,
+.tabs-below > .nav-tabs > li > a:focus {
+  border-top-color: #000;
+  border-bottom-color: transparent;
 }
 
-.subheader {
-	clear: both;
-	margin: 3px 0 10px 0;
-	padding: 8px;
-	background: #f4f4f4;
-	color: #808080;
-	border-bottom: 1px solid #ccc;
+.tabs-below > .nav-tabs > .active > a,
+.tabs-below > .nav-tabs > .active > a:hover,
+.tabs-below > .nav-tabs > .active > a:focus {
+  border-color: transparent #000 #000 #000;
 }
 
-/* left side
-   --------- */
-
-.left {
-	float: left;
-	width: 590px;
-	margin: 0 0 10px 0;
-}
-	.left_articles {
-		margin: 0 0 15px 0;
-		padding: 0 0 0 10px;
-	}
-
-	.lt {
-		height: 10px;
-		background: #6E6E6E url("/static/img/lt.gif") no-repeat;
-		color: #FFF;
-	}
-
-	.lbox {
-		color: #eee;
-		padding: 3px 12px;
-		margin: 0 0 15px 0;
-		background: #6E6E6E url("/static/img/lb.gif") no-repeat bottom left;
-		height: 150px;
-	}
-
-	.lbox a {
-		color: #FFFCD1;
-		background: inherit;
-	}
-
-	.lbox a:hover {
-        color: #036;
-    }
-
-	.lbox h2 {
-		color: #FFF;
-		background: #6E6E6E;
-	}
-
-.thumb {
-	float: left;
-	width: 150px;
-	height: 100px;
-	border: 1px solid #d4d4d4;
-	color: #fff;
-	background: #6e6e6e;
-	margin: 0 15px 15px 0;
-	padding: 5px;
-	text-align: center;
+.tabs-left > .nav-tabs > li,
+.tabs-right > .nav-tabs > li {
+  float: none;
 }
 
-.thumb p { margin: 0; padding: 3px; color: #FFF; background: #6e6e6e; }
-
-label {
-    font-weight: normal !important;
-    color: inherit;
-    font-size: 0.9em;
+.tabs-left > .nav-tabs > li > a,
+.tabs-right > .nav-tabs > li > a {
+  min-width: 74px;
+  margin-right: 0;
+  margin-bottom: 3px;
 }
 
-table {
-    border-collapse: collapse;
-    border-color: #ccc;
+.tabs-left > .nav-tabs {
+  float: left;
+  margin-right: 19px;
+  border-right: 1px solid #000;
 }
 
-td, th {
-    font-size: 0.9em;
-    line-height: 1.2em;
-    border-bottom: 0px none #eee;
-    vertical-align: top;
-    padding: 1px;
-    font-family: "Arial, Helvetica, sans-serif";
+.tabs-left > .nav-tabs > li > a {
+  margin-right: -1px;
+  -webkit-border-radius: 4px 0 0 4px;
+     -moz-border-radius: 4px 0 0 4px;
+          border-radius: 4px 0 0 4px;
 }
 
-th {
-    text-align: left;
-    font-size: 0.9em;
-    font-weight: bold;
+.tabs-left > .nav-tabs > li > a:hover,
+.tabs-left > .nav-tabs > li > a:focus {
+  border-color: #eeeeee #dddddd #eeeeee #eeeeee;
 }
 
-/* right side
-   ---------- */
-
-.right {
-	float: right;
-	width: 245px;
-	margin: 0 0 10px 0;
+.tabs-left > .nav-tabs .active > a,
+.tabs-left > .nav-tabs .active > a:hover,
+.tabs-left > .nav-tabs .active > a:focus {
+  border-color: #000 transparent #000 #000;
+  *border-right-color: #ffffff;
 }
 
-.right a {
-	color: #FFFCD1;
-	background: inherit;
-}
-.right a:hover {
-    color: #003366;
+.tabs-right > .nav-tabs {
+  float: right;
+  margin-left: 19px;
+  border-left: 1px solid #ddd;
 }
 
-
-	.rt {
-		background: #C85E35 url("/static/img/rt.gif") no-repeat;
-		color: #FFF;
-		height: 7px;
-	}
-
-	.right_articles {
-		font-size: 0.9em;
-		background: #C85E35 url("/static/img/rb.gif") no-repeat bottom;
-		color: #FEE1D5;
-		padding: 4px 8px;
-		margin: 0 0 10px 0;
-	}
-
-
-.image {
-	float: left;
-	margin: 0 9px 3px 0;
+.tabs-right > .nav-tabs > li > a {
+  margin-left: -1px;
+  -webkit-border-radius: 0 4px 4px 0;
+     -moz-border-radius: 0 4px 4px 0;
+          border-radius: 0 4px 4px 0;
 }
 
-/* footer
-   ------ */
-
-.footer {
-	clear: both;
-	text-align: center;
-	line-height: 1.8em;
-	color: #808080;
-	background: #FFF url("/static/img/dot.gif") repeat-x;
-	padding: 8px 0;
+.tabs-right > .nav-tabs > li > a:hover,
+.tabs-right > .nav-tabs > li > a:focus {
+  border-color: #eeeeee #eeeeee #eeeeee #dddddd;
 }
 
-.footer a {
-	color: #C3593C;
-	background: inherit;
-}
-
-.footer a:hover {
-    color: #036;
+.tabs-right > .nav-tabs .active > a,
+.tabs-right > .nav-tabs .active > a:hover,
+.tabs-right > .nav-tabs .active > a:focus {
+  border-color: #000 #000 #000 transparent;
+  *border-left-color: #ffffff;
 }

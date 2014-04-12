@@ -1,0 +1,35 @@
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+        <div class="row">
+  {% for replay in replays %}
+          <div class="xs-12 col-sm-6 col-lg-4">
+            <div class="panel panel-default" itemscope itemtype="http://schema.org/PlayAction">
+              <div class="panel-body">
+                <p style="font-size: larger; font-weight: bold;"><a href="{{ replay.get_absolute_url }}"><span itemprop="name" >{{ replay.title }}</span></a></p>
+                <hr style="margin-top: 7px; margin-bottom: 7px;">
+                <a itemprop="url" href="{{ replay.get_absolute_url }}">
+                  <div class="thumb">
+                    <!--  hackish way to center an image vertically... -->
+                    <table cellspacing="0" cellpadding="0" style="height:100px; width: 150px; background-color: inherit;"><tbody><tr><td style="padding: 0px; spacing: 0px; text-align:center; vertical-align:middle;">
+                      <img class="img-responsive img-rounded" itemprop="image" src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/>
+                    </td></tr></tbody></table>
+                  </div>
+                </a>
+      {% include "replay_box.html" %}
+              </div>
+            </div>
+          </div>
+          <!-- forloop.counter : {{ forloop.counter }} -->
+    {% if forloop.counter|divisibleby:2 %}
+          <div class="clearfix visible-sm visible-md"></div>
+    {% endif %}
+    {% if forloop.counter|divisibleby:3 %}
+          <div class="clearfix visible-lg"></div>
+    {% endif %}
+  {% endfor %}
+        </div> <!-- row -->
+        <div class="range" id="{{ range }}"></div>
+        <div class="range_end" id="{{ range_end }}"></div>

@@ -1,39 +1,80 @@
 {% extends 'srs_base.html' %}
 {% load cache %}
+{% load comments %}
 
-{% cache 60 index pageunique %}
-{% block pagetitle %}Home{% endblock %}
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
 
-{% block maincontent%}
-		<div class="left">
-			<div class="left_articles">
-				<h2>Latest {{ newest_replays|length }} uploads (<a href="{% url "srs.views.replays" %}">of {{ total_replays }} total</a>)</h2>
-				<p>The web site owner is not responsible for the foul language of some players in the offered game replays.</p>
-                <h3>News</h3>
-                {% block adminlink %}
-                    {% if user.is_staff %}
-                <p><a href="/admin/srs/newsitem/">edit news @admin site</a></p>
-                    {% endif %}
-                {% endblock %}
-                <ul style="list-style:circle;" >
-                    {% for n in news %}<li>{{ n.text|safe }}</li>{% endfor %}
-                </ul>
+{% cache 60 index %}
+  {% block pagetitle %}Home{% endblock %}
+
+  {% block maincontent%}
+    <div class="row">
+
+<!-- ----------
+     LEFT PANEL
+     ---------- -->
+
+      <div class="col-xs-12 col-sm-8 col-lg-9" role="main">
+    {% include "replay_index_boxes.html" %}
+        <div class="more_replays_div"></div>
+        <div class="row">
+          <div class="col-xs-12">
+            <div class="list-group">
+              <a href="#" class="list-group-item" id="more_replays_btn">
+                <h3 class="list-group-item-heading">more...</h3>
+              </a>
             </div>
-{% for replay in newest_replays %}
-			<div class="lt"></div>
-			<div class="lbox" itemscope itemtype="http://schema.org/PlayAction">
-                <p><big><b><a href="{{ replay.get_absolute_url }}"><span itemprop="name" >{{ replay.title }}</span></a></b></big></p>
-                <div class="thumb">
-                    <!--  hackish way to center an image vertically... -->
-                    <table cellspacing="0" cellpadding="0" style="height:100px; width: 150px;"><tbody><tr><td style="padding: 0px; spacing: 0px; text-align:center; vertical-align:middle;">
-					   <a itemprop="url" href="{{ replay.get_absolute_url }}"><img itemprop="image" src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/></a>
-					</td></tr></tbody></table>
-                </div>
-{% include "replay_box.html" %}
-            </div>
-{% endfor %}
+          </div>
+        </div>
+      </div>
 
-            <h2 itemprop="breadcrumb"><a href="{% url "srs.views.replays" %}">more...</a></h2>
-		</div>
-{% endblock %}
+<!-- -----------
+     RIGHT PANEL
+     ----------- -->
+
+      <div class="col-xs-12 col-sm-4 col-lg-3">
+        <div class="panel panel-default">
+          <div class="panel-heading">News</div>
+          <div class="panel-body">
+      {% block adminlink %}
+        {% if user.is_staff %}
+            <p><a href="/admin/srs/newsitem/">edit news @admin site</a></p>
+        {% endif %}
+      {% endblock %}
+            <ul style="list-style:circle;" >
+      {% for n in news %}<li>{{ n.text|safe }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-heading">Latest Comments (<a href="{% url "srs.views.all_comments" %}">All</a> | <a href="/feeds/latest_comments/">RSS</a>)</div>
+          <div class="panel-body">
+            <ul class="list-unstyled">
+      {% for comm in latest_comments %}
+              <li>{{ comm.submit_date|date:'Y-m-d' }}: {{ comm.user.username|truncatechars:15 }} on <a href="{% get_comment_permalink comm %}" title="{{ comm.comment_short }}">{{ comm.content_object.title|truncatechars:30 }}</a></li>
+      {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="list-group">
+          <a class="list-group-item active">Most popular replays</a>
+      {% for replay in popular_replays %}
+          <a href="{{ replay.get_absolute_url }}" class="list-group-item" title="{{ replay.unixTime|date:'Y-m-d' }} | {{ replay.game.name }}">{{ replay.title }}
+            <span class="badge">{{ replay.download_count }}</span>
+            <div class="clearfix"></div>
+          </a>
+      {% endfor %}
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endblock %}
 {% endcache %}
+
+{% block page_js %}
+  {% js "js/srs_index.js" %}
+{% endblock %}

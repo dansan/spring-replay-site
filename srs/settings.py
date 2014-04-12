@@ -24,41 +24,12 @@ SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
 AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
+INDEX_REPLAY_RANGE=12
 
 LOG_PATH        = realpath(dirname(__file__))+'/log'
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
 INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
 LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-AJAX_LOOKUP_CHANNELS = {
-    'game'   : ('srs.lookups','GameLookup'),
-    'map'   : ('srs.lookups','MapLookup'),
-    'player': ('srs.lookups','PlayerLookup'),
-    'tag'   : ('srs.lookups','TagLookup'),
-    'user'  : ('srs.lookups','UserLookup'),
-    'autohostname'  : ('srs.lookups','AutoHostLookup'),
-}
-AJAX_SELECT_BOOTSTRAP = False
-# True: [easiest]
-#   use the admin's jQuery if present else load from jquery's CDN
-#   use jqueryUI if present else load from jquery's CDN
-#   use jqueryUI theme if present else load one from jquery's CDN
-# False/None/Not set: [default]
-#   you should include jQuery, jqueryUI + theme in your template
-AJAX_SELECT_INLINES = False
-# 'inline': [easiest]
-#   includes the js and css inline
-#   this gets you up and running easily
-#   but on large admin pages or with higher traffic it will be a bit wasteful.
-# 'staticfiles':
-#   @import the css/js from {{STATIC_URL}}/ajax_selects using django's staticfiles app
-#   requires staticfiles to be installed and to run its management command to collect files
-#   this still includes the css/js multiple times and is thus inefficient
-#   but otherwise harmless
-# False/None: [default]
-#   does not inline anything. include the css/js files in your compressor stack
-#   or include them in the head of the admin/base_site.html template
-#   this is the most efficient but takes the longest to configure
-
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -100,18 +71,11 @@ MEDIA_ROOT = SRS_FILE_ROOT+"/static/media/"
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = SRS_FILE_ROOT+'/static_collect/'
+STATIC_ROOT = SRS_FILE_ROOT+'/static/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
-
-#JQUERY_JS_URL    = STATIC_URL + "js/jquery-1.8.3.min.js"
-JQUERY_JS_URL    = STATIC_URL + "js/jquery-1.11.0.js"
-#JQUERYUI_CSS_URL = STATIC_URL + "css/smoothness/jquery-ui-1.9.2.custom.min.css"
-JQUERYUI_CSS_URL = STATIC_URL + "css/ui-darkness/jquery-ui-1.10.4.custom.css"
-#JQUERYUI_JS_URL  = STATIC_URL + "js/jquery-ui-1.9.2.custom.min.js"
-JQUERYUI_JS_URL  = STATIC_URL + "js/jquery-ui-1.10.4.custom.js"
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -126,7 +90,6 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
-    'dajaxice.finders.DajaxiceFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -176,11 +139,9 @@ INSTALLED_APPS = (
     'srs',
     'lobbyauth',
     'django.contrib.comments',
-    'django_tables2',
     'django_xmlrpc',
-    'ajax_select',
-    'dajaxice',
-    'dajax',
+    'djangojs',
+    'eztables'
 )
 
 # A sample logging configuration. The only tangible logging

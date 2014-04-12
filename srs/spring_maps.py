@@ -156,7 +156,7 @@ class Spring_maps():
                 draw.ellipse((draw_pos_x-5, draw_pos_y-5, draw_pos_x+5, draw_pos_y+5), outline="white", fill="green")
         del draw
 
-        img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
+        #img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
         filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
         img.save(settings.MAPS_PATH+filename, "JPEG")
         return filename

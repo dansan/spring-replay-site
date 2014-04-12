@@ -1,135 +1,160 @@
-{% load comments %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <!--
-CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
-            Luka Cvrk (www.solucija.com)
-            Open Source Web Design
-            http://www.oswd.org/design/preview/id/3115
+This file is part of the "spring relay site / srs" program. It is published
+under the GPLv3.
+
+Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-    <meta name="author" content="Dansan" />
+
+<!--
+CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
+  Made by Thomas Park. Contact him at thomas@bootswatch.com.
+  Code released under the MIT License.
+  http://bootswatch.com/slate/
+-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Dansan" />
     <meta name="Description" content="{% if not pagedescription %}Replay upload site for matches on the SpringRTS game engine.{% else %}{{ pagedescription }}{% endif %}"/>
     <meta name="Keywords" content="replay, demo, sdf, spring, springrts, game, rts, real time strategy"/>
+    <link rel="icon" type="image/png" href="{{ STATIC_URL }}img/favicon.png" />
+    <title>{%block pagetitle %}{% endblock %} | Spring Replay Site</title>
 
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads" href="/feeds/latest/" />
-    {% if user.is_authenticated %}
+{% if user.is_authenticated and user.replays_uploaded > 0 %}
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads of {{ user }}" href="/feeds/uploader/{{ user }}/" />
-    {% endif %}
-    <link rel="icon" type="image/png" href="{{ STATIC_URL }}img/favicon.png" />
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/css/base.css"/>
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css" />
-{% block listheader %}{% endblock %}
-{% block searchheader %}{% endblock %}
-{% block uploadheader %}{% endblock %}
-{% block replayheader %}{% endblock %}
-{% block ratingadjustmentheader %}{% endblock %}
+{% endif %}
 
-    <title>{%block pagetitle %}{% endblock %} | Spring Replay Site</title>
+    {% css "css/ui-darkness/jquery-ui-1.10.4.custom.css" %}
+    {% css "css/bootstrap.css" %}
+    {% css "css/style.css" %}
+    {% css "css/selectize.bootstrap3.css" %}
+
+{% block page_css %}{% endblock %}
+
+    <!-- HTML5, ECMAScript 5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="{{ STATIC_URL }}js/html5shiv.js"></script>
+      <script src="{{ STATIC_URL }}js/respond.min.js"></script>
+      <script src="{{ STATIC_URL }}js/es5-shim.min.js"></script>
+    <![endif]-->
 </head>
 <body>
-    <div class="content">
-        <div class="header_right">
-            <div class="top_info">
-                <div class="top_info_right">
-                    {% if user.is_authenticated %}
-                    <p>Welcome {{ user.username }}. <a href="/">Home</a> | <a href="{% url "srs.upload.upload" %}">Upload</a> | <a href="{% url "srs.views.user_settings" %}">Settings</a> | {% if user.is_staff %}<a href="/admin/">Admin</a> | {% endif %}<a href="{% url "srs.views.logout" %}?next={{ selfurl }}">Logout</a></p>
-                    {% else %}
-                    <p><a href="/">Home</a> | You are not Logged in. To upload a replay or write a comment you must <b><a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a></b> using your spring lobby account. If you don't have one start a lobby and register.</p>
-                    {% endif %}                    
-                </div>      
-            </div>
-            {% comment %}
-            <div class="bar">
-                <ul>
-                    <li class="slogan">Menu:</li>
-                    <li><a href="#">1v1</a></li>
-                    <li><a href="#">2v2/3v3</a></li>
-                    <li class="active">Team</li>
-                    <li><a href="#">Pictures</a></li>
-                    <li><a href="#">Videos</a></li>
-                </ul>
-            </div>
-            {% endcomment %}
-        </div>
 
-        <div class="logo">
-            <h1><a href="/">Spring <span class="red">Replays</span></a></h1>
-            <p>Who needs a VCR?</p>
-        </div>
+<!-- ------
+     NAVBAR
+     ------ -->
 
-        <div class="search_field" itemprop="breadcrumb">
-            <form method="get" action="{% url "srs.views.search" %}">
-                <p><input type="submit" value="Search Replays" class="button" /></p>
+  <div class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/"><span class="text-info">Spring</span> <span class="text-danger">Replays</span></a>
+      </div>
+      <div class="navbar-collapse collapse navbar-responsive-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="{% url "srs.views.browse_archive" "" %}">Browse Archive</a></li>
+          <li><a href="{% url "srs.views.hall_of_fame" 'BA' %}">Hall of fame</a></li>
+{% if user.is_authenticated %}
+          <li><a href="{% url "srs.upload.upload" %}">Upload</a></li>
+{% endif %}
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <form class="navbar-form" role="search">
+              <div class="form-group" style="width: 200px;">
+                <select id="select-player" placeholder="Find a player..."></select>
+              </div>
             </form>
-        </div>
-
-        <div class="newsletter">
-            <p><span class="grey">RSS feed: <a href="/feeds/latest/">all</a>{% if user.is_authenticated %} | <a href="/feeds/uploader/{{ user }}/" /> {{ user|slice:":10" }}s</a>{% endif %}</span></p>
-        </div>
-
-        <div class="subheader">
-            <p>SpringRTS is a Open Source versatile 3D RTS game engine. For more information go to <a href="http://springrts.com/">springrts.com</a>.</p>
-        </div>
-
-{% block maincontent %}{% endblock %}
-
-{% block rightside %}
-        <div class="right">
-            <div class="rt"></div>
-            <div class="right_articles">
-                <p><b>Latest Comments (<a href="{% url "srs.views.all_comments" %}">All</a>, <a href="/feeds/latest_comments/">RSS</a>)</b><br/>
-                {% for comm in latest_comments %}<a href="{% get_comment_permalink comm %}" title="{{ comm.submit_date|date:'Y-m-d H:i' }}">{{ comm.user.username|truncatechars:12 }} | {{ comm.content_object.title|truncatechars:30 }}</a><br/>{% endfor %}</p>
-            </div>
-            <div class="rt"></div>
-            <div class="right_articles" itemscope itemtype="http://schema.org/WebPage">
-                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url "srs.views.hall_of_fame" 'BA' %}" itemprop="url"><span itemprop="name">Hall of fame</span></a></b></p>
-                <p><b>Tags (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tags" %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br /><span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "1v1" %}" itemprop="url"><span itemprop="name">1v1</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "2v2" %}" itemprop="url"><span itemprop="name">2v2</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "3v3" %}" itemprop="url"><span itemprop="name">3v3</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "6v6" %}" itemprop="url"><span itemprop="name">6v6</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "8v8" %}" itemprop="url"><span itemprop="name">8v8</span></a></span> <span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.tag" "Tourney" %}" itemprop="url"><span itemprop="name">Tourney</span></a></span><br />Top {{ top_tags|length }} in last 30 days: {% for tag in top_tags %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ tag.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ tag.name }}</span></a></span> {% endfor %}</p>
-                <p><b>Maps (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.maps" %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />Top {{ top_maps|length }} in last 30 days: {% for map in top_maps %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ map.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ map.name }}</span></a></span> {% endfor %}</p>
-                <p><b>Players (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.players" %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />{{ top_players|length }} most active in last 30 days: {% for player in top_players %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ player.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ player.preffered_name }}</span></a></span> {% endfor %}</p>
-                <p><b>Games (<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{% url "srs.views.games" %}" itemprop="url"><span itemprop="name">All</span></a></span>)</b><br />{% for game in all_games %}<span itemscope itemtype="http://schema.org/SiteNavigationElement"><a href="{{ game.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ game.abbreviation }}</span></a></span> {% endfor %}</p>
-                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url "srs.views.autohosts" %}" itemprop="url"><span itemprop="name">Autohosts</span></a></b></p>
-                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url "srs.views.users" %}" itemprop="url"><span itemprop="name">Uploaders</span></a></b></p>
-                <p itemscope itemtype="http://schema.org/SiteNavigationElement"><b><a href="{% url "srs.views.replays" %}" itemprop="url"><span itemprop="name">All {{ total_replays }} Replays</span></a></b></p>
-                <meta itemprop="name" content="SpringRTS replay site"/>
-                <meta itemprop="genre" content="game"/>
-                <meta itemprop="isBasedOnUrl" content="https://github.com/dansan/spring-replay-site"/>
-                <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-                    <meta itemprop="name" content="Dansan"/>
-                    <meta itemprop="url" content="https://github.com/dansan/spring-replay-site/"/>
-                </span>
-            </div>
-            <div class="rt"></div>
-            <div class="right_articles">
-                <p><b>Links</b><br />
-                <div itemscope itemtype="http://schema.org/SoftwareApplication">
-                    <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)"/>
-                    <a href="http://springrts.com/" itemprop="url"><span itemprop="name">SpringRTS</span></a><br/>
-                    <meta itemprop="name" content="SpringRTS"/>
-                    <meta itemprop="image" content="http://springrts.com/images/logo.png"/>
-                    <meta itemprop="description" content="RTS game engine"/>
-                    <meta itemprop="genre" content="game"/>
-                    <meta itemprop="applicationCategory" content="game"/>
-                    <meta itemprop="applicationSubCategory" content="Real Time Strategy"/>
-                </div>
-                <a href="http://springrts.fr/">SpringRTS.fr (French SpringRTS site)</a><br />
-                <a href="http://springfiles.com/">SpringFiles</a><br />
-                <a href="http://replays.springrts.com/piwik/index.php?module=CoreAdminHome&action=optOut&language=en">Privacy | Tracking opt out</a></p>
-            </div>
-        </div>
-{% endblock %}
-        <div class="footer" itemscope itemtype="http://schema.org/WebPage">
-            <link itemprop="additionalType" href="http://schema.org/WPFooter"/>
-            <p>If you have requests, complaints, praise or want to contribute code please contact <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Dansan</span> in the <a href="http://springrts.com/phpbb/">SpringRTS forums</a> or on <a href="https://github.com/dansan/spring-replay-site/" itemprop="url">GitHub</a></span>.</p>
-        </div>
+          </li>
+          <li class="dropdown">
+{% if user.is_authenticated %}
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ user }} <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url "srs.views.player" user.userprofile.accountid %}">My player page</a></li>
+              <li><a href="{% url "srs.views.sldb_privacy_mode" %}">(SLDB) privacy setting</a></li>
+              <li><a href="{% url "srs.views.user_settings" %}">Settings</a></li>
+  {% if user.replays_uploaded > 0 %}
+              <li><a href="{% url "srs.views.browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
+  {% endif %}
+  {% if user.is_superuser %}
+              <li><a href="/admin/">Admin</a></li>
+  {% endif %}
+              <li class="divider"></li>
+              <li><a href="{% url "srs.views.logout" %}?next={{ selfurl }}">Logout</a></li>
+            </ul>
+{% else %}
+            <a href="{% url "srs.views.login" %}?next={{ selfurl }}"><span class="glyphicon glyphicon-user"></span> Login</a>
+{% endif %}
+          </li>
+        </ul>
+      </div>
     </div>
-    <!-- Piwik -->
-    <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
-    <script type="text/javascript" src="{{ STATIC_URL }}js/piwik_track.js"></script>
-	<noscript>
-	   <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></p>
-	</noscript>
-	<!-- End Piwik Tracking Code -->
+  </div>
+
+<!-- -------
+     CONTENT
+     ------- -->
+
+  <div class="container-fluid">
+{% block maincontent %}{% endblock %}
+  </div>
+
+<!-- ------
+     FOOTER
+     ------ -->
+
+  <footer itemscope itemtype="http://schema.org/WebPage">
+    <div class="container-fluid">
+      <link itemprop="additionalType" href="http://schema.org/WPFooter"/>
+      <div class="row" >
+        <div class="col-xs-12" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <link itemprop="name" content="Dansan" />
+          <ul class="list-unstyled">
+            <li class="pull-right"><a href="#top">Back to top</a></li>
+            <li><a href="http://springrts.com/phpbb/viewtopic.php?f=71&t=28019">SpringRTS forum</a></li>
+            <li><a href="https://github.com/dansan/spring-replay-site/" itemprop="url">GitHub</a></li>
+            <li><a href="/feeds/latest/" title="feed of latest replay uploads">RSS</a></li>
+            {% if user.is_authenticated and user.replays_uploaded > 0 %}<li><a href="/feeds/uploader/{{ user }}/" title="feed of _your_ latest replay uploads">RSS of <i>your</i> uploads</a></li>{% endif %}
+          </ul>
+          <p>Theme "Slate" by Thomas Park from <a href="http://bootswatch.com/slate/">Bootswatch</a>.</p>
+        </div>
+      </div>
+      <meta itemprop="name" content="SpringRTS replay site"/>
+      <meta itemprop="genre" content="game"/>
+      <meta itemprop="isBasedOnUrl" content="https://github.com/dansan/spring-replay-site"/>
+    </div>
+  </footer>
+
+<!-- ------
+       JS
+     ------ -->
+  {% django_js %}
+  {% js_lib "jquery-ui-1.10.4.custom.min.js" %}
+  {% js_lib "bootstrap.min.js" %}
+  {% js_lib "selectize.min.js" %}
+  {% js "js/srs_base.js" %}
+
+{% block page_js %}{% endblock %}
+<!-- -----
+     Piwik
+     ----- -->
+
+  <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
+  <script type="text/javascript" src="{{ STATIC_URL }}js/piwik_track.js"></script>
+  <noscript>
+     <p><img src="http://replays.springrts.com/piwik/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></p>
+  </noscript>
 </body>
 </html>

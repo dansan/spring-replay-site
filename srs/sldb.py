@@ -86,6 +86,10 @@ def _query_sldb(service, *args, **kwargs):
     """
     logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
 
+#     if settings.DEBUG:
+#         logger.debug("not connecting while in DEBUG")
+#         raise SLDBstatusException(service, -1)
+
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
     rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)

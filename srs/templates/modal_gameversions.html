@@ -1,0 +1,27 @@
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Game versions</h4>
+          </div>
+          <div class="modal-body">
+{% if con_error %}
+            <p class="text-danger"><h5>Error retrieving information</h5></p>
+            <p class="text-danger">{{ con_error|safe }}</p>
+{% else %}
+            <div class="list-group">
+          {% for gv in gameversions %}
+              <a href="#" class="list-group-item" title="{{ gv.name }}" onclick="set_gameversion(event, {{ gv.id }}, '{{ gv.game.abbreviation }} {{ gv.version }}')" id="gameversion {{ gv.id }}">{{ gv.name }}
+                <span class="badge">{{ gv.replay_count }}</span>
+                <div class="clearfix"></div>
+              </a>
+          {% endfor %}
+            </div>
+{% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>

@@ -2,327 +2,451 @@
 {% load comments %}
 {% load cache %}
 
-{% block replayheader %}    <link rel="stylesheet" type="text/css" href="{{ JQUERYUI_CSS_URL }}" />
-    <script type="text/javascript" src="{{ JQUERY_JS_URL }}"></script>
-    <script type="text/javascript" src="{{ JQUERYUI_JS_URL }}"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/srs_replay.js"></script>
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
 
+{% block page_css %}
+    {% css "css/ionicons.min.css" %}
   {% if has_video %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/flowplayer_5.4.3.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/flowplayer_5.4.3_playful.css" />
+    {% css "css/flowplayer_5.4.3_playful.css" %}
   {% endif %}
-
-<style>
-.players {
-     font: 11px Verdana,Arial,Helvetica,sans-serif;
-     line-height: 14px;
-}
-.players a {
-    color: inherit;
-}
-.players a:hover {
-    color: #C3593C;
-}
-.bold {
-     font-weight: bold;
-}
-
-  {% if has_video %}
-.flowplayer { width: 80%; background-color: #222; background-size: cover; max-width: 800px; }
-.flowplayer .fp-controls { background-color: rgba(0, 0, 0, 0.4)}
-.flowplayer .fp-timeline { background-color: rgba(0, 0, 0, 0.5)}
-.flowplayer .fp-progress { background-color: rgba(219, 0, 0, 1)}
-.flowplayer .fp-buffer { background-color: rgba(249, 249, 249, 1)}
-.flowplayer { background-image: url({{ STATIC_URL }}img/flvbackground.jpg)}
-  {% endif %}
-</style>
 {% endblock %}
 
 {% block pagetitle %}{{ replay.title }}{% endblock %}
 
 {% block maincontent%}
-
-<!-- REPLAY_BOX -->
-
-        <div class="left" itemscope itemtype="http://schema.org/PlayAction">
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="panel panel-default" itemscope itemtype="http://schema.org/PlayAction">
+          <div class="panel-body">
             <meta itemprop="url" content="{{ replay.get_absolute_url }}"/>
             <div itemprop="audience" itemscope itemtype="http://schema.org/Audience">
                 <meta itemprop="name" content="gamers">
                 <meta itemprop="url" content="http://springrts.com/">
                 <meta itemprop="sameAs" content="http://en.wikipedia.org/wiki/Spring_(game_engine)">
             </div>
-            <div class="lt"></div>
-            <div class="lbox" style="height:200px;">
-                <p itemprop="name" style="font-size: larger; font-weight: bold;">{{ replay.title }}</p>
-{% include "replay_box.html" %}
-            </div>
+            <div class="row">
+              <div class="col-sx-12">
+                <p style="font-size: larger; font-weight: bold;"><span itemprop="name" >{{ replay.title }}</span></p>
+                {% if upload_broken %}<p class="text-danger">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
+                <hr style="margin-top: 7px; margin-bottom: 12px;">
+              </div>
+            </div> <!-- row -->
+            <div class="row">
+              <div class="col-sx-12" style="margin-bottom: 12px;">
+  <!-- Map img -->
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs nav-justified">
+                  <li class="active"><a href="#sat" data-toggle="tab">Satellite</a></li>
+                  <li><a href="#metal" data-toggle="tab">Metal</a></li>
+                  <li><a href="#height" data-toggle="tab">Height</a></li>
+                  <li><a href="#info" data-toggle="tab">Info</a></li>
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content">
+                  <div class="tab-pane active" id="sat">
+                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_img.get_absolute_url }}" alt="sat pic of {{ replay.map_info.name }}"/>
+                  </div>
+                  <div class="tab-pane" id="metal">
+                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.2 }}" alt="metal map of {{ replay.map_info.name }}"/>
+                  </div>
+                  <div class="tab-pane fade" id="height">
+                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.1 }}" alt="height map of {{ replay.map_info.name }}"/>
+                  </div>
+                  <div class="tab-pane" id="info">
+                    <div class="table-responsive">
+                      <table class="table table-striped table-hover">
+                        <tbody>
+      {% for k,v in metadata %}
+                          <tr{% if k == "Error" %} class="danger"{% endif %}>
+                            <td>{{ k }}</td>
+                            <td>{{ v }}</td>
+                          </tr>
+      {% endfor %}
+                        </tbody>
+                      </table>
+                    </div> 
+                  </div>
+                </div>
+              </div>
+            </div> <!-- row -->
+            <div class="row">
+              <div class="col-sx-12">
+                <div class="well">
+    {% include "replay_box.html" %}
+                <p></p>
+                <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs.views.download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
+                  <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
+                  <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
+                </p>
+                {% if user = replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
+                {% if user.is_staff %}<p class="text-success"><a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a></p>{% endif %}
+                </div>
+              </div>
+            </div> <!-- row -->
+          </div>
+        </div>
 
-<!-- MAP IMG -->
+      </div> <!-- col-sm-6 -->
 
-        <div class="left" style="width: 350px;">
-            {% if upload_broken %}<p style="text-align:center; color:red; font-weight:bold;">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
-            {% if user = replay.uploader %}<p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>{% endif %}
-            {% if user.is_staff %}<a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a>{% endif %}
 {% cache 600 replay replay.pk %}
-            <p class="clickme_winner" style="color: #4A8EBC; text-align: center; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;Click me to show winner and rating changes.&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
-	        <img itemprop="image" src="{{ replay.map_img.get_absolute_url }}" alt="pic of map {{ replay.map_info.name }}" width="340"/>
-	        <p><br/></p>
-            <div class="footer"></div>
+      <div class="col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <button type="button" class="btn btn-default btn-block text-warning clickme_winner" style="margin-bottom: 20px;">Show winner, TrueSkill rating changes{% if replay.bawards %} and awards{% endif %}.</button>
 
-<!-- BA Awards -->
-{% if replay.bawards %}
-            <center><img itemprop="image" class="clickme_winner" src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" title="Click to show BA awards, winner and rating changes." width="128"/></center>
-            <div class="blind_winner" style="display:none;">
-              <table>
-                  <colgroup>
-                          <col width="64"/>
-                          <col width="270"/>
-                      </colgroup>
-    {% if replay.bawards.ecoKillAward1st %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Destroying enemy resource production</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward1st" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.ecoKillAward1st.team.rgbcolor }};">{{ replay.bawards.ecoKillAward1st.name }}</span>{% if replay.bawards.ecoKillAward2nd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward2nd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.ecoKillAward3rd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward3rd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward3rd.name }}</span>{% endif %}
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.fightKillAward1st %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Destroying enemy units and defences</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward1st" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.fightKillAward1st.team.rgbcolor }};">{{ replay.bawards.fightKillAward1st.name }}</span>{% if replay.bawards.fightKillAward2nd %},<br/><span style="color: #{{ replay.bawards.fightKillAward2nd.team.rgbcolor }};">{{ replay.bawards.fightKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.fightKillAward3rd %},<br/><span style="color: #{{ replay.bawards.fightKillAward3rd.team.rgbcolor }};">{{ replay.bawards.fightKillAward3rd.name }}</span>{% endif %}
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.effKillAward1st %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Effective use of resources</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="fightKillAward1st" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.effKillAward1st.team.rgbcolor }};">{{ replay.bawards.effKillAward1st.name }}</span>{% if replay.bawards.effKillAward2nd %},<br/><span style="color: #{{ replay.bawards.effKillAward2nd.team.rgbcolor }};">{{ replay.bawards.effKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.effKillAward3rd %},<br/><span style="color: #{{ replay.bawards.effKillAward3rd.team.rgbcolor }};">{{ replay.bawards.effKillAward3rd.name }}</span>{% endif %}
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.cowAward %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Doing everything</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.cowAward.team.rgbcolor }};">{{ replay.bawards.cowAward.name }}</span>
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.ecoAward %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Produced the most resources</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/eco.png" alt="cowAward" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.ecoAward.team.rgbcolor }};">{{ replay.bawards.ecoAward.name }}</span>
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.dmgRecAward %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Took the most damage</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/damage.png" alt="cowAward" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.dmgRecAward.team.rgbcolor }};">{{ replay.bawards.dmgRecAward.name }}</span>
-                          </td>
-                      </tr>
-    {% endif %}
-    {% if replay.bawards.sleepAward %}
-                      <tr>
-                          <td colspan="2"><h4 style="margin-bottom: 2px; font-size: 1.5em;">Slept longest</h4></td>
-                      </tr>
-                      <tr>
-                          <td><img itemprop="image" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="cowAward" width="64"/></td>
-                          <td style="line-height: 1.5em; font-size: 1.3em; padding-top: 8px;padding-left: 8px;">
-                              <span style="font-weight:bold; color: #{{ replay.bawards.sleepAward.team.rgbcolor }};">{{ replay.bawards.sleepAward.name }}</span>
-                          </td>
-                      </tr>
-    {% endif %}
-              </table>
+<!-- Warnings -->
+
+  {% if replay.notcomplete or is_draw or was_stopped %}
+            <div class="alert alert-dismissable alert-warning">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              <h4>Warning!</h4>
+  {% endif %}
+  {% if replay.notcomplete %}
+              <p><span itemprop="result">Replay is incomplete or length of match less than 2 minutes. Not rated.</span></p>
+  {% elif is_draw %}
+              <div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><p><span itemprop="result">The match was a draw!</span></p></div>
+  {% elif was_stopped %}
+              <p><span itemprop="result">The match was stopped!</span></p>
+  {% endif %}
+  {% if replay.notcomplete or is_draw or was_stopped %}
             </div>
-            <div class="footer"></div>
-{% endif %}
+  {% endif %}
 
-<!-- UPLOAD COMMENT -->
-
-            <p><b>Uploaders comment:</b> {{ replay.long_text }}</p>
-            <p><br/></p>
-	        <div class="footer"></div>
-
-<!-- MAP / MOD OPTIONS -->
-
-	        <p class="clickme_mapoptions" style="color: #4A8EBC; text-align: center; font-weight:bold;">Map options (click me)</p>
-	        <div class="blind_mapoptions" style="display:none;">
-		        {% if mapoptions|length > 0 %}
-		        <div class="left" style="width: 175px;">
-		           {% for option in mapoptions|slice:"::2" %}
-			       <p>{{option.name }}: {{ option.value }}</p>
-			       {% endfor %}
-			    </div>
-			    <div class="left" style="width: 175px;">
-	               {% for option in mapoptions|slice:"1::2" %}
-	               <p>{{option.name }}: {{ option.value }}</p>
-	               {% endfor %}
-	            </div>
-		       {% else %}
-			       <p>None.</p>
-		       {% endif %}
-	       </div>
-           <p class="clickme_modoptions" style="color: #4A8EBC; text-align: center; font-weight:bold;">Mod options (click me)</p>
-           <div class="blind_modoptions" style="display:none;">
-	           {% if modoptions|length > 0 %}
-	           <div class="left" style="width: 175px;">
-	                {% for option in modoptions|slice:"::2" %}
-	                <p>{{option.name }}: {{ option.value }}</p>
-	                {% endfor %}
-	           </div>
-	           <div class="left" style="width: 175px;">
-	                {% for option in modoptions|slice:"1::2" %}
-	                <p>{{option.name }}: {{ option.value }}</p>
-	                {% endfor %}
-	           </div>
-	           {% else %}
-	                <p>None.</p>
-	           {% endif %}
-           </div>
-           <div class="footer"></div>
-	    </div>
-
-<!-- RATING -->
-
-	    <div class="left players" style="width: 240px; padding: 0;">
-	        {% if replay.notcomplete %}<p style="color:maroon;"><b><span itemprop="result">Replay is incomplete or length of match less than 2 minutes. Not rated.</span></b></p>{% endif %}
-            {% if is_draw %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><span itemprop="result">The match was a draw!</span></div>{% endif %}
-            {% if was_stopped %}<div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><span itemprop="result">The match was stopped!</span></div>{% endif %}
-	        <table border="0" cellpadding="0" cellspacing="0" rules="none" width="240px">
-                <colgroup>
-                    <col />
-                    <col />
-                    <col />
-                    <col />
-                    <col />
-                    <col />
-                </colgroup>
-{% if not user.is_authenticated or logged_in_pa and logged_in_pa.sldb_privacy_mode != 0 %}
-                <tr class="body">
-                    <td colspan="6">Want to see <b>exact TrueSkill</b> values?</td>
-                </tr>
-                <tr class="body">
-                    <td colspan="6">* <u><a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a></u> to see yours.</td>
-                </tr>
-                <tr class="body">
-                    <td colspan="6">* To let others see your TrueSkill, <u><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></u>.</td>
-                </tr>
-                <tr class="body">
-                    <td colspan="6">* To see other players exact skills, tell them to do so too.</td>
-                </tr>
-                <tr class="body">
-                    <td colspan="6"><br/></td>
-                </tr>
-{% endif %}
-                <tr class="body">
-                    <td colspan="6" style="text-align:right;">{% if not has_bot %}TrueSkill &nbsp;{% endif %}[Rank]</td>
-                </tr>
-{% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
-                <tr class="body bold">
-                    <td style="padding-bottom:5px"><b>Team {{ at.num }}</b>{% if at.winner %}<div class="blind_winner" style="display:none;"><img alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/></div>{% endif %}</td>
+<!-- Player list -->
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-condensed">
+                <tbody>
+      {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
+        {% if not replay.match_type_short == "1"  or  replay.match_type_short == "F" %}
+                  <tr class="active{% if at.winner %} blind_winner_team{% endif %}">
+                    <td style="font-weight: bold;">Team {{ at.num }}{% if at.winner %} <img class="blind_winner" style="display:none; height: 24px;" alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}</td>
                     <td></td>
-  {% if not has_bot %}
-    {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
+          {% if not has_bot %}
+            {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
                     <td style="text-align:right;">{{ old_rating|floatformat:1 }}</td>
                     <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
                     <td style="text-align:right;"><div class="blind_winner" style="display:none;">{{ new_rating|floatformat:1 }}</div></td>
                     <td style="text-align:right;">&nbsp;[{{ lobby_rank_sum }}]</td>
-    {% else %}
+            {% else %}
+                    <td></td>
+                    <td></td>
+                  <td></td>
+                  <td></td>
+            {% endif %}
+          {% else %}
                     <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
-    {% endif %}
-  {% else %}
+          {% endif %}
+                  </tr>
+        {% endif %}
+        {% for p, pl_old, pl_new in players %}
+                  <tr class="body linehl bold{% if at.winner %} blind_winner_team{% endif %}">
+                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }}</span> <a href="{{ p.get_absolute_url }}" style="text-decoration: None;" itemprop="url"><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %}>{{ p.name }}</span></a>{% else %}</span><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %}>{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
+                    <td>{{ p.team.side|ljust:"4" }}</td>
+          {% if has_bot %}
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
-  {% endif %}
-
-	            </tr>
-    {% for p, pl_old, pl_new in players %}
-                <tr class="body linehl bold">
-                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }}</span> <a href="{{ p.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ p.name }}</span></a>{% else %}</span><span itemprop="name">{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
-                    <td style="">{{ p.team.side|ljust:"4" }}</td>
-      {% if has_bot %}
-                    <td></td>
-                    <td></td>
-                    <td></td>
-      {% else %}
+          {% else %}
                     <td style="text-align:right;">&nbsp;{{ pl_old }}</td>
                     <td style="text-align:center;"><div class="blind_winner" style="display:none;">&rarr;</div></td>
                     <td style="text-align:right;"><div class="blind_winner" style="display:none;">{{ pl_new }}</div></td>
-      {% endif %}
+          {% endif %}
                     <td class="body linehl" style="text-align:right;" >&nbsp;[{{ p.rank }}]</td>
-                </tr>
-    {% endfor %}
-                <tr>
-                    <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
-                </tr>
-{% endfor %}
-	            <tr>
-		            <td class="body" style="padding-bottom:5px"><b>Spectators</b></td>
-	                <td></td><td></td><td></td><td></td><td></td>
-                </tr>
-<!-- SPECS -->
-	{% if specs|length > 0 %}
-        {% for s in specs %}
-                <tr>
-	                <td class="body" itemprop="participant" itemscope itemtype="http://schema.org/Person">{% if s.startposx == -1 %}+ {% endif %}<span itemprop="name">{{ s.name }}</span><meta itemprop="url" content="{{ s.get_absolute_url }}"><link itemprop="additionalType" content="http://schema.org/WatchAction"/></td>
-	                <td></td><td></td><td></td><td></td><td></td>
-	            </tr>
+                  </tr>
         {% endfor %}
-	{% else %}
-                <tr>
-                    <td class="body">None.</td>
-                    <td></td><td></td><td></td><td></td><td></td>
-                </tr>
-    {% endif %}
-	        </table>
-	   </div>
+        {% if not replay.match_type_short == "F" or replay.match_type_short == "G" %}
+                  <tr>
+                      <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                  </tr>
+        {% endif %}
+      {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+<!-- Spectators -->
+
+            <div class="panel-group" id="accordionSpecs">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a data-toggle="collapse" data-parent="#accordionSpecs" href="#collapseSpecs">
+                      <h4 class="panel-title">Spectators <span class="caret"></span></h4>
+                    </a>
+                </div>
+                <div id="collapseSpecs" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    <div class="table-responsive">
+                      <table class="table table-striped table-hover table-condensed">
+                        <tbody>
+              {% if specs|length > 0 %}
+                {% for s in specs %}
+                          <tr>
+                            <td itemprop="participant" itemscope itemtype="http://schema.org/Person">{% if s.startposx == -1 %}+ {% endif %}<a href="{{ s.get_absolute_url }}" style="text-decoration: None;" itemprop="url"><span itemprop="name">{{ s.name }}</span></a><link itemprop="additionalType" content="http://schema.org/WatchAction"/></td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                          </tr>
+                {% endfor %}
+              {% else %}
+                          <tr>
+                            <td>None.</td>
+                            <td></td><td></td><td></td><td></td><td></td>
+                          </tr>
+              {% endif %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+<!-- TrueSkill info -->
+
+  {% if not user.is_authenticated or logged_in_pa and logged_in_pa.sldb_privacy_mode != 0 %}
+            <div class="panel-group" id="accordionTSInfos">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a data-toggle="collapse" data-parent="#accordionTSInfos" href="#collapseTSInfos">
+                      <h4 class="panel-title">Want to see exact TrueSkill values? <span class="caret"></span></h4>
+                    </a>
+                </div>
+                <div id="collapseTSInfos" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    <ul>
+                      <li><u><a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a></u> to see yours.</li>
+                      <li>To let others see your TrueSkill, <u><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></u>.</li>
+                      <li>To see other players exact skills, tell them to do so too.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+  {% endif %}
+
+          </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!-- col-sm-6 -->      
+    </div> <!-- row -->
 {% endcache %}
+
+<!-- BA Awards -->
+
+  {% if replay.bawards %}
+    <div class="row">
+      <div class="panel panel-default blind_winner" style="display:none;">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sx-12">
+              <center><img src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
+              <hr style="margin-top: 7px; margin-bottom: 12px;">
+            </div>
+          </div> <!-- row -->
+          <div class="row">
+    {% if replay.bawards.ecoKillAward1st %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Destroying enemy resource production</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.ecoKillAward1st.team.rgbcolor }};">{{ replay.bawards.ecoKillAward1st.name }}</span>{% if replay.bawards.ecoKillAward2nd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward2nd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.ecoKillAward3rd %},<br/><span style="color: #{{ replay.bawards.ecoKillAward3rd.team.rgbcolor }};">{{ replay.bawards.ecoKillAward3rd.name }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.fightKillAward1st %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Destroying enemy units and defences</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.fightKillAward1st.team.rgbcolor }};">{{ replay.bawards.fightKillAward1st.name }}</span>{% if replay.bawards.fightKillAward2nd %},<br/><span style="color: #{{ replay.bawards.fightKillAward2nd.team.rgbcolor }};">{{ replay.bawards.fightKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.fightKillAward3rd %},<br/><span style="color: #{{ replay.bawards.fightKillAward3rd.team.rgbcolor }};">{{ replay.bawards.fightKillAward3rd.name }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.effKillAward1st %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="effKillAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Effective use of resources</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.effKillAward1st.team.rgbcolor }};">{{ replay.bawards.effKillAward1st.name }}</span>{% if replay.bawards.effKillAward2nd %},<br/><span style="color: #{{ replay.bawards.effKillAward2nd.team.rgbcolor }};">{{ replay.bawards.effKillAward2nd.name }}</span>{% endif %}{% if replay.bawards.effKillAward3rd %},<br/><span style="color: #{{ replay.bawards.effKillAward3rd.team.rgbcolor }};">{{ replay.bawards.effKillAward3rd.name }}</span>{% endif %}
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.cowAward %}
+            <div class="col-md-4" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Doing everything</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.cowAward.team.rgbcolor }};">{{ replay.bawards.cowAward.name }}</span>
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.ecoAward %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/eco.png" alt="ecoAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Produced the most resources</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.ecoAward.team.rgbcolor }};">{{ replay.bawards.ecoAward.name }}</span>
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.dmgRecAward %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/damage.png" alt="dmgRecAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Took the most damage</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.dmgRecAward.team.rgbcolor }};">{{ replay.bawards.dmgRecAward.name }}</span>
+                </div>
+              </div>
+            </div>
+    {% endif %}
+    {% if replay.bawards.sleepAward %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="sleepAward" width="64">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">Slept longest</h4>
+                  <span style="font-weight:bold; color: #{{ replay.bawards.sleepAward.team.rgbcolor }};">{{ replay.bawards.sleepAward.name }}</span>
+                </div>
+              </div>
+            </div>
+    {% endif %}
+          </div> <!-- row -->
+        </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!-- row -->
+  {% endif %}
+
+<!-- COMMENTS -->
+
+    <div class="row">
+      <div class="col-sx-12">
+        <div class="panel panel-default" itemscope itemtype="http://schema.org/WebPage">
+  {% get_comment_count for replay as comment_count %}
+          <div class="panel-heading"><b>Comments</b><br/>{% if not user.is_authenticated %}<small>(<a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a> to post a comment)</small>{% endif %}</div>
+          <div class="panel-body">
+  {% render_comment_list for replay %}
+            <a name="afterlastcomment"></a>
+
+  {% if user.is_authenticated %}
+        {% render_comment_form for replay %}
+  {% endif %}
+          </div>
+        </div>
+      </div>
+    </div> <!-- row -->
+
+<!-- MAP / MOD OPTIONS -->
+
+    <div class="row">
+      <div class="col-sm-4">
+        <div class="panel-group" id="accordionMaps">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+                <a data-toggle="collapse" data-parent="#accordionMaps" href="#collapseMaps">
+                  <h4 class="panel-title">Map options <span class="caret"></span></h4>
+                </a>
+            </div>
+            <div id="collapseMaps" class="panel-collapse collapse">
+              <div class="panel-body">
+{% if mapoptions|length > 0 %}
+  {% for option in mapoptions %}
+               <p>{{option.name }}: {{ option.value }}</p>
+  {% endfor %}
+{% else %}
+               <p>None.</p>
+{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!--col-sm-4  -->
+      <div class="col-sm-8">
+        <div class="panel-group" id="accordionMods">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+                <a data-toggle="collapse" data-parent="#accordionMods" href="#collapseMods">
+                  <h4 class="panel-title">Mod options <span class="caret"></span></h4>
+                </a>
+            </div>
+            <div id="collapseMods" class="panel-collapse collapse">
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-6">
+{% if modoptions|length > 0 %}
+  {% for option in modoptions|slice:"::2" %}
+                    <p>{{option.name }}: {{ option.value }}</p>
+  {% endfor %}
+{% else %}
+                    <p>None.</p>
+{% endif %}
+                  </div>
+                  <div class="col-md-6">
+{% if modoptions|length > 0 %}
+  {% for option in modoptions|slice:"1::2" %}
+                    <p>{{option.name }}: {{ option.value }}</p>
+  {% endfor %}
+{% endif %}
+                  </div>
+                </div> <!-- row -->
+                </div>
+              </div>
+            </div>
+          </div> <!-- panel-group -->
+      </div> <!-- col-sm-8 -->
+    </div> <!-- row -->
 
 <!-- EXTRA MEDIA -->
 
-       <div class="left" style="width: 580px; padding: 0;">
   {% if user in replay_owners %}
-            <p style="text-align:center; color:red; font-weight:bold;">&raquo;&raquo;&raquo;&nbsp;&nbsp;<a href="{% url "srs.upload.upload_media" replay.gameID %}">Upload media files.</a>&nbsp;&nbsp;&laquo;&laquo;&laquo;</p>
-            <div class="footer"></div>
+    <div class="row">
+      <div class="col-sx-12">
+        <a class="btn btn-default" role="button" href="{% url "srs.upload.upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
+      </div>
+    </div>
   {% endif %}
   {% if extra_media %}
+    <div class="row" itemscope itemtype="http://schema.org/MediaObject">
     {% for media in extra_media %}
-          <div itemscope itemtype="http://schema.org/MediaObject">
+      <div class="col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-heading"><h4 itemprop="about">{{ media.comment }}</h4></div>
+          <div class="panel-body">
       {% if media.image %}
-            <p><b><span itemprop="name">{{ media.image_basename }}</span></b> (Click to open picture maximized.)</p>
-            <p><a href="{{ media.image.url }}" title="Click to open picture maximized." itemprop="image"><img src="{{ media.image.url }}" alt="User-supplied image." style="max-width:100%; max-height:250px;" itemprop="thumbnailUrl"/></a></p>
+            <a href="{{ media.image.url }}" title="Click to open picture maximized." itemprop="thumbnailUrl"><img class="img-responsive img-thumb" src="{{ media.image.url }}" alt="User-supplied image." itemprop="image"/></a>
       {% endif %}
       {% if media.media %}
-            <p><b><span itemprop="name">{{ media.media_basename }}</span>:</b> {{ media.media_magic_text }} (<span itemprop="encodingFormat">{{ media.media_magic_mime }}</span>)</p>
-        {% if media.media_magic_mime in known_video_formats %}
+        {% if media.media_magic_mime == "image/svg+xml" %}
+            <p>Browsers have issues showing movies in SVG format after scaling. Please <a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">click here</a> to open the file in a new window.</p>
+        {% elif media.media_magic_mime in known_video_formats %}
             <div data-swf="{{ STATIC_URL }}flowplayer_5.4.3.swf" class="flowplayer" itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
                 <video>
                     <source type="{{ media.media_magic_mime }}" src="{{ media.media.url }}" itemprop="contentUrl" content="{{ media.media.url }}"/>
@@ -330,39 +454,40 @@
             </div>
         {% else %}
             <span itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
-                <p style="font-weight:bold"><a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a></p>
+                <a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a>
             </span>
         {% endif %}
       {% endif %}
-            <p><b>Comment: </b><span itemprop="about">{{ media.comment }}</span></p>
-            <p><b>Uploaded by</b> <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ media.uploader }}</span></span> on <span itemprop="uploadDate" content="{{ media.upload_date.isoformat }}">{{ media.upload_date }}</span></p>
-            <div class="footer"></div>
           </div>
+          <div class="panel-footer">Uploaded by <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ media.uploader }}</span></span> on <span itemprop="uploadDate" content="{{ media.upload_date.isoformat }}">{{ media.upload_date }}</span>: "<span itemprop="name">{% if media.image %}{{ media.image_basename }}{% else %}{{ media.media_basename }} (<span itemprop="encodingFormat">{{ media.media_magic_mime }}</span>){% endif %}</span>"</div>
+        </div> <!-- panel -->
+      </div> <!-- col-sx-6 -->
     {% endfor %}
+    </div> <!-- row -->
   {% endif %}
-       </div>
 
-<!-- COMMENTS -->
+<!-- Map & Mod download modals -->
 
-	   <div class="left" itemscope itemtype="http://schema.org/WebPage">
-            {% get_comment_count for replay as comment_count %}
-	        <h3>Comments ({{ comment_count }}):</h3>
-	        {% get_comment_list for replay as comment_list %}
-			{% for comment in comment_list %}
-            <span itemprop="comment" itemscope itemtype="http://schema.org/UserComments">
-				<p><a name="c{{ comment.id }}"></a>
-				<b>Comment by "<span itemprop="creator" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ comment.user.username }}</span></span>" on <span itemprop="commentTime" content="{{ comment.submit_date.isoformat }}">{{ comment.submit_date }}</span></b> <a href="{% get_comment_permalink comment %}" itemprop="url">(link)</a>: <span itemprop="commentText">{{ comment.comment }}</span></p>
-            </span>
-			{% endfor %}
-	        <a name="afterlastcomment"></a>
-
-            <div class="footer"></div>
-	        {% if user.is_authenticated %}
-            <h3>Post a comment:</h3>
-{% render_comment_form for replay %}
-			{% else %}
-			<h3>To post a comment you have to <a href="{% url "srs.views.login" %}?next={{ selfurl }}">log in</a>.</h3>
-            {% endif %}
+    <div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+        <!-- this div will be filled using jQuery's load with URL from button -->
         </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modModal" tabindex="-1" role="dialog" aria-labelledby="modModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+        <!-- this div will be filled using jQuery's load with URL from button -->
         </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block page_js %}
+    {% js "js/srs_replay.js" %}
+  {% if has_video %}
+    {% js_lib "flowplayer_5.4.3.min.js" %}
+  {% endif %}
 {% endblock %}

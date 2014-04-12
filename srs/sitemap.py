@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.core.urlresolvers import reverse
 
-from models import Replay, PlayerAccount, Game, GameRelease
+from models import Replay, PlayerAccount, Game
 from views import hall_of_fame
 
 class ReplaySitemap(Sitemap):
@@ -24,9 +24,3 @@ class HofSitemap(Sitemap):
 
     def location(self, game):
         return reverse(hall_of_fame, args=[game.abbreviation])
-
-class GameSitemap(Sitemap):
-    changefreq = "weekly"
-
-    def items(self):
-        return GameRelease.objects.all()

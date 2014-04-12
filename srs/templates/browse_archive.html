@@ -1,0 +1,377 @@
+{% extends 'srs_base.html' %}
+{% load eztables %}
+
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+
+{% block page_css %}
+    {% css "css/ionicons.min.css" %}
+    {% datatables_bootstrap_css %}
+    {% css "css/daterangepicker-bs3.css" %}
+    {% css "css/srs_browse.css" %}
+    <meta name="newestreplay" content="{{ first_replay.unixTime.isoformat }}"/>
+    <meta name="oldestreplay" content="{{ last_replay.unixTime.isoformat }}"/>
+    {% for name, value in filters %}
+    <meta name="bfilter" content="{{ name }} {{ value }}"/>
+    {% endfor %}
+    {% if map_name %}
+    <meta name="map_name" content="{{ map_name }}"/>
+    {% endif %}
+    {% if game_abbreviation %}
+    <meta name="game_abbreviation" content="{{ game_abbreviation }}"/>
+    {% endif %}
+{% endblock %}
+
+{% block pagetitle %}{{ pagetitle }}{% endblock %}
+
+{% block maincontent %}
+      <div class="row">
+        <div class="col-xs-12">
+          <h1 class="page-header">Browse Archive</h1>
+        </div>
+      </div>
+      <div class="row">
+
+<!-- LEFT SIDE -->
+
+        <div class="col-sm-4" itemscope itemtype="http://schema.org/WebPage">
+          <div class="row">
+            <div class="col-xs-12">
+              <p class="lead">Select a filter:<span class="pull-right"><a href="#" class="btn btn-default" id="clear_all"><span class="glyphicon glyphicon-remove-circle"></span> Clear all</a></span></p>
+            </div>
+          </div>
+<!-- TIME -->
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="panel-group" id="accordion_date">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                      <a data-toggle="collapse" data-parent="#accordion_date" href="#collapse_date">
+                        <h4 class="panel-title"><span class="glyphicon glyphicon-time"></span> Time <span class="caret"></span></h4>
+                      </a>
+                  </div>
+                  <div id="collapse_date" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                      <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> <small>Times are stored in <a href="http://en.wikipedia.org/wiki/Coordinated_Universal_Time">UTC</a>.</small></p>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter" id="date t_today" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_today.count }}</span> <span itemprop="name">today</span> 
+                            </a>
+                            <a href="#" class="btn btn-default browse_filter" id="date t_yesterday" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_yesterday.count }}</span> <span itemprop="name">yesterday</span> 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter" id="date t_this_month" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_this_month.count }}</span> <span itemprop="name">this month</span> 
+                            </a>
+                            <a href="#" class="btn btn-default browse_filter" id="date t_last_month" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_last_month.count }}</span> <span itemprop="name">last month</span> 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter" id="date t_this_year" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_this_year.count }}</span> <span itemprop="name">this year</span>  
+                            </a>
+                            <a href="#" class="btn btn-default browse_filter" id="date t_last_year" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ t_last_year.count }}</span> <span itemprop="name">last year</span> 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter" id="date t_ancient" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span itemprop="name">ancient</span> <span class="badge pull-right visible-md visible-lg">{{ t_ancient.count }}</span> 
+                            </a>
+                            <a href="#" class="btn btn-default mydatepicker" id="date datepicker">
+                              <span class="glyphicon glyphicon-calendar"></span> <span id="datepicker_label"> date range</span> 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default active browse_filter" id="date 0">
+                              <span class="badge pull-right visible-md visible-lg">{{ replays_num }}</span> <span class="pull-left glyphicon glyphicon-remove-circle"></span> Clear filter 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- MAP -->
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="panel-group" id="accordion_map">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                      <a data-toggle="collapse" data-parent="#accordion_map" href="#collapse_map">
+                        <h4 class="panel-title"><span class="ionicons ion-map"></span> Map <span class="caret"></span></h4>
+                      </a>
+                  </div>
+                  <div id="collapse_map" class="panel-collapse collapse">
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <select id="select-map" class="form-control input-lg" placeholder="Find a map..."></select>
+                          </div>
+                          <p><small>Top 10 in last 30 days (30d / total):</small></p>
+  {% for map1, map2 in top_maps %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="map {{ map1.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-lg">{{ map1.1 }}</span> <span itemprop="name">{{ map1.0.name }}</span> 
+                            </a>
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="map {{ map2.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-lg">{{ map2.1 }}</span> <span itemprop="name">{{ map2.0.name }}</span> 
+                            </a>
+                          </div>
+  {% endfor %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter{% if not map_name %} active{% endif %}" id="map 0">
+                              <span class="pull-left glyphicon glyphicon-remove-circle"></span> Clear map filter 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- TAG -->
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="panel-group" id="accordion_tags">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                      <a data-toggle="collapse" data-parent="#accordion_tag" href="#collapse_tag">
+                        <h4 class="panel-title"><span class="glyphicon glyphicon-tag"></span> Tag <span class="caret"></span></h4>
+                      </a>
+                  </div>
+                  <div id="collapse_tag" class="panel-collapse collapse">
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="col-xs-12">
+  {% for tag1, tag2, tag3 in top_tags %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="tag {{ tag1.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ tag1.1 }}</span> <span itemprop="name">{{ tag1.0.name }}</span> 
+                            </a>
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="tag {{ tag2.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ tag2.1 }}</span> <span itemprop="name">{{ tag2.0.name }}</span> 
+                            </a>
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="tag {{ tag3.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ tag3.1 }}</span> <span itemprop="name">{{ tag3.0.name }}</span> 
+                            </a>
+                          </div>
+  {% endfor %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter active" id="tag 0">
+                              <span class="badge pull-right visible-md visible-lg">{{ replays_num }}</span><span class="pull-left glyphicon glyphicon-remove-circle"></span> Clear tag filter 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- GAME -->
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="panel-group" id="accordion_game">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                      <a data-toggle="collapse" data-parent="#accordion_game" href="#collapse_game">
+                        <h4 class="panel-title"><span class="ionicons ion-game-controller-b"></span> Game <span class="caret"></span></h4>
+                      </a>
+                  </div>
+                  <div id="collapse_game" class="panel-collapse collapse">
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="col-xs-12">
+  {% for game in all_games %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default btn-sm browse_filter" id="game {{ game.0.id }}" itemscope itemtype="http://schema.org/SiteNavigationElement">
+                              <span class="badge pull-right visible-md visible-lg">{{ game.1 }}</span> <span itemprop="name">{{ game.0.name }}</span> 
+                            </a>
+                          </div>
+  {% endfor %}
+                          <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-default browse_filter active" id="game 0">
+                              <span class="pull-left glyphicon glyphicon-remove-circle"></span> Clear game filter 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <p></p>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified">
+                            <a class="btn btn-default btn-sm disabled" data-toggle="modal" data-target="#gameversionModal" href="" title="Select specific game version" id="gameversionbtn">
+                              Select specific game version
+                            </a>
+                          </div>
+                          <div class="btn-group btn-group-justified">
+                            <a class="btn btn-default btn-sm browse_filter disabled" id="gameversion 0">
+                              <span class="pull-left glyphicon glyphicon-remove-circle"></span> Clear 
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- PLAYER -->
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="panel-group" id="accordion_player">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                      <a data-toggle="collapse" data-parent="#accordion_player" href="#collapse_player">
+                        <h4 class="panel-title"><span class="ionicons ion-person-stalker"></span> Player <span class="caret"></span></h4>
+                      </a>
+                  </div>
+                  <div id="collapse_player" class="panel-collapse collapse">
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <div class="btn-group btn-group-justified" id="select-player-filter-btn-group">
+                            <select id="select-player-filter" class="form-control input-lg" placeholder="Find a player..."></select>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-xs-12">
+                          <ul class="list-group" id="selectedplayers" style="min-height: 180px;">
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- AUTOHOST -->
+          <div class="row" id="row_autohost">
+            <div class="col-xs-12">
+              <div class="btn-group btn-group-justified">
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="btn_autohost">
+                      <span class="pull-left"><span class="ionicons ion-home"></span> Autohost <span class="caret"></span></span>
+                    </button>
+                    <ul class="dropdown-menu" role="menu" id="autohostdropdown">
+                      <li><a href="#" class="ddn_clear" id="autohost -">Clear filter <span class="pull-right glyphicon glyphicon-remove-circle"></span></a></li>
+                      <li class="divider"></li>
+    {% for hostname, count in autohosts %}
+                      <li><a href="#" class="browse_filter" id="autohost {{ hostname }}">{{ hostname }} <span class="badge pull-right">{{ count }}</span></a></li>
+    {% endfor %}
+                    </ul>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+<!-- UPLOADER -->
+          <div class="row" id="row_uploader">
+            <div class="col-xs-12">
+              <div class="btn-group btn-group-justified">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="btn_uploader">
+                    <span class="pull-left"><span class="ionicons ion-ios7-contact"></span> Uploader <span class="caret"></span></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" id="uploaderdropdown">
+                      <li><a href="#" class="ddn_clear" id="uploader -">Clear filter <span class="pull-right glyphicon glyphicon-remove-circle"></span></a></li>
+                      <li class="divider"></li>
+  {% for username, count in uploaders %}
+                    <li><a href="#" class="browse_filter" id="uploader {{ username }}">{{ username }} <span class="badge pull-right">{{ count }}</span></a></li>
+  {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div> <!--col-xs-12  -->
+          </div> <!-- row -->
+        </div> <!--col-sm-4  -->
+
+<!-- RIGHT SIDE -->
+
+        <div class="col-sm-8" role="main">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="table-responsive">
+                <table id="browse-table" class="display table table-hover table-striped table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Date</th>
+                      <th>Uploader</th>
+                      <th>D</th>
+                      <th>C</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colspan="6" class="dataTables_empty">Loading data from server</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th>Title</th>
+                      <th>Date</th>
+                      <th>Uploader</th>
+                      <th>D</th>
+                      <th>C</th>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div> <!-- col-sm-8 -->
+      </div> <!-- row -->
+
+<!-- gameversion modal -->
+
+      <div class="modal fade" id="gameversionModal" tabindex="-1" role="dialog" aria-labelledby="gameversionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+          <!-- this div will be filled using jQuery's load with URL from button -->
+          </div>
+        </div>
+      </div>
+{% endblock %}
+
+{% block page_js %}
+  {% datatables_js %}
+  {% datatables_bootstrap_js %}
+  {% js_lib "moment.min.js" %}
+  {% js_lib "daterangepicker.js" %}
+  {% js "js/srs_browse.js" %}
+{% endblock %}

@@ -1,56 +1,29 @@
 {% load cache %}
+
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+
 {% cache 600 replaybox replay.pk replay_details %}
-{% if replay_details %}
-                <table border="0" cellpadding="0" cellspacing="0" rules="none">
-                    <colgroup>
-                        <col width="48"/>
-                        <col width="390"/>
-                    </colgroup>
-                    <tr>
-                        <td>Date </td><td itemprop="startTime" content="{{ replay.unixTime.isoformat }}"><a href="{% url "srs.views.match_date" replay.unixTime|date:'Y-m-d' %}">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}</td>
-                    </tr>
-                    <tr>
-                        <td>Game </td><td><a href="{% url "srs.views.gamerelease" replay.gametype %}"><span itemprop="instrument">{{ replay.gametype }}</span></a> 
-                                        <span itemprop="object" itemscope itemtype="http://schema.org/SoftwareApplication">
-                                            <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)" />
-                                            <meta itemprop="name" content="SpringRTS"/>
-                                            <meta itemprop="image" content="http://springrts.com/images/logo.png"/>
-                                            <meta itemprop="url" content="http://springrts.com/"/>
-                                            (<span itemprop="description">engine {{ replay.versionString }}</span>)
-                                        </span>
-                                      </td>
-                    </tr>
-                    <tr>
-                        <td>Map </td><td itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{{ replay.map_info.get_absolute_url }}" itemprop="sameAs"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="image" content="{{ replay.map_img.get_absolute_url }}"/><meta itemprop="thumbnailUrl" content="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg"/></td>
-                    </tr>
-                    <tr>
-                        <td>Length </td><td>{{ replay.wallclockTime }}</td>
-                    </tr>
-                    <tr>
-                        <td>Tags </td><td itemscope itemtype="http://schema.org/ItemPage">{% for tag in replay.tags.all %} <span itemprop="isPartOf" itemscope itemtype="http://schema.org/CollectionPage"><a href="{{ tag.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ tag }}</span></a></span>{% endfor %}</td>
-                    </tr>
-                    <tr>
-                        <td>Upload </td><td itemscope itemtype="http://schema.org/DataDownload">by <span itemprop="author" itemscope itemtype="http://schema.org/Person"><a href="{{ replay.uploader.get_absolute_url }}" itemprop="url"><span itemprop="name">{{ replay.uploader.username }}</span></a></span>{% if replay.autohostname %} from  <span itemprop="provider" itemscope itemtype="http://schema.org/Person"><a href="{% url "srs.views.autohost" replay.autohostname %}" itemprop="url"><span itemprop="name">{{ replay.autohostname }}</span></a></span>{% endif %} on <span itemprop="uploadDate" content="{{ replay.upload_date.isoformat }}"><a href="{% url "srs.views.upload_date" replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a> {{ replay.upload_date|date:"H:i:s (T)" }}</span></td>
-                    </tr>
-                    <tr>
-                        <td>Downloads </td><td>{{ replay.download_count }}</td>
-                    </tr>
-                    <tr>
-                        <td>Comments <br/>&nbsp;</td><td>{{ replay.comments }}</td>
-                    </tr>
-                    <tr>
-                        <td>Download </td><td><span itemscope itemtype="http://schema.org/DataDownload"><a href="{% url "srs.views.download" replay.gameID %}" itemprop="contentUrl">replay</a></span> | <a href="/mapmodlinks/{{ replay.gameID }}/">map and game</a></td>
-                    </tr>
-                </table>
-{% else %}
-                <p><a href="{% url "srs.views.gamerelease" replay.gametype %}"><span itemprop="instrument">{{ replay.gametype }}</span></a> (<span itemprop="object">engine {{ replay.versionString }}</span>)</p>
-                <p>Map: <span itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{{ replay.map_info.get_absolute_url }}" itemprop="sameAs"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="image" content="{{ replay.map_img.get_absolute_url }}"/><meta itemprop="thumbnailUrl" content="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg"/></span></p>
-                <p>Length: {{ replay.wallclockTime }}</p>
+                {% if replay_details %}<p style="margin: 0 0 2px; padding-top: 10px;">Date : <span itemprop="startTime" content="{{ replay.unixTime.isoformat }}"><a href="{% url "srs.views.browse_archive" "" %}date=daterange_{{ replay.unixTime|date:'Y-m-d' }}/">{{ replay.unixTime|date:"SHORT_DATE_FORMAT"  }}</a> {{ replay.unixTime|date:"H:i:s (T)" }}</span></p>{% else %}<meta itemprop="startTime" content="{{ replay.unixTime.isoformat }}"/>{% endif %}
+                <p style="margin: 0 0 2px;{% if not replay_details %} padding-top: 10px;{% endif %}">{% if replay_details %}Game: {% endif %}<span itemprop="instrument"><a href="{% url "srs.views.browse_archive" "" %}game={{ replay.game.id }}/">{{ replay.game.name }}</a> <a href="{% url "srs.views.browse_archive" "" %}game={{ replay.game.id }}/gameversion={{ replay.game_release.id }}/">{{ replay.game_release.version }}</a></span>
+                  <span itemprop="object" itemscope itemtype="http://schema.org/SoftwareApplication">
+                    <link itemprop="additionalType" href="http://www.productontology.org/id/Spring_(game_engine)" />
+                    <meta itemprop="name" content="SpringRTS"/>
+                    <meta itemprop="image" content="http://springrts.com/images/logo.png"/>
+                    <meta itemprop="url" content="http://springrts.com/"/>
+                    (<span itemprop="description">engine {{ replay.versionString }}</span>)
+                  </span>
+                </p>
+                <p style="margin: 0 0 2px;">Map: <span itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{% url "srs.views.browse_archive" "" %}map={{ replay.map_info.id }}/"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="thumbnailUrl" content="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg"/></span></p>
+                <p style="margin: 0 0 2px;">Length: {{ replay.wallclockTime }}</p>
+                {% if replay_details %}<p style="margin: 0 0 2px;">Tags:{% for tag in replay.tags.all %} <a href="{% url "srs.views.browse_archive" "" %}tag={{ tag.id }}/">{{ tag }}</a>{% endfor %}</p>{% endif %}
                 <span itemscope itemtype="http://schema.org/DataDownload">
-                  <p>Uploaded <span itemprop="author" itemscope itemtype="http://schema.org/Person"><meta itemprop="url" content="{{ replay.uploader.get_absolute_url }}"/><meta itemprop="name" content="{{ replay.uploader.username }}"/></span>{% if replay.autohostname %} from  <span itemprop="provider" itemscope itemtype="http://schema.org/Person"><a href="{% url "srs.views.autohost" replay.autohostname %}" itemprop="url"><span itemprop="name">{{ replay.autohostname }}</span></a></span>{% endif %} on <span itemprop="uploadDate" content="{{ replay.upload_date.isoformat }}"><a href="{% url "srs.views.upload_date" replay.upload_date|date:'Y-m-d' %}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}</a></span></p>
-                  <p><a href="{% url "srs.views.download" replay.gameID %}" class="piwik_download" itemprop="contentUrl">Download</a>s: {{ replay.download_count }} Comments: {{ replay.comments }}</p>
+                  <p style="margin: 0 0 2px;">Uploaded <span itemprop="author" itemscope itemtype="http://schema.org/Person"><meta itemprop="name" content="{{ replay.uploader.username }}"/></span>{% if replay.autohostname %} by <span itemprop="provider" itemscope itemtype="http://schema.org/Person"><a href="{% url "srs.views.browse_archive" "" %}autohost={{ replay.autohostname }}/"><span itemprop="name">{{ replay.autohostname }}</span></a></span>{% endif %} on <span itemprop="uploadDate" content="{{ replay.upload_date.isoformat }}">{{ replay.upload_date|date:"SHORT_DATE_FORMAT" }}{% if replay_details %} {{ replay.upload_date|date:"H:i:s (T)" }}{% endif %}</span></p>
+                  <p style="margin: 0 0 2px;">{% if not replay_details %}<a href="{% url "srs.views.download" replay.gameID %}" class="piwik_download" itemprop="contentUrl">Download</a>s{% else %}Downloads{% endif %}: {{ replay.download_count }} Comments: {{ replay.comment_count }}</p>
                 </span>
-                <meta itemprop="startTime" content="{{ replay.unixTime.isoformat }}"/>
-{% endif %}
+                {% if replay_details %}<p style="margin: 0 0 2px;">Uploaders comment: {% if replay.long_text %}{{ replay.long_text }}{% else %}None{% endif %}</p>{% endif %}
                 <meta itemprop="endTime" content="{{ replay.match_end.isoformat }}"/>
 {% endcache %}
