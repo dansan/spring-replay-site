@@ -10,11 +10,8 @@
 
 // initialize DataTables
 var tables = $( "table[id^='lbtable-']" );
-console.log( "tables: " );
-console.log( tables );
 for (index = 0; index < tables.length; ++index) {
 	var tid = tables[ index ].id.split("-")[1];
-	console.log( "tid: " + tid );
 	$( tables[ index ] ).dataTable({
 	"bAutoWidth": false,
 	"bLengthChange": false,

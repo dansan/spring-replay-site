@@ -121,7 +121,7 @@ WSGI_APPLICATION = 'srs.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
-    SRS_FILE_ROOT+'/templates/'
+    SRS_FILE_ROOT+'/templates/',
 )
 
 INSTALLED_APPS = (

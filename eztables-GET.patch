@@ -1,0 +1,10 @@
+--- lib/python2.7/site-packages/eztables/views.py.ori	2014-04-13 02:17:05.318379719 +0200
++++ lib/python2.7/site-packages/eztables/views.py	2014-04-13 02:17:19.896626906 +0200
+@@ -61,6 +61,7 @@
+         return self.process_dt_response(request.POST)
+ 
+     def get(self, request, *args, **kwargs):
++        self.GET = request.GET
+         return self.process_dt_response(request.GET)
+ 
+     def process_dt_response(self, data):
