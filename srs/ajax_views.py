@@ -141,8 +141,6 @@ def ajax_playerreplays_tbl_src(request, accountid):
                     "aaData": list()}
     params = dict()
     for k,v in request.GET.items():
-        #if not k.startswith("b") and "Sort" in k:
-        logger.debug("k: %s, v: %s", k, v)
         try:
             if k[0] == "i":
                 params[k] = int(v)
@@ -369,7 +367,6 @@ class BrowseReplaysDTView(DatatablesView):
         return queryset
 
 def hof_tbl_src(request, leaderboardid):
-    logger.debug("leaderboardid: %s", leaderboardid)
     empty_result = {"iTotalRecords": 0,
                     "iTotalDisplayRecords": 0,
                     "aaData": list()}

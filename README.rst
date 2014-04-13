@@ -29,6 +29,7 @@ Installation
 ============
 
 Dependencies:
+
 - Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 - DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 - suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
@@ -40,10 +41,13 @@ Dependencies:
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django.js: https://github.com/noirbizarre/django.js/
 
-.. code-block:: console
+.. code-block:: bash
+
     $ virtualenv srs
     $ . srs/bin/activate
-    (srs) $ pip install --compile Django Pillow MySQL-python suds django-xmlrpc python-magic pytz django-picklefield django-eztables django.js
+    (srs) $ pip install --compile Django Pillow MySQL-python suds django-xmlrpc python-magic pytz django-picklefield django.js
+
+- install django-eztables from https://github.com/dansan/django-eztables.git
 
 - jQuery UI: http://jqueryui.com/
 - flowplayer: http://flowplayer.org/
