@@ -30,6 +30,12 @@ Installation
 
 Dependencies:
 
+- jQuery UI: http://jqueryui.com/
+- flowplayer: http://flowplayer.org/
+- selectize.js: https://github.com/brianreavis/selectize.js/
+- bootstrap-daterangepicker: https://github.com/dangrossman/bootstrap-daterangepicker/
+- Moment.js: http://momentjs.com/
+
 - Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 - DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 - suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
@@ -49,10 +55,14 @@ Dependencies:
 
 - install django-eztables from https://github.com/dansan/django-eztables.git
 
-- jQuery UI: http://jqueryui.com/
-- flowplayer: http://flowplayer.org/
-- selectize.js: https://github.com/brianreavis/selectize.js/
-- bootstrap-daterangepicker: https://github.com/dangrossman/bootstrap-daterangepicker/
-- Moment.js: http://momentjs.com/
+.. code-block:: bash
+
+    $ pip install git+git://github.com/dansan/django-eztables.git
+
+Patch ``virtenv/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
+
+.. code-block:: bash
+
+    $ ./manage.py collectstatic
 
 Copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there.
