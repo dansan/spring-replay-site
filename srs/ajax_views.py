@@ -330,7 +330,7 @@ class BrowseReplaysDTView(DatatablesView):
     model = Replay
     fields = ("title",
               "unixTime",
-              "uploader__username",
+              "gametype",
               "download_count",
               "comment_count",
               "gameID"
