@@ -46,12 +46,13 @@ Dependencies:
 - django-picklefield: https://pypi.python.org/pypi/django-picklefield/
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django.js: https://github.com/noirbizarre/django.js/
+- South: http://south.aeracode.org/
 
 .. code-block:: bash
 
     $ virtualenv srs
     $ . srs/bin/activate
-    (srs) $ pip install --compile Django Pillow MySQL-python suds django-xmlrpc python-magic pytz django-picklefield django.js
+    (srs) $ pip install --compile Django Pillow MySQL-python suds django-xmlrpc python-magic pytz django-picklefield django.js South
 
 - install django-eztables from https://github.com/dansan/django-eztables.git
 
@@ -63,6 +64,8 @@ Patch ``virtenv/lib/python2.7/site-packages/eztables/views.py`` using ``eztables
 
 .. code-block:: bash
 
+    $ ./manage.py migrate srs
+    $ ./manage.py migrate lobbyauth
     $ ./manage.py collectstatic
 
 Copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there.
