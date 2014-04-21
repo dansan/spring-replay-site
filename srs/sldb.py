@@ -84,7 +84,7 @@ def _query_sldb(service, *args, **kwargs):
     May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
     a problem with the data/request.
     """
-    logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
+#     logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
 
 #     if settings.DEBUG:
 #         logger.debug("not connecting while in DEBUG")
@@ -100,7 +100,8 @@ def _query_sldb(service, *args, **kwargs):
         logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, e)
         raise e
     else:
-        logger.debug("%s() returned: %s", service, rpc_result)
+#         logger.debug("%s() returned: %s", service, rpc_result)
+        pass
     finally:
         socket.setdefaulttimeout(socket_timeout)
 
@@ -143,7 +144,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L1
     """
-    logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
+#     logger.debug("game: %s accountids: %s user: %s privatize: %s", game_abbr, accountids, user, privatize)
 
     rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
 
@@ -173,7 +174,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
                 pa_result["skills"][i][0] = mu
             pa_result["skills"][i][1] = si
 
-    logger.debug("returning: %s", rpc_skills)
+#     logger.debug("returning: %s", rpc_skills)
     return rpc_skills
 
 def get_sldb_pref(accountid, pref):
@@ -218,7 +219,7 @@ def get_sldb_match_skills(gameIDs):
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L60
     """
-    logger.debug("gameIDs: %s", gameIDs)
+#     logger.debug("gameIDs: %s", gameIDs)
 
     # check cache
     SldbMatchSkillsCache.purge_old()
@@ -227,10 +228,10 @@ def get_sldb_match_skills(gameIDs):
     for gameid in gameIDs:
         cache_entry, created = SldbMatchSkillsCache.objects.get_or_create(gameID=gameid, defaults={"text": ""})
         if created or cache_entry.text == "":
-            logger.info("MatchSkills cache miss for %s", gameid)
+#             logger.debug("MatchSkills cache miss for %s", gameid)
             cache_miss[gameid] = cache_entry
         else:
-            logger.info("MatchSkills cache hit  for %s", gameid)
+#             logger.debug("MatchSkills cache hit  for %s", gameid)
             sldbmatch_unpickled = cPickle.loads(str(cache_entry.text))
             result.append(sldbmatch_unpickled)
 
@@ -260,7 +261,7 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#93
     """
-    logger.debug("game: %s match_types: %s", game, match_types)
+#     logger.debug("game: %s match_types: %s", game, match_types)
     # test args
     if game.sldb_name == "":
         raise SLDBbadArgumentException("game", game)
@@ -274,10 +275,11 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
         lbg, created = SldbLeaderboardGame.objects.get_or_create(game=game, match_type=match_type)
         if created or datetime.datetime.now(tz=lbg.last_modified.tzinfo) - lbg.last_modified > datetime.timedelta(1):
             # new entry or older than 1 day -> refresh
-            logger.info("Leaderboard cache stale for %s", lbg)
+#             logger.debug("Leaderboard cache stale for %s", lbg)
             refresh_lbg.append(lbg)
         else:
-            logger.info("Leaderboard cache hit   for %s", lbg)
+#             logger.debug("Leaderboard cache hit   for %s", lbg)
+            pass
     if refresh_lbg:
         query_args = game.sldb_name, [matchtype2sldb_gametype[lbg.match_type] for lbg in refresh_lbg]
         try:
@@ -330,5 +332,5 @@ def get_sldb_player_stats(game_abbr, accountid):
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#124
     """
-    logger.debug("game_abbr: %s accountid: %d", game_abbr, accountid)
+#     logger.debug("game_abbr: %s accountid: %d", game_abbr, accountid)
     return _query_sldb("getPlayerStats", game_abbr, accountid)
