@@ -8,6 +8,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var game_pref = $( 'meta[name="game_pref"]' ).attr( "content" );
+if ( game_pref===undefined ) game_pref = 0;
+
 $('#select-player').selectize({
     valueField: 'accountid',
     labelField: 'player__name',

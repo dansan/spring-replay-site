@@ -6,38 +6,39 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.http import Http404, HttpResponse
-from django.db.models import Max
-from django.contrib.admin.views.decorators import staff_member_required
-from django.core.urlresolvers import reverse
 from django.utils.html import strip_tags
-from django.contrib.contenttypes.models import ContentType
 from django.template import add_to_builtins
+from django.core.urlresolvers import reverse
 
 import MySQLdb
 
 import logging
-from types import StringTypes
 import gzip
 import magic
 
 from srs.models import *
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import get_sldb_playerskill, privatize_skill, demoskill2float, get_sldb_pref, set_sldb_pref, get_sldb_player_stats, get_sldb_leaderboards, get_sldb_match_skills
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills
 from srs.ajax_views import replay_filter
+from srs.forms import GamePref
 
 add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger(__package__)
 
 def index(request):
     c = all_page_infos(request)
-    c["replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[:settings.INDEX_REPLAY_RANGE]
+    if c.has_key("game_pref_obj"):
+        replays = Replay.objects.filter(published=True, gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
+    else:
+        replays = Replay.objects.filter(published=True)
+    c["replays"] = replays.order_by("-unixTime")[:settings.INDEX_REPLAY_RANGE]
     c["range"] = settings.INDEX_REPLAY_RANGE
     c["range_end"] = settings.INDEX_REPLAY_RANGE
     c["popular_replays"] = Replay.objects.order_by("-download_count")[:8]
@@ -47,11 +48,23 @@ def index(request):
     c["latest_comments"] = Comment.objects.order_by("-submit_date")[:5]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
-def index_replay_range(request, range_end):
+def index_replay_range(request, range_end, game_pref):
     c = all_page_infos(request)
+    try:
+        game_pref = int(game_pref)
+    except:
+        pass
+    else:
+        if not c.has_key("game_pref_obj") and game_pref > 0:
+            c["game_pref"] = game_pref
+            c["game_pref_obj"] = Game.objects.get(id=game_pref)
     c["range"] = settings.INDEX_REPLAY_RANGE
     c["range_end"] = int(range_end) + settings.INDEX_REPLAY_RANGE
-    c["replays"] = Replay.objects.filter(published=True).order_by("-unixTime")[int(range_end):c["range_end"]]
+    if c.has_key("game_pref_obj"):
+        replays = Replay.objects.filter(published=True, gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
+    else:
+        replays = Replay.objects.filter(published=True)
+    c["replays"] = replays.order_by("-unixTime")[int(range_end):c["range_end"]]
     return render_to_response('replay_index_boxes.html', c, context_instance=RequestContext(request))
 
 def replay(request, gameID):
@@ -307,7 +320,7 @@ def hall_of_fame(request, abbreviation):
         except Exception, e:
             logger.exception(e)
     else:
-        c["errmsg"] = "No ratings available for this game."
+        c["errmsg"] = "No ratings available for this game. Please choose one from the menu."
         logger.error("%s (%s)", c["errmsg"], game)
 
     if abbreviation == "ZK":
@@ -332,7 +345,19 @@ def hall_of_fame(request, abbreviation):
 def user_settings(request):
     # TODO:
     c = all_page_infos(request)
-    c["pagedescription"] = "User settings"
+    up = request.user.userprofile
+    if request.method == 'POST':
+        game_pref_form = GamePref(request.POST)
+        if game_pref_form.is_valid():
+            up.game_pref_fixed = not game_pref_form.cleaned_data["auto"]
+            if game_pref_form.cleaned_data["game_choice"]:
+                up.game_pref = int(game_pref_form.cleaned_data["game_choice"])
+            else:
+                up.game_pref = request.session.get("game_pref", None)
+            up.save()
+    else:
+        game_pref_form = GamePref(initial={"auto": not up.game_pref_fixed, "game_choice": up.game_pref})
+    c["game_pref_form"] = game_pref_form
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
 def all_comments(request):
@@ -345,7 +370,7 @@ def login(request):
     from django.contrib.auth.forms import AuthenticationForm
 
     c = all_page_infos(request)
-    nexturl = request.GET.get('next')
+    nexturl = request.GET.get("next", "/")
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         form.fields["password"].max_length = 4096
@@ -353,12 +378,19 @@ def login(request):
             user = form.get_user()
             django.contrib.auth.login(request, user)
             logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.userprofile.aliases)
-            # TODO: "next" is never passed...
-            if nexturl:
-                dest = nexturl
+            if request.user.userprofile.game_pref_fixed or request.session.get("game_pref", None) == None:
+                # if pref was set explicitely, always set cookie according to profile
+                # or if no cookie set, use profiles setting (even if 0)
+                request.session["game_pref"] = request.user.userprofile.game_pref
             else:
-                dest = "/"
-            return HttpResponseRedirect(dest)
+                # cookie is already set, overwrite users pref as it's not fixed
+                try:
+                    request.user.userprofile.game_pref = int(request.session["game_pref"])
+                    request.user.userprofile.save()
+                except ValueError:
+                    # not int, ignore
+                    pass
+            return HttpResponseRedirect(nexturl)
         else:
             logger.info("login error: %s", form.errors)
     else:
@@ -366,7 +398,6 @@ def login(request):
     c["next"] = nexturl
     c['form'] = form
     form.fields["password"].max_length = 4096
-    c["pagedescription"] = "Login form"
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
 @never_cache
@@ -374,8 +405,12 @@ def logout(request):
     import django.contrib.auth
 
     username = str(request.user)
+    # restore game_pref after logout
+    game_pref = request.session.get("game_pref", None)
     django.contrib.auth.logout(request)
     logger.info("Logged out user '%s'", username)
+    if game_pref:
+        request.session["game_pref"] = game_pref
     nexturl = request.GET.get('next')
     if nexturl:
         dest = nexturl

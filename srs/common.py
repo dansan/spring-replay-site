@@ -5,16 +5,31 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from django.conf import settings
-from srs.models import PlayerAccount
+from srs.models import Game, PlayerAccount
 
 def all_page_infos(request):
     c = {}
+    try:
+        gameid = int(request.GET["game_pref"])
+        request.session.modified = True # force a reload in the client to update the top menu
+        request.session["game_pref"] = gameid
+        if request.user.is_authenticated() and request.user.userprofile.game_pref != gameid and not request.user.userprofile.game_pref_fixed:
+            request.user.userprofile.game_pref = gameid
+            request.user.userprofile.save()
+    except:
+        # request.GET["game_pref"] not set (or not an int)
+        pass
     if request.user.is_authenticated():
         try:
             c["logged_in_pa"] = PlayerAccount.objects.get(accountid=request.user.userprofile.accountid)
         except:
             pass
-
+        if request.session.get("game_pref", None) == None:
+            request.session["game_pref"] = request.user.userprofile.game_pref
+    c["all_games_mainmenu"] = Game.objects.all()
     c["selfurl"] = request.path
+    if request.session.get("game_pref", None) != None and request.session["game_pref"] > 0:
+        c["game_pref"]     = request.session["game_pref"]
+        c["game_pref_obj"] = Game.objects.get(id=c["game_pref"])
+        c["game_pref_browse"] = "game=" + str(c["game_pref"])
     return c

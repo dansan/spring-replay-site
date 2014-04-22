@@ -10,6 +10,8 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
 
+from srs.models import Game
+
 import logging
 logger = logging.getLogger(__package__)
 
@@ -38,3 +40,9 @@ class SLDBPrivacyForm(forms.Form):
                     (1, '<b>Basic privacy enabled <u>(default)</u></b>: players and website visitors only see a rough estimate of your trueskill rating. If you log into the website you will still see your own exact ratings. On the autohosts only privileged users can still see an exact value in !status output.'),
                     (2, '<b>Full privacy enabled</b>: same as "Basic privacy", but even privileged autohost users see only a rough estimate in !status output.'))
     mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect(renderer=RadioSelectTableRenderer))
+
+class GamePref(forms.Form):
+    GAME_CHOICES = list(Game.objects.all().order_by("name").values_list("id", "name"))
+    GAME_CHOICES.insert(0, (0, "No filter"))
+    auto         = forms.BooleanField(required=False, label="Restore previous state (default)", widget=forms.CheckboxInput(attrs={"onclick": "toggle_game_choice(this)"}))
+    game_choice  = forms.ChoiceField(required=False, choices=GAME_CHOICES, widget=forms.Select(attrs={"class": "form-control"}))

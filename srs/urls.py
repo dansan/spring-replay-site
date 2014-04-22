@@ -14,7 +14,7 @@ sitemaps = {"replays": ReplaySitemap,
 
 urlpatterns = patterns('',
     url(r'^$', 'srs.views.index'),
-    url(r'^index_replay_range/(?P<range_end>[\d]+)/$', 'srs.views.index_replay_range', name="index_replay_range"),
+    url(r'^index_replay_range/(?P<range_end>[\d]+)/(?P<game_pref>[\d]+)/$', 'srs.views.index_replay_range', name="index_replay_range"),
     url(r'^djangojs/', include('djangojs.urls')),
     url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     url(r'^upload/$', 'srs.upload.upload'),
