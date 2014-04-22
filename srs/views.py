@@ -355,6 +355,7 @@ def user_settings(request):
             else:
                 up.game_pref = request.session.get("game_pref", None)
             up.save()
+            request.session["game_pref"] = up.game_pref
     else:
         game_pref_form = GamePref(initial={"auto": not up.game_pref_fixed, "game_choice": up.game_pref})
     c["game_pref_form"] = game_pref_form
@@ -378,12 +379,12 @@ def login(request):
             user = form.get_user()
             django.contrib.auth.login(request, user)
             logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.userprofile.aliases)
-            if request.user.userprofile.game_pref_fixed or request.session.get("game_pref", None) == None:
+            if request.user.userprofile.game_pref_fixed or request.session.get("game_pref", 0) == 0:
                 # if pref was set explicitely, always set cookie according to profile
                 # or if no cookie set, use profiles setting (even if 0)
                 request.session["game_pref"] = request.user.userprofile.game_pref
             else:
-                # cookie is already set, overwrite users pref as it's not fixed
+                # cookie is already set (!=0), overwrite users pref as it's not fixed
                 try:
                     request.user.userprofile.game_pref = int(request.session["game_pref"])
                     request.user.userprofile.save()
