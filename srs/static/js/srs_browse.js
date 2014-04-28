@@ -56,6 +56,7 @@ var browse_table = $( "#browse-table" ).dataTable({
 //	              "oSearch": {"sSearch": "Global search"}
 
 });
+$( "div#browse-table_filter.dataTables_filter" ).attr("title", "Search title and game columns")
 $( "div#browse-table_filter.dataTables_filter > label" ).wrapInner( '<h4></h4>' );
 $( "div#browse-table_filter.dataTables_filter input" ).addClass( "form-control" );
 $( "div#browse-table_length.dataTables_length > label" ).wrapInner( "<h4></h4>" );
