@@ -25,10 +25,8 @@ Website
 The live site can be found at http://replays.springrts.com/ , a test site can be found at http://replays-test.springrts.com/
 Associated forum thread on the SpringRTS developers forum: http://springrts.com/phpbb/viewtopic.php?f=71&t=28019
 
-Installation
+Dependencies
 ============
-
-Dependencies:
 
 - jQuery UI: http://jqueryui.com/
 - flowplayer: http://flowplayer.org/
@@ -48,6 +46,9 @@ Dependencies:
 - django.js: https://github.com/noirbizarre/django.js/
 - South: http://south.aeracode.org/
 
+Installation
+============
+
 .. code-block:: bash
 
     $ virtualenv srs
@@ -58,14 +59,21 @@ Dependencies:
 
 .. code-block:: bash
 
-    $ pip install git+git://github.com/dansan/django-eztables.git
+    (srs) $ pip install git+git://github.com/dansan/django-eztables.git
 
-Patch ``virtenv/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
+- patch ``srs/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
 
 .. code-block:: bash
 
-    $ ./manage.py migrate srs
-    $ ./manage.py migrate lobbyauth
-    $ ./manage.py collectstatic
+    (srs) $ cd srs
+    (srs) $ patch -p0  < .../eztables-GET.patch
 
-Copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there.
+- install database schemas and static files
+
+.. code-block:: bash
+
+    (srs) $ ./manage.py migrate srs
+    (srs) $ ./manage.py migrate lobbyauth
+    (srs) $ ./manage.py collectstatic
+
+- copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there.
