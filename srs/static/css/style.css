@@ -146,3 +146,7 @@ http://stackoverflow.com/questions/18432577/stacked-tabs-in-bootstrap-3
   border-color: #000 #000 #000 transparent;
   *border-left-color: #ffffff;
 }
+
+.table#browse-table a {
+	text-decoration: none;
+}

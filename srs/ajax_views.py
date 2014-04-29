@@ -333,7 +333,8 @@ class BrowseReplaysDTView(DatatablesView):
               "gametype",
               "download_count",
               "comment_count",
-              "gameID"
+              "gameID",
+              "map_info__name"
               )
 
     def global_search(self, queryset):

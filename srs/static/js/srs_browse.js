@@ -35,7 +35,8 @@ var browse_table = $( "#browse-table" ).dataTable({
 			  if ( data == "" ) {
 				  data = "no name";
 				  }
-			  return '<a href="' + Django.url('replay_detail', full[5] ) + '">' + data + '</a>';
+			  console.log( )
+			  return '<a href="' + Django.url('replay_detail', full[5] ) + '"><img class="img-rounded" height=32 itemprop="image" src="' + Django.context.STATIC_URL + 'maps/' + full[6] + '_home.jpg" alt="pic of map ' + full[6] + '"/> ' + data + '</a>';
 			  }
          },
          {
