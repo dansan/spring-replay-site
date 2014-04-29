@@ -31,6 +31,16 @@ Please see srs_base.html for license information.
         </ul>
       </div>
       <div class="col-sm-9 col-lg-10" role="main">
+    {% if errmsg %}
+        <div class="row">
+          <div class="col-md-12">
+            <div class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              {{ errmsg|safe }}
+            </div>
+          </div>
+        </div>
+    {% endif %}
     {% for text in intro_text %}
         <div class="row">
           <div class="col-md-12">

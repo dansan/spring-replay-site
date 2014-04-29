@@ -327,7 +327,9 @@ def hall_of_fame(request, abbreviation):
         c["intro_text"] = ['<b>The official Hall of Fame of Zero-K is at <a href="http://zero-k.info/Ladders">http://zero-k.info/Ladders</a>.</b>']
     c["games"] = Game.objects.exclude(sldb_name="")
     c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
-    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
+#    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
+#FIXME: show awards that belong to each game separately. for now only BA.
+    games_with_bawards = Game.objects.filter(name="Balanced Annihilation")
     if game in games_with_bawards:
         try:
             sist = SiteStats.objects.get(id=1)
