@@ -9,6 +9,7 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
+    {% css "css/srs_replay.css" %}
     {% css "css/ionicons.min.css" %}
   {% if has_video %}
     {% css "css/flowplayer_5.4.3_playful.css" %}
@@ -24,74 +25,60 @@ Please see srs_base.html for license information.
           <div class="panel-body">
             <meta itemprop="url" content="{{ replay.get_absolute_url }}"/>
             <div itemprop="audience" itemscope itemtype="http://schema.org/Audience">
-                <meta itemprop="name" content="gamers">
-                <meta itemprop="url" content="http://springrts.com/">
-                <meta itemprop="sameAs" content="http://en.wikipedia.org/wiki/Spring_(game_engine)">
+              <meta itemprop="name" content="gamers">
+              <meta itemprop="url" content="http://springrts.com/">
+              <meta itemprop="sameAs" content="http://en.wikipedia.org/wiki/Spring_(game_engine)">
             </div>
-            <div class="row">
-              <div class="col-sx-12">
-                <p style="font-size: larger; font-weight: bold;"><span itemprop="name" >{{ replay.title }}</span></p>
-                {% if upload_broken %}<p class="text-danger">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
-                <hr style="margin-top: 7px; margin-bottom: 12px;">
-              </div>
-            </div> <!-- row -->
-            <div class="row">
-              <div class="col-sx-12" style="margin-bottom: 12px;">
+            <p style="font-size: larger; font-weight: bold;"><span itemprop="name" >{{ replay.title }}</span></p>
+            {% if upload_broken %}<p class="text-danger">ERROR while reading replays file. Please reupload, preferably a replay file of another player. If problem persists, please contact Dansan at the <a href="http://springrts.com/phpbb/ucp.php?i=pm&mode=compose&u=9838">forums</a>.</p>{% endif %}
+            <hr style="margin-top: 7px; margin-bottom: 12px;">
   <!-- Map img -->
-                <!-- Nav tabs -->
-                <ul class="nav nav-tabs nav-justified">
-                  <li class="active"><a href="#sat" data-toggle="tab">Satellite</a></li>
-                  <li><a href="#metal" data-toggle="tab">Metal</a></li>
-                  <li><a href="#height" data-toggle="tab">Height</a></li>
-                  <li><a href="#info" data-toggle="tab">Info</a></li>
-                </ul>
-                <!-- Tab panes -->
-                <div class="tab-content">
-                  <div class="tab-pane active" id="sat">
-                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_img.get_absolute_url }}" alt="sat pic of {{ replay.map_info.name }}"/>
-                  </div>
-                  <div class="tab-pane" id="metal">
-                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.2 }}" alt="metal map of {{ replay.map_info.name }}"/>
-                  </div>
-                  <div class="tab-pane fade" id="height">
-                    <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.1 }}" alt="height map of {{ replay.map_info.name }}"/>
-                  </div>
-                  <div class="tab-pane" id="info">
-                    <div class="table-responsive">
-                      <table class="table table-striped table-hover">
-                        <tbody>
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs nav-justified">
+              <li class="active"><a href="#sat" data-toggle="tab">Satellite</a></li>
+              <li><a href="#metal" data-toggle="tab">Metal</a></li>
+              <li><a href="#height" data-toggle="tab">Height</a></li>
+              <li><a href="#info" data-toggle="tab">Info</a></li>
+            </ul>
+            <!-- Tab panes -->
+            <div class="tab-content">
+              <div class="tab-pane active" id="sat">
+                <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_img.get_absolute_url }}" alt="sat pic of {{ replay.map_info.name }}"/>
+              </div>
+              <div class="tab-pane" id="metal">
+                <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.2 }}" alt="metal map of {{ replay.map_info.name }}"/>
+              </div>
+              <div class="tab-pane fade" id="height">
+                <img class="img-responsive img-rounded" itemprop="image" src="{{ replay.map_info.metadata.mapimages.1 }}" alt="height map of {{ replay.map_info.name }}"/>
+              </div>
+              <div class="tab-pane" id="info">
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover">
+                    <tbody>
       {% for k,v in metadata %}
-                          <tr{% if k == "Error" %} class="danger"{% endif %}>
-                            <td>{{ k }}</td>
-                            <td>{{ v }}</td>
-                          </tr>
+                      <tr{% if k == "Error" %} class="danger"{% endif %}>
+                        <td>{{ k }}</td>
+                        <td>{{ v }}</td>
+                      </tr>
       {% endfor %}
-                        </tbody>
-                      </table>
-                    </div> 
-                  </div>
-                </div>
+                    </tbody>
+                  </table>
+                </div> 
               </div>
-            </div> <!-- row -->
-            <div class="row">
-              <div class="col-sx-12">
-                <div class="well">
+            </div>
+            <div class="well">
     {% include "replay_box.html" %}
-                <p></p>
-                <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs.views.download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
-                  <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
-                  <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
-                </p>
-                {% if user = replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
-                {% if user.is_staff %}<p class="text-success"><a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a></p>{% endif %}
-                </div>
-              </div>
-            </div> <!-- row -->
+              <p></p>
+              <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs.views.download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
+                <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
+                <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
+              </p>
+              {% if user = replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
+              {% if user.is_staff %}<p class="text-success"><a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a></p>{% endif %}
+            </div>
           </div>
         </div>
-
       </div> <!-- col-sm-6 -->
-
 {% cache 600 replay replay.pk %}
       <div class="col-sm-6">
         <div class="panel panel-default">
