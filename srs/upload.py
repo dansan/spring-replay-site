@@ -578,6 +578,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
 
+    timer.start("  demofile.additional")
     # store if demofile doesn't contain the GAMEOVER msg, because of the spring94.1 bug:
     # http://springrts.com/mantis/view.php?id=3950
     # http://springrts.com/mantis/view.php?id=3804
@@ -585,6 +586,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.debug("replay(%d) has no GAMEOVER msg", replay.pk)
         AdditionalReplayInfo.objects.get_or_create(replay=replay, key="gameover", value="")
 
+    # BAward
     if demofile.additional.has_key("awards"):
         ba_awards, _ = BAwards.objects.get_or_create(replay=replay)
         demo_awards = demofile.additional["awards"]
@@ -613,6 +615,16 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 else:
                     setattr(ba_awards, award_name, None)
         ba_awards.save()
+
+    # XTAwards
+    if demofile.additional.has_key("xtawards"):
+        for xta_award in demofile.additional["xtawards"]:
+            team = Team.objects.get(replay=replay, num=xta_award["team"])
+            player = Player.objects.get(replay=replay, team=team)
+            xt, cr = XTAwards.objects.get_or_create(replay=replay, isAlive=xta_award["isAlive"], player=player, unit=xta_award["name"], kills=xta_award["kills"], age=xta_award["age"])
+            logger.debug("XTA created: %s, award: %s", cr, xt)
+
+    timer.stop("  demofile.additional")
 
     pp = pprint.PrettyPrinter(depth=6)
     for k, v in demofile.additional.items():

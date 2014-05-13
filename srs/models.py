@@ -605,6 +605,17 @@ class BAwards(models.Model):
     def __unicode__(self):
         return u"(%d) Replay: %d | EcoKill: %s,%s,%s | FightKill: %s,%s,%s | EffKill: %s,%s,%s | Cow: %s | Eco: %s | DmgRec: %s | Sleep: %s"%(self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd, self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st, self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
 
+class XTAwards(models.Model):
+    replay    = models.ForeignKey(Replay)
+    isAlive   = models.SmallIntegerField(default=-1)
+    player    = models.ForeignKey(Player)
+    unit      = models.CharField(max_length=1024)
+    kills     = models.IntegerField(default=-1)
+    age       = models.IntegerField(default=-1)
+
+    def __unicode__(self):
+        return u"(%d) Replay: %d | isAlive: %d | player: %s | unit: %s | kills: %d | age: %d"%(self.pk, self.replay.pk, self.isAlive, self.player.name, self.unit, self.kills, self.age)
+
 def get_owner_list(uploader):
     res = [uploader]
     res.extend(AdditionalReplayOwner.objects.filter(uploader=uploader))
@@ -624,6 +635,9 @@ def update_stats():
         replays      = Replay.objects.count()
         now          = datetime.datetime.now(timezone.get_current_timezone())
         start_date   = now - datetime.timedelta(days=30)
+        if settings.DEBUG:
+            # no daily uploads on my dev pc - list can be empty
+            start_date   = now - datetime.timedelta(days=300)
         default_tags = Tag.objects.filter(name__in=["1v1", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8", "Team", "FFA", "TeamFFA", "Tourney"])
         tags         = default_tags.annotate(num_replay=Count('replay'))
         maps         = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(num_replay=Count('replay')).order_by('-num_replay')[:10]

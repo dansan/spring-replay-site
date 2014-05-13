@@ -223,6 +223,8 @@ def replay(request, gameID):
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id, replay.map_info.metadata)
         logger.exception("Exception: %s", e)
+    c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
+    c["xtaward_los"]    = XTAwards.objects.filter(replay=replay, isAlive=0)
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 

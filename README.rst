@@ -17,7 +17,7 @@ This software is licensed as GPLv3, see COPYING.
 jQuery, Bootstrap, Respond.js, Moment.js and bootstrap-daterangepicker are released under the terms of the MIT license.
 html5shiv is dual licensed under the MIT or GPL Version 2 licenses.
 selectize.js is licensed under the Apache License, Version 2.0.
-Images under srs/static/img may have different copyright. To lazy to check now, please ask before using any of them!
+Images under srs/static/img may have different copyright, some of which are not free in any way. To lazy to list all, do absolutely ask before using any of them!
 
 Website
 =======

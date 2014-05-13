@@ -252,7 +252,8 @@ class Demoparser(object):
 			size, playerNum, script, mode = struct.unpack('<HBHB', data[:6])
 			msg = data[6:]
 			playerName = self.players[playerNum] or ''
-			return self.write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'script', 'mode', 'msg')
+			(msgid,) = struct.unpack("<B", msg[0])
+			return self.write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'script', 'mode', 'msg', 'msgid')
 		elif cmd == 51:
 			cmd = 'team'
 			playerNum, action = struct.unpack('<BB', data[:2])

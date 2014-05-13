@@ -332,6 +332,85 @@ Please see srs_base.html for license information.
       </div> <!-- row -->
   {% endif %}
 
+<!-- XTAwards -->
+
+  {% if xtaward_heroes or xtaward_los %}
+    <div class="row">
+      <div class="col-sx-12 col-sm-6">
+        <div class="panel panel-default blind_winner" style="display:none;">
+          <div class="panel-body">
+            <center><img src="{{ STATIC_URL }}img/trophy_32.png" alt="trophy" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Heroes in victory</span> &nbsp;&nbsp; <img src="{{ STATIC_URL }}img/trophy_32.png" alt="trophy" height="24"/></center>
+            <hr style="margin-top: 7px; margin-bottom: 12px;">
+            {% if xtaward_heroes %}
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-condensed">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Owner</th>
+                    <th>Kills</th>
+                    <th>Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+    {% for hero in xtaward_heroes %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ hero.unit }}</td>
+                    <td><a href="{{ hero.player.get_absolute_url }}">{{ hero.player.name }}</a></td>
+                    <td>{{ hero.kills }}</td>
+                    <td>{{ hero.age }}</td>
+                  </tr>
+    {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <p>None.</p>
+            {% endif %}
+          </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!--col-sx-12 col-sm-6  -->
+      <div class="col-sx-12 col-sm-6">
+        <div class="panel panel-default blind_winner" style="display:none;">
+          <div class="panel-body">
+            <center><img src="{{ STATIC_URL }}img/xtawards/love-rose-4_128px.png" alt="rose" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Lost in service</span> &nbsp;&nbsp; <img src="{{ STATIC_URL }}img/xtawards/love-rose-4_128px.png" alt="rose" height="24"/></center>
+            <hr style="margin-top: 7px; margin-bottom: 12px;">
+            {% if xtaward_los %}
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-condensed">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Owner</th>
+                    <th>Kills</th>
+                    <th>Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+    {% for los in xtaward_los %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ los.unit }}</td>
+                    <td><a href="{{ los.player.get_absolute_url }}">{{ los.player.name }}</a></td>
+                    <td>{{ los.kills }}</td>
+                    <td>{{ los.age }}</td>
+                  </tr>
+    {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <p>None.</p>
+            {% endif %}
+          </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!--col-sx-12 col-sm-6  -->
+    </div> <!-- row -->
+  {% endif %}
+
 <!-- COMMENTS -->
 
     <div class="row">

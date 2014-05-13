@@ -347,14 +347,13 @@ class Parse_demo_file():
                                                         "toID": messageData["toID"],
                                                         "message": messageData["message"][:-1]})
                     elif messageData["cmd"] == "luamsg":
-                        (msgid,) = struct.unpack("<B", messageData["msg"][0])
-                        if msgid == 138:
+                        if messageData["msgid"] == 138:
                             # faction change
                             playername = clean(messageData['playerName'])
                             faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
                             logger.debug("%s(%d) changed faction to '%s'", playername, messageData['playerNum'], faction)
                             self.additional["faction_change"][playername] = (self.players[playername], faction)
-                        elif msgid == 161:
+                        elif messageData["msgid"] == 161:
                             # BA Awards
                             # http://imolarpg.dyndns.org/trac/balatest/browser/trunk/luarules/gadgets/gui_awards.lua?rev=2070#L389
                             # history:
@@ -419,6 +418,35 @@ class Parse_demo_file():
                                 self.additional["awards"] = awards
                             except Exception, e:
                                 logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, e)
+                        elif messageData["msgid"] == 199:
+                            # XTA Awards, 2014-04-01
+                            # forum thread: http://springrts.com/phpbb/viewtopic.php?f=71&t=28019&start=120#p555847
+                            # XTA_AWARDMARKER,":",isAlive,":",team,":",name,":",kills,":",age
+                            # The fields for 'heroes award':
+                            #   1: string '\199', identify XTA unit award
+                            #   2: isAlive: 1
+                            #   3: teamID, owner of the corresponding unit (0)
+                            #   4: name of unit to get award (Maverick)
+                            #   5: number of kills (27)
+                            #   6: age of unit when game ends (4)
+                            # The fields for 'lost in service award':
+                            #   1: string '\199', identify XTA unit award
+                            #   2: isAlive: 0
+                            #   3: teamID, owner of the corresponding unit (0)
+                            #   4: name of unit to get award (Commander)
+                            #   5: number of kills (43)
+                            #   6: age of unit when game ends (1)
+                            xta_isAlive, xta_team, xta_name, xta_kills, xta_age = messageData["msg"][2:].split(":")
+                            xtawards = {"isAlive": int(xta_isAlive),
+                                        "team"   : int(xta_team),
+                                        "name"   : xta_name,
+                                        "kills"  : int(xta_kills),
+                                        "age"    : int(xta_age)}
+                            if self.additional.has_key("xtawards"):
+                                if not xtawards in self.additional["xtawards"]:
+                                    self.additional["xtawards"].append(xtawards)
+                            else:
+                                self.additional["xtawards"] = [xtawards]
                         else:
                             pass
             except Exception, e:
