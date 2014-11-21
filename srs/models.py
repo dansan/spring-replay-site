@@ -10,6 +10,7 @@ import logging
 import operator
 from os.path import basename
 import datetime
+import os
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -626,6 +627,48 @@ class SldbMatchSkillsCache(models.Model):
             last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo) - datetime.timedelta(
                 minutes=30)).delete()
 
+
+class SldbPlayerTSGraphCache(models.Model):
+    last_modified = models.DateTimeField(auto_now_add=True)
+    account = models.ForeignKey(PlayerAccount)
+    game = models.ForeignKey(Game)
+    filepath_global = models.CharField(max_length=256)
+    filepath_duel = models.CharField(max_length=256)
+    filepath_ffa = models.CharField(max_length=256)
+    filepath_team = models.CharField(max_length=256)
+    filepath_teamffa = models.CharField(max_length=256)
+
+    def __unicode__(self):
+        return u"(%d) %s | %s | %s" % (self.id, self.account, self.game, self.filepath_global)
+
+    def remove_files(self):
+        for filepath in (self.filepath_global, self.filepath_duel, self.filepath_ffa, self.filepath_team, self.filepath_teamffa):
+            try:
+                os.remove(filepath)
+            except:
+                logger.exception("Cannot remove file '%s' of cache entry %d, ignoring error.", filepath, self.id)
+
+    @staticmethod
+    def purge_old():
+        """
+        Remove >= 30 days old entries
+        """
+        old_entries = SldbPlayerTSGraphCache.objects.filter(last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
+                                                                              - datetime.timedelta(days=30))
+        if old_entries.exists():
+            logger.debug("Deleting stale SldbPlayerTSGraphCache objects: %s", old_entries)
+            for entry in old_entries:
+                entry.remove_files()
+            old_entries.delete()
+
+    def as_dict(self):
+        return {
+            "Global" : open(self.filepath_global),
+            "Duel"   : open(self.filepath_duel),
+            "FFA"    : open(self.filepath_ffa),
+            "Team"   : open(self.filepath_team),
+            "TeamFFA": open(self.filepath_teamffa)
+        }
 
 
 class BAwards(models.Model):

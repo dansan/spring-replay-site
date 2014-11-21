@@ -329,8 +329,72 @@ def get_sldb_player_stats(game_abbr, accountid):
                                                         'Team': [134, 567, 89]
                                                         }
                                             }
+                                            or SLDBstatusException
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#124
     """
 #     logger.debug("game_abbr: %s accountid: %d", game_abbr, accountid)
     return _query_sldb("getPlayerStats", game_abbr, accountid)
+
+def get_sldb_player_ts_history_graphs(game_abbr, accountid):
+    """
+    Returns a PNG image of the TrueSkill history of a player.
+
+    SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L141
+
+    :param game_abbr:  str - one of: "BA", "EVO", "KP", "NOTA", "S1944", "TA", "XTA", "ZK" (see "modShortName" in https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L7)
+    :param accountid:  int - accountID of playeraccount for which the graph should be fetched
+    :return: Dict - {'Global' : File object containing PNG data,
+                     'Duel'   : File object containing PNG data,
+                     'FFA'    : File object containing PNG data,
+                     'Team'   : File object containing PNG data,
+                     'TeamFFA': File object containing PNG data}
+            or SLDBstatusException
+    """
+    # check parameters
+    try:
+        pa = PlayerAccount.objects.get(accountid=accountid)
+    except:
+        raise SLDBbadArgumentException("accountid", accountid)
+    try:
+        game = Game.objects.get(sldb_name=game_abbr)
+    except:
+        raise SLDBbadArgumentException("game", game)
+
+    # check if we a have cached version
+    SldbPlayerTSGraphCache.purge_old()
+    try:
+        cached_graphs = SldbPlayerTSGraphCache.objects.get(account=pa, game=game)
+        logger.debug("Cache hit for SldbPlayerTSGraphCache.objects.get(account=%s, game=%s)", pa, game.sldb_name)
+        return cached_graphs.as_dict()
+    except SldbPlayerTSGraphCache.MultipleObjectsReturned:
+        logger.error("More than 1 entry returned for SldbPlayerTSGraphCache.objects.get(account=%s, game=%s). Removing all, creating new one.", pa, game.sldb_name)
+        cached_graphs = SldbPlayerTSGraphCache.objects.filter(account=pa, game=game)
+        for graph in cached_graphs:
+                graph.remove_files()
+        cached_graphs.delete()
+    except SldbPlayerTSGraphCache.DoesNotExist:
+        logger.debug("Cache miss for SldbPlayerTSGraphCache.objects.get(account=%s, game=%s)", pa, game.sldb_name)
+
+    # fetch new graphs
+    query = _query_sldb("getPlayerSkillGraphs", game_abbr, accountid)
+    # this returns either:
+    # {   'TeamFFA': {'status': 0, 'graph': <xmlrpclib.Binary instance>},
+    #     'Duel'   : {'status': 0, 'graph': <xmlrpclib.Binary instance>},
+    #     'Global' : {'status': 0, 'graph': <xmlrpclib.Binary instance>},
+    #     'FFA'    : {'status': 0, 'graph': <xmlrpclib.Binary instance>},
+    #     'Team'   : {'status': 0, 'graph': <xmlrpclib.Binary instance>}
+    # }
+    # or SLDBstatusException
+    now = datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
+    graph = SldbPlayerTSGraphCache(game=game, account=pa)
+    for match_type, result in query.items():
+        if result["status"] == 0:
+            path = settings.TS_HISTORY_GRAPHS_PATH+"/tsh_%d_%s_%s.png"%(accountid, now.strftime("%Y-%m-%d"), match_type)
+            open(path, "w").write(result["graph"].data)
+        else:
+            path = ""
+        setattr(graph, "filepath_"+match_type.lower(), path)
+    graph.save()
+    logger.debug("Created SldbPlayerTSGraphCache: %s", graph)
+    return graph.as_dict()

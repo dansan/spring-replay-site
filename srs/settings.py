@@ -7,6 +7,7 @@ IMG_PATH = SRS_FILE_ROOT+"/static/img/"
 MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
 REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
 FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
+TS_HISTORY_GRAPHS_PATH = SRS_FILE_ROOT+"/ts_graphs"
 THUMBNAIL_SIZES = {"home": (150, 100), "replay": (340,1000)}
 LOGIN_URL = "/login/"
 LOGOUT_URL = "/logout/"
