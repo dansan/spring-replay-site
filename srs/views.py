@@ -338,7 +338,6 @@ def player(request, accountid):
 
     if not respect_privacy(request, accountid):
         c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")
-        logger.debug("c[ts_history_games]: %s", c["ts_history_games"])
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
 def ts_history_graph(request, game_abbr, accountid, match_type):

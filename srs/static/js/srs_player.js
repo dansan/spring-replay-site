@@ -90,3 +90,9 @@ $('body').on('hidden.bs.modal', '.modal', function () {
 	console.log($(this));
     $( this ).removeData('bs.modal');
 });
+
+// show "loading" image until graph has been loaded from SLDB
+function fix_size( alt_txt ) {
+    $( 'img[id="loader_img"]' ).remove();
+    $( 'img[id="ts_graph"]' ).attr("height", 512).attr("width", 1024);
+}

@@ -344,12 +344,9 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
 
     :param game_abbr:  str - one of: "BA", "EVO", "KP", "NOTA", "S1944", "TA", "XTA", "ZK" (see "modShortName" in https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L7)
     :param accountid:  int - accountID of playeraccount for which the graph should be fetched
-    :return: Dict - {'Global' : File object containing PNG data,
-                     'Duel'   : File object containing PNG data,
-                     'FFA'    : File object containing PNG data,
-                     'Team'   : File object containing PNG data,
-                     'TeamFFA': File object containing PNG data}
-            or SLDBstatusException or SLDBbadArgumentException
+    :return: Dict - SldbPlayerTSGraphCache.as_dict()
+            or SLDBstatusException
+            or SLDBbadArgumentException
     """
     # check parameters
     try:
@@ -394,7 +391,7 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
             path = settings.TS_HISTORY_GRAPHS_PATH+"/%d_%s_%s_%s.png"%(accountid, game_abbr, match_type, now.strftime("%Y-%m-%d"))
             open(path, "w").write(result["graph"].data)
         else:
-            path = settings.IMG_PATH+"/tshgraphnodata.png"
+            path = settings.IMG_PATH+"/tsh_nodata.png"
         setattr(graph, "filepath_"+match_type.lower(), path)
     graph.save()
     logger.debug("Created SldbPlayerTSGraphCache: %s", graph)
