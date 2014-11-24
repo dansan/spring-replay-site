@@ -495,7 +495,7 @@ Please see srs_base.html for license information.
   {% if user in replay_owners %}
     <div class="row">
       <div class="col-sx-12">
-        <a class="btn btn-default" role="button" href="{% url "srs.upload.upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
+        <a class="btn btn-default" role="button" href="{% url "srs.upload_views.upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
       </div>
     </div>
   {% endif %}
