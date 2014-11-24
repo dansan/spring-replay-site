@@ -25,7 +25,7 @@ import magic
 from srs.models import *
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs
 from srs.ajax_views import replay_filter
 from srs.forms import GamePref
 
@@ -302,15 +302,66 @@ def download(request, gameID):
     response['Content-Disposition'] = 'attachment; filename="%s"'%filename
     return response
 
+def respect_privacy(request, accountid):
+    """
+    Check if the currently logged in user is allowed to see private TS data
+    :param request: django request object - request.user is the website user
+    :param accountid: int - user with the TrueSkill data that may be privacy protected
+    :return: bool - if True: use only rounded numbers / don't show TS history graphs / etc
+    """
+    accountid = int(accountid)
+    if request.user.is_authenticated() and accountid == request.user.get_profile().accountid:
+        # if the logged in user has the same accountid as the parameter accountid -> no privacy protection
+        privacy = False
+    else:
+        # request privacyMode of player from SLDB
+        try:
+            privacy_mode = get_sldb_pref(accountid, "privacyMode")
+            if privacy_mode == "0":
+                privacy = False
+            else:
+                privacy = True
+        except:
+            logger.exception("Could not retrieve privacyMode for accountid '%s' from SLDB.", accountid)
+            privacy = True
+    return privacy
+
 def player(request, accountid):
     c = all_page_infos(request)
+    accountid = int(accountid)
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
     c['pagetitle'] = "Player "+pa.preffered_name
     c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
     c["playeraccount"] = pa
     c["PA"] = pa
     c["all_names"] = pa.get_names()
+
+    if not respect_privacy(request, accountid):
+        c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")
+        logger.debug("c[ts_history_games]: %s", c["ts_history_games"])
     return render_to_response("player.html", c, context_instance=RequestContext(request))
+
+def ts_history_graph(request, game_abbr, accountid, match_type):
+    if respect_privacy(request, accountid):
+        with open(settings.IMG_PATH+"/tsh_privacy.png", "rb") as pic:
+            response = HttpResponse(pic.read(), content_type='image/png')
+        return response
+    path = str()
+    accountid = int(accountid)
+    if match_type not in ["1", "T", "F", "G", "L"]:
+        logger.error("Bad argument 'match_type': '%s'.", match_type)
+        path = settings.IMG_PATH+"/tsh_error.png"
+    else:
+        try:
+            graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
+        except:
+            logger.exception("in get_sldb_player_ts_history_graphs('%s', %d)", game_abbr, accountid)
+            path = settings.IMG_PATH+"/tsh_error.png"
+    if not path:
+        path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
+    with open(path, "rb") as pic:
+        response = HttpResponse(pic.read(), content_type='image/png')
+    return response
 
 def hall_of_fame(request, abbreviation):
     c = all_page_infos(request)
