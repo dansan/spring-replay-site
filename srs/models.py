@@ -362,6 +362,10 @@ class PlayerAccount(models.Model):
                                                                                                      flat=True)
         return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
 
+    def get_all_games_no_bots(self):
+        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).exclude(tags=Tag.objects.get(name="Bot")).values_list("gametype", flat=True)
+        return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
+
     class Meta:
         ordering = ['accountid']
 
@@ -638,6 +642,8 @@ class SldbPlayerTSGraphCache(models.Model):
     filepath_team = models.CharField(max_length=256)
     filepath_teamffa = models.CharField(max_length=256)
 
+    match_type2sldb_name = {"1": "Duel", "T": "Team", "F": "FFA", "G": "Global", "L": "TeamFFA"}
+
     def __unicode__(self):
         return u"(%d) %s | %s | %s" % (self.id, self.account, self.game, self.filepath_global)
 
@@ -663,11 +669,11 @@ class SldbPlayerTSGraphCache(models.Model):
 
     def as_dict(self):
         return {
-            "Global" : open(self.filepath_global),
-            "Duel"   : open(self.filepath_duel),
-            "FFA"    : open(self.filepath_ffa),
-            "Team"   : open(self.filepath_team),
-            "TeamFFA": open(self.filepath_teamffa)
+            "Global" : self.filepath_global,
+            "Duel"   : self.filepath_duel,
+            "FFA"    : self.filepath_ffa,
+            "Team"   : self.filepath_team,
+            "TeamFFA": self.filepath_teamffa
         }
 
 

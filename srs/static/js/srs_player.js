@@ -84,3 +84,9 @@ var playerreplays_table = $( "#playerreplays-table" ).dataTable({
 		  }
 	  }],
 });
+
+// destroy ratinghistory modal on hide, so it reloads each time (possibly with a new url)
+$('body').on('hidden.bs.modal', '.modal', function () {
+	console.log($(this));
+    $( this ).removeData('bs.modal');
+});

@@ -84,7 +84,7 @@ def _query_sldb(service, *args, **kwargs):
     May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
     a problem with the data/request.
     """
-#     logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
+#    logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
 
 #     if settings.DEBUG:
 #         logger.debug("not connecting while in DEBUG")
@@ -349,17 +349,18 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
                      'FFA'    : File object containing PNG data,
                      'Team'   : File object containing PNG data,
                      'TeamFFA': File object containing PNG data}
-            or SLDBstatusException
+            or SLDBstatusException or SLDBbadArgumentException
     """
     # check parameters
     try:
+        accountid = int(accountid)
         pa = PlayerAccount.objects.get(accountid=accountid)
     except:
         raise SLDBbadArgumentException("accountid", accountid)
     try:
         game = Game.objects.get(sldb_name=game_abbr)
     except:
-        raise SLDBbadArgumentException("game", game)
+        raise SLDBbadArgumentException("game_abbr", game_abbr)
 
     # check if we a have cached version
     SldbPlayerTSGraphCache.purge_old()
@@ -390,10 +391,10 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
     graph = SldbPlayerTSGraphCache(game=game, account=pa)
     for match_type, result in query.items():
         if result["status"] == 0:
-            path = settings.TS_HISTORY_GRAPHS_PATH+"/tsh_%d_%s_%s.png"%(accountid, now.strftime("%Y-%m-%d"), match_type)
+            path = settings.TS_HISTORY_GRAPHS_PATH+"/%d_%s_%s_%s.png"%(accountid, game_abbr, match_type, now.strftime("%Y-%m-%d"))
             open(path, "w").write(result["graph"].data)
         else:
-            path = ""
+            path = settings.IMG_PATH+"/tshgraphnodata.png"
         setattr(graph, "filepath_"+match_type.lower(), path)
     graph.save()
     logger.debug("Created SldbPlayerTSGraphCache: %s", graph)

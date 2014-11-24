@@ -41,6 +41,6 @@ SLDB_URL         = ""
 SLDB_ACCOUNT     = ""
 SLDB_PASSWORD    = ""
 SLDB_SKILL_ORDER = [("1", 0,), ("F", 1), ("T", 2), ("G", 3), ("L", 4)]
-SLDB_TIMEOUT     = 10
+SLDB_TIMEOUT     = 30
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "replays.springrts.com", "replays-test.springrts.com", "replays.admin-box.com", "replays-test.admin-box.com", "78.46.100.156"]

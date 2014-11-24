@@ -8,6 +8,7 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
+    {% css "css/srs_player.css" %}
     {% datatables_bootstrap_css %}
     <meta name="accountid" content="{{ playeraccount.accountid }}"/>
 {% endblock %}
@@ -88,7 +89,7 @@ Please see srs_base.html for license information.
         </div>
       </div>
 
-      <div class="col-xs-12 col-sm-7">
+      <div class="col-xs-12 col-sm-5">
         <div class="panel panel-default">
           <div class="panel-heading">Win/loss</div>
             <div class="panel-body">
@@ -114,9 +115,33 @@ Please see srs_base.html for license information.
               </div>
             </div>
           </div>
+        </div>
+      </div>
+  {% endif %}
+
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">Rating history</div>
+            <div class="panel-body">
+  {% if ts_history_games %}
+    {% for game in ts_history_games %}
+                <h4>{{ game.name }}</h4>
+                <div class="row">
+                    <div class="col-xs-6 col-sm-3 col-md-2"><a data-toggle="modal" data-target="#rhModal" href="{% url 'ratinghistorygraph_modal' game.sldb_name playeraccount.accountid '1' %}" title="Rating history for {{ game.name }} and match type Duel" id="rhbtn"><img src="{{ STATIC_URL }}img/tsh_thumb_duel.png" class="thumbnail"/></a></div>
+                    <div class="col-xs-6 col-sm-3 col-md-2"><a data-toggle="modal" data-target="#rhModal" href="{% url 'ratinghistorygraph_modal' game.sldb_name playeraccount.accountid 'T' %}" title="Rating history for {{ game.name }} and match type Team" id="rhbtn"><img src="{{ STATIC_URL }}img/tsh_thumb_team.png" class="thumbnail"/></a></div>
+                    <div class="col-xs-6 col-sm-3 col-md-2"><a data-toggle="modal" data-target="#rhModal" href="{% url 'ratinghistorygraph_modal' game.sldb_name playeraccount.accountid 'F' %}" title="Rating history for {{ game.name }} and match type FFA" id="rhbtn"><img src="{{ STATIC_URL }}img/tsh_thumb_ffa.png" class="thumbnail"/></a></div>
+                    <div class="col-xs-6 col-sm-3 col-md-2"><a data-toggle="modal" data-target="#rhModal" href="{% url 'ratinghistorygraph_modal' game.sldb_name playeraccount.accountid 'L' %}" title="Rating history for {{ game.name }} and match type TeamFFA" id="rhbtn"><img src="{{ STATIC_URL }}img/tsh_thumb_teamffa.png" class="thumbnail"/></a></div>
+                    <div class="col-xs-6 col-sm-3 col-md-2"><a data-toggle="modal" data-target="#rhModal" href="{% url 'ratinghistorygraph_modal' game.sldb_name playeraccount.accountid 'G' %}" title="Rating history for {{ game.name }} and match type Global" id="rhbtn"><img src="{{ STATIC_URL }}img/tsh_thumb_global.png" class="thumbnail"/></a></div>
+                </div>
+    {% endfor %}
+  {% else %}
+                <p>The user has privacy protection enabled. The rating history can only be seen by her/himself. <a href="{% url "srs.views.login" %}?next={{ selfurl }}">Login</a>, if you are {{ playeraccount.preffered_name }}.</p>
+  {% endif %}
+            </div>
+          </div>
       </div>
     </div>
-  {% endif %}
 
     <div class="row">
       <div class="col-md-12">
@@ -144,6 +169,15 @@ Please see srs_base.html for license information.
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- rating history graph modal -->
+    <div class="modal fade" id="rhModal" tabindex="-1" role="dialog" aria-labelledby="rhnModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+          <!-- this div will be filled using jQuery's load with URL from button -->
+          </div>
+        </div>
     </div>
 {% endblock %}
 

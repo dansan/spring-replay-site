@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.contrib.comments import Comment
 
 from srs.common import all_page_infos
-from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer
+from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, Game
 from srs.sldb import get_sldb_playerskill, get_sldb_player_stats
 
 import logging
@@ -167,12 +167,9 @@ def ajax_playerreplays_tbl_src(request, accountid):
         logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, e)
         return HttpResponse(json.dumps(empty_result))
 
-    logger.debug("sEcho: %s, accountid: %d, pa: %s", params["sEcho"], accountid, pa)
     qs = Replay.objects.filter(player__account__accountid=accountid)
-    logger.debug("qs 0 : %d", qs.count())
     if params["sSearch"]:
         qs = qs.filter(title__icontains=params["sSearch"])
-        logger.debug("qs sSearch : %d", qs.count())
 
     if params.has_key("iSortCol_0"):
         if params.has_key("sSortDir_0") and params["sSortDir_0"] == "desc":
@@ -194,7 +191,6 @@ def ajax_playerreplays_tbl_src(request, accountid):
                         replay._result(pa),
                         replay._faction(pa),
                         replay.gameID])
-    logger.debug("len(replays): %d", len(replays))
     return HttpResponse(json.dumps({"sEcho": params["sEcho"],
                                     "iTotalRecords": Replay.objects.filter(player__account__accountid=accountid).count(),
                                     "iTotalDisplayRecords": qs.count(),
@@ -204,6 +200,15 @@ def gamerelease_modal(request, gameid):
     c = all_page_infos(request)
     c["gameversions"] = GameRelease.objects.filter(game__id=gameid).order_by("-id")
     return render_to_response('modal_gameversions.html', c, context_instance=RequestContext(request))
+
+def ratinghistorygraph_modal(request, game_abbr, accountid, match_type):
+    c = all_page_infos(request)
+    c["game_abbr"] = game_abbr
+    c["game_verbose"] = Game.objects.get(sldb_name=game_abbr).name
+    c["accountid"] = accountid
+    c["match_type"] = match_type
+    c["match_type_verbose"] = SldbPlayerTSGraphCache.match_type2sldb_name[match_type]
+    return render_to_response('modal_rating_history_graph.html', c, context_instance=RequestContext(request))
 
 def mapmodlinks(gameID):
     replay = get_object_or_404(Replay, gameID=gameID)

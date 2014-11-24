@@ -1,0 +1,15 @@
+{% comment %}
+<!-- 
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Rating history for <u>{{ game_verbose }}</u>, match type <u>{{ match_type_verbose }}</u></h4>
+          </div>
+          <div class="modal-body">
+              <img itemprop="image" width="1024" height="512" src="{% url 'ts_history_graph' game_abbr accountid match_type %}" alt="Rating history for {{ game_abbr }} and match type {{ match_type }}"/>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
