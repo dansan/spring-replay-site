@@ -8,7 +8,7 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/srs_player.css" %}
+    {% css "css/dyn/srs_player.css" %}
     {% datatables_bootstrap_css %}
     <meta name="accountid" content="{{ playeraccount.accountid }}"/>
 {% endblock %}
@@ -185,5 +185,5 @@ Please see srs_base.html for license information.
   {% datatables_js %}
   {% datatables_bootstrap_js %}
   {% js_lib "moment.min.js" %}
-  {% js "js/srs_player.js" %}
+  {% js "js/dyn/srs_player.js" %}
 {% endblock %}

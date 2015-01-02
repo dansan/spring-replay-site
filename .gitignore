@@ -6,6 +6,7 @@ srs/static/maps/*.jpg
 srs/static/replays/*.sdf
 srs/static/replays/*.gz
 srs/static/media/*
+srs/ts_graphs
 srs/map_info_no_deps.py
 srs/log/*.log
 srs/log/initial_rating*.csv

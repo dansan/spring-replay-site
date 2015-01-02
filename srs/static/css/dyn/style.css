@@ -150,3 +150,8 @@ http://stackoverflow.com/questions/18432577/stacked-tabs-in-bootstrap-3
 .table#browse-table a {
 	text-decoration: none;
 }
+
+/* overwrite color in datatables.bootstrap.css */
+.dataTables_wrapper {
+    color: inherit;
+}

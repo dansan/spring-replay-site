@@ -8,10 +8,11 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/ionicons.min.css" %}
+    {% css "css/libs/ionicons.min.css" %}
     {% datatables_bootstrap_css %}
-    {% css "css/daterangepicker-bs3.css" %}
-    {% css "css/srs_browse.css" %}
+    {% css "css/libs/daterangepicker-bs3.css" %}
+    {% css "css/dyn/srs_browse.css" %}
+
     <meta name="newestreplay" content="{{ first_replay.unixTime.isoformat }}"/>
     <meta name="oldestreplay" content="{{ last_replay.unixTime.isoformat }}"/>
     {% for name, value in filters %}
@@ -373,5 +374,5 @@ Please see srs_base.html for license information.
   {% datatables_bootstrap_js %}
   {% js_lib "moment.min.js" %}
   {% js_lib "daterangepicker.js" %}
-  {% js "js/srs_browse.js" %}
+  {% js "js/dyn/srs_browse.js" %}
 {% endblock %}

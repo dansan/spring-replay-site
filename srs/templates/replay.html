@@ -9,10 +9,10 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/srs_replay.css" %}
-    {% css "css/ionicons.min.css" %}
+    {% css "css/dyn/srs_replay.css" %}
+    {% css "css/libs/ionicons.min.css" %}
   {% if has_video %}
-    {% css "css/flowplayer_5.4.3_playful.css" %}
+    {% css "css/libs/flowplayer_5.4.3_playful.css" %}
   {% endif %}
 {% endblock %}
 
@@ -552,7 +552,7 @@ Please see srs_base.html for license information.
 {% endblock %}
 
 {% block page_js %}
-    {% js "js/srs_replay.js" %}
+    {% js "js/dyn/srs_replay.js" %}
   {% if has_video %}
     {% js_lib "flowplayer_5.4.3.min.js" %}
   {% endif %}

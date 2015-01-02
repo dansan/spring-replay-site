@@ -32,20 +32,21 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads of {{ user }}" href="/feeds/uploader/{{ user }}/" />
 {% endif %}
 
-    {% css "css/ui-darkness/jquery-ui-1.10.4.custom.css" %}
-    {% css "css/bootstrap.css" %}
-    {% css "css/selectize.bootstrap3.css" %}
+    {% css "css/libs/ui-darkness/jquery-ui-1.10.4.custom.css" %}
+    {% css "css/libs/bootstrap.css" %}
+    {% css "css/libs/selectize.bootstrap3.css" %}
 {% block page_css %}{% endblock %}
-    {% css "css/style.css" %}
+    {% css "css/dyn/style.css" %}
+
     {% if game_pref and game_pref > 0 %}
     <meta name="game_pref" content="{{ game_pref }}"/>
     {% endif %}
 
     <!-- HTML5, ECMAScript 5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      <script src="{{ STATIC_URL }}js/html5shiv.js"></script>
-      <script src="{{ STATIC_URL }}js/respond.min.js"></script>
-      <script src="{{ STATIC_URL }}js/es5-shim.min.js"></script>
+      {% js "js/libs/html5shiv.js" %}
+      {% js "js/libs/respond.min.js" %}
+      {% js "js/libs/es5-shim.min.js" %}
     <![endif]-->
 </head>
 <body>
@@ -155,7 +156,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
   {% js_lib "jquery-ui-1.10.4.custom.min.js" %}
   {% js_lib "bootstrap.min.js" %}
   {% js_lib "selectize.min.js" %}
-  {% js "js/srs_base.js" %}
+  {% js "js/dyn/srs_base.js" %}
 
 {% block page_js %}{% endblock %}
 <!-- -----
@@ -163,7 +164,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
      ----- -->
 
   <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
-  <script type="text/javascript" src="{{ STATIC_URL }}js/piwik_track.js"></script>
+  {% js "js/libs/piwik_track.js" %}
   <noscript>
      <p><img src="/piwik/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></p>
   </noscript>
