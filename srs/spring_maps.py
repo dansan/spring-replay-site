@@ -14,9 +14,18 @@ import pprint
 import urllib
 import random
 from PIL import Image, ImageChops, ImageFont, ImageDraw, ImageColor
+import logging
 
 from django.conf import settings
 from models import Allyteam, Player
+
+logging.basicConfig(level=logging.DEBUG,
+                    format=settings.DEBUG_FORMAT,
+                    datefmt=settings.LOG_DATETIME_FORMAT,
+                    filename=settings.LOG_PATH+'/parse_debug.log',
+                    filemode='w+')
+
+logger = logging.getLogger("srs")
 
 class Spring_maps():
     def __init__(self, mapname):
@@ -69,7 +78,10 @@ class Spring_maps():
         create a map picture with start boxes (if any) and player start positions
         """
         # open image from api.springfiles.com
-        img  = Image.open(settings.MAPS_PATH+self.full_img)
+        try:
+            img  = Image.open(settings.MAPS_PATH+self.full_img)
+        except:
+            logger.exception("Could not open '%s'", settings.MAPS_PATH+self.full_img)
 
         full_img_x, full_img_y = img.size
         # map positions for players are in pixel
@@ -158,7 +170,10 @@ class Spring_maps():
 
         #img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
         filename = replay.map_info.name+"_"+str(replay.gameID)+".jpg"
-        img.save(settings.MAPS_PATH+filename, "JPEG")
+        try:
+            img.save(settings.MAPS_PATH+filename, "JPEG")
+        except:
+            logger.exception("Could not save '%s'", settings.MAPS_PATH+filename)
         return filename
 
 def main(argv=None):

@@ -87,7 +87,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
             try:
                 os.remove(path)
             except:
-                logger.error("Could not remove file '%s'", path)
+                logger.exception("Could not remove file '%s'", path)
             return '3 uploaded replay already exists as "%s" at "%s"'%(replay.__unicode__(), replay.get_absolute_url())
         else:
             logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk, replay.gameID)
@@ -103,8 +103,8 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         timer.start("store_demofile_data()")
         replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, owner_ac)
-    except Exception, e:
-        logger.error("Error in store_demofile_data(): %s", e)
+    except Exception:
+        logger.exception("Error in store_demofile_data()")
         return "4 server error, please try again later, or contact admin"
     finally:
         timer.stop("store_demofile_data()")
@@ -445,8 +445,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # always make new img, as players will never choose exact same startpos
     try:
         mapfile = smap.create_map_with_boxes(replay)
-    except Exception, e:
-        logger.error("error creating map img for Replay(%s): %s", replay.pk, e)
+    except Exception:
+        logger.exception("error creating map img for Replay(%s) on map '%s'", replay.pk, replay.map_info.name)
         mapfile = "error creating map img"
 
     replay.map_img = MapImg.objects.create(filename=mapfile, startpostype=2, map_info=replay.map_info)
