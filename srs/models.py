@@ -649,10 +649,14 @@ class SldbPlayerTSGraphCache(models.Model):
 
     def remove_files(self):
         for filepath in (self.filepath_global, self.filepath_duel, self.filepath_ffa, self.filepath_team, self.filepath_teamffa):
-            try:
-                os.remove(filepath)
-            except:
-                logger.exception("Cannot remove file '%s' of cache entry %d, ignoring error.", filepath, self.id)
+            if "static/img/" in filepath:
+                # don't remove static error / info images
+                continue
+            else:
+                try:
+                    os.remove(filepath)
+                except:
+                    logger.exception("Cannot remove file '%s' of cache entry %d, ignoring error.", filepath, self.id)
 
     @staticmethod
     def purge_old():
