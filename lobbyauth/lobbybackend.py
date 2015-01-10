@@ -17,7 +17,7 @@ from django.contrib.auth.models import User
 from suds.client import Client
 from models import UserProfile
 
-url = 'http://zero-k.info/ContentService.asmx?WSDL'
+url = 'http://zero-k.info/ContentService.svc?WSDL'
 logger = logging.getLogger(__package__)
 
 class LobbyBackend():
