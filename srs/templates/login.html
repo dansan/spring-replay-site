@@ -11,16 +11,15 @@ Please see srs_base.html for license information.
 {% block maincontent%}
 <div class="row">
     <div class="col-xs-12">
-        <h3>Login disabled</h3>
-        <p>Zero-K has moved it's services to a forked lobby-server and in the process lost important login-information
-        this site was dependent on.</p>
-        <p>Until a technical replacement has been found, login is disabled.</p>
+        <div class="alert alert-dismissable alert-warning">
+            <button class="close" data-dismiss="alert" type="button">×</button>
+            <h4>Warning!</h4>
+            <p>Currently only accounts that were created prior to Zero-Ks lobby-server-move (15. Jan. 2015) can login.</p>
         <p>Sorry for the inconvenience.</p>
+        </div>
     </div>
 </div>
 
-
-{% comment %}
 <div class="row">
   <div class="col-sm-8 col-sm-offset-2">
     <form class="form-horizontal" role="form" action="{{ selfurl }}?next={{ next }}" method="post">
@@ -61,5 +60,4 @@ Please see srs_base.html for license information.
     </form>
   </div>
 </div>
-{% endcomment %}
 {% endblock %}

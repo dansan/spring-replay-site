@@ -33,6 +33,9 @@ class LobbyBackend():
         if not accountinfo == None:
             accountid = accountinfo.LobbyID
             logger.info("SOAP-login success for username: %s, returned accountid: %d", username, accountid)
+            if accountid == 0:
+                logger.info("New/Unknown account: accountid == 0, login not allowed.")
+                return None
             try:
                 user = User.objects.get(last_name=str(accountid))
             except:
