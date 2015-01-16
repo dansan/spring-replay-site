@@ -10,6 +10,18 @@ Please see srs_base.html for license information.
 
 {% block maincontent%}
 <div class="row">
+    <div class="col-xs-12">
+        <h3>Login disabled</h3>
+        <p>Zero-K has moved it's services to a forked lobby-server and in the process lost important login-information
+        this site was dependent on.</p>
+        <p>Until a technical replacement has been found, login is disabled.</p>
+        <p>Sorry for the inconvenience.</p>
+    </div>
+</div>
+
+
+{% comment %}
+<div class="row">
   <div class="col-sm-8 col-sm-offset-2">
     <form class="form-horizontal" role="form" action="{{ selfurl }}?next={{ next }}" method="post">
       {% csrf_token %}
@@ -49,4 +61,5 @@ Please see srs_base.html for license information.
     </form>
   </div>
 </div>
+{% endcomment %}
 {% endblock %}

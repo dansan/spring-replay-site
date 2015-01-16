@@ -10,3 +10,5 @@ srs/ts_graphs
 srs/map_info_no_deps.py
 srs/log/*.log
 srs/log/initial_rating*.csv
+.idea
+STUFF
