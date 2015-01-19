@@ -81,7 +81,11 @@ class LobbyBackend():
 
             server_aliases = [accountinfo.Name]
             if hasattr(accountinfo, "Aliases"):
-                server_aliases.extend(accountinfo.Aliases.split(","))
+                try:
+                    server_aliases.extend(accountinfo.Aliases.split(","))
+                except:
+                    # webservice loosing entries one by one...
+                    pass
             up_aliases     = userprofile.aliases.split(",")
             for s_a in server_aliases:
                 if not s_a in up_aliases:
