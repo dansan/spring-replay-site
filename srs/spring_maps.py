@@ -15,6 +15,7 @@ import urllib
 import random
 from PIL import Image, ImageChops, ImageFont, ImageDraw, ImageColor
 import logging
+from shutil import copyfile
 
 from django.conf import settings
 from models import Allyteam, Player
@@ -60,7 +61,11 @@ class Spring_maps():
         if not hasattr(self, "map_info"):
             self.fetch_info()
         self.full_img = self.mapname+".jpg"
-        urllib.urlretrieve (self.map_info[0]['mapimages'][0], settings.MAPS_PATH+self.full_img)
+        if self.map_info:
+            urllib.urlretrieve (self.map_info[0]['mapimages'][0], settings.MAPS_PATH+self.full_img)
+        else:
+            # no img for this map available
+            copyfile(settings.IMG_PATH+"map_img_not_avail.jpg", settings.MAPS_PATH+self.full_img)
         return self.full_img
 
     def make_home_thumb(self):
