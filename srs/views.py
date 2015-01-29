@@ -208,7 +208,7 @@ def replay(request, gameID):
         c["metadata"].append(("Size", "%d x %d"%(map_px_x, map_px_y)))
         if replay.map_info.metadata.has_key("MinWind") and replay.map_info.metadata.has_key("MaxWind"):
             c["metadata"].append(("Wind", "%d - %d"%(replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
-        if replay.map_info.metadata.has_key("TidalStrength")
+        if replay.map_info.metadata.has_key("TidalStrength"):
             c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
         for k,v in replay.map_info.metadata["metadata"].items():
             if type(v) == str and not v.strip():
