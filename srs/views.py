@@ -206,14 +206,17 @@ def replay(request, gameID):
         map_px_y = replay.map_info.height
     try:
         c["metadata"].append(("Size", "%d x %d"%(map_px_x, map_px_y)))
-        c["metadata"].append(("Wind", "%d - %d"%(replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
-        c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
+        if replay.map_info.metadata.has_key("MinWind") and replay.map_info.metadata.has_key("MaxWind"):
+            c["metadata"].append(("Wind", "%d - %d"%(replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
+        if replay.map_info.metadata.has_key("TidalStrength")
+            c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
         for k,v in replay.map_info.metadata["metadata"].items():
             if type(v) == str and not v.strip():
                 continue
             elif type(v) == list and not v:
                 continue
             elif k.strip() in ["", "Width", "TidalStrength", "MapFileName", "MapMinHeight", "Type", "MapMaxHeight", "Resources", "Height", "MinWind", "MaxWind", "StartPos"]:
+                # either already added above, or ignore uninteresting data
                 continue
             else:
                 c["metadata"].append((k.strip(), v))

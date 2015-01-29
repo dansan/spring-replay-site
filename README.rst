@@ -34,6 +34,8 @@ Dependencies
 - bootstrap-daterangepicker: https://github.com/dangrossman/bootstrap-daterangepicker/
 - Moment.js: http://momentjs.com/
 
+(regarding python: make a virtenv and use requirements.txt)
+
 - Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 - DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 - suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
