@@ -16,6 +16,7 @@ import pprint
 from django.db.models import Min
 from django.contrib.sitemaps import ping_google
 import django.contrib.auth
+from django.core.exceptions import ObjectDoesNotExist
 
 from models import *
 import parse_demo_file
@@ -323,7 +324,10 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 logger.info("replay(%d) found matching name-account info for previously accountless Player(s):", replay.pk)
                 logger.info("replay(%d) PA.pk=%d Player(s).pk:%s", replay.pk, pa.pk, [(p.name, p.pk) for p in pac])
                 for pplayer in pac:
-                    pplayer.account.delete()
+                    try:
+                        pplayer.account.delete()
+                    except ObjectDoesNotExist:
+                        pass
                     pplayer.account = pa
                     pplayer.save()
 
