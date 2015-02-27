@@ -176,7 +176,7 @@ def replay(request, gameID):
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
                         pl_old = privatize_skill(pl_old)
-                players_w_rating.append((all_players.filter(account=pa, spectator=False), pl_old, pl_new))
+                players_w_rating.append((all_players.get(account=pa, spectator=False), pl_old, pl_new))
 
         if teams:
             lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in all_players.filter(team__allyteam=at)], 0)
