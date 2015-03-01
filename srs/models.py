@@ -782,7 +782,7 @@ def update_stats():
         timer.stop("active_players")
 
         # newest comments (for index page)
-        comments = Comment.objects.reverse()[:5]
+        comments = Comment.objects.filter(is_removed=False).reverse()[:5]
 
         # encode stats into strings
         timer.start("strings")

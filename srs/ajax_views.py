@@ -397,3 +397,6 @@ class CommentDTView(DatatablesView):
               "user__userprofile__accountid",
               "object_pk"
               )
+
+    def global_search(self, queryset):
+        return super(CommentDTView, self).global_search(queryset.filter(is_removed=False))
