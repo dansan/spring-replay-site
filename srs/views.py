@@ -369,7 +369,9 @@ def hall_of_fame(request, abbreviation):
     c = all_page_infos(request)
     game = get_object_or_404(Game, abbreviation=abbreviation)
 
-    if game.sldb_name != "":
+    if game.sldb_name == "ZK":
+        pass
+    elif game.sldb_name != "":
         try:
             c["leaderboards"] = get_sldb_leaderboards(game)
         except Exception, e:
@@ -379,7 +381,9 @@ def hall_of_fame(request, abbreviation):
         logger.error("%s (%s)", c["errmsg"], game)
 
     if abbreviation == "ZK":
-        c["intro_text"] = ['<b>The official Hall of Fame of Zero-K is at <a href="http://zero-k.info/Ladders">http://zero-k.info/Ladders</a>.</b>']
+        c["intro_text"] = ['<b>The official Hall of Fame of Zero-K is at <a '
+                           'href="http://zero-k.info/Ladders">http://zero-k.info/Ladders</a>.</b><br/>No rating '
+                           'records are kept on this site anymore.']
     c["games"] = Game.objects.exclude(sldb_name="")
     c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
 #    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
