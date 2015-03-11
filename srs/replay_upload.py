@@ -89,8 +89,12 @@ def main(argv=None):
     else:
         trans = None # use xmlrpclib internal HTTP transport
 
-    rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
-    result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title, args.comment, args.tags, args.owner)
+    try:
+        rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
+        result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title, args.comment, args.tags, args.owner)
+    except Exception, e:
+        print "[Replay Upload] Error sending data to replay site. Exception:\n%s\n" % str(e)
+        return 1
 
     if args.verbose:
         print "[Replay Upload] %s" % result
