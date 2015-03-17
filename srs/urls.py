@@ -51,6 +51,7 @@ urlpatterns = patterns('',
     url(r'^ajax_playerrating_tbl_src/(?P<accountid>[\d-]+)/$', 'srs.ajax_views.ajax_playerrating_tbl_src', name='ajax_playerrating_tbl_src'),
     url(r'^ajax_winloss_tbl_src/(?P<accountid>[\d-]+)/$', 'srs.ajax_views.ajax_winloss_tbl_src', name='ajax_winloss_tbl_src'),
     url(r'^ajax_playerreplays_tbl_src/(?P<accountid>[\d-]+)/$', 'srs.ajax_views.ajax_playerreplays_tbl_src', name='ajax_playerreplays_tbl_src'),
+    url(r'^infolog/', include('infolog-upload.urls')),
 )
 
 urlpatterns += staticfiles_urlpatterns()

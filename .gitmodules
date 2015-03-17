@@ -1,0 +1,3 @@
+[submodule "infolog-upload"]
+	path = infolog-upload
+	url = git@github.com:dansan/infolog-upload.git

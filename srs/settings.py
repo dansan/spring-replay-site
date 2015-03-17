@@ -142,6 +142,7 @@ INSTALLED_APPS = (
     'django.contrib.sitemaps',
     'south',
     'srs',
+    'infolog-upload',
     'lobbyauth',
     'django.contrib.comments',
     'django_xmlrpc',
