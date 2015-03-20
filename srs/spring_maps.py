@@ -20,13 +20,7 @@ from shutil import copyfile
 from django.conf import settings
 from models import Allyteam, Player
 
-logging.basicConfig(level=logging.DEBUG,
-                    format=settings.DEBUG_FORMAT,
-                    datefmt=settings.LOG_DATETIME_FORMAT,
-                    filename=settings.LOG_PATH+'/parse_debug.log',
-                    filemode='w+')
-
-logger = logging.getLogger("srs")
+logger = logging.getLogger(__package__)
 
 class Spring_maps():
     def __init__(self, mapname):

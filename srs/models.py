@@ -463,6 +463,7 @@ class Game(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     abbreviation = models.CharField(max_length=64, db_index=True)
     sldb_name = models.CharField(max_length=64, db_index=True)
+    developer = models.ManyToManyField(User, blank=True, null=True)
 
     def __unicode__(self):
         return self.name[:70] + " (" + self.abbreviation + ")"
@@ -854,7 +855,7 @@ def update_stats():
         logger.info("timings:\n%s", timer)
 
 # TODO: use a proxy model for this
-User.get_absolute_url = lambda self: "/user/" + str(self.userprofile.accountid) + "/"
+User.get_absolute_url = lambda self: "/player/" + str(self.userprofile.accountid) + "/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
 
 # TODO: use a proxy model for this

@@ -22,18 +22,7 @@ import struct
 import logging
 import settings
 
-logging.basicConfig(level=logging.DEBUG,
-                    format=settings.DEBUG_FORMAT,
-                    datefmt=settings.LOG_DATETIME_FORMAT,
-                    filename=settings.LOG_PATH+'/parse_debug.log',
-                    filemode='w+')
-
-logger = logging.getLogger("srs")
-# ro = logging.FileHandler(settings.LOG_PATH+'/root_debug.log')
-# ro.setLevel(logging.DEBUG)
-# ro.setFormatter(logging.Formatter(fmt=settings.DEBUG_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT))
-# logger.addHandler(ro)
-
+logger = logging.getLogger(__package__)
 
 
 #

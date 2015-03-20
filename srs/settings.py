@@ -142,12 +142,14 @@ INSTALLED_APPS = (
     'django.contrib.sitemaps',
     'south',
     'srs',
-    'infolog-upload',
+    'infolog_upload',
     'lobbyauth',
     'django.contrib.comments',
     'django_xmlrpc',
     'djangojs',
-    'eztables'
+    'eztables',
+    'django_extensions',
+    'jsonrpc'
 )
 
 # A sample logging configuration. The only tangible logging
