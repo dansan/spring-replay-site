@@ -73,7 +73,7 @@ Please see srs_base.html for license information.
                 <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
                 <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
               </p>
-              {% if user = replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
+              {% if user == replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
               {% if user.is_staff %}<p class="text-success"><a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a></p>{% endif %}
             </div>
           </div>
@@ -414,7 +414,7 @@ Please see srs_base.html for license information.
 <!-- COMMENTS -->
 
     <div class="row">
-      <div class="col-sx-12">
+      <div class="col-sx-12" style="padding-left: 15px; padding-right: 15px;">
         <div class="panel panel-default" itemscope itemtype="http://schema.org/WebPage">
   {% get_comment_count for replay as comment_count %}
           <div class="panel-heading"><b>Comments</b><br/>{% if not user.is_authenticated %}<small>(<a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a> to post a comment)</small>{% endif %}</div>
@@ -494,7 +494,7 @@ Please see srs_base.html for license information.
 
   {% if user in replay_owners %}
     <div class="row">
-      <div class="col-sx-12">
+      <div class="col-sx-12" style="padding-left: 15px; padding-right: 15px;">
         <a class="btn btn-default" role="button" href="{% url "srs.upload_views.upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
       </div>
     </div>
