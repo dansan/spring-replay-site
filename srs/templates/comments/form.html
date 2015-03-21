@@ -5,7 +5,7 @@
               <fieldset>
                 <legend>Post a comment</legend>
   {% for field in form %}
-                <div class="form-group" {% if field.name == "honeypot" or field.name == "name" or field.name == "email" or field.name == "url" or field.name == "content_type" or field.name == "object_pk" or field.name == "timestamp" or field.name == "security_hash" %} style="display:none; margin-bottom: 0px;"{% endif %}>
+                <div class="form-group{% if field.name == "honeypot" or field.name == "name" or field.name == "email" or field.name == "url" or field.name == "content_type" or field.name == "object_pk" or field.name == "timestamp" or field.name == "security_hash" %}" style="display:none; margin-bottom: 0px;"{% else %} col-lg-10 col-lg-offset-2"{% endif %}>
     {% if field.is_hidden %}
                   <div>{{ field }}</div>
     {% else %}
