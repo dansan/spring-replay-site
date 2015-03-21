@@ -184,4 +184,8 @@ LOGGING = {
 # import site specific settings
 from local_settings_ import *
 # overwrite default settings
-from local_settings import *
+try:
+    from local_settings import *
+except ImportError:
+    print("ERROR: Please copy local_settings_.py to local_settings.py, and overwrite\n       default settings there.")
+    exit(1)

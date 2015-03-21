@@ -90,6 +90,9 @@ def _query_sldb(service, *args, **kwargs):
 #         logger.debug("not connecting while in DEBUG")
 #         raise SLDBstatusException(service, -1)
 
+    if not socket.gethostbyname(socket.getfqdn()) in settings.SLDB_ALLOWED_IPS:
+        raise Exception("This host is not allowed to connect to SLDB.")
+
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
     rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
