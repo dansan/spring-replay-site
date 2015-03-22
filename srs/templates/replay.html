@@ -74,7 +74,7 @@ Please see srs_base.html for license information.
                 <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
               </p>
               {% if user == replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
-              {% if user.is_staff %}<p class="text-success"><a href="/admin/srs/replay/{{ replay.pk }}/">replay @admin site</a></p>{% endif %}
+              {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:srs_replay_change' replay.pk %}">replay @admin site</a></p>{% endif %}
             </div>
           </div>
         </div>
