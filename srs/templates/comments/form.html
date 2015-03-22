@@ -1,7 +1,7 @@
 {% load comments %}
             <form role="form" class="form-horizontal" action="{% comment_form_target %}" method="post">
               {% csrf_token %}
-              <div><input type="hidden" name="next" value="{{ replay.get_absolute_url }}#afterlastcomment" /></div>
+              <div><input type="hidden" name="next" value="{{ comment_obj.get_absolute_url }}#afterlastcomment" /></div>
               <fieldset>
                 <legend>Post a comment</legend>
   {% for field in form %}

@@ -14,7 +14,6 @@ from django.views.decorators.cache import never_cache
 from django.http import Http404, HttpResponse
 from django.utils.html import strip_tags
 from django.template import add_to_builtins
-from django.core.urlresolvers import reverse
 
 import MySQLdb
 
@@ -72,6 +71,7 @@ def replay(request, gameID):
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
+        c["comment_obj"] = replay
     except:
         raise Http404("No replay with gameID '"+ strip_tags(gameID)+"' found.")
 

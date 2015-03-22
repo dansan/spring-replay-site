@@ -19,6 +19,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.db.models import Count
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
 from django.conf import settings
 from picklefield.fields import PickledObjectField
@@ -893,7 +894,9 @@ def replay_del_callback(sender, instance, **kwargs):
 # automatically refresh statistics when a replay is created or modified
 @receiver(post_save, sender=Comment)
 def comment_save_callback(sender, instance, **kwargs):
-    logger.debug("Comment.save(%d) : '%s'", instance.pk, instance)
+    if instance.content_type == ContentType.objects.get(name="infolog"):
+        from infolog_upload.notifications import Notifications
+        Notifications().new_comment(instance)
     update_stats()
 
 

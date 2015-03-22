@@ -2,7 +2,7 @@
             <dl id="comments" itemprop="comment" itemscope itemtype="http://schema.org/UserComments">
   {% for comment_obj in comment_list %}
               <dt id="c{{ comment_obj.id }}">
-                  <span itemprop="commentTime" content="{{ comment_obj.submit_date.isoformat }}">{{ comment_obj.submit_date }}</span> - <span itemprop="creator" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ comment_obj.user.username }}</span></span> <a href="{% get_comment_permalink comment_obj %}" itemprop="url"><span class="ionicons ion-link"></span></a>
+                  <span itemprop="commentTime" content="{{ comment_obj.submit_date.isoformat }}">{{ comment_obj.submit_date|date:"LONG_DATETIME_FORMAT" }}</span>  --  <span itemprop="creator" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ comment_obj.user.username }}</span></span> <a href="{% get_comment_permalink comment_obj %}" itemprop="url"><span class="ionicons ion-link"></span></a>
               </dt>
               <dd>
                   <p>{{ comment_obj.comment }}</p>
