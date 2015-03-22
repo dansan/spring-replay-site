@@ -100,6 +100,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
   {% if user.replays_uploaded > 0 %}
               <li><a href="{% url "srs.views.browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
   {% endif %}
+  {% if user.get_profile.is_developer %}
+              <li><a href="{% url "infolog_upload.views.index" %}">Infologs</a></li>
+  {% endif %}
   {% if user.is_superuser %}
               <li><a href="/admin/">Admin</a></li>
   {% endif %}
