@@ -17,6 +17,7 @@ class UserProfile(models.Model):
     country   = models.CharField(max_length=2)
     game_pref = models.SmallIntegerField(default=0) # id of srs.models.Game
     game_pref_fixed = models.BooleanField(default=False)
+    is_developer = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "profile for %s (accID: %s | %d)"%(self.user.username, self.user.last_name, self.accountid)

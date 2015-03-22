@@ -155,3 +155,7 @@ http://stackoverflow.com/questions/18432577/stacked-tabs-in-bootstrap-3
 .dataTables_wrapper {
     color: inherit;
 }
+
+textarea {
+    color: #000000;
+}

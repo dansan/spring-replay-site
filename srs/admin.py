@@ -38,6 +38,10 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ["name"]
 
+class GameAdmin(admin.ModelAdmin):
+    list_display = ("name", "abbreviation", "sldb_name")
+    search_fields = ["name", "abbreviation", "sldb_name", "developer__username"]
+
 class AdditionalReplayOwnerAdmin(admin.ModelAdmin):
     list_display = ("uploader", "additional_owner")
     search_fields = ["uploader", "additional_owner"]
@@ -71,11 +75,9 @@ admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(UploadTmp)
 admin.site.register(Rating, RatingAdmin)
 admin.site.register(RatingHistory)
-admin.site.register(Game)
+admin.site.register(Game, GameAdmin)
 admin.site.register(GameRelease)
 admin.site.register(AdditionalReplayOwner, AdditionalReplayOwnerAdmin)
 admin.site.register(ExtraReplayMedia, ExtraReplayMediaAdmin)
 admin.site.register(SldbLeaderboardGame, SldbLeaderboardGameAdmin)
 admin.site.register(SldbLeaderboardPlayer, SldbLeaderboardPlayerAdmin)
-
-admin.site.register(UserProfile)
