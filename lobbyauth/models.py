@@ -21,3 +21,6 @@ class UserProfile(models.Model):
 
     def __unicode__(self):
         return "profile for %s (accID: %s | %d)"%(self.user.username, self.user.last_name, self.accountid)
+
+    class Meta:
+        ordering = ('user__username',)

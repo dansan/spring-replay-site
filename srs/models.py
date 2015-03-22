@@ -367,6 +367,12 @@ class PlayerAccount(models.Model):
         gametypes = Replay.objects.filter(player__account=self, player__spectator=False).exclude(tags=Tag.objects.get(name="Bot")).values_list("gametype", flat=True)
         return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
 
+    def get_user(self):
+        try:
+            return User.objects.get(userprofile__accountid=self.accountid)
+        except:
+            return None
+
     class Meta:
         ordering = ['accountid']
 

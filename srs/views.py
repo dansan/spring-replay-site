@@ -549,12 +549,12 @@ def browse_archive(request, bfilter):
     tags              = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
     c["top_tags"]     = list()
     for t in range(0, 12, 3):
-        if t+2 > len(tags): break
+        if t+3 > len(tags): break
         c["top_tags"].append((tags[t], tags[t+1], tags[t+2]))
     maps              = map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|'))
     c["top_maps"]     = list()
     for r in range(0, 8, 2):
-        if r+1 > len(maps): break
+        if r+2 > len(maps): break
         c["top_maps"].append((maps[r], maps[r+1]))
     c["top_players"]  = map(lambda x: (PlayerAccount.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.active_players.split('|'))
     c["all_games"]    = map(lambda x: (Game.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.games.split('|'))

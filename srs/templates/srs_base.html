@@ -80,7 +80,13 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 {% endfor %}
             </ul>
           </li>
-          <li><a href="{% url "srs.upload_views.upload" %}">Upload</a></li>
+          <li>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Upload <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{% url "srs.upload_views.upload" %}">Replay</a></li>
+              <li><a href="{% url "infolog_upload.views.upload_html" %}">Infolog</a></li>
+            </ul>
+          </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
@@ -100,7 +106,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
   {% if user.replays_uploaded > 0 %}
               <li><a href="{% url "srs.views.browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
   {% endif %}
-  {% if user.get_profile.is_developer %}
+  {% if user.get_profile.is_developer or user.infolog_uploader.exists %}
               <li><a href="{% url "infolog_upload.views.index" %}">Infologs</a></li>
   {% endif %}
   {% if user.is_superuser %}

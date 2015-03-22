@@ -171,6 +171,46 @@ Please see srs_base.html for license information.
       </div>
     </div>
 
+  {% if user.userprofile.is_developer or playeraccount.get_user and playeraccount.get_user == user and playeraccount.get_user.infolog_uploader.exists %}
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Your infolog uploads</h2>
+        </div>
+        <div class="col-xs-12">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped table-condensed">
+              <thead>
+                <tr>
+                  <th class="text-center">#</th>
+                  <th class="text-center">Match Date</th>
+                  <th class="text-center">Upload Date</th>
+                  <th class="text-center">Game</th>
+                  <th class="text-center">Engine</th>
+                  <th class="text-center">Severity</th>
+                  <th class="text-center">Replay</th>
+                  <th class="text-center">Comments</th>
+                </tr>
+              </thead>
+              <tbody>
+    {% for infolog in playeraccount.get_user.infolog_uploader.all %}
+                <tr>
+                  <td class="text-right"><a href="{{ infolog.get_absolute_url }}"># {{ infolog.id }}</a></td>
+                  <td class="text-center" title="{{ infolog.replay.unixTime|date:"LONG_DATETIME_FORMAT" }}">{{ infolog.replay.unixTime|date:"SHORT_DATE_FORMAT" }}</td>
+                  <td class="text-center" title="{{ infolog.upload_date|date:"LONG_DATETIME_FORMAT" }}">{{ infolog.upload_date|date:"SHORT_DATE_FORMAT" }}</td>
+                  <td class="text-center">{{ infolog.game.abbreviation }}</td>
+                  <td class="text-center">{{ infolog.replay.versionString }}</td>
+                  <td class="text-center">{{ infolog.severity }}</td>
+                  <td class="text-center"><a href="{{ infolog.replay.get_absolute_url }}">{{ infolog.replay.title }}</a></td>
+                  <td class="text-center">{{ infolog.comments_count }}</td>
+                </tr>
+    {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+  {% endif %}
+
     <!-- rating history graph modal -->
     <div class="modal fade" id="rhModal" tabindex="-1" role="dialog" aria-labelledby="rhnModalLabel" aria-hidden="true">
         <div class="modal-dialog">

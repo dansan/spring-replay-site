@@ -430,6 +430,60 @@ Please see srs_base.html for license information.
       </div>
     </div> <!-- row -->
 
+  {% if replay.infolog_set.all %}
+<!-- INFOLOG -->
+    {% for infolog in replay.infolog_set.all %}
+      {% if user.userprofile.is_developer or user == infolog.uploader %}
+    <div class="row">
+      <div class="col-sx-12" style="padding-left: 15px; padding-right: 15px;">
+        <div class="panel panel-default" itemscope itemtype="http://schema.org/WebPage">
+          <div class="panel-heading"><b>infolog</b></div>
+          <div class="panel-body">
+            <div class="col-sm-6">
+                <p style="font-size: larger; font-weight: bold;">
+                    <a href="{% url "infolog_upload.views.infolog_view" infolog.id %}">Infolog #{{ infolog.id }}</a>
+                </p>
+                <hr style="margin-top: 7px; margin-bottom: 7px;">
+                <p style="margin: 0 0 2px;">Upload date: {{ infolog.upload_date|date:"LONG_DATETIME_FORMAT" }}</p>
+                <p style="margin: 0 0 2px;">Uploader: <a href="{% url 'srs.views.player' user.get_profile.accountid %}">{{ infolog.uploader }}</a></p>
+                <p style="margin: 0 0 2px;">Client software: {{ infolog.client }}</p>
+                <p style="margin: 0 0 2px;">External link: {% if infolog.ext_link %}<a href="{{ infolog.ext_link }}">{{ infolog.ext_link }}</a>{% else %}None{% endif %}</p>
+                {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:infolog_upload_infolog_change' infolog.pk %}">infolog @admin site</a></p>{% endif %}
+                {% if not user in infolog.subscribed.all and not user == infolog.uploader %}
+                <form class="form" action="." method="POST" role="form">
+                    {% csrf_token %}
+                    <p>Subscribed devs: {% for subs in infolog.subscribed.all %}{{ subs.username }} {% endfor %}
+                    <button type="submit" class="btn btn-default btn-xs pull-right">Subscribe to changes</button></p>
+                </form>
+                {% else %}
+                <p>Subscribed devs: {% for subs in infolog.subscribed.all %}{{ subs.username }} {% endfor %}</p>
+                {% endif %}
+            </div>
+            <div class="col-sm-6">
+                <p style="font-size: larger; font-weight: bold;">User supplied text</p>
+                <hr style="margin-top: 7px; margin-bottom: 7px;">
+                <textarea readonly style="color: #000000; height: 64px; width: 100%;">{{ infolog.free_text }}</textarea>
+            </div>
+            <div class="col-sm-12">
+                <textarea readonly style="color: #000000; height: 256px; width: 100%;">{{ infolog.infolog_text }}</textarea>
+            </div>
+            <div class="col-sm-12">
+                <p style="font-size: larger; font-weight: bold; margin-top: 20px;">Comments on the infolog</p>
+                <hr style="margin-top: 7px; margin-bottom: 7px;">
+                {% render_comment_list for infolog %}
+                <a name="afterlastcomment"></a>
+                {% if user.is_authenticated %}
+                    {% render_comment_form for infolog %}
+                {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- row -->
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
 <!-- MAP / MOD OPTIONS -->
 
     <div class="row">

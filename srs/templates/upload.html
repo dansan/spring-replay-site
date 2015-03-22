@@ -11,7 +11,19 @@ Please see srs_base.html for license information.
 {% block maincontent%}
     <div class="row">
       <div class="col-xs-12 col-sm-8 col-sm-offset-2">
-        <h1 class="page-header">Upload</h1>
+        <h1 class="page-header">Replay upload</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-8 col-sm-offset-2">
+        <div class="panel panel-warning">
+          <div class="panel-heading">
+            <h3 class="panel-title">Infolog upload</h3>
+          </div>
+          <div class="panel-body">
+            <p>If you wish to upload a infolog.txt file, please follow <a href="{% url 'infolog_upload.views.upload_html' %}">this link</a>.</p>
+          </div>
+        </div>
       </div>
     </div>
     <div class="row">
