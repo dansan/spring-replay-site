@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /admin/
 Disallow: /xmlrpc/
+Disallow: /infolog/
 
 user-agent: AhrefsBot
 Disallow: /
