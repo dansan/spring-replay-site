@@ -58,6 +58,7 @@ Installation
 
 .. code-block:: bash
 
+    $ sudo aptitude install libzmq-dev
     $ virtualenv srs
     $ . srs/bin/activate
     (srs) $ pip install -r requirements.txt
