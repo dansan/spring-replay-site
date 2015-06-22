@@ -430,8 +430,9 @@ Please see srs_base.html for license information.
       </div>
     </div> <!-- row -->
 
-  {% if replay.infolog_set.all %}
 <!-- INFOLOG -->
+
+  {% if replay.infolog_set.all %}
     {% for infolog in replay.infolog_set.all %}
       {% if user.userprofile.is_developer or user == infolog.uploader %}
     <div class="row">

@@ -116,6 +116,26 @@ class Replay(models.Model):
     def __unicode__(self):
         return "(" + str(self.pk) + ") " + self.title + " " + self.unixTime.strftime("%Y-%m-%d")
 
+    def to_dict(self):
+        return {"id": self.id,
+                "versionString": self.versionString,
+                "gameID": self.gameID,
+                "unixTime": self.unixTime,
+                "wallclockTime": self.wallclockTime,
+                "autohostname": self.autohostname,
+                "gametype": self.gametype,
+                "startpostype": self.startpostype,
+                "title": self.title,
+                "short_text": self.short_text,
+                "long_text": self.long_text,
+                "map_name": self.map_info.name,
+                "map_startpos": self.map_info.startpos,
+                "map_width": self.map_info.width,
+                "map_height": self.map_info.height,
+                "tags": ",".join(self.tags.all().values_list("name", flat=True)) if self.tags.exists() else "",
+                "uploader": self.uploader.username,
+                "upload_date": self.upload_date}
+
     @models.permalink
     def get_absolute_url(self):
         return ('srs.views.replay', [str(self.gameID)])
