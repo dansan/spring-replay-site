@@ -47,6 +47,11 @@ Dependencies
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django.js: https://github.com/noirbizarre/django.js/
 - South: http://south.aeracode.org/
+- django_extensions
+- jsonrpc
+- ipython
+- watchdog
+- Werkzeug
 
 Installation
 ============
@@ -55,7 +60,7 @@ Installation
 
     $ virtualenv srs
     $ . srs/bin/activate
-    (srs) $ pip install --compile Django Pillow MySQL-python suds django-xmlrpc python-magic pytz django-picklefield django.js South
+    (srs) $ pip install -r requirements.txt
 
 - install django-eztables from https://github.com/dansan/django-eztables.git
 
