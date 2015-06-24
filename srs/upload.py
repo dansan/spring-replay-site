@@ -152,6 +152,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     Store all data about this replay in the database,
     if replay exists, all argument except 'demofile' are ignored
     """
+    logger.info("tags='%s' path='%s' filename='%s' short='%s' long_text='%s' user='%s'",
+                tags, path, filename, short, long_text, user)
+    logger.info("gameID='%s'", demofile.header["gameID"])
     global timer
     if not timer: timer = UploadTiming()
 #     pp = pprint.PrettyPrinter(depth=6)

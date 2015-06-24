@@ -39,7 +39,8 @@ def upload(request):
         if formset.is_valid():
             for form in formset:
                 if form.cleaned_data:
-                    logger.debug("form.cleaned_data=%s", form.cleaned_data)
+                    logger.info("upload by request.user='%s'", request.user)
+                    logger.info("form.cleaned_data=%s", form.cleaned_data)
                     ufile = form.cleaned_data['file']
                     short = form.cleaned_data['short']
                     long_text = form.cleaned_data['long_text']
