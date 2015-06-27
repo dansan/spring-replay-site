@@ -42,6 +42,10 @@ class GameAdmin(admin.ModelAdmin):
     list_display = ("name", "abbreviation", "sldb_name")
     search_fields = ["name", "abbreviation", "sldb_name", "developer__username"]
 
+class GameReleaseAdmin(admin.ModelAdmin):
+    list_display = ("name", "version", "game")
+    search_fields = ["name", "version", "game__name"]
+
 class AdditionalReplayOwnerAdmin(admin.ModelAdmin):
     list_display = ("uploader", "additional_owner")
     search_fields = ["uploader", "additional_owner"]
@@ -76,7 +80,7 @@ admin.site.register(UploadTmp)
 admin.site.register(Rating, RatingAdmin)
 admin.site.register(RatingHistory)
 admin.site.register(Game, GameAdmin)
-admin.site.register(GameRelease)
+admin.site.register(GameRelease, GameReleaseAdmin)
 admin.site.register(AdditionalReplayOwner, AdditionalReplayOwnerAdmin)
 admin.site.register(ExtraReplayMedia, ExtraReplayMediaAdmin)
 admin.site.register(SldbLeaderboardGame, SldbLeaderboardGameAdmin)

@@ -20,9 +20,11 @@ from django.dispatch import receiver
 from django.db.models import Count
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
-
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from picklefield.fields import PickledObjectField
+
+from mail import send_mail
 
 logger = logging.getLogger(__package__)
 
@@ -154,14 +156,41 @@ class Replay(models.Model):
 
     @property
     def game_release(self):
-        gr_name = self.gametype
         try:
-            return GameRelease.objects.get(name=gr_name)
-        except:
+            gr = GameRelease.objects.get(name=self.gametype)
+            logger.debug("gr: %r", gr)
+            return gr
+        except ObjectDoesNotExist:
+            # new game release
+            pass
+
+        # look for existing game name
+        game = None
+        for i in range(len(self.gametype)):
+            _game = Game.objects.filter(name=self.gametype[:-1*i])
+            if _game.count() == 1:
+                game = _game.first()
+                break
+            elif _game.count() > 1:
+                msg = "Found %r Games with name %r: %r.\ngametype: %r\ngameID: %r\nmatch: %r." % (_game.count(),
+                                                                                                  self.gametype[:-1*i],
+                                                                                                  _game, self.gametype,
+                                                                                                  self.gameID,
+                                                                                                  self.__unicode__())
+                logger.error(msg)
+                send_mail([x[1] for x in settings.ADMINS], "SRS: ambiguous game name", msg)
+            else:
+                pass
+        if not game:
+            logger.debug("not game")
+            msg = "Unknown gametype: %r\ngameID: %r\nmatch: %r." % (self.gametype, self.gameID, self.__unicode__())
+            logger.error(msg)
+            send_mail([x[1] for x in settings.ADMINS], "SRS: Unknown game name", msg)
+
             game_name = str()
             version = str()
             in_version = False
-            for gr_name_part in gr_name.split():
+            for gr_name_part in self.gametype.split():
                 version_start = ["v", "V", "b", "("]
                 version_start.extend(map(str, range(10)))
                 if in_version or gr_name_part.upper().startswith("TEST") or gr_name_part.upper().startswith("RC") or \
@@ -174,15 +203,17 @@ class Replay(models.Model):
             game_name = game_name.rstrip()
             while game_name[-1] in [" ", "-"]:
                 game_name = game_name[:-1]
+        else:
+            game_name = game.name
+            version = self.gametype[len(game.name):]
+        version = version.strip()
 
-            version = version.rstrip()
+        if version[0].upper() == "V" or version[0] == ".":
+            version = version[1:]
 
-            if version[0].upper() == "V" or version[0] == ".":
-                version = version[1:]
-
-            game, _ = Game.objects.get_or_create(name=game_name, defaults={
-                "abbreviation": reduce(lambda x, y: x + y, [gn[0].upper() for gn in game_name.split()])})
-            return GameRelease.objects.create(name=gr_name, game=game, version=version)
+        game, _ = Game.objects.get_or_create(name=game_name, defaults={
+            "abbreviation": reduce(lambda x, y: x + y, [gn[0].upper() for gn in game_name.split()])})
+        return GameRelease.objects.create(name=self.gametype, game=game, version=version)
 
     @property
     def match_type(self):
