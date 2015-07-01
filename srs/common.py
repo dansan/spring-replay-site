@@ -5,6 +5,8 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from django.shortcuts import get_object_or_404
+
 from srs.models import Game, PlayerAccount
 
 def all_page_infos(request):
@@ -29,7 +31,8 @@ def all_page_infos(request):
     c["all_games_mainmenu"] = Game.objects.all()
     c["selfurl"] = request.path
     if request.session.get("game_pref", None) != None and request.session["game_pref"] > 0:
-        c["game_pref"]     = request.session["game_pref"]
-        c["game_pref_obj"] = Game.objects.get(id=c["game_pref"])
-        c["game_pref_browse"] = "game=" + str(c["game_pref"])
+        game_pref = request.session["game_pref"]
+        c["game_pref"] = game_pref
+        c["game_pref_obj"] = get_object_or_404(Game, id=game_pref)
+        c["game_pref_browse"] = "game=" + str(game_pref)
     return c
