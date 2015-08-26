@@ -362,8 +362,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.info("removing deprecated Teams: %s", team_depr.values_list('id'))
         team_depr.delete()
     for tnum,val in demofile.game_setup['team'].items():
-        defaults = {"allyteam": allyteams[val["allyteam"]], "handicap": val["handicap"], "rgbcolor": floats2rgbhex(val["rgbcolor"]),
-                    "side": val["side"], "teamleader": players[val["teamleader"]]}
+        defaults = {"allyteam": allyteams[val["allyteam"]], "handicap": val["handicap"],
+                    "rgbcolor": floats2rgbhex(val.get("rgbcolor", 1.0)), "side": val["side"],
+                    "teamleader": players[val["teamleader"]]}
+        if not "rgbcolor" in val:
+            # probably zero-k, let's see and learn what stuff they use instead
+            logger.error("No key 'rgbcolor' in game_setup of team %r, val=%r ", tnum, val)
         if val.has_key("startposx") and val.has_key("startposy") and val.has_key("startposz"):
             defaults["startposx"] = val["startposx"]
             defaults["startposy"] = val["startposy"]
