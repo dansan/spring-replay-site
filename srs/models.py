@@ -20,7 +20,7 @@ from django.dispatch import receiver
 from django.db.models import Count
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from picklefield.fields import PickledObjectField
 
@@ -393,8 +393,14 @@ class PlayerAccount(models.Model):
         return Player.objects.filter(account__in=self, spectator=True).count()
 
     def get_rating(self, game, match_type):
-        rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type, defaults={})
-        return rating
+        try:
+            rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type)
+            return rating
+        except MultipleObjectsReturned:
+            # this shouldn't happen, was a bug, now delete last object and return first
+            ratings = Rating.objects.filter(playeraccount=self, game=game, match_type=match_type)
+            ratings.last().delete()
+            return ratings.first()
 
     def get_names(self):
         pls = list(Player.objects.filter(account=self).values_list("name", flat=True))
