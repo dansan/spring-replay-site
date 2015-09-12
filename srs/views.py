@@ -43,7 +43,6 @@ def index(request):
     c["popular_replays"] = Replay.objects.order_by("-download_count")[:8]
     c["news"] = NewsItem.objects.filter(show=True).order_by('-pk')[:6]
     c["replay_details"] = False
-    c["pageunique"] = reduce(lambda x, y: x+y, [str(r.pk) for r in c["replays"]])
     c["latest_comments"] = Comment.objects.filter(is_removed=False).order_by("-submit_date")[:5]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 

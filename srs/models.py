@@ -158,7 +158,6 @@ class Replay(models.Model):
     def game_release(self):
         try:
             gr = GameRelease.objects.get(name=self.gametype)
-            logger.debug("gr: %r", gr)
             return gr
         except ObjectDoesNotExist:
             # new game release

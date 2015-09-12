@@ -76,12 +76,13 @@ Installation
     (srs) $ cd srs
     (srs) $ patch -p0  < .../eztables-GET.patch
 
-- install database schemas and static files
+- create database in xxSQL
+- copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there (at least DATABASES and ADMINS).
+- install database schemas and static files:
 
 .. code-block:: bash
 
-    (srs) $ ./manage.py migrate srs
-    (srs) $ ./manage.py migrate lobbyauth
-    (srs) $ ./manage.py collectstatic
+    (srs) $ ./manage.py syncdb
+    (srs) $ ./manage.py migrate
 
-- copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there.
+- go to the /admin/ page and create a Lobbyauth->User_profile for your admin user

@@ -12,11 +12,11 @@ from django.contrib import admin
 
 class PlayerAccountAdmin(admin.ModelAdmin):
     list_display = ("accountid", "id", "preffered_name", "get_names")
-    search_fields = ["id", "accountid", "preffered_name", "primary_account__preffered_name", "player__name"]
+    search_fields = ["id", "accountid", "preffered_name", "player__name"]
 
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ("name", "id", "spectator")
-    search_fields = ["id", "name", "account__preffered_name", "account__primary_account__preffered_name"]
+    search_fields = ["id", "name", "account__preffered_name"]
 
 class RatingAdmin(admin.ModelAdmin):
     list_display = ("playername", "playeraccount", "game", "match_type", "trueskill_mu")

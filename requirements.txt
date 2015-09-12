@@ -1,13 +1,13 @@
 argh==0.26.1
 backports.ssl-match-hostname==3.4.0.2
 certifi==14.5.14
-Django==1.6.2
+Django==1.6.3
 django-extensions==1.5.1
 django-eztables==0.3.3.dev0
+django.js==0.8.1
 django-json-rpc==0.6.3
 django-picklefield==0.3.1
 django-xmlrpc==0.1.5
-django.js==0.8.1
 ipython==3.0.0
 Jinja2==2.7.3
 jsonschema==2.4.0
@@ -23,9 +23,9 @@ pytz==2014.10
 PyYAML==3.11
 pyzmq==14.5.0
 six==1.5.2
-South==0.8.4
+South==1.0.2
 suds==0.4
 terminado==0.5
 tornado==4.1
 watchdog==0.8.3
-Werkzeug==0.10.1
+Werkzeug==0.10.4
