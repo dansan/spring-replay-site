@@ -81,6 +81,21 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             </ul>
           </li>
           <li>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Recent seen <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+{% for hreplay in page_history %}
+              <li>
+                  <a href="{% url "srs.views.replay" hreplay.gameID %}">
+                    <small>
+                        {{ hreplay.title }} ({{ hreplay.game.abbreviation }})<br/>
+                        {{ hreplay.unixTime|date:"LONG_DATETIME_FORMAT" }}
+                    </small>
+                  </a>
+              </li>
+{% endfor %}
+            </ul>
+          </li>
+          <li>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Upload <b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="{% url "srs.upload_views.upload" %}">Replay</a></li>

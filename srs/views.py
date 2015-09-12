@@ -20,6 +20,7 @@ import MySQLdb
 import logging
 import gzip
 import magic
+import re
 
 from srs.models import *
 from srs.common import all_page_infos
@@ -30,6 +31,8 @@ from srs.forms import GamePref
 
 add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger(__package__)
+
+gameid_re = re.compile("^[0-9a-f]{32}$")
 
 def index(request):
     c = all_page_infos(request)
@@ -67,6 +70,10 @@ def index_replay_range(request, range_end, game_pref):
 
 def replay(request, gameID):
     c = all_page_infos(request)
+
+    if not gameid_re.findall(gameID):
+        raise Http404("Malformed gameID: %r." % gameID)
+
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
@@ -227,6 +234,20 @@ def replay(request, gameID):
         logger.exception("Exception: %s", e)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"]    = XTAwards.objects.filter(replay=replay, isAlive=0)
+
+    page_history = request.session.get("page_history")
+    if page_history and type(page_history) == list:
+        # check data (session data is user input)
+        for page in list(page_history):
+            if not gameid_re.findall(page):
+                page_history.remove(page)
+        if len(page_history) > 4:
+            page_history.remove(page)
+        if not gameID in page_history:
+            page_history.append(gameID)
+    else:
+        page_history = [gameID]
+    request.session["page_history"] = page_history
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 

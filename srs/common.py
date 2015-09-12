@@ -5,9 +5,12 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
+
 from django.shortcuts import get_object_or_404
 
-from srs.models import Game, PlayerAccount
+from srs.models import Game, PlayerAccount, Replay
+
 
 def all_page_infos(request):
     c = {}
@@ -30,7 +33,8 @@ def all_page_infos(request):
             request.session["game_pref"] = request.user.userprofile.game_pref
     c["all_games_mainmenu"] = Game.objects.all()
     c["selfurl"] = request.path
-    if request.session.get("game_pref", None) != None and request.session["game_pref"] > 0:
+    c["page_history"] = [Replay.objects.get(gameID=gid) for gid in request.session.get("page_history", [])]
+    if request.session.get("game_pref") and request.session["game_pref"] > 0:
         game_pref = request.session["game_pref"]
         c["game_pref"] = game_pref
         c["game_pref_obj"] = get_object_or_404(Game, id=game_pref)
