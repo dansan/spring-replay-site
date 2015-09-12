@@ -241,10 +241,10 @@ def replay(request, gameID):
         for page in list(page_history):
             if not gameid_re.findall(page):
                 page_history.remove(page)
-        if len(page_history) > 4:
-            page_history.remove(page)
         if not gameID in page_history:
-            page_history.append(gameID)
+            if len(page_history) > 4:
+                page_history.remove(page)
+            page_history.insert(0, gameID)
     else:
         page_history = [gameID]
     request.session["page_history"] = page_history
