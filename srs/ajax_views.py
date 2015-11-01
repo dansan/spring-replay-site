@@ -261,7 +261,7 @@ def replay_filter(queryset, filter_name):
     now               = datetime.datetime.now(timezone.utc)
     today             = datetime.datetime(year=now.year, month=now.month, day=now.day, tzinfo=timezone.utc)
     this_month_start  = datetime.datetime(year=now.year, month=now.month, day=1, tzinfo=timezone.utc)
-    this_month_end    = datetime.datetime(year=now.year if now.month<12 else now.year+1, month=(now.month+1)%12, day=1, tzinfo=timezone.utc) - datetime.timedelta(microseconds=1)
+    this_month_end    = datetime.datetime(year=now.year if now.month<12 else now.year+1, month=((now.month+1)%12 or 12), day=1, tzinfo=timezone.utc) - datetime.timedelta(microseconds=1)
     last_month_end    = this_month_start - datetime.timedelta(microseconds=1)
     last_month_start  = datetime.datetime(year=last_month_end.year, month=last_month_end.month, day=1, tzinfo=timezone.utc)
     this_year_start   = datetime.datetime(year=now.year, month=1, day=1, tzinfo=timezone.utc)
