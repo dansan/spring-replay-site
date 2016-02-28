@@ -58,7 +58,7 @@ def upload(request):
                     timer.stop("Parse_demo_file()")
                     try:
                         demofile.check_magic()
-                    except:
+                    except parse_demo_file.BadFileType:
                         form._errors = {'file': [u'Not a spring demofile: %s.'%ufile.name]}
                         replays.append((False, 'Not a spring demofile: %s.'%ufile.name))
                         continue

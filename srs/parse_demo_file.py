@@ -60,6 +60,13 @@ logger = logging.getLogger(__package__)
 #  * - ...
 #
 
+class ParseError(Exception):
+    pass
+
+
+class BadFileType(ParseError):
+    pass
+
 
 class Parse_demo_file():
     def __init__(self, filename):
@@ -97,14 +104,14 @@ class Parse_demo_file():
         """
         filemagic = magic.from_file(self.filename, mime=True)
         if filemagic.endswith("gzip"):
-            demofile = gzip.open(self.filename, 'rb')
+            myopen = gzip.open
         else:
-            demofile = open(self.filename, "rb")
-        demofile.seek(0)
-        _magic = demofile.read(16)
-        if not _magic.startswith("spring demofile"):
-            raise Exception("Not a spring demofile.")
-        demofile.close()
+            myopen = open
+        with myopen(self.filename, "rb") as demofile:
+            demofile.seek(0)
+            _magic = demofile.read(16)
+            if not _magic.startswith("spring demofile"):
+                raise BadFileType("Not a spring demofile.")
 
     def parse(self):
         """
@@ -114,16 +121,14 @@ class Parse_demo_file():
         """
         filemagic = magic.from_file(self.filename, mime=True)
         if filemagic.endswith("gzip"):
-            self.demofile = gzip.open(self.filename, 'rb')
+            myopen = gzip.open
         else:
-            self.demofile = open(self.filename, "rb")
-
-        self.parse_header()
-        self.parse_winningAllyTeams()
-        self.parse_script()
-        self.parse_demostream()
-
-        self.demofile.close()
+            myopen = open
+        with myopen(self.filename, "rb") as self.demofile:
+            self.parse_header()
+            self.parse_winningAllyTeams()
+            self.parse_script()
+            self.parse_demostream()
 
     def parse_header(self):
         #
