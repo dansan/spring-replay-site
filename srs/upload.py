@@ -12,6 +12,7 @@ import stat
 from tempfile import mkstemp
 import gzip
 import pprint
+import magic
 
 from django.db.models import Min
 from django.contrib.sitemaps import ping_google
@@ -140,12 +141,17 @@ def save_uploaded_file(ufile, filename):
     may raise an exception from os.open/write/close()
     """
     suff = filename.split("_")[-1]
-    (fd, path) = mkstemp(suffix="_"+suff+".gz", prefix=filename[:-len(suff)-1]+"__")
-    gzf = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
-    written_bytes = gzf.write(ufile)
-    gzf.close()
+    filemagic = magic.from_buffer(ufile, mime=True)
+    if filemagic.endswith("gzip"):
+        (fd, path) = mkstemp(suffix="_"+suff, prefix=filename[:-len(suff)-1]+"__")
+        f = os.fdopen(fd, "wb")
+    else:
+        (fd, path) = mkstemp(suffix="_"+suff+".gz", prefix=filename[:-len(suff)-1]+"__")
+        f = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
+    written_bytes = f.write(ufile)
+    f.close()
     logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
-    return (path, written_bytes)
+    return path, written_bytes
 
 def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     """

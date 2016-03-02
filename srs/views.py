@@ -312,7 +312,7 @@ def download(request, gameID):
         errmsg = 'File for replay(%d) "%s" not found.' %(replay.id, replay)
         logger.error(errmsg)
         raise Http404(errmsg)
-    if filemagic.endswith("gzip"):
+    if filemagic.endswith("gzip") and not replay.filename.endswith(".sdfz"):
         demofile = gzip.open(path, 'rb')
     else:
         demofile = open(path, "rb")

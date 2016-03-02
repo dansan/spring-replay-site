@@ -103,6 +103,7 @@ class Parse_demo_file():
         - may raise Exception when file is not a spring demofile
         """
         filemagic = magic.from_file(self.filename, mime=True)
+
         if filemagic.endswith("gzip"):
             myopen = gzip.open
         else:

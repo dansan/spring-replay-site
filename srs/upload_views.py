@@ -51,7 +51,8 @@ def upload(request):
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user, os.path.basename(path), short[:20])
         #            try:
                     if written_bytes != ufile.size:
-                        return HttpResponse("Could not store the replay file. Please contact the administrator.")
+                        logger.warn("written_bytes=%r != ufile.size=%r", written_bytes, ufile.size)
+                        #return HttpResponse("Could not store the replay file. Please contact the administrator.")
 
                     timer.start("Parse_demo_file()")
                     demofile = parse_demo_file.Parse_demo_file(path)
