@@ -800,7 +800,7 @@ def get_owner_list(uploader):
     return res
 
 
-def update_stats():
+def update_stats(force=False):
     """
     some very expensive operations -> this runs only once per day
     """
@@ -808,7 +808,7 @@ def update_stats():
     sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': 0, 'tags': "", 'maps': "",
                                                                     "active_players": "", 'all_players': "",
                                                                     'comments': "", "games": "", "bawards": ""})
-    if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0:
+    if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0 or force:
         # update stats
         from upload import UploadTiming
 
@@ -943,8 +943,8 @@ Comment.comment_short = lambda self: self.comment[:50] + "..."
 def replay_save_callback(sender, instance, **kwargs):
     logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
     # check for new new Game[Release] object
-    if kwargs["created"]: instance.game_release
-    update_stats()
+    if kwargs.get("created"):
+        update_stats()
 
 
 # automatically refresh statistics when a replay is deleted
@@ -953,7 +953,7 @@ def replay_del_callback(sender, instance, **kwargs):
     update_stats()
 
 
-# automatically refresh statistics when a replay is created or modified
+# automatically refresh statistics when a comment is created or modified
 @receiver(post_save, sender=Comment)
 def comment_save_callback(sender, instance, **kwargs):
     if instance.content_type == ContentType.objects.get(name="infolog"):
@@ -962,7 +962,7 @@ def comment_save_callback(sender, instance, **kwargs):
     update_stats()
 
 
-# automatically refresh statistics when a replay is deleted
+# automatically refresh statistics when a comment is deleted
 @receiver(post_delete, sender=Comment)
 def comment_del_callback(sender, instance, **kwargs):
     update_stats()

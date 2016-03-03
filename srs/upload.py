@@ -125,8 +125,8 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         try:
             timer.start("ping_google()")
             ping_google()
-        except Exception:
-            logger.exception("ping_google(): %s", e)
+        except Exception as exc:
+            logger.exception("ping_google(): %s", exc)
             pass
         finally:
             timer.stop("ping_google()")
@@ -134,7 +134,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     timer.stop("xmlrpc_upload()")
     logger.info("timings:\n%s", timer)
 
-    return '0 received %d bytes, replay at "%s"'%(written_bytes, replay.get_absolute_url())
+    return '0 received %s bytes, replay at "%s"' % (str(written_bytes), replay.get_absolute_url())
 
 def save_uploaded_file(ufile, filename):
     """
@@ -151,7 +151,7 @@ def save_uploaded_file(ufile, filename):
     written_bytes = f.write(ufile)
     f.close()
     logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
-    return path, written_bytes
+    return path, len(ufile)
 
 def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     """
