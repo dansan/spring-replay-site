@@ -1,10 +1,10 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
 # implementing a custom django auth backend here
@@ -24,7 +24,7 @@ from xmlrpclib import ServerProxy
 from models import UserProfile
 
 url = 'https://springrts.com/api/uber/xmlrpc'
-logger = logging.getLogger(__package__)
+logger = logging.getLogger("srs.auth")
 
 
 class LobbyBackend():
@@ -74,7 +74,7 @@ class LobbyBackend():
                     pass
                 user = User.objects.create_user(username=username, email="django@needs.this",
                                                 password="NoNeedToStoreEvenHashedPasswords")
-                                                # email, so comments form doesn't ask for it
+                # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
                 user.last_name = str(accountid)

@@ -3,12 +3,12 @@ from django.conf import global_settings
 from os.path import realpath, dirname
 
 SRS_FILE_ROOT = realpath(dirname(__file__))
-IMG_PATH = SRS_FILE_ROOT+"/static/img/"
-MAPS_PATH = SRS_FILE_ROOT+"/static/maps/"
-REPLAYS_PATH = SRS_FILE_ROOT+"/static/replays/"
-FONTS_PATH = SRS_FILE_ROOT+"/static/fonts/"
-TS_HISTORY_GRAPHS_PATH = SRS_FILE_ROOT+"/ts_graphs"
-THUMBNAIL_SIZES = {"home": (150, 100), "replay": (340,1000)}
+IMG_PATH = SRS_FILE_ROOT + "/static/img/"
+MAPS_PATH = SRS_FILE_ROOT + "/static/maps/"
+REPLAYS_PATH = SRS_FILE_ROOT + "/static/replays/"
+FONTS_PATH = SRS_FILE_ROOT + "/static/fonts/"
+TS_HISTORY_GRAPHS_PATH = SRS_FILE_ROOT + "/ts_graphs"
+THUMBNAIL_SIZES = {"home": (150, 100), "replay": (340, 1000)}
 LOGIN_URL = "/login/"
 LOGOUT_URL = "/logout/"
 ACCOUNT_ACTIVATION_DAYS = 4
@@ -20,17 +20,17 @@ DATE_FORMAT = 'd.m.Y'
 LONG_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 DATETIME_FORMAT = DATE_FORMAT
 SHORT_DATE_FORMAT = 'd.m.Y'
-#SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
+# SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request", )
-AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend', ) + global_settings.AUTHENTICATION_BACKENDS
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request",)
+AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend',) + global_settings.AUTHENTICATION_BACKENDS
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
-INDEX_REPLAY_RANGE=12
-AUTH_PROFILE_MODULE="lobbyauth.UserProfile"
+INDEX_REPLAY_RANGE = 12
+AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
 
-LOG_PATH        = realpath(dirname(__file__))+'/log'
+LOG_PATH = realpath(dirname(__file__)) + '/log'
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
-INFO_FORMAT  = '%(asctime)s %(levelname)-8s %(message)s'
+INFO_FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
 LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # Local time zone for this installation. Choices can be found here:
@@ -61,19 +61,19 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = SRS_FILE_ROOT+"/static/media/"
+MEDIA_ROOT = SRS_FILE_ROOT + "/static/media/"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-#MEDIA_URL = 'http://127.0.0.1:8000/static/media/'
+# MEDIA_URL = 'http://127.0.0.1:8000/static/media/'
 # --> local_settings.py
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = SRS_FILE_ROOT+'/static/'
+STATIC_ROOT = SRS_FILE_ROOT + '/static/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -91,7 +91,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -103,7 +103,7 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-     'django.template.loaders.eggs.Loader',
+    'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -125,7 +125,7 @@ WSGI_APPLICATION = 'srs.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
-    SRS_FILE_ROOT+'/templates/',
+    SRS_FILE_ROOT + '/templates/',
 )
 
 INSTALLED_APPS = (
@@ -183,6 +183,7 @@ LOGGING = {
 
 # import site specific settings
 from local_settings_ import *
+
 # overwrite default settings
 try:
     from local_settings import *

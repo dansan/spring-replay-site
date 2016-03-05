@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -26,10 +26,10 @@ from picklefield.fields import PickledObjectField
 
 from mail import send_mail
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger("srs.models")
 
 
-def uniqify_list(seq, idfun=None): # from http://www.peterbe.com/plog/uniqifiers-benchmark
+def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifiers-benchmark
     if idfun is None:
         def idfun(x): return x
     seen = {}
@@ -166,13 +166,14 @@ class Replay(models.Model):
         # look for existing game name
         game = None
         for i in range(len(self.gametype)):
-            _game = Game.objects.filter(name=self.gametype[:-1*i])
+            _game = Game.objects.filter(name=self.gametype[:-1 * i])
             if _game.count() == 1:
                 game = _game.first()
                 break
             elif _game.count() > 1:
                 msg = "Found %r Games with name %r: %r.\ngametype: %r\ngameID: %r\nmatch: %r." % (_game.count(),
-                                                                                                  self.gametype[:-1*i],
+                                                                                                  self.gametype[
+                                                                                                  :-1 * i],
                                                                                                   _game, self.gametype,
                                                                                                   self.gameID,
                                                                                                   self.__unicode__())
@@ -420,7 +421,8 @@ class PlayerAccount(models.Model):
         return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
 
     def get_all_games_no_bots(self):
-        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).exclude(tags=Tag.objects.get(name="Bot")).values_list("gametype", flat=True)
+        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).exclude(
+            tags=Tag.objects.get(name="Bot")).values_list("gametype", flat=True)
         return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
 
     def get_user(self):
@@ -482,7 +484,7 @@ class MapModOption(models.Model):
         return self.name
 
 
-#     class Meta:
+# class Meta:
 #         abstract = True
 
 class MapOption(MapModOption):
@@ -567,7 +569,7 @@ class RatingBase(models.Model):
                           ('F', u'FFA'),
                           ('G', u'TeamFFA'),
                           ('L', u'Global'),
-    )
+                          )
     match_type = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
     playeraccount = models.ForeignKey(PlayerAccount)
     playername = models.CharField(max_length=128, blank=True, null=True,
@@ -727,8 +729,9 @@ class SldbPlayerTSGraphCache(models.Model):
         """
         Remove >= 30 days old entries
         """
-        old_entries = SldbPlayerTSGraphCache.objects.filter(last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
-                                                                              - datetime.timedelta(days=30))
+        old_entries = SldbPlayerTSGraphCache.objects.filter(
+            last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
+                              - datetime.timedelta(days=30))
         if old_entries.exists():
             logger.debug("Deleting stale SldbPlayerTSGraphCache objects: %s", old_entries)
             for entry in old_entries:
@@ -737,10 +740,10 @@ class SldbPlayerTSGraphCache(models.Model):
 
     def as_dict(self):
         return {
-            "Global" : self.filepath_global,
-            "Duel"   : self.filepath_duel,
-            "FFA"    : self.filepath_ffa,
-            "Team"   : self.filepath_team,
+            "Global": self.filepath_global,
+            "Duel": self.filepath_duel,
+            "FFA": self.filepath_ffa,
+            "Team": self.filepath_team,
             "TeamFFA": self.filepath_teamffa
         }
 
@@ -831,7 +834,8 @@ def update_stats(force=False):
         games = list()
         for game in Game.objects.all():
             games.append((
-                game.id, Replay.objects.filter(gametype__in=game.gamerelease_set.values_list("name", flat=True)).count()))
+                game.id,
+                Replay.objects.filter(gametype__in=game.gamerelease_set.values_list("name", flat=True)).count()))
         games.sort(key=operator.itemgetter(1), reverse=True)
         timer.stop("games")
 
@@ -917,6 +921,7 @@ def update_stats(force=False):
         timer.stop("update_stats()")
         logger.info("timings:\n%s", timer)
 
+
 # TODO: use a proxy model for this
 User.get_absolute_url = lambda self: "/player/" + str(self.userprofile.accountid) + "/"
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
@@ -925,16 +930,17 @@ User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count(
 Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50] + "..."
 
+
 # HEAVY DEBUG
 # automatically log each DB object save
-#@receiver(post_save)
-#def obj_save_callback(sender, instance, **kwargs):
+# @receiver(post_save)
+# def obj_save_callback(sender, instance, **kwargs):
 #    # Session obj has u'str encoded hex key as pk
 #    logger.debug("%s.save(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
 
 # automatically log each DB object delete
-#@receiver(post_delete)
-#def obj_del_callback(sender, instance, **kwargs):
+# @receiver(post_delete)
+# def obj_del_callback(sender, instance, **kwargs):
 #    # Session obj has u'str encoded hex key as pk
 #    logger.debug("%s.delete(%s) : '%s'", instance.__class__.__name__, instance.pk, instance)
 

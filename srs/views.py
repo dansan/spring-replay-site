@@ -1,10 +1,10 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
@@ -25,19 +25,22 @@ import re
 from srs.models import *
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, \
+    get_sldb_player_ts_history_graphs
 from srs.ajax_views import replay_filter
 from srs.forms import GamePref
 
 add_to_builtins('djangojs.templatetags.js')
-logger = logging.getLogger(__package__)
+logger = logging.getLogger("srs.views")
 
 gameid_re = re.compile("^[0-9a-f]{32}$")
+
 
 def index(request):
     c = all_page_infos(request)
     if c.has_key("game_pref_obj"):
-        replays = Replay.objects.filter(published=True, gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
+        replays = Replay.objects.filter(published=True,
+                                        gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
         replays = Replay.objects.filter(published=True)
     c["replays"] = replays.order_by("-unixTime")[:settings.INDEX_REPLAY_RANGE]
@@ -49,6 +52,7 @@ def index(request):
     c["latest_comments"] = Comment.objects.filter(is_removed=False).order_by("-submit_date")[:5]
     return render_to_response('index.html', c, context_instance=RequestContext(request))
 
+
 def index_replay_range(request, range_end, game_pref):
     c = all_page_infos(request)
     try:
@@ -56,17 +60,19 @@ def index_replay_range(request, range_end, game_pref):
     except:
         pass
     else:
-        if not c.has_key("game_pref_obj") and game_pref > 0:
+        if "game_pref_obj" not in c and game_pref > 0:
             c["game_pref"] = game_pref
             c["game_pref_obj"] = Game.objects.get(id=game_pref)
     c["range"] = settings.INDEX_REPLAY_RANGE
     c["range_end"] = int(range_end) + settings.INDEX_REPLAY_RANGE
     if c.has_key("game_pref_obj"):
-        replays = Replay.objects.filter(published=True, gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
+        replays = Replay.objects.filter(published=True,
+                                        gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
         replays = Replay.objects.filter(published=True)
     c["replays"] = replays.order_by("-unixTime")[int(range_end):c["range_end"]]
     return render_to_response('replay_index_boxes.html', c, context_instance=RequestContext(request))
+
 
 def replay(request, gameID):
     c = all_page_infos(request)
@@ -79,7 +85,7 @@ def replay(request, gameID):
         c["replay"] = replay
         c["comment_obj"] = replay
     except:
-        raise Http404("No replay with gameID '"+ strip_tags(gameID)+"' found.")
+        raise Http404("No replay with gameID '" + strip_tags(gameID) + "' found.")
 
     if not replay.published:
         return render_to_response('replay_unpublished.html', c, context_instance=RequestContext(request))
@@ -113,16 +119,25 @@ def replay(request, gameID):
                     if pa_skill.playername == "" or pa_skill.playername == "??":
                         pa_skill.playername = playername
                     pa_skill.save()
-                    defaults = {"match_date": replay.unixTime, "playername": playername, "trueskill_mu": mu, "trueskill_sigma": si}
-                    rh, created = RatingHistory.objects.get_or_create(match=replay, game=game, match_type=match_type, playeraccount=pa, defaults=defaults)
+                    defaults = dict(
+                        match_date=replay.unixTime,
+                        playername=playername,
+                        trueskill_mu=mu,
+                        trueskill_sigma=si
+                    )
+                    rh, created = RatingHistory.objects.get_or_create(match=replay,
+                                                                      game=game,
+                                                                      match_type=match_type,
+                                                                      playeraccount=pa,
+                                                                      defaults=defaults)
                     if not created:
-                        for k,v in defaults.items():
+                        for k, v in defaults.items():
                             setattr(rh, k, v)
                         rh.save()
                 if pa.sldb_privacy_mode != player["privacyMode"]:
                     pa.sldb_privacy_mode = player["privacyMode"]
                     pa.save()
-                if replay.rated == False:
+                if not replay.rated:
                     replay.rated = True
                     replay.save()
         else:
@@ -142,7 +157,8 @@ def replay(request, gameID):
         old_rating = 0
         new_rating = 0
         lobby_rank_sum = 0
-        if replay.rated == False or replay.notcomplete or not players.exists() or not replay.game_release.game.sldb_name or all_players.filter(account__accountid=0).exists():
+        if replay.rated == False or replay.notcomplete or not players.exists() or not replay.game_release.game.sldb_name or all_players.filter(
+                account__accountid=0).exists():
             # notcomplete, no SLDB rating or bot present -> no rating
             players_w_rating = [(player, None, None) for player in players]
         else:
@@ -153,19 +169,23 @@ def replay(request, gameID):
                     def _get_players_skills(pa):
                         for pl in match_skills["players"]:
                             if pl["account"] == pa: return pl
+
                     pl = _get_players_skills(pa)
                     pl_new = pl["skills"][1][0]
                     pl_old = pl["skills"][0][0]
                 else:
                     # use old method of DB lookups for currect and previous matchs DB entries
                     try:
-                        pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game, match_type=match_type).trueskill_mu
+                        pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game,
+                                                           match_type=match_type).trueskill_mu
                     except:
                         # no rating on this replay
                         pl_new = None
                     try:
                         # find previous TS value
-                        pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type, match__unixTime__lt=replay.unixTime,).order_by("-match__unixTime")[0].trueskill_mu
+                        pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type,
+                                                              match__unixTime__lt=replay.unixTime, ).order_by(
+                            "-match__unixTime")[0].trueskill_mu
                     except:
                         pl_old = None
 
@@ -177,7 +197,8 @@ def replay(request, gameID):
                     new_rating += privatize_skill(pl_new) if pl_new else 0
                     old_rating += privatize_skill(pl_old) if pl_old else 0
 
-                if pa.sldb_privacy_mode != 0 and (not request.user.is_authenticated() or pa.accountid != request.user.userprofile.accountid):
+                if pa.sldb_privacy_mode != 0 and (
+                    not request.user.is_authenticated() or pa.accountid != request.user.userprofile.accountid):
                     if pl_new:
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
@@ -185,7 +206,7 @@ def replay(request, gameID):
                 players_w_rating.append((all_players.get(account=pa, spectator=False), pl_old, pl_new))
 
         if teams:
-            lobby_rank_sum = reduce(lambda x, y: x+y, [pl.rank for pl in all_players.filter(team__allyteam=at)], 0)
+            lobby_rank_sum = reduce(lambda x, y: x + y, [pl.rank for pl in all_players.filter(team__allyteam=at)], 0)
             c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
     c["has_bot"] = replay.tags.filter(name="Bot").exists()
@@ -196,7 +217,8 @@ def replay(request, gameID):
     c["replay_details"] = True
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
     c["is_draw"] = allyteams.filter(winner=True).count() > 1
-    c["pagedescription"] = "%s %s %s match on %s (%s)"%(replay.num_players, replay.match_type, replay.game_release.game.name, replay.map_info.name, replay.unixTime)
+    c["pagedescription"] = "%s %s %s match on %s (%s)" % (
+    replay.num_players, replay.match_type, replay.game_release.game.name, replay.map_info.name, replay.unixTime)
     c["replay_owners"] = get_owner_list(replay.uploader)
     c["extra_media"] = ExtraReplayMedia.objects.filter(replay=replay)
     c["known_video_formats"] = ["video/webm", "video/mp4", "video/ogg", "video/x-flv", "application/ogg"]
@@ -211,17 +233,19 @@ def replay(request, gameID):
         map_px_x = replay.map_info.width
         map_px_y = replay.map_info.height
     try:
-        c["metadata"].append(("Size", "%d x %d"%(map_px_x, map_px_y)))
+        c["metadata"].append(("Size", "%d x %d" % (map_px_x, map_px_y)))
         if replay.map_info.metadata.has_key("MinWind") and replay.map_info.metadata.has_key("MaxWind"):
-            c["metadata"].append(("Wind", "%d - %d"%(replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
+            c["metadata"].append(("Wind", "%d - %d" % (
+            replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
         if replay.map_info.metadata.has_key("TidalStrength"):
             c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
-        for k,v in replay.map_info.metadata["metadata"].items():
+        for k, v in replay.map_info.metadata["metadata"].items():
             if type(v) == str and not v.strip():
                 continue
             elif type(v) == list and not v:
                 continue
-            elif k.strip() in ["", "Width", "TidalStrength", "MapFileName", "MapMinHeight", "Type", "MapMaxHeight", "Resources", "Height", "MinWind", "MaxWind", "StartPos"]:
+            elif k.strip() in ["", "Width", "TidalStrength", "MapFileName", "MapMinHeight", "Type", "MapMaxHeight",
+                               "Resources", "Height", "MinWind", "MaxWind", "StartPos"]:
                 # either already added above, or ignore uninteresting data
                 continue
             else:
@@ -230,10 +254,11 @@ def replay(request, gameID):
             c["metadata"].append(("Version", replay.map_info.metadata["version"]))
     except Exception, e:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
-        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id, replay.map_info.metadata)
+        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id,
+                     replay.map_info.metadata)
         logger.exception("Exception: %s", e)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
-    c["xtaward_los"]    = XTAwards.objects.filter(replay=replay, isAlive=0)
+    c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)
 
     page_history = request.session.get("page_history")
     if page_history and type(page_history) == list:
@@ -241,7 +266,7 @@ def replay(request, gameID):
         for page in list(page_history):
             if not gameid_re.findall(page):
                 page_history.remove(page)
-        if not gameID in page_history:
+        if gameID not in page_history:
             if len(page_history) > 4:
                 page_history.remove(page)
             page_history.insert(0, gameID)
@@ -251,12 +276,14 @@ def replay(request, gameID):
 
     return render_to_response('replay.html', c, context_instance=RequestContext(request))
 
+
 def replay_by_id(request, replayid):
     try:
         r = Replay.objects.get(id=replayid)
         return HttpResponseRedirect(r.get_absolute_url())
     except:
-        raise Http404("No replay with ID '"+ strip_tags(replayid)+"' found.")
+        raise Http404("No replay with ID '" + strip_tags(replayid) + "' found.")
+
 
 @login_required
 @never_cache
@@ -268,7 +295,7 @@ def edit_replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except:
-        raise Http404("No replay with ID '"+ strip_tags(gameID)+"' found.")
+        raise Http404("No replay with ID '" + strip_tags(gameID) + "' found.")
 
     if request.user != replay.uploader:
         return render_to_response('edit_replay_wrong_user.html', c, context_instance=RequestContext(request))
@@ -290,14 +317,18 @@ def edit_replay(request, gameID):
             save_desc(replay, short, long_text, autotag)
             replay.save()
             logger.info("User '%s' modified replay '%s': short: '%s' title:'%s' long_text:'%s' tags:'%s'",
-                        request.user, replay.gameID, replay.short_text, replay.title, replay.long_text, reduce(lambda x,y: x+", "+y, [t.name for t in Tag.objects.filter(replay=replay)]))
+                        request.user, replay.gameID, replay.short_text, replay.title, replay.long_text,
+                        reduce(lambda x, y: x + ", " + y, [t.name for t in Tag.objects.filter(replay=replay)]))
             return HttpResponseRedirect(replay.get_absolute_url())
     else:
-        form = EditReplayForm({'short': replay.short_text, 'long_text': replay.long_text, 'tags': reduce(lambda x,y: x+", "+y, [t.name for t in Tag.objects.filter(replay=replay)])})
+        form = EditReplayForm({'short': replay.short_text, 'long_text': replay.long_text,
+                               'tags': reduce(lambda x, y: x + ", " + y,
+                                              [t.name for t in Tag.objects.filter(replay=replay)])})
     c['form'] = form
     c["replay_details"] = True
 
     return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
+
 
 def download(request, gameID):
     replay = get_object_or_404(Replay, gameID=gameID)
@@ -305,11 +336,11 @@ def download(request, gameID):
     replay.download_count += 1
     replay.save()
 
-    path = replay.path+"/"+replay.filename
+    path = replay.path + "/" + replay.filename
     try:
         filemagic = magic.from_file(path, mime=True)
     except IOError:
-        errmsg = 'File for replay(%d) "%s" not found.' %(replay.id, replay)
+        errmsg = 'File for replay(%d) "%s" not found.' % (replay.id, replay)
         logger.error(errmsg)
         raise Http404(errmsg)
     if filemagic.endswith("gzip") and not replay.filename.endswith(".sdfz"):
@@ -322,8 +353,9 @@ def download(request, gameID):
         filename = replay.filename
 
     response = HttpResponse(demofile.read(), content_type='application/x-spring-demo')
-    response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
+
 
 def respect_privacy(request, accountid):
     """
@@ -349,12 +381,13 @@ def respect_privacy(request, accountid):
             privacy = True
     return privacy
 
+
 def player(request, accountid):
     c = all_page_infos(request)
     accountid = int(accountid)
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    c['pagetitle'] = "Player "+pa.preffered_name
-    c["pagedescription"] = "Statistics and match history of player %s"%pa.preffered_name
+    c['pagetitle'] = "Player " + pa.preffered_name
+    c["pagedescription"] = "Statistics and match history of player %s" % pa.preffered_name
     c["playeraccount"] = pa
     c["PA"] = pa
     c["all_names"] = pa.get_names()
@@ -363,27 +396,29 @@ def player(request, accountid):
         c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")
     return render_to_response("player.html", c, context_instance=RequestContext(request))
 
+
 def ts_history_graph(request, game_abbr, accountid, match_type):
     if respect_privacy(request, accountid):
-        with open(settings.IMG_PATH+"/tsh_privacy.png", "rb") as pic:
+        with open(settings.IMG_PATH + "/tsh_privacy.png", "rb") as pic:
             response = HttpResponse(pic.read(), content_type='image/png')
         return response
     path = str()
     accountid = int(accountid)
     if match_type not in ["1", "T", "F", "G", "L"]:
         logger.error("Bad argument 'match_type': '%s'.", match_type)
-        path = settings.IMG_PATH+"/tsh_error.png"
+        path = settings.IMG_PATH + "/tsh_error.png"
     else:
         try:
             graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
         except:
             logger.exception("in get_sldb_player_ts_history_graphs('%s', %d)", game_abbr, accountid)
-            path = settings.IMG_PATH+"/tsh_error.png"
+            path = settings.IMG_PATH + "/tsh_error.png"
     if not path:
         path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
     with open(path, "rb") as pic:
         response = HttpResponse(pic.read(), content_type='image/png')
     return response
+
 
 def hall_of_fame(request, abbreviation):
     c = all_page_infos(request)
@@ -406,8 +441,8 @@ def hall_of_fame(request, abbreviation):
                            'records are kept on this site anymore.']
     c["games"] = Game.objects.exclude(sldb_name="")
     c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
-#    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
-#FIXME: show awards that belong to each game separately. for now only BA.
+    #    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
+    # FIXME: show awards that belong to each game separately. for now only BA.
     games_with_bawards = Game.objects.filter(name="Balanced Annihilation")
     if game in games_with_bawards:
         try:
@@ -420,6 +455,7 @@ def hall_of_fame(request, abbreviation):
         c["bawards_lu"] = sist.last_modified
     c["thisgame"] = game
     return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
+
 
 @login_required
 @never_cache
@@ -442,9 +478,11 @@ def user_settings(request):
     c["game_pref_form"] = game_pref_form
     return render_to_response('settings.html', c, context_instance=RequestContext(request))
 
+
 def all_comments(request):
     c = all_page_infos(request)
     return render_to_response('comments.html', c, context_instance=RequestContext(request))
+
 
 @never_cache
 def login(request):
@@ -482,6 +520,7 @@ def login(request):
     form.fields["password"].max_length = 4096
     return render_to_response('login.html', c, context_instance=RequestContext(request))
 
+
 @never_cache
 def logout(request):
     import django.contrib.auth
@@ -500,6 +539,7 @@ def logout(request):
         dest = "/"
     return HttpResponseRedirect(dest)
 
+
 def media(request, mediaid):
     media = get_object_or_404(ExtraReplayMedia, id=mediaid)
     if media.media_magic_mime == "image/svg+xml":
@@ -509,11 +549,13 @@ def media(request, mediaid):
     else:
         try:
             response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
-            response['Content-Disposition'] = 'attachment; filename="%s"'%media.media_basename
+            response['Content-Disposition'] = 'attachment; filename="%s"' % media.media_basename
             return response
         except IOError, e:
-            logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" %(media.id, media.replay.id, media.media_basename, str(e)))
-            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum."%media.media_basename)
+            logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" % (
+                media.id, media.replay.id, media.media_basename, str(e)))
+            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum." % media.media_basename)
+
 
 @login_required
 @never_cache
@@ -554,10 +596,12 @@ def sldb_privacy_mode(request):
 
     return render_to_response('sldb_privacy_mode.html', c, context_instance=RequestContext(request))
 
+
 def browse_archive(request, bfilter):
     c = all_page_infos(request)
 
-    for browse_filter in ["t_today", "t_yesterday", "t_this_month", "t_last_month", "t_this_year", "t_last_year", "t_ancient"]:
+    for browse_filter in ["t_today", "t_yesterday", "t_this_month", "t_last_month", "t_this_year", "t_last_year",
+                          "t_ancient"]:
         c[browse_filter] = replay_filter(Replay.objects.all(), "date " + browse_filter)
 
     try:
@@ -566,27 +610,28 @@ def browse_archive(request, bfilter):
         update_stats()
         sist = SiteStats.objects.get(id=1)
 
-    tags              = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
-    c["top_tags"]     = list()
+    tags = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
+    c["top_tags"] = list()
     for t in range(0, 12, 3):
-        if t+3 > len(tags): break
-        c["top_tags"].append((tags[t], tags[t+1], tags[t+2]))
-    maps              = map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|'))
-    c["top_maps"]     = list()
+        if t + 3 > len(tags): break
+        c["top_tags"].append((tags[t], tags[t + 1], tags[t + 2]))
+    maps = map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|'))
+    c["top_maps"] = list()
     for r in range(0, 8, 2):
-        if r+2 > len(maps): break
-        c["top_maps"].append((maps[r], maps[r+1]))
-    c["top_players"]  = map(lambda x: (PlayerAccount.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.active_players.split('|'))
-    c["all_games"]    = map(lambda x: (Game.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.games.split('|'))
-    c["replays_num"]  = Replay.objects.count()
-    c["gr_all"]       = GameRelease.objects.all()
-    c["tags_all"]     = Tag.objects.all()
-    c["maps_all"]     = Map.objects.all()
-    c["pa_num"]       = PlayerAccount.objects.exclude(accountid__lte=0).count()
-    c["ah_num"]       = Replay.objects.values("autohostname").distinct().count()
-    c["user_num"]     = len([user for user in User.objects.all() if user.replays_uploaded() > 0])
+        if r + 2 > len(maps): break
+        c["top_maps"].append((maps[r], maps[r + 1]))
+    c["top_players"] = map(lambda x: (PlayerAccount.objects.get(id=int(x.split(".")[0])), x.split(".")[1]),
+                           sist.active_players.split('|'))
+    c["all_games"] = map(lambda x: (Game.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.games.split('|'))
+    c["replays_num"] = Replay.objects.count()
+    c["gr_all"] = GameRelease.objects.all()
+    c["tags_all"] = Tag.objects.all()
+    c["maps_all"] = Map.objects.all()
+    c["pa_num"] = PlayerAccount.objects.exclude(accountid__lte=0).count()
+    c["ah_num"] = Replay.objects.values("autohostname").distinct().count()
+    c["user_num"] = len([user for user in User.objects.all() if user.replays_uploaded() > 0])
     c["first_replay"] = Replay.objects.first()
-    c["last_replay"]  = Replay.objects.last()
+    c["last_replay"] = Replay.objects.last()
     hosts = dict()
     for host in Replay.objects.values_list("autohostname", flat=True):
         if host:
@@ -594,9 +639,10 @@ def browse_archive(request, bfilter):
                 hosts[host] += 1
             except:
                 hosts[host] = 0
-    c["autohosts"]    = [(name, count) for name, count in hosts.items() if count > 0]
+    c["autohosts"] = [(name, count) for name, count in hosts.items() if count > 0]
     c["autohosts"].sort(key=operator.itemgetter(1), reverse=True)
-    c["uploaders"]    = [(user.username, user.replays_uploaded()) for user in User.objects.all() if user.replays_uploaded() > 0]
+    c["uploaders"] = [(user.username, user.replays_uploaded()) for user in User.objects.all() if
+                      user.replays_uploaded() > 0]
     c["uploaders"].sort(key=operator.itemgetter(1), reverse=True)
 
     if bfilter and bfilter.strip():
@@ -607,7 +653,9 @@ def browse_archive(request, bfilter):
         c["filters"] = list()
         have = list()
         for filter_ in filters_:
-            if len(filter_) == 2 and filter_[1].strip() and filter_[0] in ["date", "map", "tag", "game", "gameversion", "player", "autohost", "uploader" ] and filter_[0] not in have:
+            if len(filter_) == 2 and filter_[1].strip() and filter_[0] in ["date", "map", "tag", "game", "gameversion",
+                                                                           "player", "autohost", "uploader"] and \
+                            filter_[0] not in have:
                 try:
                     if filter_[0] == "date":
                         pass
@@ -627,7 +675,7 @@ def browse_archive(request, bfilter):
                     elif filter_[0] == "uploader":
                         Replay.objects.filter(uploader__username=filter_[1])[0]
                     else:
-                        raise Exception("unknown filter type '%s'"%filter_[0])
+                        raise Exception("unknown filter type '%s'" % filter_[0])
                     # all fine, add filter
                     c["filters"].append((filter_[0], filter_[1]))
                     have.append(filter_[0])

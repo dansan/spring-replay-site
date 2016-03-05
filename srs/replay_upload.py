@@ -3,10 +3,10 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
 # example cmdline call:
@@ -20,14 +20,21 @@ from time import sleep
 
 # argparse for python installations <2.7
 from os.path import realpath, dirname
-sys.path.append(realpath(dirname(__file__))+"/contrib")
+
+sys.path.append(realpath(dirname(__file__)) + "/contrib")
 import argparse
+
 
 def main(argv=None):
     XMLRPC_URL = "http://replays.springrts.com/xmlrpc/"
 
-    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.", epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a lobby accounts credentials. XMLRPC_URL can also be set in your environment, use \"http://replays-test.springrts.com/xmlrpc/\" for upload testing purposes.")
-    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %gameDuration)", type=int, default=9999)
+    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.",
+                                     epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a "
+                                            "lobby accounts credentials. XMLRPC_URL can also be set in your environment"
+                                            ", use 'http://replays-test.springrts.com/xmlrpc/' for upload testing "
+                                            "purposes.")
+    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %gameDuration)", type=int,
+                        default=9999)
     parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %result)", default="")
     parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -45,7 +52,7 @@ def main(argv=None):
     try:
         sdf = open(args.path, "rb")
     except IOError, ioe:
-        print "[Replay Upload] ERROR: could not open spring demo file: %s."%ioe
+        print "[Replay Upload] ERROR: could not open spring demo file: %s." % ioe
         return 6
 
     if not os.environ.has_key("XMLRPC_USER") or not os.environ.has_key("XMLRPC_PASSWORD"):
@@ -61,10 +68,12 @@ def main(argv=None):
 
     if args.verbose:
         if args.throttle > 0:
-            sp = "at %.2f kb/s"%(args.throttle/1024.0)
+            sp = "at %.2f kb/s" % (args.throttle / 1024.0)
         else:
             sp = "without upload throttling"
-        print "[Replay Upload] Uploading file '%s'\n  authenticating as '%s'\n  to '%s'\n  for owner '%s'\n  with subject '%s'\n  comment '%s'\n  and tags '%s'\n  %s."%(args.path, XMLRPC_USER, XMLRPC_URL, args.owner, args.title, args.comment, args.tags, sp)
+        print "[Replay Upload] Uploading file '%s'\n  authenticating as '%s'\n  to '%s'\n  for owner '%s'\n with " \
+              "subject '%s'\n  comment '%s'\n  and tags '%s'\n  %s." % (args.path, XMLRPC_USER, XMLRPC_URL, args.owner,
+                                                                        args.title, args.comment, args.tags, sp)
 
     demofile = xmlrpclib.Binary(sdf.read())
 
@@ -87,20 +96,22 @@ def main(argv=None):
         curltrans._curl.setopt(pycurl.MAX_SEND_SPEED_LARGE, args.throttle)
         trans = curltrans
     else:
-        trans = None # use xmlrpclib internal HTTP transport
+        trans = None  # use xmlrpclib internal HTTP transport
 
     try:
         rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
-        result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title, args.comment, args.tags, args.owner)
+        result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title,
+                                       args.comment, args.tags, args.owner)
     except Exception, e:
         print "[Replay Upload] Error sending data to replay site. Exception:\n%s\n" % str(e)
         return 1
 
     if args.verbose:
-        print "[Replay Upload] %s" % result
+        print "[Replay Upload] %r" % result
 
-    sleep(10) # allow site to process replay before displaying the URL
+    sleep(10)  # allow site to process replay before displaying the URL
     return int(result[0])
+
 
 if __name__ == "__main__":
     sys.exit(main())

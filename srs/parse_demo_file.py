@@ -3,10 +3,10 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2012 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
 import sys
@@ -16,13 +16,14 @@ from datetime import timedelta
 import pprint
 import magic
 import gzip
-from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, ScriptRestrictions, ScriptTeam
+from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+    ScriptRestrictions, ScriptTeam
 from demoparser import Demoparser
 import struct
 import logging
 import settings
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger("srs.upload")
 
 
 #
@@ -175,7 +176,7 @@ class Parse_demo_file():
     def parse_winningAllyTeams(self):
         self.winningAllyTeams = []
         winnning_team = 0
-        self.demofile.seek(self.header['headerSize']+self.header['scriptSize']+self.header['demoStreamSize'])
+        self.demofile.seek(self.header['headerSize'] + self.header['scriptSize'] + self.header['demoStreamSize'])
         while winnning_team < self.header['winningAllyTeamsSize']:
             team = unpack('B', self.read_blob(self.demofile.tell(), 1))
             self.winningAllyTeams.append(team[0])
@@ -226,7 +227,7 @@ class Parse_demo_file():
                 elif section['name'] == 'modoptions':
                     self.script.modoptions = ScriptModoptions(section['name'], section['data'])
                     self.game_setup["modoptions"] = self.script.modoptions.__dict__
-        game_txt = game['data'].split("}")[-1:][0].replace('\n','')
+        game_txt = game['data'].split("}")[-1:][0].replace('\n', '')
         self.game_setup['host'] = ScriptGamesetup("game_setup_host", game_txt).__dict__
         self.script.other['mapname'] = self.game_setup['host']['mapname']
         self.script.other['modname'] = self.game_setup['host']['gametype']
@@ -234,18 +235,19 @@ class Parse_demo_file():
     def _read(self, length):
         return self.demofile.read(length)
 
-    def _tell(self): return self.demofile.tell()
+    def _tell(self):
+        return self.demofile.tell()
 
     def _readPacket(self):
         maxSize = (self.header['demoStreamSize'] or sys.maxint)
         if maxSize:
             modGameTime, length = struct.unpack('<fI', self._read(8))
-            if self._tell()+length - self.header['headerSize'] - self.header['scriptSize'] == maxSize:
+            if self._tell() + length - self.header['headerSize'] - self.header['scriptSize'] == maxSize:
                 return False
             data = self._read(length)
         if not data:
             return False
-        return {'modGameTime':modGameTime, 'length':length, 'data':data}
+        return {'modGameTime': modGameTime, 'length': length, 'data': data}
 
     def parse_demostream(self):
         def _save_playerinfo(playername, key, value):
@@ -268,25 +270,27 @@ class Parse_demo_file():
         self.teams = self.script.teams
         self.allies = self.script.allies
         self.options = dict(_dictify(self.script.modoptions).items()
-                        + _dictify(self.script.other).items() + _dictify(self.script.mapoptions).items())
+                            + _dictify(self.script.other).items() + _dictify(self.script.mapoptions).items())
         self.restrictions = self.script.restrictions
         self.gameid = self.header['gameID']
 
-        self.demofile.seek(self.header['headerSize']+self.header['scriptSize'])
+        self.demofile.seek(self.header['headerSize'] + self.header['scriptSize'])
         packet = True
         currentFrame = 0
         playerIDToName = {}
         if settings.DEBUG:
-            kop = open('/tmp/msg.data','w')
+            kop = open('/tmp/msg.data', 'w')
         demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
             try:
                 messageData = demoparser.parsePacket(packet)
                 if settings.DEBUG:
-                    kop.write(str(messageData)+'\n')
+                    kop.write(str(messageData) + '\n')
+
                 def clean(name):
-                    return name.replace('\x00','')
+                    return name.replace('\x00', '')
+
                 if messageData:
                     try:
                         clean_name = clean(messageData['playerName'])
@@ -309,7 +313,8 @@ class Parse_demo_file():
                     elif messageData['cmd'] == 'gameid':
                         if self.header['gameID'] != messageData['gameID']:
                             self.gameid = messageData['gameID']
-                            logger.error("messageData['gameID']: %s != self.header['gameID']: %s", messageData['gameID'], self.header['gameID'])
+                            logger.error("messageData['gameID']: %s != self.header['gameID']: %s",
+                                         messageData['gameID'], self.header['gameID'])
                     elif messageData['cmd'] == 'playerleft':
                         playername = clean(messageData['playerName'])
                         if messageData['bIntended'] == 0:
@@ -321,13 +326,13 @@ class Parse_demo_file():
                     elif messageData['cmd'] == 'team':
                         if clean_name in self.script.spectators.keys():
                             continue
-                        if messageData['action'] == 'team_died': #team died event
+                        if messageData['action'] == 'team_died':  # team died event
                             deadTeam = messageData['param']
-                            for name,rank in self.players.iteritems():
+                            for name, rank in self.players.iteritems():
                                 if rank.team == deadTeam:
                                     self.players[name].died = currentFrame
                         elif messageData['action'] == 'giveaway':
-                            #giving everything away == death
+                            # giving everything away == death
                             self.players[clean_name].died = currentFrame
                     elif messageData["cmd"] == "startpos":
                         if messageData["ready"] == 1:
@@ -367,8 +372,8 @@ class Parse_demo_file():
                                 # award markers are ints 161-167 encoded in one unsigned char, but the
                                 # player numbers are ints 0-31 encoded each digit as a single char
                                 # ':' is 58 in str_B (and ':' in str_c)
-                                str_B = struct.unpack("B"*len(messageData["msg"]), messageData["msg"])
-                                str_c = struct.unpack("c"*len(messageData["msg"]), messageData["msg"])
+                                str_B = struct.unpack("B" * len(messageData["msg"]), messageData["msg"])
+                                str_c = struct.unpack("c" * len(messageData["msg"]), messageData["msg"])
                                 start = end = 0
                                 awards_data = list()
                                 for pos in range(1, len(str_B)):
@@ -378,36 +383,37 @@ class Parse_demo_file():
                                                 return float(s)
                                             else:
                                                 return int(s)
+
                                         end = pos
                                         awards_data.append(str_B[start])
-                                        s_ = "".join(str_c[start+1:end]).split(":")
+                                        s_ = "".join(str_c[start + 1:end]).split(":")
                                         try:
-                                            awards_data.append([int(s_[0])-1, f_(s_[1])])
+                                            awards_data.append([int(s_[0]) - 1, f_(s_[1])])
                                         except IndexError:
                                             # gadget version < r2043 has no ':score' after the teamID
-                                            awards_data.append([int(s_[0])-1, -1])
+                                            awards_data.append([int(s_[0]) - 1, -1])
                                         except ValueError:
                                             # beware typo in gadget: http://imolarpg.dyndns.org/trac/balatest/changeset/2070
-                                            awards_data.append([int(s_[0])-1, -2])
+                                            awards_data.append([int(s_[0]) - 1, -2])
                                         start = end
                                 else:
                                     awards_data.append(str_B[start])
-                                    s_ = "".join(str_c[start+1:]).split(":")
+                                    s_ = "".join(str_c[start + 1:]).split(":")
                                     try:
-                                        awards_data.append([int(s_[0])-1, f_(s_[1])])
+                                        awards_data.append([int(s_[0]) - 1, f_(s_[1])])
                                     except IndexError:
-                                            # gadget version < r2043 has no ':score' after the teamID
-                                            awards_data.append([int(s_[0])-1, -1])
+                                        # gadget version < r2043 has no ':score' after the teamID
+                                        awards_data.append([int(s_[0]) - 1, -1])
                                 # Substract 1 from each players number.
                                 # It was added in gadget to make all numbers positive.
-                                awards = {"ecoKillAward": (awards_data[1], awards_data[3], awards_data[5]),    #161
-                                          "fightKillAward": (awards_data[7], awards_data[9], awards_data[11]), #162
-                                          "effKillAward": (awards_data[13], awards_data[15], awards_data[17]), #163
-                                          "cowAward": awards_data[19],     #164
-                                          "ecoAward": awards_data[21],     #165
-                                          "dmgRecAward": awards_data[23]}  #166
+                                awards = {"ecoKillAward": (awards_data[1], awards_data[3], awards_data[5]),  # 161
+                                          "fightKillAward": (awards_data[7], awards_data[9], awards_data[11]),  # 162
+                                          "effKillAward": (awards_data[13], awards_data[15], awards_data[17]),  # 163
+                                          "cowAward": awards_data[19],  # 164
+                                          "ecoAward": awards_data[21],  # 165
+                                          "dmgRecAward": awards_data[23]}  # 166
                                 if len(awards_data) > 24:
-                                    awards["sleepAward"] = awards_data[25] #167
+                                    awards["sleepAward"] = awards_data[25]  # 167
                                 else:
                                     awards["sleepAward"] = [-1, -1]
                                 self.additional["awards"] = awards
@@ -461,7 +467,7 @@ def main(argv=None):
         if len(argv) == 1:
             print "Usage: %s demofile" % (argv[0])
             return 1
-        settings.DEBUG = True # command line use is always dev intended
+        settings.DEBUG = True  # command line use is always dev intended
         replay = Parse_demo_file(argv[1])
         replay.parse()
 
@@ -478,6 +484,7 @@ def main(argv=None):
             replay.additional["chat"] = "chat removed for shorter output"
         pp.pprint(replay.additional)
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
