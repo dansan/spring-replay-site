@@ -607,8 +607,7 @@ def browse_archive(request, bfilter):
     try:
         sist = SiteStats.objects.get(id=1)
     except:
-        update_stats()
-        sist = SiteStats.objects.get(id=1)
+        sist = update_stats()
 
     tags = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
     c["top_tags"] = list()

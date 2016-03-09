@@ -24,7 +24,8 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from picklefield.fields import PickledObjectField
 
-from mail import send_mail
+from srs.mail import send_mail
+from srs.upload import UploadTiming
 
 logger = logging.getLogger("srs.models")
 
@@ -721,7 +722,7 @@ class SldbPlayerTSGraphCache(models.Model):
             else:
                 try:
                     os.remove(filepath)
-                except:
+                except OSError:
                     logger.exception("Cannot remove file '%s' of cache entry %d, ignoring error.", filepath, self.id)
 
     @staticmethod
@@ -806,6 +807,7 @@ def get_owner_list(uploader):
 def update_stats(force=False):
     """
     some very expensive operations -> this runs only once per day
+    :arg force: bool: run even if has already run in the last 24h
     """
     # statistics like most played maps, most used tags etc. (sed in the browse and all_players views)
     sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': 0, 'tags': "", 'maps': "",
@@ -813,8 +815,6 @@ def update_stats(force=False):
                                                                     'comments': "", "games": "", "bawards": ""})
     if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0 or force:
         # update stats
-        from upload import UploadTiming
-
         timer = UploadTiming()
         timer.start("update_stats()")
         replays = Replay.objects.count()
@@ -841,12 +841,11 @@ def update_stats(force=False):
 
         # most active players in the last 30 days (for browse page)
         timer.start("active_players")
-        active_players = list()
-        for pa in PlayerAccount.objects.exclude(accountid__lte=0).order_by("accountid"):  # exclude bots
-            nummatches = Player.objects.filter(account=pa, spectator=False,
-                                               replay__unixTime__range=(start_date, now)).count()
-            active_players.append((nummatches, pa))
-        active_players.sort(key=operator.itemgetter(0), reverse=True)
+        active_players = PlayerAccount.objects.filter(accountid__gt=0,
+                                                      player__spectator=False,
+                                                      player__replay__unixTime__range=(start_date, now)
+                                                      ).annotate(Count("player__replay")
+                                                                 ).order_by("-player__replay__count", "accountid")
         timer.stop("active_players")
 
         # newest comments (for index page)
@@ -855,54 +854,50 @@ def update_stats(force=False):
         # encode stats into strings
         timer.start("strings")
         if tags.exists():
-            tags_s = reduce(lambda x, y: x + y, ["|%d.%d" % (t.id, t.num_replay) for t in tags])[1:]
+            tags_s = "|".join(["{}.{}".format(t.id, t.num_replay) for t in tags])
         else:
             tags_s = ""
         if maps.exists():
-            maps_s = reduce(lambda x, y: x + y,
-                            ["|%d.%d / %d" % (m.id, m.num_replay, Replay.objects.filter(map_info=m).count()) for m in
-                             maps])[1:]
+            # map.id . #matches_last_30d / #matches_total
+            maps_s = "|".join(["{}.{} / {}".format(m.id, m.num_replay, Replay.objects.filter(map_info=m).count())
+                               for m in maps])
         else:
             maps_s = ""
         if active_players:
-            act_pls_s = reduce(lambda x, y: x + y,
-                               ["|%d.%d" % (pa.id, nummatches) for nummatches, pa in active_players[:20]])[1:]
+            act_pls_s = "|".join(["{}.{}".format(pa.id, pa.player__replay__count) for pa in active_players[:20]])
         else:
             act_pls_s = ""
         if comments.exists():
-            comments_s = reduce(lambda x, y: str(x) + "|%d" % y, [c.id for c in comments])
+            comments_s = "|".join(map(str, comments.values_list("id", flat=True)))
         else:
             comments_s = ""
         if games:
-            games_s = reduce(lambda x, y: x + y, ["|%d.%d" % g for g in games])[1:]
+            games_s = "|".join(["{}.{}".format(*g) for g in games])
         else:
             games_s = ""
         timer.stop("strings")
 
         #  player names and urls (for all_players page)
         timer.start("all_players")
-        unique_names = set()
-        aplayers = list()
-        for pa in PlayerAccount.objects.exclude(accountid__lte=0):
-            for pl in pa.player_set.values_list("name", flat=True):
-                if pl not in unique_names:
-                    unique_names.add(pl)
-                    aplayers.append((pa.get_absolute_url(), pl))
-        aplayers_sorted = sorted(aplayers, key=operator.itemgetter(1))
+
+        pl_pas = PlayerAccount.objects.filter(accountid__gt=0, player__isnull=False).values(
+            "accountid", "player__name").order_by("player__name").distinct()
+        all_players = [("/player/{}/".format(pl["accountid"]), pl["player__name"]) for pl in pl_pas]
         timer.stop("all_players")
 
         # BAwards statistics (for hall of fame)
         timer.start("bawards")
         bawards_fields = [field for field in BAwards._meta.get_all_field_names() if
-                          "Award" in field and not "Score" in field]
+                          "Award" in field and "Score" not in field]
         bawards_stats = dict([(field, {}) for field in bawards_fields])
         for field in bawards_fields:
-            for player_id in BAwards.objects.values_list(field, flat=True):
-                if not player_id: continue
+            arg = {"{}__isnull".format(field): False}
+            for pa in PlayerAccount.objects.filter(
+                    player__id__in=BAwards.objects.filter(**arg).values_list(field, flat=True)):
                 try:
-                    bawards_stats[field][PlayerAccount.objects.get(player__id=player_id)] += 1
-                except:
-                    bawards_stats[field][PlayerAccount.objects.get(player__id=player_id)] = 1
+                    bawards_stats[field][pa] += 1
+                except KeyError:
+                    bawards_stats[field][pa] = 1
             # converting dict to list, sort, keep only top 10
             bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
         timer.stop("bawards")
@@ -912,7 +907,7 @@ def update_stats(force=False):
         sist.tags = tags_s
         sist.maps = maps_s
         sist.active_players = act_pls_s
-        sist.all_players = aplayers_sorted
+        sist.all_players = all_players
         sist.comments = comments_s
         sist.games = games_s
         sist.bawards = bawards_stats
@@ -920,6 +915,7 @@ def update_stats(force=False):
         timer.stop("save()")
         timer.stop("update_stats()")
         logger.info("timings:\n%s", timer)
+        return sist
 
 
 # TODO: use a proxy model for this
