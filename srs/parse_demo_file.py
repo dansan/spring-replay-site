@@ -16,12 +16,14 @@ from datetime import timedelta
 import pprint
 import magic
 import gzip
-from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
-    ScriptRestrictions, ScriptTeam
-from demoparser import Demoparser
 import struct
 import logging
-import settings
+
+from django.conf import settings
+
+from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+    ScriptRestrictions, ScriptTeam
+from srs.demoparser import Demoparser
 
 logger = logging.getLogger("srs.upload")
 

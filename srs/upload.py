@@ -13,42 +13,37 @@ from tempfile import mkstemp
 import gzip
 import pprint
 import magic
+import datetime
+import os
 
 from django.db.models import Min
 from django.contrib.sitemaps import ping_google
 import django.contrib.auth
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
+import django.utils.timezone
 
-from models import *
-import parse_demo_file
-import spring_maps
-from sldb import get_sldb_match_skills, sldb_gametype2matchtype
-from srs.sldb import demoskill2float
+from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming
+import srs.parse_demo_file as parse_demo_file
+import srs.springmaps as springmaps
+from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype
 
 logger = logging.getLogger("srs.upload")
 
 timer = None
 
 
-class UploadTiming(object):
-    def __init__(self):
-        self.times = dict()
-        self.counter = 0
+class UploadError(Exception):
+    def __init__(self, demofile, *args, **kwargs):
+        self.demofile = demofile
+        super(self, UploadError).__init__(*args, **kwargs)
 
-    def start(self, name):
-        self.times[name] = (self.counter, datetime.datetime.now(), name)
-        self.counter += 1
 
-    def stop(self, name):
-        self.times[name] = (self.times[name][0], datetime.datetime.now() - self.times[name][1], name)
-
-    @property
-    def sorted_list(self):
-        return sorted(self.times.values(), key=operator.itemgetter(0))
-
-    def __str__(self):
-        return "\n".join(
-            [t[2] + ": " + str(t[1].seconds) + "." + str(t[1].microseconds / 100000) for t in self.sorted_list])
+class AlreadyExistsError(UploadError):
+    def __init__(self, demofile, replay, *args, **kwargs):
+        self.replay = replay
+        super(self, AlreadyExistsError).__init__(demofile, *args, **kwargs)
 
 
 def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
@@ -72,7 +67,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         logger.info("Owner '%s' unknown on replays site, abort.", owner)
         return "2 Unknown or inactive owner account, please log in via web interface once."
 
-    timer = UploadTiming()
+    timer = SrsTiming()
     timer.start("xmlrpc_upload()")
     # this is code double from upload() :(
     (path, written_bytes) = save_uploaded_file(demofile.data, filename)
@@ -101,7 +96,8 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
                         replay.gameID)
             del_replay(replay)
             UploadTmp.objects.filter(replay=replay).delete()
-    except:
+    except ObjectDoesNotExist:
+        # is new replay
         pass
 
     new_filename = os.path.basename(path).replace(" ", "_")
@@ -170,7 +166,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 tags, path, filename, short, long_text, user)
     logger.info("gameID='%s'", demofile.header["gameID"])
     global timer
-    if not timer: timer = UploadTiming()
+    if not timer: timer = SrsTiming()
     #     pp = pprint.PrettyPrinter(depth=6)
     #     logger.debug("demofile.__dict__: %s",pp.pformat(demofile.__dict__))
     try:
@@ -434,7 +430,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
 
     timer.start("  map creation")
     # get / create map infos
-    smap = spring_maps.SpringMaps(demofile.game_setup["host"]["mapname"])
+    smap = springmaps.SpringMaps(demofile.game_setup["host"]["mapname"])
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
         logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)

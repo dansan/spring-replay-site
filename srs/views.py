@@ -6,29 +6,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-from django.http import Http404, HttpResponse
-from django.utils.html import strip_tags
-from django.template import add_to_builtins
-
-import MySQLdb
-
 import logging
 import gzip
 import magic
 import re
+import operator
 
-from srs.models import *
+import MySQLdb
+
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import login as django_contrib_auth_login, logout as django_contrib_auth_logout
+from django.views.decorators.cache import never_cache
+from django.http import Http404, HttpResponse
+from django.utils.html import strip_tags
+from django.template import add_to_builtins
+from django.conf import settings
+
+from srs.models import Allyteam, Comment, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, \
-    get_sldb_player_ts_history_graphs
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs
 from srs.ajax_views import replay_filter
-from srs.forms import GamePref
+from srs.forms import EditReplayForm, GamePref,SLDBPrivacyForm
 
 add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger("srs.views")
@@ -288,8 +292,6 @@ def replay_by_id(request, replayid):
 @login_required
 @never_cache
 def edit_replay(request, gameID):
-    from forms import EditReplayForm
-
     c = all_page_infos(request)
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
@@ -486,9 +488,6 @@ def all_comments(request):
 
 @never_cache
 def login(request):
-    import django.contrib.auth
-    from django.contrib.auth.forms import AuthenticationForm
-
     c = all_page_infos(request)
     nexturl = request.GET.get("next", "/")
     if request.method == 'POST':
@@ -496,7 +495,7 @@ def login(request):
         form.fields["password"].max_length = 4096
         if form.is_valid():
             user = form.get_user()
-            django.contrib.auth.login(request, user)
+            django_contrib_auth_login(request, user)
             logger.info("Logged in user '%s' (%s) a.k.a '%s'", user.username, user.last_name, user.userprofile.aliases)
             if request.user.userprofile.game_pref_fixed or request.session.get("game_pref", 0) == 0:
                 # if pref was set explicitely, always set cookie according to profile
@@ -523,12 +522,11 @@ def login(request):
 
 @never_cache
 def logout(request):
-    import django.contrib.auth
 
     username = str(request.user)
     # restore game_pref after logout
     game_pref = request.session.get("game_pref", None)
-    django.contrib.auth.logout(request)
+    django_contrib_auth_logout(request)
     logger.info("Logged out user '%s'", username)
     if game_pref:
         request.session["game_pref"] = game_pref
@@ -560,7 +558,6 @@ def media(request, mediaid):
 @login_required
 @never_cache
 def sldb_privacy_mode(request):
-    from forms import SLDBPrivacyForm
     c = all_page_infos(request)
 
     accountid = request.user.userprofile.accountid

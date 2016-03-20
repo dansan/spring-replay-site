@@ -18,7 +18,7 @@ import logging
 from shutil import copyfile
 
 from django.conf import settings
-from models import Allyteam, Player
+from srs.models import Allyteam, Player
 
 logger = logging.getLogger("srs.views")
 

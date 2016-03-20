@@ -25,7 +25,7 @@ from django.conf import settings
 from picklefield.fields import PickledObjectField
 
 from srs.mail import send_mail
-from srs.upload import UploadTiming
+from infolog_upload.notifications import Notifications
 
 logger = logging.getLogger("srs.models")
 
@@ -815,7 +815,7 @@ def update_stats(force=False):
                                                                     'comments': "", "games": "", "bawards": ""})
     if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0 or force:
         # update stats
-        timer = UploadTiming()
+        timer = SrsTiming()
         timer.start("update_stats()")
         replays = Replay.objects.count()
         now = datetime.datetime.now(timezone.get_current_timezone())
@@ -927,6 +927,27 @@ Comment.replay = lambda self: self.content_object.__unicode__()
 Comment.comment_short = lambda self: self.comment[:50] + "..."
 
 
+class SrsTiming(object):
+    def __init__(self):
+        self.times = dict()
+        self.counter = 0
+
+    def start(self, name):
+        self.times[name] = (self.counter, datetime.datetime.now(), name)
+        self.counter += 1
+
+    def stop(self, name):
+        self.times[name] = (self.times[name][0], datetime.datetime.now() - self.times[name][1], name)
+
+    @property
+    def sorted_list(self):
+        return sorted(self.times.values(), key=operator.itemgetter(0))
+
+    def __str__(self):
+        return "\n".join(
+            [t[2] + ": " + str(t[1].seconds) + "." + str(t[1].microseconds / 100000) for t in self.sorted_list])
+
+
 # HEAVY DEBUG
 # automatically log each DB object save
 # @receiver(post_save)
@@ -959,7 +980,6 @@ def replay_del_callback(sender, instance, **kwargs):
 @receiver(post_save, sender=Comment)
 def comment_save_callback(sender, instance, **kwargs):
     if instance.content_type == ContentType.objects.get(name="infolog"):
-        from infolog_upload.notifications import Notifications
         Notifications().new_comment(instance)
     update_stats()
 

@@ -8,7 +8,12 @@
 
 import datetime
 import json
+from operator import or_
+import logging
+from xmlrpclib import ServerProxy
+
 import MySQLdb
+
 from eztables.views import DatatablesView
 
 from django.http import HttpResponse
@@ -17,13 +22,13 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
 from django.contrib.comments import Comment
+from django.db.models import Q
 
 from srs.common import all_page_infos
 from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, \
     Game
 from srs.sldb import get_sldb_playerskill, get_sldb_player_stats
 
-import logging
 
 logger = logging.getLogger("srs.views")
 
@@ -228,7 +233,6 @@ def mapmodlinks(gameID):
     mapname = replay.map_info.name
     result = dict()
 
-    from xmlrpclib import ServerProxy
     try:
         proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
 
@@ -366,8 +370,6 @@ class BrowseReplaysDTView(DatatablesView):
 
     def global_search(self, queryset):
         '''Filter a queryset with global search'''
-        from django.db.models import Q
-        from operator import or_
         for k, v in self.GET.items():
             if k.startswith("btnfilter") and v.strip():
                 queryset = replay_filter(queryset, v)

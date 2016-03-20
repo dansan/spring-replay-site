@@ -6,23 +6,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-import shutil
-import stat
 import magic
+import logging
+import os
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.forms.formsets import formset_factory
-from django.contrib.sitemaps import ping_google
 
-from upload import UploadTiming, store_demofile_data, save_uploaded_file, del_replay, rate_match
-from models import *
-from common import all_page_infos
-from forms import UploadFileForm, UploadMediaForm
-import parse_demo_file
+from srs.upload import save_uploaded_file, parse_uploaded_file, AlreadyExistsError
+from srs.models import ExtraReplayMedia, Replay, SrsTiming, get_owner_list
+from srs.common import all_page_infos
+from srs.forms import UploadFileForm, UploadMediaForm
+import srs.parse_demo_file as parse_demo_file
 
 logger = logging.getLogger("srs.views")
 
@@ -45,7 +43,7 @@ def upload(request):
                     short = form.cleaned_data['short']
                     long_text = form.cleaned_data['long_text']
                     tags = form.cleaned_data['tags']
-                    timer = UploadTiming()
+                    timer = SrsTiming()
                     timer.start("upload()")
                     (path, written_bytes) = save_uploaded_file(ufile.read(), ufile.name)
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user,

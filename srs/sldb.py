@@ -6,14 +6,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
-from srs.models import *
 import logging
 import xmlrpclib
 import socket
 from operator import methodcaller
 import datetime
 import cPickle
+
+from django.conf import settings
+
+from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
 logger = logging.getLogger("srs")
 
