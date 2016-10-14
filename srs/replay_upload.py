@@ -33,9 +33,9 @@ def main(argv=None):
                                             "lobby accounts credentials. XMLRPC_URL can also be set in your environment"
                                             ", use 'http://replays-test.springrts.com/xmlrpc/' for upload testing "
                                             "purposes.")
-    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %gameDuration)", type=int,
+    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %%gameDuration)", type=int,
                         default=9999)
-    parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %result)", default="")
+    parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %%result)", default="")
     parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("title", help="short description (50 char max)")
@@ -55,16 +55,18 @@ def main(argv=None):
         print "[Replay Upload] ERROR: could not open spring demo file: %s." % ioe
         return 6
 
-    if not os.environ.has_key("XMLRPC_USER") or not os.environ.has_key("XMLRPC_PASSWORD"):
+    try:
+        XMLRPC_USER = os.environ["XMLRPC_USER"]
+        XMLRPC_PASSWORD = os.environ["XMLRPC_PASSWORD"]
+    except KeyError:
         print "[Replay Upload] Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS"
         print "environment to a lobby accounts credentials."
         return 1
-    else:
-        XMLRPC_USER = os.environ["XMLRPC_USER"]
-        XMLRPC_PASSWORD = os.environ["XMLRPC_PASSWORD"]
 
-    if os.environ.has_key("XMLRPC_URL"):
+    try:
         XMLRPC_URL = os.environ["XMLRPC_URL"]
+    except KeyError:
+        pass
 
     if args.verbose:
         if args.throttle > 0:
@@ -102,8 +104,8 @@ def main(argv=None):
         rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
         result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title,
                                        args.comment, args.tags, args.owner)
-    except Exception, e:
-        print "[Replay Upload] Error sending data to replay site. Exception:\n%s\n" % str(e)
+    except Exception as exc:
+        print "[Replay Upload] Error sending data to replay site. Exception:\n%s\n" % str(exc)
         return 1
 
     if args.verbose:
