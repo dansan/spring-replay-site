@@ -14,6 +14,7 @@ import datetime
 import cPickle
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
@@ -108,8 +109,9 @@ def _query_sldb(service, *args, **kwargs):
     rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
         rpc_result = rpc(rpc_srv)
-    except Exception, e:
-        logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, exc)
         raise e
     else:
         #         logger.debug("%s() returned: %s", service, rpc_result)
@@ -137,6 +139,7 @@ def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
                 account.sldb_privacy_mode = get_sldb_pref(accountid, "privacyMode")
                 account.save()
             except:
+                logger.exception("FIXME: to broad exception handling.")
                 pass
     if (account.preffered_name == "" or account.preffered_name == "??") and preffered_name:
         account.preffered_name = preffered_name
@@ -288,6 +291,7 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     try:
         [(matchtype2sldb_gametype[match_type], match_type) for match_type in match_types]
     except:
+        logger.exception("FIXME: to broad exception handling.")
         raise SLDBbadArgumentException("match_types", match_types)
 
     refresh_lbg = list()
@@ -304,9 +308,10 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
         query_args = game.sldb_name, [matchtype2sldb_gametype[lbg.match_type] for lbg in refresh_lbg]
         try:
             leaderboards = _query_sldb("getLeaderboards", *query_args)
-        except Exception, e:
+        except Exception as exc:
             # problem fetching data from SLDB, mark existing data as stale, so it will be retried next website reload
-            logger.exception("Exception fetching data from SLDB for '%s': %s", query_args, e)
+            logger.error("FIXME: to broad exception handling.")
+            logger.exception("Exception fetching data from SLDB for '%s': %s", query_args, exc)
             for lbg in refresh_lbg:
                 lbg.last_modified = datetime.datetime(1970, 1, 1, tzinfo=lbg.last_modified.tzinfo)
                 lbg.save()
@@ -377,11 +382,11 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
     try:
         accountid = int(accountid)
         pa = PlayerAccount.objects.get(accountid=accountid)
-    except:
+    except ObjectDoesNotExist:
         raise SLDBbadArgumentException("accountid", accountid)
     try:
         game = Game.objects.get(sldb_name=game_abbr)
-    except:
+    except ObjectDoesNotExist:
         raise SLDBbadArgumentException("game_abbr", game_abbr)
 
     # check if we a have cached version

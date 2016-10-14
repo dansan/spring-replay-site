@@ -7,6 +7,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 
 from srs.models import Game, PlayerAccount, Replay
 
@@ -22,13 +23,13 @@ def all_page_infos(request):
                 not request.user.userprofile.game_pref_fixed):
             request.user.userprofile.game_pref = gameid
             request.user.userprofile.save()
-    except:
+    except (TypeError, ValueError):
         # request.GET["game_pref"] not set (or not an int)
         pass
     if request.user.is_authenticated():
         try:
             c["logged_in_pa"] = PlayerAccount.objects.get(accountid=request.user.userprofile.accountid)
-        except:
+        except ObjectDoesNotExist:
             pass
         if not request.session.get("game_pref"):
             request.session["game_pref"] = request.user.userprofile.game_pref

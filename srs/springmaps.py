@@ -50,6 +50,7 @@ class SpringMaps():
         try:
             self.map_info = proxy.springfiles.search(searchstring)
         except:
+            logger.exception("FIXME: to broad exception handling.")
             self.map_info = None
 
     def fetch_img(self):
@@ -196,7 +197,8 @@ class SpringMaps():
         try:
             img.save(settings.MAPS_PATH + filename, "JPEG")
         except:
-            logger.exception("Could not save '%s'", settings.MAPS_PATH + filename)
+            logger.exception("FIXME: to broad exception handling.")
+            logger.exception("Could not save '%s'", path_join(settings.MAPS_PATH, filename))
         return filename
 
 

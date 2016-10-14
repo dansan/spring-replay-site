@@ -226,17 +226,17 @@ class Replay(models.Model):
                 return "1v1"
             else:
                 return "Team"
-        except:
+        except KeyError:
             pass
         try:
             tag = self.tags.get(name__regex=r'^TeamFFA$')
             return tag.name
-        except:
+        except ObjectDoesNotExist:
             pass
         try:
             tag = self.tags.get(name__regex=r'^FFA$')
             return tag.name
-        except:
+        except ObjectDoesNotExist:
             pass
 
         # thoroughly using player/team count
@@ -275,6 +275,7 @@ class Replay(models.Model):
             at_sizes.sort()
             return str(reduce(lambda x, y: str(x) + "v" + str(y), at_sizes))
         except:
+            logger.exception("FIXME: to broad exception handling.")
             return "?v?"
 
     @property
@@ -282,7 +283,7 @@ class Replay(models.Model):
         length = self.wallclockTime.split(":")
         try:
             length2 = datetime.timedelta(seconds=int(length[2]), minutes=int(length[1]), hours=int(length[0]))
-        except:
+        except KeyError:
             return self.unixTime
         return self.unixTime + length2
 
@@ -290,8 +291,8 @@ class Replay(models.Model):
     def duration_ISO_8601(self):
         length = self.wallclockTime.split(":")
         try:
-            return "PT" + length[0] + "H" + length[1] + "M" + length[2] + "S"
-        except:
+            return "PT{0}H{1}M{2}S".format(*length)
+        except IndexError:
             return self.wallclockTime
 
     playername = "N/A"  # something must exists, or PlayersReplayTable will always have an empty column
@@ -341,7 +342,7 @@ class Replay(models.Model):
     def bawards(self):
         try:
             return BAwards.objects.get(replay=self)
-        except:
+        except ObjectDoesNotExist:
             return None
 
 
@@ -408,7 +409,7 @@ class PlayerAccount(models.Model):
         if pls:
             try:
                 pls.remove(self.preffered_name)
-            except:
+            except ValueError:
                 pass  # Player with name "pref_name"  was removed from DB, but PlayerAccount stayed
             else:
                 pls.insert(0, self.preffered_name)
@@ -429,7 +430,7 @@ class PlayerAccount(models.Model):
     def get_user(self):
         try:
             return User.objects.get(userprofile__accountid=self.accountid)
-        except:
+        except ObjectDoesNotExist:
             return None
 
     class Meta:

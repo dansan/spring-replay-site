@@ -83,7 +83,7 @@ def main(argv=None):
         try:
             import pycurl
             import pyCURLTransport
-        except:
+        except ImportError:
             print """
 [Replay Upload] ERROR: Please install pycurl to use bandwidth throttling.
   Homepage: http://pycurl.sourceforge.net/

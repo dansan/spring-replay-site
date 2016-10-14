@@ -13,6 +13,7 @@ import logging
 from xmlrpclib import ServerProxy
 
 import MySQLdb
+from httplib import HTTPException
 
 from eztables.views import DatatablesView
 
@@ -51,18 +52,21 @@ def ajax_playerrating_tbl_src(request, accountid):
     try:
         sEcho = int(request.GET["sEcho"])
         empty_result["sEcho"] = sEcho
-    except Exception, e:
-        logger.exception("trouble reading 'sEcho': %s", e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("trouble reading 'sEcho': %s", exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         accountid = int(accountid)
-    except Exception, e:
-        logger.exception("accountid '%s' is not an integer: %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
-    except Exception, e:
-        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
 
     ratings = list()
@@ -73,8 +77,9 @@ def ajax_playerrating_tbl_src(request, accountid):
             user = request.user if request.user.is_authenticated() else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
-            except Exception, e:
-                logger.exception("Exception in get_sldb_playerskill(): %s", e)
+            except Exception as exc:
+                logger.error("FIXME: to broad exception handling.")
+                logger.exception("Exception in get_sldb_playerskill(): %s", exc)
                 continue
             else:
                 if pa != skills["account"]:
@@ -102,26 +107,30 @@ def ajax_winloss_tbl_src(request, accountid):
     try:
         sEcho = int(request.GET["sEcho"])
         empty_result["sEcho"] = sEcho
-    except Exception, e:
-        logger.exception("trouble reading 'sEcho': %s", e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("trouble reading 'sEcho': %s", exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         accountid = int(accountid)
-    except Exception, e:
-        logger.exception("accountid '%s' is not an integer: %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
-    except Exception, e:
-        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
 
     win_loss_data = list()
     for game in pa.get_all_games().exclude(sldb_name=""):
         try:
             player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
-        except Exception, e:
-            logger.exception("Exception in get_sldb_player_stats(): %s", e)
+        except Exception as exc:
+            logger.error("FIXME: to broad exception handling.")
+            logger.exception("Exception in get_sldb_player_stats(): %s", exc)
             continue
         else:
             for match_type in ["Duel", "Team", "FFA", "TeamFFA"]:
@@ -165,27 +174,30 @@ def ajax_playerreplays_tbl_src(request, accountid):
                 pass
             else:
                 raise Exception("Unhandled parameter type")
-        except Exception, e:
-            logger.exception("trouble reading request.GET['%s']='%s', Exception: %s", k, v, e)
+        except Exception as exc:
+            logger.error("FIXME: to broad exception handling.")
+            logger.exception("trouble reading request.GET['%s']='%s', Exception: %s", k, v, exc)
             return HttpResponse(json.dumps(empty_result))
     empty_result["sEcho"] = params["sEcho"]
     try:
         accountid = int(accountid)
-    except Exception, e:
-        logger.exception("accountid '%s' is not an integer: %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
-    except Exception, e:
-        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
 
     qs = Replay.objects.filter(player__account__accountid=accountid)
     if params["sSearch"]:
         qs = qs.filter(title__icontains=params["sSearch"])
 
-    if params.has_key("iSortCol_0"):
-        if params.has_key("sSortDir_0") and params["sSortDir_0"] == "desc":
+    if "iSortCol_0" in params:
+        if params.get("sSortDir_0", "") == "desc":
             order = "-"
         else:
             order = ""
@@ -243,10 +255,10 @@ def mapmodlinks(gameID):
         searchstring = {"springname": mapname.replace(" ", "*"), "category": "map",
                         "torrent": False, "metadata": False, "nosensitive": True, "images": False}
         result['map_info'] = proxy.springfiles.search(searchstring)
-    except:
-        result[
-            'con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: <a href=\"http://springfiles.com/finder/1/%s\">game</a>  <a href=\"http://springfiles.com/finder/1/%s\">map</a>." % (
-        gamename, mapname)
+    except (IOError, HTTPException):
+        result['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: " \
+                              "<a href=\"http://springfiles.com/finder/1/%s\">game</a>  " \
+                              "<a href=\"http://springfiles.com/finder/1/%s\">map</a>." % (gamename, mapname)
 
     return result
 
@@ -352,12 +364,23 @@ def replay_filter(queryset, filter_name):
                 return queryset
             else:
                 return queryset.filter(uploader__username=selected)
-    except Exception, e:
-        logger.debug("Exception, prob from bad argument. filter_name: '%s', Exception: %s", filter_name, e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.debug("Exception, prob from bad argument. filter_name: '%s', Exception: %s", filter_name, exc)
         return queryset
 
 
-class BrowseReplaysDTView(DatatablesView):
+class Django17DatatablesView(DatatablesView):
+    """
+    https://github.com/noirbizarre/django-eztables/commit/3a6b492d2ef6dd3d82727aa03c4deb7b1d1ffdea
+    """
+    def json_response(self, data):
+        return HttpResponse(
+            json.dumps(data, cls=DjangoJSONEncoder),
+            content_type=JSON_MIMETYPE
+        )
+
+class BrowseReplaysDTView(Django17DatatablesView):
     model = Replay
     fields = ("title",
               "unixTime",
@@ -368,9 +391,14 @@ class BrowseReplaysDTView(DatatablesView):
               "map_info__name"
               )
 
+    # safe GET data for use in global_search()
+    def get(self, request, *args, **kwargs):
+        self._GET = request.GET
+        return super(Django17DatatablesView, self).get(request, *args, **kwargs)
+
     def global_search(self, queryset):
         '''Filter a queryset with global search'''
-        for k, v in self.GET.items():
+        for k, v in self._GET.items():
             if k.startswith("btnfilter") and v.strip():
                 queryset = replay_filter(queryset, v)
         search = self.dt_data['sSearch']
@@ -404,8 +432,9 @@ def hof_tbl_src(request, leaderboardid):
     try:
         sEcho = int(request.GET["sEcho"])
         empty_result["sEcho"] = sEcho
-    except Exception, e:
-        logger.exception("trouble reading 'sEcho': %s", e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("trouble reading 'sEcho': %s", exc)
         return HttpResponse(json.dumps(empty_result))
 
     lps = list(SldbLeaderboardPlayer.objects.filter(leaderboard__id=int(leaderboardid)).values_list("rank",

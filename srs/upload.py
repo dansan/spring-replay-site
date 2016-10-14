@@ -65,7 +65,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         owner_ac = User.objects.get(username__iexact=owner)
         logger.info("Owner is '%s'", owner_ac)
-    except:
+    except ObjectDoesNotExist:
         logger.info("Owner '%s' unknown on replays site, abort.", owner)
         return "2 Unknown or inactive owner account, please log in via web interface once."
 
@@ -97,8 +97,8 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
             logger.warn("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
             try:
                 os.remove(path)
-            except:
-                logger.exception("Could not remove file '%s'", path)
+            except OSError as exc:
+                logger.warn("Could not remove file '%s': %s", path, exc)
             raise AlreadyExistsError(demofile, replay, '3 uploaded replay already exists as "{}" at "{}"'.format(
                 replay.__unicode__(), replay.get_absolute_url()))
         else:
@@ -117,7 +117,8 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
     try:
         timer.start("store_demofile_data()")
         replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, owner_ac)
-    except Exception:
+    except:
+        logger.error("FIXME: to broad exception handling.")
         logger.exception("Error in store_demofile_data()")
         return "4 server error, please try again later, or contact admin"
     finally:
@@ -138,6 +139,7 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
             timer.start("ping_google()")
             ping_google()
         except Exception as exc:
+            logger.error("FIXME: to broad exception handling.")
             logger.exception("ping_google(): %s", exc)
             pass
         finally:
@@ -182,7 +184,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         replay.download_count = 0
         logger.debug("reparsing existing Replay(%d) %s (%s)", replay.id, replay, replay.gameID)
-    except:
+    except ObjectDoesNotExist:
         replay = Replay()
         logger.debug("new Replay: gameID: %s", demofile.header["gameID"])
 
@@ -321,17 +323,17 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             pa.save()
         try:
             skill = player["skill"]
-        except:
+        except KeyError:
             skill = ""
         try:
             skilluncertainty = player["skilluncertainty"]
-        except:
+        except KeyError:
             skilluncertainty = -1
 
         if player["rank"] == None:
             try:
                 rank = Player.objects.filter(account=pa).order_by("-id")[0].rank
-            except:
+            except KeyError:
                 rank = 0
         else:
             rank = player["rank"]
@@ -451,7 +453,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
         logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
         smap.full_img = MapImg.objects.get(startpostype=-1, map_info=replay.map_info).filename
-    except:
+    except ObjectDoesNotExist:
         # 1st time upload for this map: fetch info and full map, create thumb
         # for index page
         smap.fetch_info()
@@ -499,7 +501,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # always make new img, as players will never choose exact same startpos
     try:
         mapfile = smap.create_map_with_boxes(replay)
-    except Exception:
+    except:
+        logger.error("FIXME: to broad exception handling.")
         logger.exception("error creating map img for Replay(%s) on map '%s'", replay.pk, replay.map_info.name)
         mapfile = "error creating map img"
 
@@ -596,8 +599,9 @@ def rate_match(replay):
                         "status"])
         else:
             raise Exception("no SLDB data")
-    except Exception, e:
-        logger.debug("in/after get_sldb_match_skills(): %s", e)
+    except Exception as exc:
+        logger.exception("FIXME: to broad exception handling.")
+        logger.debug("in/after get_sldb_match_skills(): %s", exc)
         # use "skill" tag from demo data if available
         logger.info("Trying to use skill tag from demofile")
         players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="")
@@ -634,12 +638,13 @@ def rate_match(replay):
     try:
         match_type = sldb_gametype2matchtype[match_skill["gameType"]]
     except:
+        logger.exception("FIXME: to broad exception handling.")
         match_type = replay.match_type_short
     for player in match_skill["players"]:
         pa = player["account"]
         try:
             playername = Player.objects.get(account=pa, replay=replay).name
-        except:
+        except ObjectDoesNotExist:
             playername = ""
         if pa.sldb_privacy_mode != player["privacyMode"]:
             pa.sldb_privacy_mode = player["privacyMode"]
@@ -710,8 +715,9 @@ def rate_matches(replays):
             counter = 0
             try:
                 _ = get_sldb_match_skills([r.gameID for r in current32])
-            except Exception, e:
-                logger.exception(e)
+            except:
+                logger.exception("FIXME: to broad exception handling.")
+                pass
             for match in current32:
                 try:
                     rate_match(match)
@@ -833,9 +839,10 @@ def reparse(replay):
         demofile = parse_demo_file.Parse_demo_file(path)
         demofile.check_magic()
         demofile.parse()
-    except Exception, e:
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
         logger.exception("Error opening or parsing demofile '%s'.", path)
-        raise e
+        raise exc
     if not replay.gameID == demofile.header["gameID"]:
         raise Exception("self.gameID(%s) != demofile.header[gameID](%s)" % (replay.gameID, demofile.header["gameID"]))
     store_demofile_data(demofile, None, None, None, None, None, None)

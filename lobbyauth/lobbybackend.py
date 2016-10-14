@@ -20,6 +20,7 @@
 import logging
 import socket
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from xmlrpclib import ServerProxy
 from models import UserProfile
 
@@ -55,7 +56,7 @@ class LobbyBackend():
                 return None
             try:
                 user = User.objects.get(last_name=str(accountid))
-            except:
+            except ObjectDoesNotExist:
                 logger.info("New account for username: %s. Accountinfo returned by xml-rpc: '%s'", username,
                             accountinfo)
                 try:
@@ -69,7 +70,7 @@ class LobbyBackend():
                     while User.objects.filter(username=username + "_" + str(counter)).exists():
                         counter += 1
                     username = username + "_" + str(counter)
-                except:
+                except ObjectDoesNotExist:
                     # no user already exists that has the same username
                     pass
                 user = User.objects.create_user(username=username, email="django@needs.this",
@@ -139,8 +140,8 @@ class LobbyBackend():
         except socket.error, se:
             logger.exception("socket error: errno: %d text: %s", se.errno, se.strerror)
             return {'status': 2}
-        except Exception, e:
-            logger.exception("Unknown exception: %s", e)
+        except:
+            logger.exception("FIXME: to broad exception handling.")
             return {'status': 2}
 
     @staticmethod

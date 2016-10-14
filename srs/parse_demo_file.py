@@ -297,6 +297,7 @@ class Parse_demo_file():
                     try:
                         clean_name = clean(messageData['playerName'])
                     except:
+                        logger.exception("FIXME: Why can we continue?")
                         pass
                     if messageData['cmd'] == 'keyframe':
                         currentFrame = messageData['framenum']
@@ -419,8 +420,9 @@ class Parse_demo_file():
                                 else:
                                     awards["sleepAward"] = [-1, -1]
                                 self.additional["awards"] = awards
-                            except Exception, e:
-                                logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, e)
+                            except Exception as exc:
+                                logger.error("FIXME: to broad exception handling.")
+                                logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, exc)
                         elif messageData["msgid"] == 199:
                             # XTA Awards, 2014-04-01
                             # forum thread: http://springrts.com/phpbb/viewtopic.php?f=71&t=28019&start=120#p555847
@@ -452,8 +454,9 @@ class Parse_demo_file():
                                 self.additional["xtawards"] = [xtawards]
                         else:
                             pass
-            except Exception, e:
-                logger.exception("Exception parsing packet '%s': %s", packet, e)
+            except Exception as exc:
+                logger.error("FIXME: to broad exception handling.")
+                logger.exception("Exception parsing packet '%s': %s", packet, exc)
                 #raise e
         if settings.DEBUG:
             kop.close()

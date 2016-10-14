@@ -56,6 +56,9 @@ class Result():
             return 'Result: %s team(%d) died(%d) quit(%d) ' % (self.player.nick,
                                                                self.team, self.died, self.quit)
         except:
+            import logging
+            logger = logging.getLogger("srs.script")
+            logger.exception("FIXME: to broad exception handling.")
             return 'Result: team(%s) died(%d) quit(%d) ' % (self.team, self.died, self.quit)
 
 
@@ -65,7 +68,7 @@ def try_make_numeric(val):
     else:
         try:
             return float(val)
-        except Exception:
+        except ValueError:
             pass
     return val
 

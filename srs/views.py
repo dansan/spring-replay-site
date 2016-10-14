@@ -61,7 +61,7 @@ def index_replay_range(request, range_end, game_pref):
     c = all_page_infos(request)
     try:
         game_pref = int(game_pref)
-    except:
+    except (TypeError, ValueError):
         pass
     else:
         if "game_pref_obj" not in c and game_pref > 0:
@@ -88,7 +88,7 @@ def replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
         c["comment_obj"] = replay
-    except:
+    except ObjectDoesNotExist:
         raise Http404("No replay with gameID '" + strip_tags(gameID) + "' found.")
 
     if not replay.published:
@@ -101,8 +101,9 @@ def replay(request, gameID):
         match_skills = get_sldb_match_skills([replay.gameID])
         if match_skills:
             match_skills = match_skills[0]
-    except Exception, e:
-        logger.exception("in get_sldb_match_skills(%s): %s", [replay.gameID], e)
+    except Exception as exc:
+        logger.error("FIXME: to broad exception handling.")
+        logger.exception("in get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         match_skills = {"status": 3}
         # ignore, we'll just use the old values from the DB in the view
     else:
@@ -116,7 +117,7 @@ def replay(request, gameID):
                 if pa_skill.trueskill_mu != mu or pa_skill.trueskill_sigma != si:
                     try:
                         playername = Player.objects.get(account=pa, replay=replay).name
-                    except:
+                    except ObjectDoesNotExist:
                         playername = "??"
                     pa_skill.trueskill_mu = mu
                     pa_skill.trueskill_sigma = si
@@ -182,15 +183,15 @@ def replay(request, gameID):
                     try:
                         pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game,
                                                            match_type=match_type).trueskill_mu
-                    except:
+                    except ObjectDoesNotExist:
                         # no rating on this replay
                         pl_new = None
                     try:
                         # find previous TS value
                         pl_old = RatingHistory.objects.filter(playeraccount=pa, game=game, match_type=match_type,
-                                                              match__unixTime__lt=replay.unixTime, ).order_by(
+                                                              match__unixTime__lt=replay.unixTime).order_by(
                             "-match__unixTime")[0].trueskill_mu
-                    except:
+                    except IndexError:
                         pl_old = None
 
                 # privatize?
@@ -257,10 +258,12 @@ def replay(request, gameID):
         if replay.map_info.metadata.has_key("version") and replay.map_info.metadata["version"]:
             c["metadata"].append(("Version", replay.map_info.metadata["version"]))
     except Exception, e:
+    except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
+        logger.error("FIXME: to broad exception handling.")
         logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id,
                      replay.map_info.metadata)
-        logger.exception("Exception: %s", e)
+        logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)
 
@@ -285,7 +288,7 @@ def replay_by_id(request, replayid):
     try:
         r = Replay.objects.get(id=replayid)
         return HttpResponseRedirect(r.get_absolute_url())
-    except:
+    except ObjectDoesNotExist:
         raise Http404("No replay with ID '" + strip_tags(replayid) + "' found.")
 
 
@@ -296,7 +299,7 @@ def edit_replay(request, gameID):
     try:
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
-    except:
+    except ObjectDoesNotExist:
         raise Http404("No replay with ID '" + strip_tags(gameID) + "' found.")
 
     if request.user != replay.uploader:
@@ -379,6 +382,7 @@ def respect_privacy(request, accountid):
             else:
                 privacy = True
         except:
+            logger.exception("FIXME: to broad exception handling.")
             logger.exception("Could not retrieve privacyMode for accountid '%s' from SLDB.", accountid)
             privacy = True
     return privacy
@@ -413,6 +417,7 @@ def ts_history_graph(request, game_abbr, accountid, match_type):
         try:
             graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
         except:
+            logger.error("FIXME: to broad exception handling.")
             logger.exception("in get_sldb_player_ts_history_graphs('%s', %d)", game_abbr, accountid)
             path = settings.IMG_PATH + "/tsh_error.png"
     if not path:
@@ -431,8 +436,8 @@ def hall_of_fame(request, abbreviation):
     elif game.sldb_name != "":
         try:
             c["leaderboards"] = get_sldb_leaderboards(game)
-        except Exception, e:
-            logger.exception(e)
+        except:
+            logger.exception("FIXME: to broad exception handling.")
     else:
         c["errmsg"] = "No ratings available for this game. Please choose one from the menu."
         logger.error("%s (%s)", c["errmsg"], game)
@@ -449,7 +454,7 @@ def hall_of_fame(request, abbreviation):
     if game in games_with_bawards:
         try:
             sist = SiteStats.objects.get(id=1)
-        except:
+        except ObjectDoesNotExist:
             update_stats()
             sist = SiteStats.objects.get(id=1)
 
@@ -564,6 +569,7 @@ def sldb_privacy_mode(request):
     try:
         c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
     except:
+        logger.exception("FIXME: to broad exception handling.")
         c["current_privacy_mode"] = -1
     logger.debug("current_privacy_mode: %s (user: %s)", str(c["current_privacy_mode"]), request.user)
 
@@ -579,6 +585,7 @@ def sldb_privacy_mode(request):
             try:
                 sldb_pref = set_sldb_pref(accountid, "privacyMode", str(new_mode))
             except:
+                logger.exception("FIXME: to broad exception handling.")
                 c["new_privacy_mode"] = -1
             else:
                 c["new_privacy_mode"] = new_mode
@@ -603,7 +610,7 @@ def browse_archive(request, bfilter):
 
     try:
         sist = SiteStats.objects.get(id=1)
-    except:
+    except ObjectDoesNotExist:
         sist = update_stats()
 
     tags = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
@@ -633,7 +640,7 @@ def browse_archive(request, bfilter):
         if host:
             try:
                 hosts[host] += 1
-            except:
+            except KeyError:
                 hosts[host] = 0
     c["autohosts"] = [(name, count) for name, count in hosts.items() if count > 0]
     c["autohosts"].sort(key=operator.itemgetter(1), reverse=True)
@@ -675,9 +682,10 @@ def browse_archive(request, bfilter):
                     # all fine, add filter
                     c["filters"].append((filter_[0], filter_[1]))
                     have.append(filter_[0])
-                except Exception, e:
+                except Exception as exc:
                     # object doesnt exist
-                    logger.debug("invalid filter_: '%s' Exception: %s", filter_, e)
+                    logger.exception("FIXME: to broad exception handling.")
+                    logger.debug("invalid filter_: '%s' Exception: %s", filter_, exc)
     else:
         c["filters"] = ""
     return render_to_response('browse_archive.html', c, context_instance=RequestContext(request))
