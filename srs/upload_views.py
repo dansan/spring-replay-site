@@ -48,71 +48,23 @@ def upload(request):
                     (path, written_bytes) = save_uploaded_file(ufile.read(), ufile.name)
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user,
                                 os.path.basename(path), short[:20])
-                    #            try:
                     if written_bytes != ufile.size:
                         logger.warn("written_bytes=%r != ufile.size=%r", written_bytes, ufile.size)
-                        # return HttpResponse("Could not store the replay file. Please contact the administrator.")
-
-                    timer.start("Parse_demo_file()")
-                    demofile = parse_demo_file.Parse_demo_file(path)
-                    timer.stop("Parse_demo_file()")
                     try:
-                        demofile.check_magic()
+                        replay, msg = parse_uploaded_file(path, timer, tags, short, long_text, request.user)
+                        logger.debug("replay=%r msg=%r", replay, msg)
+                        replays.append((True, replay))
                     except parse_demo_file.BadFileType:
                         form._errors = {'file': [u'Not a spring demofile: %s.' % ufile.name]}
                         replays.append((False, 'Not a spring demofile: %s.' % ufile.name))
                         continue
-
-                    timer.start("parse()")
-                    demofile.parse()
-                    timer.stop("parse()")
-
-                    try:
-                        replay = Replay.objects.get(gameID=demofile.header["gameID"])
-                        if replay.was_succ_uploaded:
-                            logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-                            form._errors = {'file': [u'Uploaded replay already exists: "%s"' % replay.title]}
-                            replays.append((False, 'Uploaded replay already exists: <a href="%s">%s</a>.' % (
-                            replay.get_absolute_url(), replay.title)))
-                        else:
-                            logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay,
-                                        replay.pk, replay.gameID)
-                            del_replay(replay)
-                            UploadTmp.objects.filter(replay=replay).delete()
-                            replays.append((False, "Error while uploading."))
+                    except AlreadyExistsError as exc:
+                        form._errors = {'file': [u'Uploaded replay already exists: "{}"'.format(exc.replay.title)]}
+                        replays.append((False, 'Uploaded replay already exists: <a href="{}">{}</a>.'.format(
+                            exc.replay.get_absolute_url(), exc.replay.title)))
                         continue
-                    except:
-                        new_filename = os.path.basename(path).replace(" ", "_")
-                        newpath = settings.REPLAYS_PATH + "/" + new_filename
-                        shutil.move(path, newpath)
-                        os.chmod(newpath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
-                        timer.start("store_demofile_data()")
-                        replay = store_demofile_data(demofile, tags, newpath, ufile.name, short, long_text,
-                                                     request.user)
-                        timer.stop("store_demofile_data()")
-                        demofile = tags = newpath = ufile = short = long_text = None
-                        replays.append((True, replay))
-                        logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
-
-                        try:
-                            timer.start("rate_match()")
-                            rate_match(replay)
-                        except Exception, e:
-                            logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
-                        finally:
-                            timer.stop("rate_match()")
-
-                        if not settings.DEBUG:
-                            try:
-                                timer.start("ping_google()")
-                                ping_google()
-                            except Exception, e:
-                                logger.exception("ping_google(): %s", e)
-                                pass
-                            finally:
-                                timer.stop("ping_google()")
-
-                    timer.stop("upload()")
+                    finally:
+                        timer.stop("upload()")
                     logger.info("timings:\n%s", timer)
 
         if len(replays) == 0:

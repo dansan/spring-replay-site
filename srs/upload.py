@@ -15,6 +15,7 @@ import pprint
 import magic
 import datetime
 import os
+from os.path import join as path_join
 
 from django.db.models import Min
 from django.contrib.sitemaps import ping_google
@@ -24,7 +25,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import django.utils.timezone
 
-from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming
+from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, \
+    PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming
 import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
 from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype
@@ -37,13 +39,13 @@ timer = None
 class UploadError(Exception):
     def __init__(self, demofile, *args, **kwargs):
         self.demofile = demofile
-        super(self, UploadError).__init__(*args, **kwargs)
+        super(UploadError, self).__init__(*args, **kwargs)
 
 
 class AlreadyExistsError(UploadError):
     def __init__(self, demofile, replay, *args, **kwargs):
         self.replay = replay
-        super(self, AlreadyExistsError).__init__(demofile, *args, **kwargs)
+        super(AlreadyExistsError, self).__init__(demofile, *args, **kwargs)
 
 
 def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags, owner):
@@ -69,10 +71,18 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
 
     timer = SrsTiming()
     timer.start("xmlrpc_upload()")
-    # this is code double from upload() :(
     (path, written_bytes) = save_uploaded_file(demofile.data, filename)
-    logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", username, path, subject)
 
+    logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", username, path, subject)
+    try:
+        replay, msg = parse_uploaded_file(path, timer, tags, subject, comment, owner_ac)
+    except UploadError as exc:
+        return exc.message
+    return msg
+
+
+def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
+    timer.start("parse_uploaded_file()")
     timer.start("parse_demo_file.Parse_demo_file()")
     demofile = parse_demo_file.Parse_demo_file(path)
     timer.stop("parse_demo_file.Parse_demo_file()")
@@ -84,13 +94,13 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         if replay.was_succ_uploaded:
-            logger.info("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+            logger.warn("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
             try:
                 os.remove(path)
             except:
                 logger.exception("Could not remove file '%s'", path)
-            return '3 uploaded replay already exists as "%s" at "%s"' % (replay.__unicode__(),
-                                                                         replay.get_absolute_url())
+            raise AlreadyExistsError(demofile, replay, '3 uploaded replay already exists as "{}" at "{}"'.format(
+                replay.__unicode__(), replay.get_absolute_url()))
         else:
             logger.info("Deleting existing unsuccessfully uploaded replay '%s' (%d, %s)", replay, replay.pk,
                         replay.gameID)
@@ -101,7 +111,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         pass
 
     new_filename = os.path.basename(path).replace(" ", "_")
-    newpath = settings.REPLAYS_PATH + "/" + new_filename
+    newpath = os.path.join(settings.REPLAYS_PATH, new_filename)
     shutil.move(path, newpath)
     os.chmod(newpath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
     try:
@@ -133,10 +143,9 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
         finally:
             timer.stop("ping_google()")
 
-    timer.stop("xmlrpc_upload()")
-    logger.info("timings:\n%s", timer)
+    timer.stop("parse_uploaded_file()")
 
-    return '0 received %s bytes, replay at "%s"' % (str(written_bytes), replay.get_absolute_url())
+    return replay, '0 replay at "{}"'.format(replay.get_absolute_url())
 
 
 def save_uploaded_file(ufile, filename):
@@ -153,7 +162,7 @@ def save_uploaded_file(ufile, filename):
         f = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
     written_bytes = f.write(ufile)
     f.close()
-    logger.debug("stored file with '%d' bytes in '%s'", written_bytes, path)
+    logger.debug("stored file with %r bytes in %r", written_bytes, path)
     return path, len(ufile)
 
 
@@ -187,9 +196,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for key in ["versionString", "gameID", "wallclockTime"]:
         replay.__setattr__(key, demofile.header[key])
     replay.unixTime = datetime.datetime.strptime(demofile.header["unixTime"], "%Y-%m-%d %H:%M:%S").replace(
-        tzinfo=timezone.get_current_timezone())
+        tzinfo=django.utils.timezone.get_current_timezone())
     for key in ["autohostname", "gametype", "startpostype"]:
-        if demofile.game_setup["host"].has_key(key):
+        if key in demofile.game_setup["host"]:
             replay.__setattr__(key, demofile.game_setup["host"][key])
 
     # if match is <2 min long, don't rate it
@@ -334,7 +343,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 setattr(players[pnum], k, v)
 
         if pa.accountid > 0 and not (
-                            player['spectator'] == 1 and player.has_key('startposx') and player['startposx'] == -1):
+                            player['spectator'] == 1 and 'startposx' in player and player['startposx'] == -1):
             # if we found players w/o account, and now have a player with the
             # same name, but with an account - unify them
             # exclude freshly created players from late-join
@@ -351,23 +360,25 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                     pplayer.account = pa
                     pplayer.save()
 
-        if player.has_key("team") and player["team"] != None:
+        if "team" in player and player["team"] is not None:
             teams.append((players[pnum], player["team"]))  # [(Player, "2"), ...]
 
-            if player.has_key("startposx") and player.has_key("startposy") and player.has_key("startposz"):
+            try:
                 players[pnum].startposx = player["startposx"]
                 players[pnum].startposy = player["startposy"]
                 players[pnum].startposz = player["startposz"]
-            else:
+            except KeyError:
                 logger.info("player has no start coords. (quit/kicked/not connected?) player: %s players[%d]: %s",
                             player, pnum, players[pnum])
         else:
             # this must be a spectator
             if not player["spectator"] == 1:
                 logger.error("replay(%d) found player without team and not a spectator: %s", replay.pk, player)
-            if player.has_key("startposx"):
+            try:
                 # late-join spec
                 players[pnum].startposx = player["startposx"]
+            except KeyError:
+                pass
         players[pnum].save()
     timer.stop("  players and playeraccounts")
 
@@ -387,10 +398,12 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         if not "rgbcolor" in val:
             # probably zero-k, let's see and learn what stuff they use instead
             logger.error("No key 'rgbcolor' in game_setup of team %r, val=%r ", tnum, val)
-        if val.has_key("startposx") and val.has_key("startposy") and val.has_key("startposz"):
+        try:
             defaults["startposx"] = val["startposx"]
             defaults["startposy"] = val["startposy"]
             defaults["startposz"] = val["startposz"]
+        except KeyError:
+            pass
         team, created = Team.objects.get_or_create(replay=replay, num=tnum, defaults=defaults)
         if not created:
             for k, v in defaults.items():
@@ -415,10 +428,13 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             replay.tags.add(bottag)
 
             # detect single player and add tag
-            if demofile.game_setup["host"].has_key("hostip") and demofile.game_setup["host"]["hostip"] == "" and \
-                            demofile.game_setup["host"]["ishost"] == 1:
-                sptag, _ = Tag.objects.get_or_create(name="Single Player")
-                replay.tags.add(sptag)
+            try:
+                if demofile.game_setup["host"]["hostip"] == "" and demofile.game_setup["host"]["ishost"] == 1:
+                    sptag, _ = Tag.objects.get_or_create(name="Single Player")
+                    replay.tags.add(sptag)
+            except KeyError:
+                pass
+
     timer.stop("  teams")
     logger.debug("replay(%d) saved Teams (%s)", replay.pk, Team.objects.filter(replay=replay).values_list('id'))
 
@@ -455,8 +471,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             startpos = ""
             height = 170
             width = 340
-            shutil.copy(settings.MAPS_PATH + "__no_map_img.jpg", settings.MAPS_PATH + smap.mapname + ".jpg")
-            full_img = settings.MAPS_PATH + smap.mapname + ".jpg"
+            shutil.copy(path_join(settings.MAPS_PATH, "__no_map_img.jpg"), path_join(settings.MAPS_PATH, smap.mapname, ".jpg"))
+            full_img = path_join(settings.MAPS_PATH, smap.mapname, ".jpg")
 
         smap.make_home_thumb()
         if smap.map_info:
@@ -511,7 +527,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         AdditionalReplayInfo.objects.get_or_create(replay=replay, key="gameover", value="")
 
     # BAward
-    if demofile.additional.has_key("awards"):
+    if "awards" in demofile.additional:
         ba_awards, _ = BAwards.objects.get_or_create(replay=replay)
         demo_awards = demofile.additional["awards"]
         for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward",
@@ -542,7 +558,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         ba_awards.save()
 
     # XTAwards
-    if demofile.additional.has_key("xtawards"):
+    if "xtawards" in demofile.additional:
         for xta_award in demofile.additional["xtawards"]:
             team = Team.objects.get(replay=replay, num=xta_award["team"])
             player = Player.objects.get(replay=replay, team=team)
@@ -706,12 +722,12 @@ def rate_matches(replays):
 
 
 def set_accountid(player):
-    if player.has_key("lobbyid"):
+    if "lobbyid" in player:
         # game was on springie
         player["accountid"] = player["lobbyid"]
         return
 
-    if not player.has_key("accountid") or player["accountid"] == None:
+    if "accountid" not in player or player["accountid"] is None:
         logger.info("no accountid for player '%s'", player["name"])
         # single player - we still need a unique accountid. Either we find an
         # existing player/account, or we create a temporary account.
@@ -812,7 +828,7 @@ def reparse(replay):
     """
     Update data from stored demofile (to use new features)
     """
-    path = replay.path + "/" + replay.filename
+    path = path_join(replay.path, replay.filename)
     try:
         demofile = parse_demo_file.Parse_demo_file(path)
         demofile.check_magic()
