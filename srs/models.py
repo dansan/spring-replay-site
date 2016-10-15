@@ -11,6 +11,7 @@ import operator
 from os.path import basename
 import datetime
 import os
+from collections import defaultdict
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -23,6 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from picklefield.fields import PickledObjectField
+from djutils.decorators import async
 
 from srs.mail import send_mail
 from infolog_upload.notifications import Notifications
@@ -805,6 +807,7 @@ def get_owner_list(uploader):
     return res
 
 
+@async
 def update_stats(force=False):
     """
     some very expensive operations -> this runs only once per day
@@ -814,8 +817,9 @@ def update_stats(force=False):
     sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': 0, 'tags': "", 'maps': "",
                                                                     "active_players": "", 'all_players': "",
                                                                     'comments': "", "games": "", "bawards": ""})
-    if created or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0 or force:
+    if created or force or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0:
         # update stats
+        logger.info("starting stats update...")
         timer = SrsTiming()
         timer.start("update_stats()")
         replays = Replay.objects.count()
@@ -888,17 +892,13 @@ def update_stats(force=False):
 
         # BAwards statistics (for hall of fame)
         timer.start("bawards")
-        bawards_fields = [field for field in BAwards._meta.get_all_field_names() if
-                          "Award" in field and "Score" not in field]
-        bawards_stats = dict([(field, {}) for field in bawards_fields])
+        bawards_fields = [field.name for field in BAwards._meta.get_fields()
+                          if "Award" in field.name and "Score" not in field.name]
+        bawards_stats = dict([(field, defaultdict(int)) for field in bawards_fields])
         for field in bawards_fields:
             arg = {"{}__isnull".format(field): False}
-            for pa in PlayerAccount.objects.filter(
-                    player__id__in=BAwards.objects.filter(**arg).values_list(field, flat=True)):
-                try:
-                    bawards_stats[field][pa] += 1
-                except KeyError:
-                    bawards_stats[field][pa] = 1
+            for pa in PlayerAccount.objects.filter(player__in=BAwards.objects.filter(**arg).values(field)):
+                bawards_stats[field][pa] += 1
             # converting dict to list, sort, keep only top 10
             bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
         timer.stop("bawards")

@@ -45,7 +45,8 @@ Dependencies
 - timezone defs: dev-python/pytz | python-tz
 - django-picklefield: https://pypi.python.org/pypi/django-picklefield/
 - django-eztables: https://github.com/noirbizarre/django-eztables/
-- django.js: https://github.com/noirbizarre/django.js/
+- django-utils: https://github.com/dansan/django-utils/
+- django.js: pip install git+https://github.com/Lightmatter/django.js.git
 - South: http://south.aeracode.org/
 - django_extensions
 - jsonrpc
@@ -58,16 +59,18 @@ Installation
 
 .. code-block:: bash
 
-    $ sudo aptitude install libzmq-dev
+    $ sudo aptitude install libzmq-dev libfreetype6-dev
     $ virtualenv srs
     $ . srs/bin/activate
     (srs) $ pip install -r requirements.txt
 
 - install django-eztables from https://github.com/dansan/django-eztables.git
+- install django-utils from https://github.com/dansan/django-utils.git
 
 .. code-block:: bash
 
     (srs) $ pip install git+git://github.com/dansan/django-eztables.git
+    (srs) $ pip install git+git://github.com/dansan/django-utils.git
 
 - patch ``srs/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
 
