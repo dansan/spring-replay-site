@@ -15,7 +15,7 @@ from collections import defaultdict
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.comments import Comment
+from django_comments.models import Comment
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.db.models import Count
@@ -228,7 +228,7 @@ class Replay(models.Model):
                 return "1v1"
             else:
                 return "Team"
-        except KeyError:
+        except IndexError:
             pass
         try:
             tag = self.tags.get(name__regex=r'^TeamFFA$')
@@ -310,13 +310,13 @@ class Replay(models.Model):
         """
         try:
             player = Player.objects.get(replay=self, account=playeraccount)
-            team = Team.objects.get(replay=self, teamleader=player)
+            team = Team.objects.filter(replay=self, teamleader=player)[0]
             if team.allyteam.winner:
                 self._result_cache = (playeraccount, "won")
             else:
                 self._result_cache = (playeraccount, "lost")
             self._faction_cache = (playeraccount, team.side)
-        except:
+        except (ObjectDoesNotExist, IndexError):
             self._result_cache = (playeraccount, "spec")
             self._faction_cache = (playeraccount, "spec")
 
@@ -532,14 +532,14 @@ class Game(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     abbreviation = models.CharField(max_length=64, db_index=True)
     sldb_name = models.CharField(max_length=64, db_index=True)
-    developer = models.ManyToManyField(User, blank=True, null=True)
+    developer = models.ManyToManyField(User, blank=True)
 
     def __unicode__(self):
         return self.name[:70] + " (" + self.abbreviation + ")"
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.game', [self.name])
+        return 'srs.views.game', [self.name]
 
     class Meta:
         ordering = ['name']
@@ -556,7 +556,7 @@ class GameRelease(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.gamerelease', [self.name])
+        return 'srs.views.gamerelease', [self.name]
 
     @property
     def replay_count(self):
@@ -945,8 +945,7 @@ class SrsTiming(object):
         return sorted(self.times.values(), key=operator.itemgetter(0))
 
     def __str__(self):
-        return "\n".join(
-            [t[2] + ": " + str(t[1].seconds) + "." + str(t[1].microseconds / 100000) for t in self.sorted_list])
+        return "\n".join(["{}: {}.{}".format(t[2], t[1].seconds, t[1].microseconds / 100000) for t in self.sorted_list])
 
 
 # HEAVY DEBUG
@@ -980,7 +979,7 @@ def replay_del_callback(sender, instance, **kwargs):
 # automatically refresh statistics when a comment is created or modified
 @receiver(post_save, sender=Comment)
 def comment_save_callback(sender, instance, **kwargs):
-    if instance.content_type == ContentType.objects.get(name="infolog"):
+    if instance.content_type == ContentType.objects.get(model="infolog"):
         Notifications().new_comment(instance)
     update_stats()
 

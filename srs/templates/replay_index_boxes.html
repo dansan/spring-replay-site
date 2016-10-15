@@ -3,6 +3,7 @@
 Please see srs_base.html for license information.
 -->
 {% endcomment %}
+{% load static %}
         <div class="row">
   {% for replay in replays %}
           <div class="xs-12 col-sm-6 col-lg-4">
@@ -14,7 +15,7 @@ Please see srs_base.html for license information.
                   <div class="thumb">
                     <!--  hackish way to center an image vertically... -->
                     <table cellspacing="0" cellpadding="0" style="height:100px; width: 150px; background-color: inherit;"><tbody><tr><td style="padding: 0px; spacing: 0px; text-align:center; vertical-align:middle;">
-                      <img class="img-responsive img-rounded" itemprop="image" src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/>
+                      <img class="img-responsive img-rounded" itemprop="image" src="{% static "maps" %}/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}" title="{{ replay.long_text|slice:":128" }}..."/>
                     </td></tr></tbody></table>
                   </div>
                 </a>

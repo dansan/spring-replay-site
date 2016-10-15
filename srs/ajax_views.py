@@ -15,20 +15,22 @@ from xmlrpclib import ServerProxy
 import MySQLdb
 from httplib import HTTPException
 
-from eztables.views import DatatablesView
+from eztables.views import DatatablesView, JSON_MIMETYPE
 
 from django.http import HttpResponse
 from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
-from django.contrib.comments import Comment
+from django_comments.models import Comment
 from django.db.models import Q
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core.exceptions import ObjectDoesNotExist
 
 from srs.common import all_page_infos
 from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, \
     Game
-from srs.sldb import get_sldb_playerskill, get_sldb_player_stats
+from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBConnectionError
 
 
 logger = logging.getLogger("srs.views")
@@ -77,9 +79,8 @@ def ajax_playerrating_tbl_src(request, accountid):
             user = request.user if request.user.is_authenticated() else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
-            except Exception as exc:
-                logger.error("FIXME: to broad exception handling.")
-                logger.exception("Exception in get_sldb_playerskill(): %s", exc)
+            except SLDBConnectionError as exc:
+                logger.error("Retrieving skill for player %s for game %s: %s", pa, game, exc)
                 continue
             else:
                 if pa != skills["account"]:
@@ -113,24 +114,21 @@ def ajax_winloss_tbl_src(request, accountid):
         return HttpResponse(json.dumps(empty_result))
     try:
         accountid = int(accountid)
-    except Exception as exc:
-        logger.error("FIXME: to broad exception handling.")
+    except ValueError as exc:
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
-    except Exception as exc:
-        logger.error("FIXME: to broad exception handling.")
-        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
+    except ObjectDoesNotExist as exc:
+        logger.error("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
 
     win_loss_data = list()
     for game in pa.get_all_games().exclude(sldb_name=""):
         try:
             player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
-        except Exception as exc:
-            logger.error("FIXME: to broad exception handling.")
-            logger.exception("Exception in get_sldb_player_stats(): %s", exc)
+        except SLDBConnectionError as exc:
+            logger.error("Retrieving stats for player %s for game %s: %s", pa, game, exc)
             continue
         else:
             for match_type in ["Duel", "Team", "FFA", "TeamFFA"]:
@@ -450,7 +448,7 @@ def hof_tbl_src(request, leaderboardid):
                                     "aaData": lps}))
 
 
-class CommentDTView(DatatablesView):
+class CommentDTView(Django17DatatablesView):
     model = Comment
     fields = ("submit_date",
               "user_name",

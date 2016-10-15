@@ -16,6 +16,7 @@ import random
 from PIL import Image, ImageFont, ImageDraw, ImageColor
 import logging
 from shutil import copyfile
+from os.path import join as path_join
 
 from django.conf import settings
 from srs.models import Allyteam, Player
@@ -59,34 +60,29 @@ class SpringMaps():
         """
         if not hasattr(self, "map_info"):
             self.fetch_info()
-        self.full_img = self.map_name + ".jpg"
+        self.full_img = path_join(self.map_name, ".jpg")
         if self.map_info:
-            urllib.urlretrieve(self.map_info[0]['mapimages'][0], settings.MAPS_PATH + self.full_img)
+            urllib.urlretrieve(self.map_info[0]['mapimages'][0], path_join(settings.MAPS_PATH, self.full_img))
         else:
             # no img for this map available
-            copyfile(settings.IMG_PATH + "map_img_not_avail.jpg", settings.MAPS_PATH + self.full_img)
+            copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), path_join(settings.MAPS_PATH, self.full_img))
         return self.full_img
 
     def make_home_thumb(self):
         if not hasattr(self, "full_img"):
             self.fetch_img()
-        image = Image.open(settings.MAPS_PATH + self.full_img)
+        image = Image.open(path_join(settings.MAPS_PATH, self.full_img))
         size = settings.THUMBNAIL_SIZES["home"]
         image.thumbnail(size, Image.ANTIALIAS)
-        self.thumb = self.map_name + "_home.jpg"
-        image.save(settings.MAPS_PATH + self.thumb, "JPEG")
+        self.thumb = path_join(self.map_name, "_home.jpg")
+        image.save(path_join(settings.MAPS_PATH, self.thumb), "JPEG")
         return self.thumb
 
     def create_map_with_boxes(self, replay):
         """
         create a map picture with start boxes (if any) and player start positions
         """
-        # open image from api.springfiles.com
-        try:
-            img = Image.open(settings.MAPS_PATH + self.full_img)
-        except:
-            logger.exception("Could not open '%s'.", settings.MAPS_PATH + self.full_img)
-            raise
+        img = Image.open(path_join(settings.MAPS_PATH, self.full_img))
 
         full_img_x, full_img_y = img.size
         # map positions for players are in pixel
@@ -148,7 +144,7 @@ class SpringMaps():
             #
             # draw players actual start positions
             #
-            font = ImageFont.truetype(settings.FONTS_PATH + "VeraMono.ttf", 28)
+            font = ImageFont.truetype(path_join(settings.FONTS_PATH, "VeraMono.ttf"), 28)
             for player in players:
                 pl_img_pos_x = player.startposx / map_img_mult_x
                 pl_img_pos_y = player.startposz / map_img_mult_y  # z is in spring what y is in img
@@ -193,9 +189,9 @@ class SpringMaps():
         del draw
 
         # img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
-        filename = replay.map_info.name + "_" + str(replay.gameID) + ".jpg"
+        filename = "{}_{}.jpg".format(replay.map_info.name, replay.gameID)
         try:
-            img.save(settings.MAPS_PATH + filename, "JPEG")
+            img.save(path_join(settings.MAPS_PATH, filename), "JPEG")
         except:
             logger.exception("FIXME: to broad exception handling.")
             logger.exception("Could not save '%s'", path_join(settings.MAPS_PATH, filename))

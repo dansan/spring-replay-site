@@ -18,7 +18,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
-logger = logging.getLogger("srs")
+logger = logging.getLogger("srs.sldb")
 
 
 #
@@ -26,7 +26,7 @@ logger = logging.getLogger("srs")
 # It has a XMLRPC interface that the website uses: https://github.com/Yaribz/SLDB/blob/master/XMLRPC
 #
 
-class SLDBstatusException(Exception):
+class SLDBstatusError(Exception):
     def __init__(self, service, status):
         self.service = service
         self.status = status
@@ -35,13 +35,17 @@ class SLDBstatusException(Exception):
         return "%s() returned status %d." % (self.service, self.status)
 
 
-class SLDBbadArgumentException(Exception):
+class SLDBbadArgumentError(Exception):
     def __init__(self, arg, val):
         self.argument = arg
         self.value = val
 
     def __str__(self):
         return "Bad argument '%s': %s" % (self.argument, self.value)
+
+
+class SLDBConnectionError(Exception):
+    pass
 
 
 rank2skill = {0: 10,
@@ -98,10 +102,11 @@ def _query_sldb(service, *args, **kwargs):
 
     #     if settings.DEBUG:
     #         logger.debug("not connecting while in DEBUG")
-    #         raise SLDBstatusException(service, -1)
+    #         raise SLDBstatusError(service, -1)
 
     if not socket.gethostbyname(socket.getfqdn()) in settings.SLDB_ALLOWED_IPS:
-        raise Exception("This host is not allowed to connect to SLDB.")
+        # fail fast while developing
+        raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
 
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
@@ -120,12 +125,12 @@ def _query_sldb(service, *args, **kwargs):
         socket.setdefaulttimeout(socket_timeout)
 
     if rpc_result["status"] != 0:
-        raise SLDBstatusException(service, rpc_result["status"])
+        raise SLDBstatusError(service, rpc_result["status"])
 
-    if rpc_result.has_key("result"):
+    try:
         return rpc_result["result"]
-    else:
-        return rpc_result.get("results", "status")
+    except KeyError:
+        return rpc_result["status"]
 
 
 def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
@@ -287,12 +292,12 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     #     logger.debug("game: %s match_types: %s", game, match_types)
     # test args
     if game.sldb_name == "":
-        raise SLDBbadArgumentException("game", game)
+        raise SLDBbadArgumentError("game", game)
     try:
         [(matchtype2sldb_gametype[match_type], match_type) for match_type in match_types]
     except:
         logger.exception("FIXME: to broad exception handling.")
-        raise SLDBbadArgumentException("match_types", match_types)
+        raise SLDBbadArgumentError("match_types", match_types)
 
     refresh_lbg = list()
     for match_type in match_types:
@@ -308,10 +313,9 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
         query_args = game.sldb_name, [matchtype2sldb_gametype[lbg.match_type] for lbg in refresh_lbg]
         try:
             leaderboards = _query_sldb("getLeaderboards", *query_args)
-        except Exception as exc:
+        except SLDBConnectionError as exc:
             # problem fetching data from SLDB, mark existing data as stale, so it will be retried next website reload
-            logger.error("FIXME: to broad exception handling.")
-            logger.exception("Exception fetching data from SLDB for '%s': %s", query_args, exc)
+            logger.error("getLeaderboards '%s': %s", query_args, exc)
             for lbg in refresh_lbg:
                 lbg.last_modified = datetime.datetime(1970, 1, 1, tzinfo=lbg.last_modified.tzinfo)
                 lbg.save()
@@ -358,7 +362,7 @@ def get_sldb_player_stats(game_abbr, accountid):
                                                         'Team': [134, 567, 89]
                                                         }
                                             }
-                                            or SLDBstatusException
+                                            or SLDBstatusError
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#124
     """
@@ -375,19 +379,19 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
     :param game_abbr:  str - one of: "BA", "EVO", "KP", "NOTA", "S1944", "TA", "XTA", "ZK" (see "modShortName" in https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L7)
     :param accountid:  int - accountID of playeraccount for which the graph should be fetched
     :return: Dict - SldbPlayerTSGraphCache.as_dict()
-            or SLDBstatusException
-            or SLDBbadArgumentException
+            or SLDBstatusError
+            or SLDBbadArgumentError
     """
     # check parameters
     try:
         accountid = int(accountid)
         pa = PlayerAccount.objects.get(accountid=accountid)
     except ObjectDoesNotExist:
-        raise SLDBbadArgumentException("accountid", accountid)
+        raise SLDBbadArgumentError("accountid", accountid)
     try:
         game = Game.objects.get(sldb_name=game_abbr)
     except ObjectDoesNotExist:
-        raise SLDBbadArgumentException("game_abbr", game_abbr)
+        raise SLDBbadArgumentError("game_abbr", game_abbr)
 
     # check if we a have cached version
     SldbPlayerTSGraphCache.purge_old()
@@ -414,7 +418,7 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
     #     'FFA'    : {'status': 0, 'graph': <xmlrpclib.Binary instance>},
     #     'Team'   : {'status': 0, 'graph': <xmlrpclib.Binary instance>}
     # }
-    # or SLDBstatusException
+    # or SLDBstatusError
     now = datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
     graph = SldbPlayerTSGraphCache(game=game, account=pa)
     for match_type, result in query.items():

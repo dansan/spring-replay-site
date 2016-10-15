@@ -1,6 +1,7 @@
 {% extends 'srs_base.html' %}
 {% load eztables %}
 {% load cache %}
+{% load static %}
 
 {% comment %}
 <!-- 
@@ -59,7 +60,7 @@ Please see srs_base.html for license information.
               <div class="panel-body">
                 <div class="row">
                   <div class="col-xs-12">
-                    <center><img src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
+                    <center><img src="{% static "img/bawards/awards.png" %}" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
                     <hr style="margin-top: 7px; margin-bottom: 12px;">
                   </div>
                 </div> <!-- row -->
@@ -67,7 +68,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/fuscup.png" %}" alt="ecoKillAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Destroying enemy resource production</h4>
@@ -80,7 +81,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/bullcup.png" %}" alt="fightKillAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Destroying enemy units and defences</h4>
@@ -94,7 +95,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="effKillAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/comwreath.png" %}" alt="effKillAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Effective use of resources</h4>
@@ -107,7 +108,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/cow.png" %}" alt="cowAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Doing everything</h4>
@@ -118,7 +119,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/eco.png" alt="ecoAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/eco.png" %}" alt="ecoAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Produced the most resources</h4>
@@ -129,7 +130,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/damage.png" alt="dmgRecAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/damage.png" %}" alt="dmgRecAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Took the most damage</h4>
@@ -140,7 +141,7 @@ Please see srs_base.html for license information.
                   <div class="col-sm-6" style="margin-bottom: 15px;">
                     <div class="media">
                       <div class="pull-left">
-                        <img class="media-object" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="sleepAward" width="64">
+                        <img class="media-object" src="{% static "img/bawards/sleep.png" %}" alt="sleepAward" width="64">
                       </div>
                       <div class="media-body">
                         <h4 class="media-heading">Slept longest</h4>

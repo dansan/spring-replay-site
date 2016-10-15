@@ -24,17 +24,18 @@ from django.contrib.auth import login as django_contrib_auth_login, logout as dj
 from django.views.decorators.cache import never_cache
 from django.http import Http404, HttpResponse
 from django.utils.html import strip_tags
-from django.template import add_to_builtins
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django_comments.models import Comment
 
-from srs.models import Allyteam, Comment, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
+from srs.models import Allyteam, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBConnectionError
 from srs.ajax_views import replay_filter
-from srs.forms import EditReplayForm, GamePref,SLDBPrivacyForm
+from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
 
-add_to_builtins('djangojs.templatetags.js')
+#add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger("srs.views")
 
 gameid_re = re.compile("^[0-9a-f]{32}$")
@@ -42,7 +43,7 @@ gameid_re = re.compile("^[0-9a-f]{32}$")
 
 def index(request):
     c = all_page_infos(request)
-    if c.has_key("game_pref_obj"):
+    if "game_pref_obj" in c:
         replays = Replay.objects.filter(published=True,
                                         gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
@@ -69,7 +70,7 @@ def index_replay_range(request, range_end, game_pref):
             c["game_pref_obj"] = Game.objects.get(id=game_pref)
     c["range"] = settings.INDEX_REPLAY_RANGE
     c["range_end"] = int(range_end) + settings.INDEX_REPLAY_RANGE
-    if c.has_key("game_pref_obj"):
+    if "game_pref_obj"in c:
         replays = Replay.objects.filter(published=True,
                                         gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
@@ -101,9 +102,8 @@ def replay(request, gameID):
         match_skills = get_sldb_match_skills([replay.gameID])
         if match_skills:
             match_skills = match_skills[0]
-    except Exception as exc:
-        logger.error("FIXME: to broad exception handling.")
-        logger.exception("in get_sldb_match_skills(%s): %s", [replay.gameID], exc)
+    except SLDBConnectionError as exc:
+        logger.error("get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         match_skills = {"status": 3}
         # ignore, we'll just use the old values from the DB in the view
     else:
@@ -238,12 +238,16 @@ def replay(request, gameID):
         map_px_x = replay.map_info.width
         map_px_y = replay.map_info.height
     try:
-        c["metadata"].append(("Size", "%d x %d" % (map_px_x, map_px_y)))
-        if replay.map_info.metadata.has_key("MinWind") and replay.map_info.metadata.has_key("MaxWind"):
-            c["metadata"].append(("Wind", "%d - %d" % (
-            replay.map_info.metadata["metadata"]["MinWind"], replay.map_info.metadata["metadata"]["MaxWind"])))
-        if replay.map_info.metadata.has_key("TidalStrength"):
+        c["metadata"].append(("Size", "{} x {}".format(map_px_x, map_px_y)))
+        try:
+            c["metadata"].append(("Wind", "{} - {}".format(replay.map_info.metadata["metadata"]["MinWind"],
+                                                           replay.map_info.metadata["metadata"]["MaxWind"])))
+        except KeyError:
+            pass
+        try:
             c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
+        except KeyError:
+            pass
         for k, v in replay.map_info.metadata["metadata"].items():
             if type(v) == str and not v.strip():
                 continue
@@ -255,9 +259,11 @@ def replay(request, gameID):
                 continue
             else:
                 c["metadata"].append((k.strip(), v))
-        if replay.map_info.metadata.has_key("version") and replay.map_info.metadata["version"]:
-            c["metadata"].append(("Version", replay.map_info.metadata["version"]))
-    except Exception, e:
+        try:
+            if replay.map_info.metadata["version"]:
+                c["metadata"].append(("Version", replay.map_info.metadata["version"]))
+        except KeyError:
+            pass
     except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
@@ -268,7 +274,7 @@ def replay(request, gameID):
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)
 
     page_history = request.session.get("page_history")
-    if page_history and type(page_history) == list:
+    if page_history and isinstance(page_history, list):
         # check data (session data is user input)
         for page in list(page_history):
             if not gameid_re.findall(page):
@@ -300,7 +306,7 @@ def edit_replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except ObjectDoesNotExist:
-        raise Http404("No replay with ID '" + strip_tags(gameID) + "' found.")
+        raise Http404("No replay with ID '{}' found.".format(strip_tags(gameID)))
 
     if request.user != replay.uploader:
         return render_to_response('edit_replay_wrong_user.html', c, context_instance=RequestContext(request))
@@ -323,12 +329,11 @@ def edit_replay(request, gameID):
             replay.save()
             logger.info("User '%s' modified replay '%s': short: '%s' title:'%s' long_text:'%s' tags:'%s'",
                         request.user, replay.gameID, replay.short_text, replay.title, replay.long_text,
-                        reduce(lambda x, y: x + ", " + y, [t.name for t in Tag.objects.filter(replay=replay)]))
+                        ", ".join(Tag.objects.filter(replay=replay).values_list("name", flat=True)))
             return HttpResponseRedirect(replay.get_absolute_url())
     else:
         form = EditReplayForm({'short': replay.short_text, 'long_text': replay.long_text,
-                               'tags': reduce(lambda x, y: x + ", " + y,
-                                              [t.name for t in Tag.objects.filter(replay=replay)])})
+                               'tags': ", ".join(Tag.objects.filter(replay=replay).values_list("name", flat=True))})
     c['form'] = form
     c["replay_details"] = True
 
@@ -370,7 +375,7 @@ def respect_privacy(request, accountid):
     :return: bool - if True: use only rounded numbers / don't show TS history graphs / etc
     """
     accountid = int(accountid)
-    if request.user.is_authenticated() and accountid == request.user.get_profile().accountid:
+    if request.user.is_authenticated() and accountid == request.user.userprofile.accountid:
         # if the logged in user has the same accountid as the parameter accountid -> no privacy protection
         privacy = False
     else:
@@ -381,9 +386,8 @@ def respect_privacy(request, accountid):
                 privacy = False
             else:
                 privacy = True
-        except:
-            logger.exception("FIXME: to broad exception handling.")
-            logger.exception("Could not retrieve privacyMode for accountid '%s' from SLDB.", accountid)
+        except SLDBConnectionError as exc:
+            logger.error("Could not retrieve privacyMode for accountid '%s' from SLDB: %s", accountid, exc)
             privacy = True
     return privacy
 
@@ -416,9 +420,8 @@ def ts_history_graph(request, game_abbr, accountid, match_type):
     else:
         try:
             graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
-        except:
-            logger.error("FIXME: to broad exception handling.")
-            logger.exception("in get_sldb_player_ts_history_graphs('%s', %d)", game_abbr, accountid)
+        except SLDBConnectionError as exc:
+            logger.error("get_sldb_player_ts_history_graphs(%r, %d): %s", game_abbr, accountid, exc)
             path = settings.IMG_PATH + "/tsh_error.png"
     if not path:
         path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
@@ -436,8 +439,8 @@ def hall_of_fame(request, abbreviation):
     elif game.sldb_name != "":
         try:
             c["leaderboards"] = get_sldb_leaderboards(game)
-        except:
-            logger.exception("FIXME: to broad exception handling.")
+        except SLDBConnectionError as exc:
+            logger.error("get_sldb_leaderboards(%r): %s", game, exc)
     else:
         c["errmsg"] = "No ratings available for this game. Please choose one from the menu."
         logger.error("%s (%s)", c["errmsg"], game)
@@ -568,8 +571,8 @@ def sldb_privacy_mode(request):
     accountid = request.user.userprofile.accountid
     try:
         c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
-    except:
-        logger.exception("FIXME: to broad exception handling.")
+    except SLDBConnectionError as exc:
+        logger.error("get_sldb_pref(%r, \"privacyMode\"): %s", accountid, exc)
         c["current_privacy_mode"] = -1
     logger.debug("current_privacy_mode: %s (user: %s)", str(c["current_privacy_mode"]), request.user)
 

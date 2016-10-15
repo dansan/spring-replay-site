@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
 <head>
 <!--
@@ -24,7 +24,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <meta name="author" content="Dansan" />
     <meta name="Description" content="{% if not pagedescription %}Replay upload site for matches on the SpringRTS game engine.{% else %}{{ pagedescription }}{% endif %}"/>
     <meta name="Keywords" content="replay, demo, sdf, spring, springrts, game, rts, real time strategy"/>
-    <link rel="icon" type="image/png" href="{{ STATIC_URL }}img/favicon.png" />
+    <link rel="icon" type="image/png" href="{% static "img/favicon.png" %}" />
     <title>{%block pagetitle %}{% endblock %} | Spring Replay Site</title>
 
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads" href="/feeds/latest/" />
@@ -88,7 +88,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
                   <a href="{% url "srs.views.replay" hreplay.gameID %}">
                     <small>
                         {{ hreplay.title }} ({{ hreplay.game.abbreviation }})<br/>
-                        {{ hreplay.unixTime|date:"LONG_DATETIME_FORMAT" }}
+                        {{ hreplay.unixTime|date:"d.m.Y H:i:s (T)" }}
                     </small>
                   </a>
               </li>
@@ -121,7 +121,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
   {% if user.replays_uploaded > 0 %}
               <li><a href="{% url "srs.views.browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
   {% endif %}
-  {% if user.get_profile.is_developer or user.infolog_uploader.exists %}
+  {% if user.userprofile.is_developer or user.infolog_uploader.exists %}
               <li><a href="{% url "infolog_upload.views.index" %}">Infologs</a></li>
   {% endif %}
   {% if user.is_superuser %}
@@ -176,7 +176,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 <!-- ------
        JS
      ------ -->
-  {% django_js %}
+  {% js_lib "jquery-2.0.3.js" %}
+  {% django_js_init %}
+  {% js "js/djangojs/django.js" %}
   {% js_lib "jquery-ui-1.10.4.custom.min.js" %}
   {% js_lib "bootstrap.min.js" %}
   {% js_lib "selectize.min.js" %}

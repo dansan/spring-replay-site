@@ -195,8 +195,8 @@ Please see srs_base.html for license information.
     {% for infolog in playeraccount.get_user.infolog_uploader.all %}
                 <tr>
                   <td class="text-right"><a href="{{ infolog.get_absolute_url }}"># {{ infolog.id }}</a></td>
-                  <td class="text-center" title="{{ infolog.replay.unixTime|date:"LONG_DATETIME_FORMAT" }}">{{ infolog.replay.unixTime|date:"SHORT_DATE_FORMAT" }}</td>
-                  <td class="text-center" title="{{ infolog.upload_date|date:"LONG_DATETIME_FORMAT" }}">{{ infolog.upload_date|date:"SHORT_DATE_FORMAT" }}</td>
+                  <td class="text-center" title="{{ infolog.replay.unixTime|date:"d.m.Y H:i:s (T)" }}">{{ infolog.replay.unixTime|date:"SHORT_DATE_FORMAT" }}</td>
+                  <td class="text-center" title="{{ infolog.upload_date|date:"d.m.Y H:i:s (T)" }}">{{ infolog.upload_date|date:"SHORT_DATE_FORMAT" }}</td>
                   <td class="text-center">{{ infolog.game.abbreviation }}</td>
                   <td class="text-center">{{ infolog.replay.versionString }}</td>
                   <td class="text-center">{{ infolog.severity }}</td>

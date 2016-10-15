@@ -21,7 +21,7 @@ import logging
 import socket
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from xmlrpclib import ServerProxy
+from xmlrpclib import ServerProxy, ProtocolError
 from models import UserProfile
 
 url = 'https://springrts.com/api/uber/xmlrpc'
@@ -137,7 +137,11 @@ class LobbyBackend():
         try:
             client = ServerProxy(url)
             return client.get_account_info(username, password)
-        except socket.error, se:
+        except ProtocolError as pe:
+            # 403 will happen when not running @ replay VM
+            logger.exception("ProtocolError: %s", pe)
+            return {'status': 2}
+        except socket.error as se:
             logger.exception("socket error: errno: %d text: %s", se.errno, se.strerror)
             return {'status': 2}
         except:

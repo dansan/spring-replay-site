@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.conf import global_settings
-from os.path import realpath, dirname
+from os.path import realpath, dirname, abspath, join as path_join
 
-SRS_FILE_ROOT = realpath(dirname(__file__))
-IMG_PATH = SRS_FILE_ROOT + "/static/img/"
-MAPS_PATH = SRS_FILE_ROOT + "/static/maps/"
-REPLAYS_PATH = SRS_FILE_ROOT + "/static/replays/"
-FONTS_PATH = SRS_FILE_ROOT + "/static/fonts/"
-TS_HISTORY_GRAPHS_PATH = SRS_FILE_ROOT + "/ts_graphs"
+SRS_FILE_ROOT = dirname(abspath(__file__))
+IMG_PATH = path_join(SRS_FILE_ROOT, "static/img")
+MAPS_PATH = path_join(SRS_FILE_ROOT, "static/maps")
+REPLAYS_PATH = path_join(SRS_FILE_ROOT, "static/replays")
+FONTS_PATH = path_join(SRS_FILE_ROOT, "static/fonts")
+TS_HISTORY_GRAPHS_PATH = path_join(SRS_FILE_ROOT, "ts_graphs")
 THUMBNAIL_SIZES = {"home": (150, 100), "replay": (340, 1000)}
 LOGIN_URL = "/login/"
 LOGOUT_URL = "/logout/"
@@ -17,140 +17,97 @@ EMAIL_HOST = 'localhost'
 DEFAULT_FROM_EMAIL = 'webmaster@replays.springrts.com'
 LOGIN_REDIRECT_URL = '/'
 DATE_FORMAT = 'd.m.Y'
-LONG_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 DATETIME_FORMAT = DATE_FORMAT
 SHORT_DATE_FORMAT = 'd.m.Y'
 # SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ("django.core.context_processors.request",)
-AUTHENTICATION_BACKENDS = ('lobbyauth.lobbybackend.LobbyBackend',) + global_settings.AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = ['lobbyauth.lobbybackend.LobbyBackend'] + global_settings.AUTHENTICATION_BACKENDS
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
 INDEX_REPLAY_RANGE = 12
 AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
 
-LOG_PATH = realpath(dirname(__file__)) + '/log'
+LOG_PATH = path_join(SRS_FILE_ROOT, 'log')
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
 INFO_FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
 LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# On Unix systems, a value of None will cause Django to use the same
-# timezone as the operating system.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
 TIME_ZONE = 'Europe/Berlin'
-
-# Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
-
 SITE_ID = 1
-
-# If you set this to False, Django will make some optimizations so as not
-# to load the internationalization machinery.
 USE_I18N = True
-
-# If you set this to False, Django will not format dates, numbers and
-# calendars according to the current locale.
 USE_L10N = False
-
-# If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = SRS_FILE_ROOT + "/static/media/"
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-# MEDIA_URL = 'http://127.0.0.1:8000/static/media/'
-# --> local_settings.py
+MEDIA_ROOT = path_join(SRS_FILE_ROOT, "static/media")
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = SRS_FILE_ROOT + '/static/'
+STATIC_ROOT = path_join(SRS_FILE_ROOT, 'static')
 
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
-# Additional locations of static files
-STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
-
-# List of finder classes that know how to find static files in
-# various locations.
-STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
-)
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = 'z@=s%z(tp1faa%g1soppjrxs*kd2m!#avt_pc447#x(@=%m$+g'
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    'django.template.loaders.eggs.Loader',
-)
-
-MIDDLEWARE_CLASSES = (
-    'django.middleware.http.ConditionalGetMiddleware',
-    'django.middleware.common.CommonMiddleware',
+MIDDLEWARE_CLASSES = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.cache.CacheMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+    'django.middleware.http.ConditionalGetMiddleware',
+    'django.middleware.cache.CacheMiddleware',
+]
 
 ROOT_URLCONF = 'srs.urls'
 
-# Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'srs.wsgi.application'
 
-TEMPLATE_DIRS = (
-    # Don't forget to use absolute paths, not relative paths.
-    SRS_FILE_ROOT + '/templates/',
-)
-
-INSTALLED_APPS = (
+INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
-    'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
     'django.contrib.sitemaps',
-    'south',
     'srs',
     'infolog_upload',
     'lobbyauth',
-    'django.contrib.comments',
+    'django_comments',
     'django_xmlrpc',
     'djangojs',
     'eztables',
     'django_extensions',
     'jsonrpc'
-)
+]
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [path_join(SRS_FILE_ROOT, 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
+                'djangojs.context_processors.booleans',
+            ],
+            'builtins': ['djangojs.templatetags.js'],
+        },
+    },
+]
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = "DENY"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -181,10 +138,11 @@ LOGGING = {
     }
 }
 
-# import site specific settings
+
+# import site specific settings, defaults first
 from local_settings_ import *
 
-# overwrite default settings
+# now overwrite default settings
 try:
     from local_settings import *
 except ImportError:

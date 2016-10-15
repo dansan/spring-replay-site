@@ -9,7 +9,7 @@
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-from django.contrib.comments.feeds import LatestCommentFeed
+from django_comments.feeds import LatestCommentFeed
 
 from models import Replay
 
@@ -20,19 +20,16 @@ class LatestUploadsFeed(Feed):
     description = "Newest replay uploads"
     description_template = 'feeds_replay_description.html'
 
-    @staticmethod
-    def items():
+    def items(self):
         return Replay.objects.order_by('-upload_date')[:20]
 
     def item_title(self, replay):
         return super(LatestUploadsFeed, self).item_title(replay.title)
 
-    @staticmethod
-    def item_pubdate(item):
+    def item_pubdate(self, item):
         return item.unixTime
 
-    @staticmethod
-    def item_author_name(item):
+    def item_author_name(self, item):
         if item.autohostname:
             return item.autohostname
         else:
@@ -42,35 +39,28 @@ class LatestUploadsFeed(Feed):
 class UploaderFeed(Feed):
     description_template = 'feeds_replay_description.html'
 
-    @staticmethod
-    def get_object(request, username):
+    def get_object(self, request, username):
         return get_object_or_404(User, username=username)
 
-    @staticmethod
-    def title(user):
+    def title(self, user):
         return "Replays uploaded by %s" % user.username
 
-    @staticmethod
-    def link(user):
+    def link(self, user):
         return user.get_absolute_url()
 
-    @staticmethod
-    def description(user):
+    def description(self, user):
         return "Newest replays uploaded by %s" % user.username
 
-    @staticmethod
-    def items(user):
+    def items(self, user):
         return Replay.objects.filter(uploader=user).order_by('-upload_date')[:20]
 
     def item_title(self, replay):
         return super(UploaderFeed, self).item_title(replay.title)
 
-    @staticmethod
-    def item_pubdate(item):
+    def item_pubdate(self, item):
         return item.unixTime
 
-    @staticmethod
-    def item_author_name(item):
+    def item_author_name(self, item):
         if item.autohostname:
             return item.autohostname
         else:
@@ -78,8 +68,8 @@ class UploaderFeed(Feed):
 
 
 class SRSLatestCommentFeed(LatestCommentFeed):
-    @staticmethod
-    def item_author_name(item):
+
+    def item_author_name(self, item):
         return item.user.username
 
     def item_title(self, item):

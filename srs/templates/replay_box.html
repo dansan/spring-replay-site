@@ -1,4 +1,5 @@
 {% load cache %}
+{% load static %}
 
 {% comment %}
 <!-- 
@@ -17,7 +18,7 @@ Please see srs_base.html for license information.
                     (<span itemprop="description">engine {{ replay.versionString }}</span>)
                   </span>
                 </p>
-                <p style="margin: 0 0 2px;">Map: <span itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{% url "srs.views.browse_archive" "" %}map={{ replay.map_info.id }}/"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="thumbnailUrl" content="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg"/></span></p>
+                <p style="margin: 0 0 2px;">Map: <span itemprop="location" itemscope itemtype="http://schema.org/Map"><a href="{% url "srs.views.browse_archive" "" %}map={{ replay.map_info.id }}/"><span itemprop="name">{{ replay.map_info.name }}</span></a><meta itemprop="thumbnailUrl" content="{% get_static_prefix %}maps/{{ replay.map_info.name }}_home.jpg"/></span></p>
                 <p style="margin: 0 0 2px;">Length: {{ replay.wallclockTime }}</p>
                 {% if replay_details %}<p style="margin: 0 0 2px;">Tags:{% for tag in replay.tags.all %} <a href="{% url "srs.views.browse_archive" "" %}tag={{ tag.id }}/">{{ tag }}</a>{% endfor %}</p>{% endif %}
                 <span itemscope itemtype="http://schema.org/DataDownload">

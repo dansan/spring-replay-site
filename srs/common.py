@@ -8,6 +8,7 @@
 
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.datastructures import MultiValueDictKeyError
 
 from srs.models import Game, PlayerAccount, Replay
 
@@ -23,7 +24,7 @@ def all_page_infos(request):
                 not request.user.userprofile.game_pref_fixed):
             request.user.userprofile.game_pref = gameid
             request.user.userprofile.save()
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, MultiValueDictKeyError):
         # request.GET["game_pref"] not set (or not an int)
         pass
     if request.user.is_authenticated():

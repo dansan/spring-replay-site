@@ -1,4 +1,5 @@
 {% extends 'srs_base.html' %}
+{% load static %}
 
 {% comment %}
 <!-- 
@@ -25,7 +26,7 @@ Please see srs_base.html for license information.
             <div class="lbox" style="height:200px;">
                 <p><big><b><a href="{{ replay.get_absolute_url }}">{{ replay.title }}</a></b></big></p>
                 <div class="thumb">
-                    <a href="{{ replay.get_absolute_url }}"><img src="{{ STATIC_URL }}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
+                    <a href="{{ replay.get_absolute_url }}"><img src="{% get_static_prefix %}maps/{{ replay.map_info.name }}_home.jpg" alt="pic of map {{ replay.map_info.name }}"/></a>
                 </div>
 {% include "replay_box.html" %}
             </div>

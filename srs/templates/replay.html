@@ -1,6 +1,7 @@
 {% extends 'srs_base.html' %}
 {% load comments %}
 {% load cache %}
+{% load static %}
 
 {% comment %}
 <!-- 
@@ -110,7 +111,7 @@ Please see srs_base.html for license information.
       {% for at, players, old_rating, new_rating, lobby_rank_sum in allyteams %}
         {% if not replay.match_type_short == "1"  or  replay.match_type_short == "F" %}
                   <tr class="active{% if at.winner %} blind_winner_team{% endif %}">
-                    <td style="font-weight: bold;">Team {{ at.num }}{% if at.winner %} <img class="blind_winner" style="display:none; height: 24px;" alt="Winner" src="{{ STATIC_URL }}img/trophy_32.png"/>{% endif %}</td>
+                    <td style="font-weight: bold;">Team {{ at.num }}{% if at.winner %} <img class="blind_winner" style="display:none; height: 24px;" alt="Winner" src="{% static "img/trophy_32.png" %}"/>{% endif %}</td>
                     <td></td>
           {% if not has_bot %}
             {% if replay.match_type_short == "T" or replay.match_type_short == "G" %}
@@ -230,7 +231,7 @@ Please see srs_base.html for license information.
         <div class="panel-body">
           <div class="row">
             <div class="col-sx-12">
-              <center><img src="{{ STATIC_URL }}img/bawards/awards.png" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
+              <center><img src="{% static "img/bawards/awards.png" %}" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
               <hr style="margin-top: 7px; margin-bottom: 12px;">
             </div>
           </div> <!-- row -->
@@ -239,7 +240,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/fuscup.png" alt="ecoKillAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/fuscup.png" %}" alt="ecoKillAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Destroying enemy resource production</h4>
@@ -252,7 +253,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/bullcup.png" alt="fightKillAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/bullcup.png" %}" alt="fightKillAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Destroying enemy units and defences</h4>
@@ -265,7 +266,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/comwreath.png" alt="effKillAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/comwreath.png" %}" alt="effKillAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Effective use of resources</h4>
@@ -278,7 +279,7 @@ Please see srs_base.html for license information.
             <div class="col-md-4" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/cow.png" alt="cowAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/cow.png" %}" alt="cowAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Doing everything</h4>
@@ -291,7 +292,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/eco.png" alt="ecoAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/eco.png" %}" alt="ecoAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Produced the most resources</h4>
@@ -304,7 +305,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/damage.png" alt="dmgRecAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/damage.png" %}" alt="dmgRecAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Took the most damage</h4>
@@ -317,7 +318,7 @@ Please see srs_base.html for license information.
             <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
               <div class="media">
                 <div class="pull-left">
-                  <img class="media-object" src="{{ STATIC_URL }}img/bawards/sleep.png" alt="sleepAward" width="64">
+                  <img class="media-object" src="{% static "img/bawards/sleep.png" %}" alt="sleepAward" width="64">
                 </div>
                 <div class="media-body">
                   <h4 class="media-heading">Slept longest</h4>
@@ -339,7 +340,7 @@ Please see srs_base.html for license information.
       <div class="col-sx-12 col-sm-6">
         <div class="panel panel-default blind_winner" style="display:none;">
           <div class="panel-body">
-            <center><img src="{{ STATIC_URL }}img/trophy_32.png" alt="trophy" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Heroes in victory</span> &nbsp;&nbsp; <img src="{{ STATIC_URL }}img/trophy_32.png" alt="trophy" height="24"/></center>
+            <center><img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Heroes in victory</span> &nbsp;&nbsp; <img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/></center>
             <hr style="margin-top: 7px; margin-bottom: 12px;">
             {% if xtaward_heroes %}
             <div class="table-responsive">
@@ -375,7 +376,7 @@ Please see srs_base.html for license information.
       <div class="col-sx-12 col-sm-6">
         <div class="panel panel-default blind_winner" style="display:none;">
           <div class="panel-body">
-            <center><img src="{{ STATIC_URL }}img/xtawards/love-rose-4_128px.png" alt="rose" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Lost in service</span> &nbsp;&nbsp; <img src="{{ STATIC_URL }}img/xtawards/love-rose-4_128px.png" alt="rose" height="24"/></center>
+            <center><img src="{% static "img/xtawards/love-rose-4_128px.png" %}" alt="rose" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Lost in service</span> &nbsp;&nbsp; <img src="{% static "img/xtawards/love-rose-4_128px.png" %}" alt="rose" height="24"/></center>
             <hr style="margin-top: 7px; margin-bottom: 12px;">
             {% if xtaward_los %}
             <div class="table-responsive">
@@ -445,8 +446,8 @@ Please see srs_base.html for license information.
                     <a href="{% url "infolog_upload.views.infolog_view" infolog.id %}">Infolog #{{ infolog.id }}</a>
                 </p>
                 <hr style="margin-top: 7px; margin-bottom: 7px;">
-                <p style="margin: 0 0 2px;">Upload date: {{ infolog.upload_date|date:"LONG_DATETIME_FORMAT" }}</p>
-                <p style="margin: 0 0 2px;">Uploader: <a href="{% url 'srs.views.player' user.get_profile.accountid %}">{{ infolog.uploader }}</a></p>
+                <p style="margin: 0 0 2px;">Upload date: {{ infolog.upload_date|date:"d.m.Y H:i:s (T)" }}</p>
+                <p style="margin: 0 0 2px;">Uploader: <a href="{% url 'srs.views.player' user.userprofile.accountid %}">{{ infolog.uploader }}</a></p>
                 <p style="margin: 0 0 2px;">Client software: {{ infolog.client }}</p>
                 <p style="margin: 0 0 2px;">External link: {% if infolog.ext_link %}<a href="{{ infolog.ext_link }}">{{ infolog.ext_link }}</a>{% else %}None{% endif %}</p>
                 {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:infolog_upload_infolog_change' infolog.pk %}">infolog @admin site</a></p>{% endif %}
@@ -568,7 +569,7 @@ Please see srs_base.html for license information.
         {% if media.media_magic_mime == "image/svg+xml" %}
             <p>Browsers have issues showing movies in SVG format after scaling. Please <a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">click here</a> to open the file in a new window.</p>
         {% elif media.media_magic_mime in known_video_formats %}
-            <div data-swf="{{ STATIC_URL }}flowplayer_5.4.3.swf" class="flowplayer" itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
+            <div data-swf="{% static "flowplayer_5.4.3.swf" %}" class="flowplayer" itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
                 <video>
                     <source type="{{ media.media_magic_mime }}" src="{{ media.media.url }}" itemprop="contentUrl" content="{{ media.media.url }}"/>
                 </video>

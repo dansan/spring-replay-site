@@ -1,7 +1,6 @@
 # copy to local_settings.py and overwrite settings there
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Me', 'my@myself.I'),
@@ -9,15 +8,30 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASES = dict(
-    default=dict(ENGINE='django.db.backends.sqlite3', NAME='srs.db', USER='', PASSWORD='', HOST='', PORT='')
+    default=dict(
+        ENGINE='django.db.backends.sqlite3',
+        NAME='srs.db',
+        USER='',
+        PASSWORD='',
+        HOST='',
+        PORT=''
+    )
 )
+
+CONN_MAX_AGE = 10
+
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = 's3cr3t'
 
 CACHE_MIDDLEWARE_ALIAS = 'default'
 CACHE_MIDDLEWARE_SECONDS = 300
 CACHE_MIDDLEWARE_KEY_PREFIX = 'test'
 
 CACHES = dict(
-    default=dict(BACKEND='django.core.cache.backends.dummy.DummyCache', KEY_PREFIX=CACHE_MIDDLEWARE_KEY_PREFIX)
+    default=dict(
+        BACKEND='django.core.cache.backends.dummy.DummyCache',
+        KEY_PREFIX=CACHE_MIDDLEWARE_KEY_PREFIX
+    )
 )
 
 DEFAULT_FROM_EMAIL = 'webmaster@replays.springrts.com'
@@ -36,3 +50,7 @@ SLDB_ALLOWED_IPS = ["78.46.100.156"]
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "replays.springrts.com", "replays-test.springrts.com",
                  "replays.admin-box.com", "replays-test.admin-box.com", "78.46.100.156"]
+
+# STATICFILES_DIRS = []
+
+# logging.disable(logging.DEBUG)

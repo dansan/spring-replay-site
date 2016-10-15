@@ -447,10 +447,10 @@ class Parse_demo_file():
                                         "name"   : xta_name,
                                         "kills"  : int(xta_kills),
                                         "age"    : int(xta_age)}
-                            if self.additional.has_key("xtawards"):
-                                if not xtawards in self.additional["xtawards"]:
+                            try:
+                                if xtawards not in self.additional["xtawards"]:
                                     self.additional["xtawards"].append(xtawards)
-                            else:
+                            except KeyError:
                                 self.additional["xtawards"] = [xtawards]
                         else:
                             pass
