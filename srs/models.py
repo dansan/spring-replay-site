@@ -52,7 +52,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=128, unique=True, db_index=True)
 
     def __unicode__(self):
-        return self.name
+        return "Tag({}, {})".format(self.pk, self.name)
 
     @models.permalink
     def get_absolute_url(self):
@@ -71,7 +71,7 @@ class Map(models.Model):
     metadata = PickledObjectField(blank=True, null=True)
 
     def __unicode__(self):
-        return self.name
+        return "Map({}, {})".format(self.pk, self.name)
 
     @models.permalink
     def get_absolute_url(self):
@@ -91,7 +91,7 @@ class MapImg(models.Model):
     map_info = models.ForeignKey(Map)
 
     def __unicode__(self):
-        return "{} type: {}".format(self.map_info.name, self.startpostype)
+        return "MapImg({}, {}, {})".format(self.pk, self.map_info.name, self.startpostype)
 
     def get_absolute_url(self):
         return "{}maps/{}".format(settings.STATIC_URL, self.filename)
@@ -359,7 +359,7 @@ class AdditionalReplayInfo(models.Model):
     value = models.CharField(max_length=512)
 
     def __unicode__(self):
-        return u"%s : '%s'='%s'" % (self.replay.__unicode__(), self.key, self.value)
+        return u"AdditionalReplayInfo({}, {}): '{}'='{}'".format(self.pk, self.replay, self.key, self.value)
 
 
 class Allyteam(models.Model):
@@ -373,7 +373,7 @@ class Allyteam(models.Model):
     num = models.SmallIntegerField()
 
     def __unicode__(self):
-        return str(self.id) + u" win:" + str(self.winner)
+        return u"Allyteam({}) win:{}".format(self.id, self.winner)
 
 
 class PlayerAccount(models.Model):
@@ -383,7 +383,7 @@ class PlayerAccount(models.Model):
     sldb_privacy_mode = models.SmallIntegerField(default=1)
 
     def __unicode__(self):
-        return str(self.accountid) + u" " + reduce(lambda x, y: x + "|" + y, self.get_names())[:40]
+        return u"PlayerAccount({}: {})".format(self.accountid, reduce(lambda x, y: x + "|" + y, self.get_names())[:40])
 
     @models.permalink
     def get_absolute_url(self):
@@ -454,7 +454,7 @@ class Player(models.Model):
     startposz = models.FloatField(blank=True, null=True)
 
     def __unicode__(self):
-        return "(%d) %s" % (self.id, self.name)
+        return "Player({}, {})".format(self.id, self.name)
 
     @models.permalink
     def get_absolute_url(self):
@@ -477,7 +477,7 @@ class Team(models.Model):
     num = models.SmallIntegerField()
 
     def __unicode__(self):
-        return "(%d) %s" % (self.pk, self.teamleader.name)
+        return "Team({}, {})".format(self.pk, self.teamleader.name)
 
 
 class MapModOption(models.Model):
@@ -486,7 +486,7 @@ class MapModOption(models.Model):
     replay = models.ForeignKey(Replay)
 
     def __unicode__(self):
-        return self.name
+        return "{}({}, {})".format(self.__class__.__name__, self.pk, self.name)
 
 
 # class Meta:
@@ -506,14 +506,14 @@ class NewsItem(models.Model):
     show = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return self.text[:50]
+        return "NewsItem({}): {}".format(self.pk, self.text[:50])
 
 
 class UploadTmp(models.Model):
     replay = models.ForeignKey(Replay)
 
     def __unicode__(self):
-        return self.replay.__unicode__()
+        return "UploadTmp({}, {})".format(self.pk, self.replay)
 
 
 # not the most beautiful model, but efficient
@@ -536,7 +536,7 @@ class Game(models.Model):
     developer = models.ManyToManyField(User, blank=True)
 
     def __unicode__(self):
-        return self.name[:70] + " (" + self.abbreviation + ")"
+        return "Game({}, {}, {})".format(self.pk, self.abbreviation, self.name[:70])
 
     @models.permalink
     def get_absolute_url(self):
@@ -552,8 +552,7 @@ class GameRelease(models.Model):
     game = models.ForeignKey(Game)
 
     def __unicode__(self):
-        return self.name[:70] + " | version: " + self.version + " | Game(" + str(
-            self.game.pk) + "): " + self.game.abbreviation
+        return "GameRelease({}, {}, {}, {})".format(self.pk, self.name[:70], self.version, self.game)
 
     @models.permalink
     def get_absolute_url(self):
@@ -596,9 +595,9 @@ class RatingBase(models.Model):
             return 0
 
     def __unicode__(self):
-        return "(" + str(self.id) + ") " + str(
-            self.playername) + " | " + self.game.abbreviation + " | " + self.match_type + " | " + " TS: (" + str(
-            self.trueskill_mu) + ", " + str(self.trueskill_sigma) + ")"
+        return "{}({}, {}, {}) TS: ({}, {})".format(self.__class__.__name__, self.pk, self.playername,
+                                                    self.game.abbreviation, self.match_type,
+                                                    self.trueskill_mu, self.trueskill_sigma)
 
     class Meta:
         ordering = ['-trueskill_mu']
@@ -615,7 +614,7 @@ class RatingHistory(RatingBase):
                                       db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
 
     def __unicode__(self):
-        return str(self.match_date) + " | " + super(RatingHistory, self).__unicode__()
+        return "RatingHistory({}, {}): {}".format(self.pk, self.match_date, super(RatingHistory, self))
 
     class Meta:
         ordering = ['-match_date', 'playername']
@@ -626,8 +625,8 @@ class AdditionalReplayOwner(models.Model):
     additional_owner = models.ForeignKey(PlayerAccount)
 
     def __unicode__(self):
-        return u"(" + unicode(self.id) + u") uploader: " + unicode(self.uploader) + u" additional_owner: " + unicode(
-            self.additional_owner)
+        return u"AdditionalReplayOwner({}) uploader: {}, additional_owner: {}".format(self.id, self.uploader,
+                                                                                      self.additional_owner)
 
     class Meta:
         ordering = ['uploader__username']
@@ -652,9 +651,8 @@ class ExtraReplayMedia(models.Model):
         return basename(self.image.name)
 
     def __unicode__(self):
-        return u"(" + unicode(self.id) + u") replay: " + unicode(self.replay) + u" media: " + unicode(
-            self.media) + u" image: " + unicode(self.image) + u" by: " + unicode(self.uploader) + u" on: " + unicode(
-            self.upload_date)
+        return u"ExtraReplayMedia({}) replay: {} media: {} image: {} by: {} on: {}".format(
+            self.pk, self.replay, self.media, self.image, self.uploader, self.upload_date)
 
     class Meta:
         ordering = ['-upload_date']
@@ -666,7 +664,7 @@ class SldbLeaderboardGame(models.Model):
     match_type = models.CharField(max_length=1, choices=RatingBase.MATCH_TYPE_CHOICES, db_index=True)
 
     def __unicode__(self):
-        return u"(%d) %s | %s" % (self.id, self.game, self.match_type)
+        return u"SldbLeaderboardGame({}, {}, {})".format(self.pk, self.game, self.match_type)
 
 
 class SldbLeaderboardPlayer(models.Model):
@@ -679,7 +677,8 @@ class SldbLeaderboardPlayer(models.Model):
     inactivity = models.IntegerField()
 
     def __unicode__(self):
-        return u"(%d) %s | %d | %s | %f" % (self.id, self.leaderboard, self.rank, self.account, self.trusted_skill)
+        return u"SldbLeaderboardPlayer({}, {}, {}, {}, {})".format(self.pk, self.leaderboard, self.rank, self.account,
+                                                                  self.trusted_skill)
 
     class Meta:
         ordering = ['rank']
@@ -691,7 +690,7 @@ class SldbMatchSkillsCache(models.Model):
     text = models.TextField()
 
     def __unicode__(self):
-        return u"(%d) %s | %s" % (self.id, self.gameID, self.text)
+        return u"SldbMatchSkillsCache({}, {}, {})".format(self.pk, self.gameID, self.text)
 
     @staticmethod
     def purge_old():
@@ -716,7 +715,7 @@ class SldbPlayerTSGraphCache(models.Model):
     match_type2sldb_name = {"1": "Duel", "T": "Team", "F": "FFA", "G": "Global", "L": "TeamFFA"}
 
     def __unicode__(self):
-        return u"(%d) %s | %s | %s" % (self.id, self.account, self.game, self.filepath_global)
+        return u"SldbPlayerTSGraphCache({}) {} | {} | {}".format(self.pk, self.account, self.game, self.filepath_global)
 
     def remove_files(self):
         for filepath in (self.filepath_global, self.filepath_duel, self.filepath_ffa, self.filepath_team, self.filepath_teamffa):
@@ -782,7 +781,8 @@ class BAwards(models.Model):
     sleepAwardScore = models.IntegerField(default=-1)
 
     def __unicode__(self):
-        return u"(%d) Replay: %d | EcoKill: %s,%s,%s | FightKill: %s,%s,%s | EffKill: %s,%s,%s | Cow: %s | Eco: %s | DmgRec: %s | Sleep: %s" % (
+        return u"BAwards({}) Replay: {} | EcoKill: {},{},{} | FightKill: {},{},{} | EffKill: {},{},{} | Cow: {} | " \
+               u"Eco: {} | DmgRec: {} | Sleep: {}".format(
             self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd,
             self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st,
             self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
@@ -797,7 +797,7 @@ class XTAwards(models.Model):
     age = models.IntegerField(default=-1)
 
     def __unicode__(self):
-        return u"(%d) Replay: %d | isAlive: %d | player: %s | unit: %s | kills: %d | age: %d" % (
+        return u"XTAwards({}) Replay: {} | isAlive: {} | player: {} | unit: {} | kills: {} | age: {}".format(
             self.pk, self.replay.pk, self.isAlive, self.player.name, self.unit, self.kills, self.age)
 
 
