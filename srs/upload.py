@@ -29,7 +29,7 @@ from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, Map
     PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming
 import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
-from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype
+from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBConnectionError
 
 logger = logging.getLogger("srs.upload")
 
@@ -177,7 +177,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
                 tags, path, filename, short, long_text, user)
     logger.info("gameID='%s'", demofile.header["gameID"])
     global timer
-    if not timer: timer = SrsTiming()
+    if not timer:
+        timer = SrsTiming()
     #     pp = pprint.PrettyPrinter(depth=6)
     #     logger.debug("demofile.__dict__: %s",pp.pformat(demofile.__dict__))
     try:
@@ -189,9 +190,9 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         logger.debug("new Replay: gameID: %s", demofile.header["gameID"])
 
     replay.published = False
-    if user != None:
+    if user is not None:
         replay.uploader = user
-    if short != None:
+    if short is not None:
         replay.title = short  # temp
 
     # copy match infos
@@ -207,7 +208,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith(
         "0:01:")
 
-    if path != None:
+    if path is not None:
         replay.filename = os.path.basename(path)
         replay.path = os.path.dirname(path)
 
@@ -310,7 +311,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     for pnum in sorted(demofile.game_setup['player'].keys()):
         player = demofile.game_setup['player'][pnum]
         set_accountid(player)
-        if player["countrycode"] == None:
+        if player["countrycode"] is None:
             player["countrycode"] = "??"
         pa, _ = PlayerAccount.objects.get_or_create(accountid=player["accountid"],
                                                     defaults={'countrycode': player["countrycode"],
@@ -330,7 +331,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         except KeyError:
             skilluncertainty = -1
 
-        if player["rank"] == None:
+        if player["rank"] is None:
             try:
                 rank = Player.objects.filter(account=pa).order_by("-id")[0].rank
             except KeyError:
@@ -397,7 +398,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         defaults = {"allyteam": allyteams[val["allyteam"]], "handicap": val["handicap"],
                     "rgbcolor": floats2rgbhex(val.get("rgbcolor", 1.0)), "side": val["side"],
                     "teamleader": players[val["teamleader"]]}
-        if not "rgbcolor" in val:
+        if "rgbcolor" not in val:
             # probably zero-k, let's see and learn what stuff they use instead
             logger.error("No key 'rgbcolor' in game_setup of team %r, val=%r ", tnum, val)
         try:
@@ -516,7 +517,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
 
-    if short != None and long_text != None:
+    if short is not None and long_text is not None:
         # save descriptions
         save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
@@ -599,9 +600,8 @@ def rate_match(replay):
                         "status"])
         else:
             raise Exception("no SLDB data")
-    except Exception as exc:
-        logger.exception("FIXME: to broad exception handling.")
-        logger.debug("in/after get_sldb_match_skills(): %s", exc)
+    except SLDBConnectionError as exc:
+        logger.error("in get_sldb_match_skills([%r]): %s", replay.gameID, exc)
         # use "skill" tag from demo data if available
         logger.info("Trying to use skill tag from demofile")
         players = Player.objects.filter(replay=replay, spectator=False).exclude(skill="")

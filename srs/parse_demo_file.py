@@ -296,8 +296,7 @@ class Parse_demo_file():
                 if messageData:
                     try:
                         clean_name = clean(messageData['playerName'])
-                    except:
-                        logger.exception("FIXME: Why can we continue?")
+                    except KeyError:
                         pass
                     if messageData['cmd'] == 'keyframe':
                         currentFrame = messageData['framenum']

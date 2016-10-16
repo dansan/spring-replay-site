@@ -27,6 +27,7 @@ from picklefield.fields import PickledObjectField
 from djutils.decorators import async
 
 from srs.mail import send_mail
+
 from infolog_upload.notifications import Notifications
 
 logger = logging.getLogger("srs.models")
@@ -34,12 +35,14 @@ logger = logging.getLogger("srs.models")
 
 def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifiers-benchmark
     if idfun is None:
-        def idfun(x): return x
+        def idfun(x):
+            return x
     seen = {}
     result = []
     for item in seq:
         marker = idfun(item)
-        if marker in seen: continue
+        if marker in seen:
+            continue
         seen[marker] = 1
         result.append(item)
     return result
@@ -53,7 +56,7 @@ class Tag(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.tag', [self.name])
+        return 'srs.views.tag', [self.name]
 
     @property
     def replay_count(self):
@@ -72,7 +75,7 @@ class Map(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.rmap', [self.name])
+        return 'srs.views.rmap', [self.name]
 
     @property
     def replay_count(self):
@@ -88,10 +91,10 @@ class MapImg(models.Model):
     map_info = models.ForeignKey(Map)
 
     def __unicode__(self):
-        return self.map_info.name + " type:" + str(self.startpostype)
+        return "{} type: {}".format(self.map_info.name, self.startpostype)
 
     def get_absolute_url(self):
-        return (settings.STATIC_URL + "maps/" + self.filename)
+        return "{}maps/{}".format(settings.STATIC_URL, self.filename)
 
 
 class Replay(models.Model):
@@ -119,7 +122,7 @@ class Replay(models.Model):
     published = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return "(" + str(self.pk) + ") " + self.title + " " + self.unixTime.strftime("%Y-%m-%d")
+        return "Replay({}, {}, {})".format(self.pk, self.gameID, self.title)
 
     def to_dict(self):
         return {"id": self.id,
@@ -143,7 +146,7 @@ class Replay(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.replay', [str(self.gameID)])
+        return 'srs.views.replay', [str(self.gameID)]
 
     @property
     def was_succ_uploaded(self):
@@ -257,8 +260,6 @@ class Replay(models.Model):
         else:
             # this is kind of a broken match, but not returning anything breaks the web site
             return "1v1"
-
-        raise Exception("Could not determine match_type for replay(%d) %s." % (self.id, self.gameID))
 
     @property
     def match_type_short(self):
@@ -386,7 +387,7 @@ class PlayerAccount(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.player', [self.accountid])
+        return 'srs.views.player', [self.accountid]
 
     @property
     def replay_count(self):
@@ -457,7 +458,7 @@ class Player(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('srs.views.player', [self.account.accountid])
+        return 'srs.views.player', [self.account.accountid]
 
     class Meta:
         ordering = ['name']
@@ -733,9 +734,8 @@ class SldbPlayerTSGraphCache(models.Model):
         """
         Remove >= 30 days old entries
         """
-        old_entries = SldbPlayerTSGraphCache.objects.filter(
-            last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo)
-                              - datetime.timedelta(days=30))
+        old_entries = SldbPlayerTSGraphCache.objects.filter(last_modified__lt=datetime.datetime.now(
+            tz=Replay.objects.latest().unixTime.tzinfo) - datetime.timedelta(days=30))
         if old_entries.exists():
             logger.debug("Deleting stale SldbPlayerTSGraphCache objects: %s", old_entries)
             for entry in old_entries:
@@ -967,6 +967,7 @@ def replay_save_callback(sender, instance, **kwargs):
     logger.debug("Replay.save(%d) : '%s'", instance.pk, instance)
     # check for new new Game[Release] object
     if kwargs.get("created"):
+        Notifications().new_replay(instance)
         update_stats()
 
 
