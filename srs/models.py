@@ -311,6 +311,12 @@ class Replay(models.Model):
         """
         try:
             player = Player.objects.get(replay=self, account=playeraccount)
+        except MultipleObjectsReturned:  # happens on Bots player page
+            if playeraccount.accountid == 0:
+                player = Player.objects.filter(replay=self, account=playeraccount)[0]
+            else:
+                raise
+        try:
             team = Team.objects.filter(replay=self, teamleader=player)[0]
             if team.allyteam.winner:
                 self._result_cache = (playeraccount, "won")
