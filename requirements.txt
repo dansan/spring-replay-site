@@ -12,6 +12,7 @@ django-picklefield==0.3.2
 django-xmlrpc==0.1.5
 djutils==0.3.1
 functools32==3.2.3.post2
+gunicorn==19.6.0
 ipykernel==4.3.1
 ipython==4.1.2
 ipython-genutils==0.1.0
