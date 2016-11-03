@@ -24,7 +24,7 @@ from srs.models import Allyteam, Player
 logger = logging.getLogger("srs.views")
 
 
-class SpringMaps():
+class SpringMaps:
     def __init__(self, mapname):
         self.map_name = mapname
         self.full_img = None

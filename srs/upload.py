@@ -207,6 +207,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # if match is <2 min long, don't rate it
     replay.notcomplete = demofile.header['gameTime'].startswith("0:00:") or demofile.header['gameTime'].startswith(
         "0:01:")
+    logger.info("gameTime=%r -> replay.notcomplete=%r", demofile.header['gameTime'], replay.notcomplete)
 
     if path is not None:
         replay.filename = os.path.basename(path)
@@ -385,8 +386,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         players[pnum].save()
     timer.stop("  players and playeraccounts")
 
-    logger.debug("replay(%d) saved PlayerAccounts and Players: %s", replay.pk,
-                 Player.objects.filter(replay=replay).values_list('id', 'name'))
+    logger.debug("replay(%d) saved PlayerAccounts and Players: %s", replay.pk, [Player.objects.filter(replay=replay)])
 
     # save teams
     timer.start("  teams")
@@ -579,7 +579,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             v = "chat removed for shorter output"
         elif k == "awards":
             v = ba_awards
-        logger.info("demofile.additional[%s]: %s", k, pp.pformat(v))
+        logger.info("demofile.additional[%r]: %s", k, pp.pformat(v))
 
     replay.published = True
     replay.save()
