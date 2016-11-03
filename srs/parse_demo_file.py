@@ -19,11 +19,32 @@ import gzip
 import struct
 import logging
 
-from django.conf import settings
+if not hasattr(magic, "from_file"):
+    print("Please install python-magic (with pip, version should be around 0.4, NOT 5.xx)!")
+    exit(1)
 
-from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
-    ScriptRestrictions, ScriptTeam
-from srs.demoparser import Demoparser
+try:
+    from django.core.exceptions import ImproperlyConfigured
+    try:
+        from django.conf import settings
+        DEBUG = settings.DEBUG
+    except (ImportError, ImproperlyConfigured):
+        # commandline use
+        DEBUG = True
+except ImportError:
+    # django not installed
+    DEBUG = True
+
+try:
+    from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+        ScriptRestrictions, ScriptTeam
+    from srs.demoparser import Demoparser
+except ImportError:
+    # commandline use
+    from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+        ScriptRestrictions, ScriptTeam
+    from demoparser import Demoparser
+
 
 logger = logging.getLogger("srs.upload")
 
@@ -128,11 +149,37 @@ class Parse_demo_file():
             myopen = gzip.open
         else:
             myopen = open
+        # Example 20161016_233916_Charlie in the Hills v2_103.sdfz file size = 1104963 byte
+        #         20161016_233916_Charlie in the Hills v2_103.sdf  file size = 3187862 byte
+
+
+        # {'demoStreamSize': 3088877,
+        #  'gameID': 'f34405581adec916289cf47c6b65bf7c',
+        #  'gameTime': '0:28:45',
+        #  'headerSize': 352,
+        #  'magic': 'spring demofile',
+        #  'numPlayers': 23,
+        #  'numTeams': 10,
+        #  'playerStatElemSize': 20,
+        #  'playerStatSize': 460,
+        #  'scriptSize': 4533,
+        #  'teamStatElemSize': 80,
+        #  'teamStatPeriod': 15,
+        #  'teamStatSize': 93640,
+        #  'unixTime': '2016-10-16 23:39:16',
+        #  'version': 5,
+        #  'versionString': '103',
+        #  'wallclockTime': '0:30:43',
+        #  'winningAllyTeamsSize': 1}
         with myopen(self.filename, "rb") as self.demofile:
-            self.parse_header()
-            self.parse_winningAllyTeams()
-            self.parse_script()
-            self.parse_demostream()
+            self.parse_header()            # pos:       0 -     352 (0 -> headerSize)
+            self.parse_script()            # pos:     352 -    4885 (headerSize -> + scriptSize)
+            self.parse_demostream()        # pos:    4885 - 3093743 (headerSize + scriptSize -> + demoStreamSize | END)
+            #                                                        352 + 4533 + 3088877 = 3093762
+            self.parse_player_stats()      # pos:       ? -       ? (numPlayers * playerStatElemSize = playerStatSize -> 23 * 20 = 460)
+            self.parse_team_stats()        # pos:       ? -       ? (teamStatSize = numTeams * char/uint (size of teams stats)
+            #                                                                       + numTeams * teams stats * teamStatElemSize)
+            self.parse_winningAllyTeams()  # pos: 3093762 - 3093763 (headerSize + scriptSize + demoStreamSize -> + winningAllyTeamsSize)
 
     def parse_header(self):
         #
@@ -143,7 +190,10 @@ class Parse_demo_file():
             raise Exception("Not a spring demofile.")
         self.header['version'] = self.read_blob_into_int(16, 4)[0]               # int version; ///< DEMOFILE_VERSION
         self.header['headerSize'] = self.read_blob_into_int(20, 4)[0]            # int headerSize; ///< Size of the DemoFileHeader, minor version number.
-        self.header['versionString'] = self.read_blob(24, 256)                   # char versionString[256]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
+        if self.header['version'] > 4:  # springrts commit ddf5be4f8a7006dcb870c5736b1a59c455df0535
+            self.header['versionString'] = self.read_blob(24, 256)               # char versionString[256]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
+        else:
+            self.header['versionString'] = self.read_blob(24, 16)
         self.header['gameID'] = self.read_blob(280, 16)                          # boost::uint8_t gameID[16]; ///< Unique game identifier. Identical for each player of the game.
         self.header['unixTime'] = self.read_blob(296, 8)                         # boost::uint64_t unixTime; ///< Unix time when game was started.
         self.header['scriptSize'] = self.read_blob_into_int(304, 4)[0]           # int scriptSize; ///< Size of startscript.
@@ -174,15 +224,21 @@ class Parse_demo_file():
         self.header['unixTime']      = "%s" % strftime("%Y-%m-%d %H:%M:%S", localtime(unpack("Q", self.header['unixTime'])[0]))
         self.header['gameTime']      = "%s" % str(timedelta(seconds=self.header['gameTime']))
         self.header['wallclockTime'] = "%s" % str(timedelta(seconds=self.header['wallclockTime']))
+        logger.debug("self.header=\n%s", pprint.pformat(self.header))
+        return self.header
 
     def parse_winningAllyTeams(self):
         self.winningAllyTeams = []
         winnning_team = 0
         self.demofile.seek(self.header['headerSize'] + self.header['scriptSize'] + self.header['demoStreamSize'])
         while winnning_team < self.header['winningAllyTeamsSize']:
-            team = unpack('B', self.read_blob(self.demofile.tell(), 1))
+            blob = self.read_blob(self.demofile.tell(), 1)
+            logger.debug("blob=%r", blob)
+            team = unpack_B = unpack('B', blob)
             self.winningAllyTeams.append(team[0])
             winnning_team += 1
+        logger.debug("self.winningAllyTeams=%r", self.winningAllyTeams)
+        return self.winningAllyTeams
 
     def parse_script(self):
         script = self.read_blob(self.header['headerSize'], self.header['scriptSize'])
@@ -233,6 +289,9 @@ class Parse_demo_file():
         self.game_setup['host'] = ScriptGamesetup("game_setup_host", game_txt).__dict__
         self.script.other['mapname'] = self.game_setup['host']['mapname']
         self.script.other['modname'] = self.game_setup['host']['gametype']
+        # logger.debug("self.game_setup=\n%s", pprint.pformat(self.game_setup))
+        logger.debug("self.script=\n%s", pprint.pformat(self.script.__dict__))
+        return self.script
 
     def _read(self, length):
         return self.demofile.read(length)
@@ -280,14 +339,14 @@ class Parse_demo_file():
         packet = True
         currentFrame = 0
         playerIDToName = {}
-        if settings.DEBUG:
+        if DEBUG:
             kop = open('/tmp/msg.data', 'w')
         demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
             try:
                 messageData = demoparser.parsePacket(packet)
-                if settings.DEBUG:
+                if DEBUG:
                     kop.write(str(messageData) + '\n')
 
                 def clean(name):
@@ -457,26 +516,54 @@ class Parse_demo_file():
                 logger.error("FIXME: to broad exception handling.")
                 logger.exception("Exception parsing packet '%s': %s", packet, exc)
                 #raise e
-        if settings.DEBUG:
+        if DEBUG:
             kop.close()
 
         for pnum, player in self.players.items():
             if not hasattr(player, "connected"):
                 self.additional["not_connected"][pnum] = player
 
+    def parse_player_stats(self):
+        pass  # TODO
+
+    def parse_team_stats(self):
+        pass  # TODO
+
 
 def main(argv=None):
+    global DEBUG
+
     if argv is None:
         argv = sys.argv
-        if len(argv) == 1:
-            print "Usage: %s demofile" % (argv[0])
+        if len(argv) == 1 or argv[-1] in ["--winning-test", "--winning-test-header"]:
+            print "Usage: %s [--winning-test] [--winning-test-header] demofile" % (argv[0])
             return 1
-        settings.DEBUG = True  # command line use is always dev intended
-        replay = Parse_demo_file(argv[1])
+
+        DEBUG = True  # command line use is always dev intended
+        replay = Parse_demo_file(argv[-1])
+        replay.check_magic()
         replay.parse()
 
-        pp = pprint.PrettyPrinter(depth=6)
+        if "--winning-test-header" in argv:
+            print('"versionString","version","winningAllyTeamsSize","numallyteams","winningAllyTeams","gametype",'
+                  '"autohostname","gameID","unixTime"')
+            if "--winning-test" not in argv:
+                return 0
 
+        if "--winning-test" in argv:
+            print('"{}","{}","{}","{}","{}","{}","{}","{}","{}"'.format(
+                replay.header["versionString"],
+                replay.header["version"],
+                replay.header["winningAllyTeamsSize"],
+                replay.game_setup["host"]["numallyteams"],
+                ",".join(map(str, replay.winningAllyTeams)),
+                replay.game_setup["host"]["gametype"],
+                replay.game_setup["host"]["autohostname"],
+                replay.header["gameID"],
+                replay.header["unixTime"],))
+            return 0
+
+        pp = pprint.PrettyPrinter(depth=6)
         print "#################### header ##########################"
         pp.pprint(replay.header)
         print "################## game_setup ########################"

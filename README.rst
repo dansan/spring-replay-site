@@ -41,7 +41,7 @@ Dependencies
 - suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
     - I applied https://fedorahosted.org/suds/ticket/359/ (1/2 hunks succeeded -> fixed) 
 - django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc/
-- python-magic: http://pypi.python.org/pypi/python-magic/
+- python-magic: http://pypi.python.org/pypi/python-magic/ (version is around 0.4 - do NOT use python-magic-5.xx)
 - timezone defs: dev-python/pytz | python-tz
 - django-picklefield: https://pypi.python.org/pypi/django-picklefield/
 - django-eztables: https://github.com/noirbizarre/django-eztables/
