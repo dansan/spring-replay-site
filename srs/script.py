@@ -51,15 +51,14 @@ class Result():
             return 0
         return valuetocompare1 < valuetocompare2
 
-    def __str__(self):
+    def __repr__(self):
         try:
-            return 'Result: %s team(%d) died(%d) quit(%d) ' % (self.player.nick,
-                                                               self.team, self.died, self.quit)
+            return 'Result(player={} team={} died={} quit={})'.format(self.player.nick, self.team, self.died, self.quit)
         except:
             import logging
             logger = logging.getLogger("srs.script")
             logger.exception("FIXME: to broad exception handling.")
-            return 'Result: team(%s) died(%d) quit(%d) ' % (self.team, self.died, self.quit)
+            return 'Result(team={} died={} quit={})'.format(self.team, self.died, self.quit)
 
 
 def try_make_numeric(val):
@@ -89,6 +88,9 @@ class ScriptObject(object):
 
         if self.req_keys and not any([hasattr(self, key) for key in self.req_keys]):
             raise Exception("Missing required key in section '%s'." % section)
+
+    def __repr__(self):
+            return "{}({})".format(self.__class__.__name__, self.__dict__)
 
 
 class ScriptPlayer(ScriptObject):
@@ -124,6 +126,12 @@ class ScriptPlayer(ScriptObject):
         else:
             print "Missing required key 'countrycode' in section '%s': '%s'." % (section, data)
             self.countrycode = None
+
+    def __repr__(self):
+        if hasattr(self, "name"):
+            return "ScriptPlayer({}, {})".format(getattr(self, "name", "-"), getattr(self, "accountid", "-"))
+        else:
+            return super(self, self.__repr__)
 
 
 class ScriptAI(ScriptObject):
