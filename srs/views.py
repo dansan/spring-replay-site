@@ -49,7 +49,7 @@ def index(request):
                                         gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
         replays = Replay.objects.filter(published=True)
-    c["replays"] = replays.order_by("-unixTime")[:settings.INDEX_REPLAY_RANGE]
+    c["replays"] = replays.order_by("-upload_date")[:settings.INDEX_REPLAY_RANGE]
     c["range"] = settings.INDEX_REPLAY_RANGE
     c["range_end"] = settings.INDEX_REPLAY_RANGE
     c["popular_replays"] = Replay.objects.order_by("-download_count")[:8]
@@ -76,7 +76,7 @@ def index_replay_range(request, range_end, game_pref):
                                         gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True))
     else:
         replays = Replay.objects.filter(published=True)
-    c["replays"] = replays.order_by("-unixTime")[int(range_end):c["range_end"]]
+    c["replays"] = replays.order_by("-upload_date")[int(range_end):c["range_end"]]
     return render_to_response('replay_index_boxes.html', c, context_instance=RequestContext(request))
 
 
