@@ -34,6 +34,7 @@ from srs.upload import save_tags, set_autotag, save_desc
 from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBConnectionError
 from srs.ajax_views import replay_filter
 from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
+from srs.utils import fix_missing_winner
 
 #add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger("srs.views")
@@ -153,7 +154,13 @@ def replay(request, gameID):
     # fill cache prefetching all entries from DB in one call
     all_players = Player.objects.filter(replay=replay)
     allyteams = Allyteam.objects.filter(replay=replay)
+    if not allyteams.filter(winner=True).exists():
+        # workaround for issue #89: guess winner from ratings
+        fix_missing_winner(replay)
+
     c["allyteams"] = []
+    match_rating_history = RatingHistory.objects.filter(match=replay, match_type=match_type)
+    [entry for entry in match_rating_history]  # prefetch all ratings of this match by hitting the DB only once
     for at in allyteams:
         playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at).order_by("player__team__num")
         teams = Team.objects.filter(allyteam=at)
@@ -179,10 +186,9 @@ def replay(request, gameID):
                     pl_new = pl["skills"][1][0]
                     pl_old = pl["skills"][0][0]
                 else:
-                    # use old method of DB lookups for currect and previous matchs DB entries
+                    # use old method of DB lookups for current and previous matchs DB entries
                     try:
-                        pl_new = RatingHistory.objects.get(match=replay, playeraccount=pa, game=game,
-                                                           match_type=match_type).trueskill_mu
+                        pl_new = match_rating_history.get(playeraccount=pa).trueskill_mu
                     except ObjectDoesNotExist:
                         # no rating on this replay
                         pl_new = None
@@ -192,7 +198,7 @@ def replay(request, gameID):
                                                               match__unixTime__lt=replay.unixTime).order_by(
                             "-match__unixTime")[0].trueskill_mu
                     except IndexError:
-                        pl_old = None
+                        pl_old = 25  # default value for new players
 
                 # privatize?
                 if playeraccounts.count() > 2 or pa.sldb_privacy_mode == 0:
@@ -221,6 +227,8 @@ def replay(request, gameID):
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
     c["replay_details"] = True
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
+    if c["was_stopped"]:
+        logger.info("was_stopped=True: allyteams=%r replay=%r", allyteams, replay)
     c["is_draw"] = allyteams.filter(winner=True).count() > 1
     c["pagedescription"] = "%s %s %s match on %s (%s)" % (
     replay.num_players, replay.match_type, replay.game_release.game.name, replay.map_info.name, replay.unixTime)
