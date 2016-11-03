@@ -110,7 +110,7 @@ def replay(request, gameID):
     else:
         if match_skills and match_skills["status"] == 0:
             # update skill data in DB
-            logger.debug("got match data from sldb")
+            logger.debug("got match data for %s from sldb", replay)
             for player in match_skills["players"]:
                 pa = player["account"]
                 pa_skill = pa.get_rating(game, match_type)
