@@ -57,10 +57,14 @@ class SLDBPrivacyForm(forms.Form):
                              widget=forms.RadioSelect(renderer=RadioSelectTableRenderer))
 
 
+def _game_choices():
+    game_choices = list(Game.objects.all().order_by("name").values_list("id", "name"))
+    game_choices.insert(0, (0, "No filter"))
+    return game_choices
+
+
 class GamePref(forms.Form):
-    GAME_CHOICES = list(Game.objects.all().order_by("name").values_list("id", "name"))
-    GAME_CHOICES.insert(0, (0, "No filter"))
     auto = forms.BooleanField(required=False, label="Restore previous state (default)",
                               widget=forms.CheckboxInput(attrs={"onclick": "toggle_game_choice(this)"}))
-    game_choice = forms.ChoiceField(required=False, choices=GAME_CHOICES,
+    game_choice = forms.ChoiceField(required=False, choices=_game_choices,
                                     widget=forms.Select(attrs={"class": "form-control"}))
