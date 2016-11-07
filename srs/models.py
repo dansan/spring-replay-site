@@ -49,7 +49,7 @@ def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifier
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=128, unique=True, db_index=True)
+    name = models.CharField(max_length=128, unique=True)
 
     def __unicode__(self):
         return "Tag({}, {})".format(self.pk, self.name)
@@ -88,7 +88,7 @@ class Map(models.Model):
 class MapImg(models.Model):
     filename = models.CharField(max_length=128)
     startpostype = models.IntegerField(blank=True, null=True, verbose_name='-1 means full image')
-    map_info = models.ForeignKey(Map, db_index=True)
+    map_info = models.ForeignKey(Map)
 
     def __unicode__(self):
         return "MapImg({}, {}, {})".format(self.pk, self.map_info.name, self.startpostype)
@@ -99,7 +99,7 @@ class MapImg(models.Model):
 
 class Replay(models.Model):
     versionString = models.CharField(max_length=32)
-    gameID = models.CharField(max_length=32, unique=True, db_index=True)
+    gameID = models.CharField(max_length=32, unique=True)
     unixTime = models.DateTimeField(verbose_name='date of match', db_index=True)
     wallclockTime = models.CharField(max_length=32, verbose_name='length of match')
     autohostname = models.CharField(max_length=128, blank=True, null=True, db_index=True)
@@ -360,7 +360,7 @@ class AdditionalReplayInfo(models.Model):
     Infos that are only relevant to a few Replay objects are not worth their
     own attribute in the Replay class.
     """
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
     key = models.CharField(max_length=32)
     value = models.CharField(max_length=512)
 
@@ -375,7 +375,7 @@ class Allyteam(models.Model):
     startrectright = models.FloatField(blank=True, null=True)
     startrecttop = models.FloatField(blank=True, null=True)
     winner = models.BooleanField(default=False)
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
     num = models.SmallIntegerField()
 
     def __unicode__(self):
@@ -383,7 +383,7 @@ class Allyteam(models.Model):
 
 
 class PlayerAccount(models.Model):
-    accountid = models.IntegerField(unique=True, db_index=True)
+    accountid = models.IntegerField(unique=True)
     countrycode = models.CharField(max_length=2)
     preffered_name = models.CharField(max_length=128, db_index=True)
     sldb_privacy_mode = models.SmallIntegerField(default=1)
@@ -447,14 +447,14 @@ class PlayerAccount(models.Model):
 
 
 class Player(models.Model):
-    account = models.ForeignKey(PlayerAccount, blank=True, null=True, db_index=True)
+    account = models.ForeignKey(PlayerAccount, blank=True, null=True)
     name = models.CharField(max_length=128, db_index=True)
     rank = models.SmallIntegerField()
     skill = models.CharField(max_length=16, blank=True)
     skilluncertainty = models.SmallIntegerField(default=-1, blank=True)
     spectator = models.BooleanField(default=False)
-    team = models.ForeignKey("Team", blank=True, null=True, db_index=True)
-    replay = models.ForeignKey(Replay, db_index=True)
+    team = models.ForeignKey("Team", blank=True, null=True)
+    replay = models.ForeignKey(Replay)
     startposx = models.FloatField(blank=True, null=True)
     startposy = models.FloatField(blank=True, null=True)
     startposz = models.FloatField(blank=True, null=True)
@@ -471,7 +471,7 @@ class Player(models.Model):
 
 
 class Team(models.Model):
-    allyteam = models.ForeignKey(Allyteam, db_index=True)
+    allyteam = models.ForeignKey(Allyteam)
     handicap = models.IntegerField()
     rgbcolor = models.CharField(max_length=23)
     side = models.CharField(max_length=32)
@@ -479,7 +479,7 @@ class Team(models.Model):
     startposy = models.IntegerField(blank=True, null=True)
     startposz = models.IntegerField(blank=True, null=True)
     teamleader = models.ForeignKey(Player, related_name="+")
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
     num = models.SmallIntegerField()
 
     def __unicode__(self):
@@ -489,7 +489,7 @@ class Team(models.Model):
 class MapModOption(models.Model):
     name = models.CharField(max_length=128)
     value = models.CharField(max_length=512)
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
 
     def __unicode__(self):
         return "{}({}, {})".format(self.__class__.__name__, self.pk, self.name)
@@ -573,7 +573,7 @@ class GameRelease(models.Model):
 
 
 class RatingBase(models.Model):
-    game = models.ForeignKey(Game, db_index=True)
+    game = models.ForeignKey(Game)
     MATCH_TYPE_CHOICES = (('1', u'1v1'),
                           ('T', u'Team'),
                           ('F', u'FFA'),
@@ -581,7 +581,7 @@ class RatingBase(models.Model):
                           ('L', u'Global'),
                           )
     match_type = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
-    playeraccount = models.ForeignKey(PlayerAccount, db_index=True)
+    playeraccount = models.ForeignKey(PlayerAccount)
     playername = models.CharField(max_length=128, blank=True, null=True,
                                   db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
 
@@ -615,7 +615,7 @@ class Rating(RatingBase):
 
 
 class RatingHistory(RatingBase):
-    match = models.ForeignKey(Replay, db_index=True)
+    match = models.ForeignKey(Replay)
     match_date = models.DateTimeField(blank=True, null=True,
                                       db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
 
@@ -639,7 +639,7 @@ class AdditionalReplayOwner(models.Model):
 
 
 class ExtraReplayMedia(models.Model):
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
     uploader = models.ForeignKey(User)
     upload_date = models.DateTimeField(auto_now_add=True, db_index=True)
     comment = models.CharField(max_length=513)
@@ -692,7 +692,7 @@ class SldbLeaderboardPlayer(models.Model):
 
 class SldbMatchSkillsCache(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
-    gameID = models.CharField(max_length=32, unique=True, db_index=True)
+    gameID = models.CharField(max_length=32, unique=True)
     text = models.TextField()
 
     def __unicode__(self):
@@ -710,8 +710,8 @@ class SldbMatchSkillsCache(models.Model):
 
 class SldbPlayerTSGraphCache(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
-    account = models.ForeignKey(PlayerAccount, db_index=True)
-    game = models.ForeignKey(Game, db_index=True)
+    account = models.ForeignKey(PlayerAccount)
+    game = models.ForeignKey(Game)
     filepath_global = models.CharField(max_length=256)
     filepath_duel = models.CharField(max_length=256)
     filepath_ffa = models.CharField(max_length=256)
@@ -759,31 +759,31 @@ class SldbPlayerTSGraphCache(models.Model):
 
 class BAwards(models.Model):
     replay = models.ForeignKey(Replay)
-    ecoKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    ecoKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     ecoKillAward1stScore = models.IntegerField(default=-1)
-    ecoKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    ecoKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     ecoKillAward2ndScore = models.IntegerField(default=-1)
-    ecoKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    ecoKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     ecoKillAward3rdScore = models.IntegerField(default=-1)
-    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     fightKillAward1stScore = models.IntegerField(default=-1)
-    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     fightKillAward2ndScore = models.IntegerField(default=-1)
-    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     fightKillAward3rdScore = models.IntegerField(default=-1)
-    effKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    effKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     effKillAward1stScore = models.FloatField(default=-1)
-    effKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    effKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     effKillAward2ndScore = models.FloatField(default=-1)
-    effKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    effKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     effKillAward3rdScore = models.FloatField(default=-1)
-    cowAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    cowAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     cowAwardScore = models.IntegerField(default=-1)
-    ecoAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    ecoAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     ecoAwardScore = models.IntegerField(default=-1)
-    dmgRecAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    dmgRecAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     dmgRecAwardScore = models.FloatField(default=-1)
-    sleepAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", db_index=True)
+    sleepAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
     sleepAwardScore = models.IntegerField(default=-1)
 
     def __unicode__(self):
@@ -795,9 +795,9 @@ class BAwards(models.Model):
 
 
 class XTAwards(models.Model):
-    replay = models.ForeignKey(Replay, db_index=True)
+    replay = models.ForeignKey(Replay)
     isAlive = models.SmallIntegerField(default=-1)
-    player = models.ForeignKey(Player, db_index=True)
+    player = models.ForeignKey(Player)
     unit = models.CharField(max_length=1024)
     kills = models.IntegerField(default=-1)
     age = models.IntegerField(default=-1)
