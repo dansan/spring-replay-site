@@ -104,9 +104,9 @@ def _query_sldb(service, *args, **kwargs):
     #         logger.debug("not connecting while in DEBUG")
     #         raise SLDBstatusError(service, -1)
 
-    if not socket.gethostbyname(socket.getfqdn()) in settings.SLDB_ALLOWED_IPS:
-        # fail fast while developing
-        raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
+    # if not socket.gethostbyname(socket.getfqdn()) in settings.SLDB_ALLOWED_IPS:
+    #     # fail fast while developing
+    #     raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
 
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
@@ -117,7 +117,7 @@ def _query_sldb(service, *args, **kwargs):
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, exc)
-        raise e
+        raise exc
     else:
         #         logger.debug("%s() returned: %s", service, rpc_result)
         pass
@@ -125,10 +125,11 @@ def _query_sldb(service, *args, **kwargs):
         socket.setdefaulttimeout(socket_timeout)
 
     if rpc_result["status"] != 0:
+        logger.debug("rpc_result=%r", rpc_result)
         raise SLDBstatusError(service, rpc_result["status"])
 
     try:
-        return rpc_result["result"]
+        return rpc_result["result"] if "result" in rpc_result else rpc_result["results"]
     except KeyError:
         return rpc_result["status"]
 

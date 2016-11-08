@@ -68,8 +68,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
       <div class="navbar-collapse collapse navbar-responsive-collapse">
         <ul class="nav navbar-nav">
         <!-- {{ game_pref }} -->
-          <li><a href="{% if game_pref_browse %}{% url "srs.views.browse_archive" game_pref_browse %}{% else %}{% url "srs.views.browse_archive" "" %}{% endif %}">Browse Archive</a></li>
-          <li><a href="{% if game_pref_obj.sldb_name %}{% url "srs.views.hall_of_fame" game_pref_obj.abbreviation %}{% else %}{% url "srs.views.hall_of_fame" "BA" %}{% endif %}">Hall of fame</a></li>
+          <li><a href="{% if game_pref_browse %}{% url "srs/browse_archive" game_pref_browse %}{% else %}{% url "srs/browse_archive" "" %}{% endif %}">Browse Archive</a></li>
+          <li><a href="{% if game_pref_obj.sldb_name %}{% url "srs/hall_of_fame" game_pref_obj.abbreviation %}{% else %}{% url "srs/hall_of_fame" "BA" %}{% endif %}">Hall of fame</a></li>
           <li>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% if game_pref and game_pref > 0 %}{{ game_pref_obj.name }}{% else %}Game{% endif %} <b class="caret"></b></a>
             <ul class="dropdown-menu">
@@ -85,7 +85,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
             <ul class="dropdown-menu">
 {% for hreplay in page_history %}
               <li>
-                  <a href="{% url "srs.views.replay" hreplay.gameID %}">
+                  <a href="{% url "srs/replay" hreplay.gameID %}">
                     <small>
                         {{ hreplay.title }} ({{ hreplay.game.abbreviation }})<br/>
                         {{ hreplay.unixTime|date:"d.m.Y H:i:s (T)" }}
@@ -98,8 +98,8 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
           <li>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Upload <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              <li><a href="{% url "srs.upload_views.upload" %}">Replay</a></li>
-              <li><a href="{% url "infolog_upload.views.upload_html" %}">Infolog</a></li>
+              <li><a href="{% url "srs/upload" %}">Replay</a></li>
+              <li><a href="{% url "infolog_upload/upload_html" %}">Infolog</a></li>
             </ul>
           </li>
         </ul>
@@ -115,23 +115,23 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 {% if user.is_authenticated %}
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ user }} <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              <li><a href="{% url "srs.views.player" user.userprofile.accountid %}">My player page</a></li>
-              <li><a href="{% url "srs.views.sldb_privacy_mode" %}">(SLDB) privacy setting</a></li>
-              <li><a href="{% url "srs.views.user_settings" %}">Settings</a></li>
+              <li><a href="{% url "srs/player" user.userprofile.accountid %}">My player page</a></li>
+              <li><a href="{% url "srs/sldb_privacy_mode" %}">(SLDB) privacy setting</a></li>
+              <li><a href="{% url "srs/settings" %}">Settings</a></li>
   {% if user.replays_uploaded > 0 %}
-              <li><a href="{% url "srs.views.browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
+              <li><a href="{% url "srs/browse_archive" "" %}uploader={{ user.username }}/">My uploads</a></li>
   {% endif %}
   {% if user.userprofile.is_developer or user.infolog_uploader.exists %}
-              <li><a href="{% url "infolog_upload.views.index" %}">Infologs</a></li>
+              <li><a href="{% url "infolog_upload/index" %}">Infologs</a></li>
   {% endif %}
   {% if user.is_superuser %}
-              <li><a href="/admin/">Admin</a></li>
+              <li><a href="{% url 'admin:index' %}">Admin</a></li>
   {% endif %}
               <li class="divider"></li>
-              <li><a href="{% url "srs.views.logout" %}?next={{ selfurl }}">Logout</a></li>
+              <li><a href="{% url "srs/logout" %}?next={{ selfurl }}">Logout</a></li>
             </ul>
 {% else %}
-            <a href="{% url "srs.views.login" %}?next={{ selfurl }}"><span class="glyphicon glyphicon-user"></span> Login</a>
+            <a href="{% url "srs/login" %}?next={{ selfurl }}"><span class="glyphicon glyphicon-user"></span> Login</a>
 {% endif %}
           </li>
         </ul>

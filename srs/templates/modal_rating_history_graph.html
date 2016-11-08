@@ -9,7 +9,7 @@ Please see srs_base.html for license information.
             <h4 class="modal-title">Rating history for <u>{{ game_verbose }}</u>, match type <u>{{ match_type_verbose }}</u></h4>
           </div>
           <div class="modal-body">
-              <img id="ts_graph" width=0 height=0 src="{% url 'ts_history_graph' game_abbr accountid match_type %}" onload="fix_size()"/>
+              <img id="ts_graph" width=0 height=0 src="{% url 'srs/ts_history_graph' game_abbr accountid match_type %}" onload="fix_size()"/>
               <img id="loader_img" src="{% static "img/loading_bar.gif" %}" style="border: none; display: block; margin: 0 auto;"/>
           </div>
           <div class="modal-footer">

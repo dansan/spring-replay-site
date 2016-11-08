@@ -12,8 +12,7 @@ import os
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.forms.formsets import formset_factory
 
 from srs.upload import save_uploaded_file, parse_uploaded_file, AlreadyExistsError
@@ -78,12 +77,12 @@ def upload(request):
         else:
             c['replays'] = replays
             c["replay_details"] = True
-            return render_to_response('multi_upload_success.html', c, context_instance=RequestContext(request))
+            return render(request, 'multi_upload_success.html', c)
     else:
         # form = UploadFileForm()
         formset = UploadFormSet()
     c['formset'] = formset
-    return render_to_response('upload.html', c, context_instance=RequestContext(request))
+    return render(request, 'upload.html', c)
 
 
 @login_required
@@ -124,7 +123,7 @@ def upload_media(request, gameID):
                     c["media_files"].append(erm)
                     logger.info("User '%s' uploaded for replay:'%s' media:'%s' img:'%s' with comment:'%s'.",
                                 request.user, replay, erm.media, erm.image, erm.comment[:20])
-            return render_to_response('upload_media_success.html', c, context_instance=RequestContext(request))
+            return render(request, 'upload_media_success.html', c)
         else:
             logger.error("formset.errors: %s", formset.errors)
             logger.error("request.FILES: %s", request.FILES)
@@ -132,4 +131,4 @@ def upload_media(request, gameID):
     else:
         formset = UploadMediaFormSet()
     c["formset"] = formset
-    return render_to_response('upload_media.html', c, context_instance=RequestContext(request))
+    return render(request, 'upload_media.html', c)

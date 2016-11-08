@@ -20,7 +20,7 @@ var playerrating_table = $( "#playerrating-table" ).dataTable({
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url('ajax_playerrating_tbl_src', accountid),
+	"sAjaxSource": Django.url('srs/ajax_playerrating_tbl_src', accountid),
 });
 
 var winloss_table = $( "#winloss-table" ).dataTable({
@@ -32,7 +32,7 @@ var winloss_table = $( "#winloss-table" ).dataTable({
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "ajax_winloss_tbl_src", accountid ),
+	"sAjaxSource": Django.url( "srs/ajax_winloss_tbl_src", accountid ),
 });
 
 var playerreplays_table = $( "#playerreplays-table" ).dataTable({
@@ -45,7 +45,7 @@ var playerreplays_table = $( "#playerreplays-table" ).dataTable({
 	"bScrollCollapse": true,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "ajax_playerreplays_tbl_src", accountid ),
+	"sAjaxSource": Django.url( "srs/ajax_playerreplays_tbl_src", accountid ),
 	"bRegex" : true,
 	"aoColumns": [
 	              null,
@@ -64,7 +64,7 @@ var playerreplays_table = $( "#playerreplays-table" ).dataTable({
 			  if ( data == "" ) {
 				  data = "no name"
 			  }
-			  return '<a href="' + Django.url('replay_detail', full[7] ) + '">' + data + '</a>';
+			  return '<a href="' + Django.url('srs/replay', full[7] ) + '">' + data + '</a>';
 		  }
 	  },
 	  {

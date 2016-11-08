@@ -15,8 +15,7 @@ import operator
 import MySQLdb
 
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
@@ -56,7 +55,7 @@ def index(request):
     c["news"] = NewsItem.objects.filter(show=True).order_by('-pk')[:6]
     c["replay_details"] = False
     c["latest_comments"] = Comment.objects.filter(is_removed=False).order_by("-submit_date")[:5]
-    return render_to_response('index.html', c, context_instance=RequestContext(request))
+    return render(request, 'index.html', c)
 
 
 def index_replay_range(request, range_end, game_pref):
@@ -77,7 +76,7 @@ def index_replay_range(request, range_end, game_pref):
     else:
         replays = Replay.objects.filter(published=True)
     c["replays"] = replays.order_by("-upload_date")[int(range_end):c["range_end"]]
-    return render_to_response('replay_index_boxes.html', c, context_instance=RequestContext(request))
+    return render(request, 'replay_index_boxes.html', c)
 
 
 def replay(request, gameID):
@@ -94,7 +93,7 @@ def replay(request, gameID):
         raise Http404("No replay with gameID '" + strip_tags(gameID) + "' found.")
 
     if not replay.published:
-        return render_to_response('replay_unpublished.html', c, context_instance=RequestContext(request))
+        return render(request, 'replay_unpublished.html', c)
 
     game = replay.game_release.game
     match_type = replay.match_type_short
@@ -295,7 +294,7 @@ def replay(request, gameID):
         page_history = [gameID]
     request.session["page_history"] = page_history
 
-    return render_to_response('replay.html', c, context_instance=RequestContext(request))
+    return render(request, 'replay.html', c)
 
 
 def replay_by_id(request, replayid):
@@ -317,7 +316,7 @@ def edit_replay(request, gameID):
         raise Http404("No replay with ID '{}' found.".format(strip_tags(gameID)))
 
     if request.user != replay.uploader:
-        return render_to_response('edit_replay_wrong_user.html', c, context_instance=RequestContext(request))
+        return render(request, 'edit_replay_wrong_user.html', c)
 
     if request.method == 'POST':
         form = EditReplayForm(request.POST)
@@ -345,7 +344,7 @@ def edit_replay(request, gameID):
     c['form'] = form
     c["replay_details"] = True
 
-    return render_to_response('edit_replay.html', c, context_instance=RequestContext(request))
+    return render(request, 'edit_replay.html', c)
 
 
 def download(request, gameID):
@@ -412,7 +411,7 @@ def player(request, accountid):
 
     if not respect_privacy(request, accountid):
         c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")
-    return render_to_response("player.html", c, context_instance=RequestContext(request))
+    return render(request, "player.html", c)
 
 
 def ts_history_graph(request, game_abbr, accountid, match_type):
@@ -472,7 +471,7 @@ def hall_of_fame(request, abbreviation):
         c["bawards"] = sist.bawards
         c["bawards_lu"] = sist.last_modified
     c["thisgame"] = game
-    return render_to_response("hall_of_fame.html", c, context_instance=RequestContext(request))
+    return render(request, "hall_of_fame.html", c)
 
 
 @login_required
@@ -494,12 +493,12 @@ def user_settings(request):
     else:
         game_pref_form = GamePref(initial={"auto": not up.game_pref_fixed, "game_choice": up.game_pref})
     c["game_pref_form"] = game_pref_form
-    return render_to_response('settings.html', c, context_instance=RequestContext(request))
+    return render(request, 'settings.html', c)
 
 
 def all_comments(request):
     c = all_page_infos(request)
-    return render_to_response('comments.html', c, context_instance=RequestContext(request))
+    return render(request, 'comments.html', c)
 
 
 @never_cache
@@ -533,7 +532,7 @@ def login(request):
     c["next"] = nexturl
     c['form'] = form
     form.fields["password"].max_length = 4096
-    return render_to_response('login.html', c, context_instance=RequestContext(request))
+    return render(request, 'login.html', c)
 
 
 @never_cache
@@ -559,7 +558,7 @@ def media(request, mediaid):
     if media.media_magic_mime == "image/svg+xml":
         c = all_page_infos(request)
         c["media"] = media
-        return render_to_response('show_svg.html', c, context_instance=RequestContext(request))
+        return render(request, 'show_svg.html', c)
     else:
         try:
             response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
@@ -609,7 +608,7 @@ def sldb_privacy_mode(request):
 
     c['form'] = form
 
-    return render_to_response('sldb_privacy_mode.html', c, context_instance=RequestContext(request))
+    return render(request, 'sldb_privacy_mode.html', c)
 
 
 def browse_archive(request, bfilter):
@@ -699,4 +698,4 @@ def browse_archive(request, bfilter):
                     logger.debug("invalid filter_: '%s' Exception: %s", filter_, exc)
     else:
         c["filters"] = ""
-    return render_to_response('browse_archive.html', c, context_instance=RequestContext(request))
+    return render(request, 'browse_archive.html', c)

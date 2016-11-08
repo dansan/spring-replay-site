@@ -22,7 +22,7 @@ $( "#more_replays_btn" ).click( function() {
 		$( ".more_replays_div" ).before( '<div class="fill_me"></div>' );
 		fill_me = $( ".fill_me" );
 	}
-	fill_me.load( Django.url('index_replay_range', range_end, game_pref) );
+	fill_me.load( Django.url('srs/index_replay_range', range_end, game_pref) );
 	range_div.remove()
 	range_end_div.remove()
 	fill_me.removeClass( "fill_me" );

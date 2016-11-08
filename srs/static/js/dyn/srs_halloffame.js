@@ -21,13 +21,13 @@ for (index = 0; index < tables.length; ++index) {
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "hof_tbl_src", tid ),
+	"sAjaxSource": Django.url( "srs/hof_tbl_src", tid ),
 	"aoColumnDefs": [
        {
 		  "aTargets": [ 1 ],
 		  "mData": 1,
 		  "mRender": function ( data, type, full ) {
-			  return '<a href="' + Django.url('player_detail', full[6] ) + '">' + data + '</a>';
+			  return '<a href="' + Django.url('srs/player', full[6] ) + '">' + data + '</a>';
 		  }
 	  }],
 	});

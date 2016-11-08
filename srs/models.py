@@ -56,7 +56,7 @@ class Tag(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.tag', [self.name]
+        return 'srs/tag', [self.name]
 
     @property
     def replay_count(self):
@@ -75,7 +75,7 @@ class Map(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.rmap', [self.name]
+        return 'srs/rmap', [self.name]
 
     @property
     def replay_count(self):
@@ -146,7 +146,7 @@ class Replay(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.replay', [str(self.gameID)]
+        return 'srs/replay', [str(self.gameID)]
 
     @property
     def was_succ_uploaded(self):
@@ -393,7 +393,7 @@ class PlayerAccount(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.player', [self.accountid]
+        return 'srs/player', [self.accountid]
 
     @property
     def replay_count(self):
@@ -464,7 +464,7 @@ class Player(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.player', [self.account.accountid]
+        return 'srs/player', [self.account.accountid]
 
     class Meta:
         ordering = ['name']
@@ -546,7 +546,7 @@ class Game(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.game', [self.name]
+        return 'srs/game', [self.name]
 
     class Meta:
         ordering = ['name']
@@ -562,7 +562,7 @@ class GameRelease(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs.views.gamerelease', [self.name]
+        return 'srs/gamerelease', [self.name]
 
     @property
     def replay_count(self):
@@ -731,8 +731,8 @@ class SldbPlayerTSGraphCache(models.Model):
             else:
                 try:
                     os.remove(filepath)
-                except OSError:
-                    logger.exception("Cannot remove file '%s' of cache entry %d, ignoring error.", filepath, self.id)
+                except OSError as exc:
+                    logger.warn("Cannot remove file '%s' of cache entry %d: %s", filepath, self.id, exc)
 
     @staticmethod
     def purge_old():

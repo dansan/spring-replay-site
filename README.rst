@@ -46,7 +46,7 @@ Dependencies
 - django-picklefield: https://pypi.python.org/pypi/django-picklefield/
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django-utils: https://github.com/dansan/django-utils/
-- django.js: pip install git+https://github.com/Lightmatter/django.js.git
+- django.js: pip install git+https://github.com/veeloinc/django.js.git
 - South: http://south.aeracode.org/
 - django_extensions
 - jsonrpc
@@ -66,11 +66,13 @@ Installation
 
 - install django-eztables from https://github.com/dansan/django-eztables.git
 - install django-utils from https://github.com/dansan/django-utils.git
+- install django.js from https://github.com/veeloinc/django.js.git
 
 .. code-block:: bash
 
     (srs) $ pip install git+git://github.com/dansan/django-eztables.git
     (srs) $ pip install git+git://github.com/dansan/django-utils.git
+    (srs) $ pip install git+git://github.com/veeloinc/django.js.git
 
 - patch ``srs/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
 

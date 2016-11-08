@@ -18,7 +18,7 @@ var browse_table = $( "#browse-table" ).dataTable({
 	"bScrollCollapse": true,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "browse_tbl_src" ),
+	"sAjaxSource": Django.url( "srs/browse_tbl_src" ),
 	"bRegex" : true,
 	"aoColumns": [
 	              null,
@@ -36,7 +36,7 @@ var browse_table = $( "#browse-table" ).dataTable({
 				  data = "no name";
 				  }
 			  console.log( )
-			  return '<a href="' + Django.url('replay_detail', full[5] ) + '"><img class="img-rounded" height=32 itemprop="image" src="' + Django.context.STATIC_URL + 'maps/' + full[6] + '_home.jpg" alt="pic of map ' + full[6] + '"/> ' + data + '</a>';
+			  return '<a href="' + Django.url('srs/replay', full[5] ) + '"><img class="img-rounded" height=32 itemprop="image" src="' + Django.context.STATIC_URL + 'maps/' + full[6] + '_home.jpg" alt="pic of map ' + full[6] + '"/> ' + data + '</a>';
 			  }
          },
          {
@@ -243,7 +243,7 @@ var gameversion0txt    = gameversion0.html();
 // use when game is set
 function set_gameversionbtn_url() {
 	var game_id = $( "a.browse_filter.active[id^='game']" ).attr( "id" ).split( " " )[1];
-	gameversionbtn.attr( "href", Django.url( 'gamerelease_modal', game_id ) );
+	gameversionbtn.attr( "href", Django.url( 'srs/gamerelease_modal', game_id ) );
 }
 
 // apply to almost all filter buttons and the autohost & uploader dropdowns
@@ -278,7 +278,7 @@ $( ".browse_filter" ).click( function( event ) {
 			gameversionbtn.attr( "href", "#" );
 			gameversionbtn.addClass( "disabled" );
 		} else {
-			gameversionbtn.attr( "href", Django.url( 'gamerelease_modal', val ) );
+			gameversionbtn.attr( "href", Django.url( 'srs/gamerelease_modal', val ) );
 			gameversionbtn.removeClass( "disabled" );
 		}
 	}

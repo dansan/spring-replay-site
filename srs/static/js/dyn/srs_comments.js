@@ -18,7 +18,7 @@ var browse_table = $( "#comments-table" ).dataTable({
 	"bScrollCollapse": true,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "comment_tbl_src$" ),
+	"sAjaxSource": Django.url( "srs/comment_tbl_src$" ),
 	"bRegex" : true,
 	"aoColumns": [
 	              { "bSearchable": false },
@@ -47,7 +47,7 @@ var browse_table = $( "#comments-table" ).dataTable({
 		  "aTargets": [ 1 ],
 		  "mData": 1,
 		  "mRender": function ( data, type, full ) {
-			  return '<a href="' + Django.url('player_detail', full[3] ) + '">Player</a> | <a href="' + Django.url('replay_by_id', full[4] ) + '">Match</a>';
+			  return '<a href="' + Django.url('srs/player', full[3] ) + '">Player</a> | <a href="' + Django.url('srs/replay_by_id', full[4] ) + '">Match</a>';
 			  }
          }
          ]

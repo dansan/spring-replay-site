@@ -19,8 +19,7 @@ from eztables.views import DatatablesView, JSON_MIMETYPE
 
 from django.http import HttpResponse
 from django.conf import settings
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django_comments.models import Comment
 from django.db.models import Q
@@ -224,7 +223,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
 def gamerelease_modal(request, gameid):
     c = all_page_infos(request)
     c["gameversions"] = GameRelease.objects.filter(game__id=gameid).order_by("-id")
-    return render_to_response('modal_gameversions.html', c, context_instance=RequestContext(request))
+    return render(request, 'modal_gameversions.html', c)
 
 
 def ratinghistorygraph_modal(request, game_abbr, accountid, match_type):
@@ -234,7 +233,7 @@ def ratinghistorygraph_modal(request, game_abbr, accountid, match_type):
     c["accountid"] = accountid
     c["match_type"] = match_type
     c["match_type_verbose"] = SldbPlayerTSGraphCache.match_type2sldb_name[match_type]
-    return render_to_response('modal_rating_history_graph.html', c, context_instance=RequestContext(request))
+    return render(request, 'modal_rating_history_graph.html', c)
 
 
 def mapmodlinks(gameID):
@@ -268,7 +267,7 @@ def maplinks_modal(request, gameID):
     for k, v in mml.items():
         c[k] = v
 
-    return render_to_response('modal_maplinks.html', c, context_instance=RequestContext(request))
+    return render(request, 'modal_maplinks.html', c)
 
 
 def modlinks_modal(request, gameID):
@@ -278,7 +277,7 @@ def modlinks_modal(request, gameID):
     for k, v in mml.items():
         c[k] = v
 
-    return render_to_response('modal_modlinks.html', c, context_instance=RequestContext(request))
+    return render(request, 'modal_modlinks.html', c)
 
 
 def replay_filter(queryset, filter_name):

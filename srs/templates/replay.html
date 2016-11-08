@@ -2,7 +2,7 @@
 {% load comments %}
 {% load cache %}
 {% load static %}
-
+s
 {% comment %}
 <!-- 
 Please see srs_base.html for license information.
@@ -70,11 +70,11 @@ Please see srs_base.html for license information.
             <div class="well">
     {% include "replay_box.html" %}
               <p></p>
-              <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs.views.download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
-                <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
-                <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
+              <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs/download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
+                <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "srs/maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
+                <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "srs/modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
               </p>
-              {% if user == replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs.views.edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
+              {% if user == replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs/edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
               {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:srs_replay_change' replay.pk %}">replay @admin site</a></p>{% endif %}
             </div>
           </div>
@@ -207,8 +207,8 @@ Please see srs_base.html for license information.
                 <div id="collapseTSInfos" class="panel-collapse collapse">
                   <div class="panel-body">
                     <ul>
-                      <li><u><a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a></u> to see yours.</li>
-                      <li>To let others see your TrueSkill, <u><a href="{% url "srs.views.sldb_privacy_mode" %}">click to change your privacy setting</a></u>.</li>
+                      <li><u><a href="{% url "srs/login" %}?next={{ selfurl }}">Log in</a></u> to see yours.</li>
+                      <li>To let others see your TrueSkill, <u><a href="{% url "srs/sldb_privacy_mode" %}">click to change your privacy setting</a></u>.</li>
                       <li>To see other players exact skills, tell them to do so too.</li>
                     </ul>
                   </div>
@@ -418,8 +418,8 @@ Please see srs_base.html for license information.
       <div class="col-sx-12" style="padding-left: 15px; padding-right: 15px;">
         <div class="panel panel-default" itemscope itemtype="http://schema.org/WebPage">
   {% get_comment_count for replay as comment_count %}
-          <div class="panel-heading"><b>Comments</b><br/>{% if not user.is_authenticated %}<small>(<a href="{% url "srs.views.login" %}?next={{ selfurl }}">Log in</a> to post a comment)</small>{% endif %}</div>
-          <div class="panel-body">
+          <div class="panel-heading"><b>Comments</b><br/>{% if not user.is_authenticated %}<small>(<a href="{% url "srs/login" %}?next={{ selfurl }}">Log in</a> to post a comment)</small>{% endif %}</div>
+          <div class="panel-body" id="replay_comments">
   {% render_comment_list for replay %}
             <a name="afterlastcomment"></a>
 
@@ -443,11 +443,11 @@ Please see srs_base.html for license information.
           <div class="panel-body">
             <div class="col-sm-6">
                 <p style="font-size: larger; font-weight: bold;">
-                    <a href="{% url "infolog_upload.views.infolog_view" infolog.id %}">Infolog #{{ infolog.id }}</a>
+                    <a href="{% url "infolog_upload/show" infolog.id %}">Infolog #{{ infolog.id }}</a>
                 </p>
                 <hr style="margin-top: 7px; margin-bottom: 7px;">
                 <p style="margin: 0 0 2px;">Upload date: {{ infolog.upload_date|date:"d.m.Y H:i:s (T)" }}</p>
-                <p style="margin: 0 0 2px;">Uploader: <a href="{% url 'srs.views.player' user.userprofile.accountid %}">{{ infolog.uploader }}</a></p>
+                <p style="margin: 0 0 2px;">Uploader: <a href="{% url 'srs/player' user.userprofile.accountid %}">{{ infolog.uploader }}</a></p>
                 <p style="margin: 0 0 2px;">Client software: {{ infolog.client }}</p>
                 <p style="margin: 0 0 2px;">External link: {% if infolog.ext_link %}<a href="{{ infolog.ext_link }}">{{ infolog.ext_link }}</a>{% else %}None{% endif %}</p>
                 {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:infolog_upload_infolog_change' infolog.pk %}">infolog @admin site</a></p>{% endif %}
@@ -469,7 +469,7 @@ Please see srs_base.html for license information.
             <div class="col-sm-12">
                 <textarea readonly style="color: #000000; height: 256px; width: 100%;">{{ infolog.infolog_text }}</textarea>
             </div>
-            <div class="col-sm-12">
+            <div class="col-sm-12" id="infolog_comments">
                 <p style="font-size: larger; font-weight: bold; margin-top: 20px;">Comments on the infolog</p>
                 <hr style="margin-top: 7px; margin-bottom: 7px;">
                 {% render_comment_list for infolog %}
@@ -551,7 +551,7 @@ Please see srs_base.html for license information.
   {% if user in replay_owners %}
     <div class="row">
       <div class="col-sx-12" style="padding-left: 15px; padding-right: 15px;">
-        <a class="btn btn-default" role="button" href="{% url "srs.upload_views.upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
+        <a class="btn btn-default" role="button" href="{% url "srs/upload_media" replay.gameID %}"><span class="glyphicon glyphicon-upload"></span> Upload media files</a>
       </div>
     </div>
   {% endif %}
@@ -567,7 +567,7 @@ Please see srs_base.html for license information.
       {% endif %}
       {% if media.media %}
         {% if media.media_magic_mime == "image/svg+xml" %}
-            <p>Browsers have issues showing movies in SVG format after scaling. Please <a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">click here</a> to open the file in a new window.</p>
+            <p>Browsers have issues showing movies in SVG format after scaling. Please <a href="{% url "srs/media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">click here</a> to open the file in a new window.</p>
         {% elif media.media_magic_mime in known_video_formats %}
             <div data-swf="{% static "flowplayer_5.4.3.swf" %}" class="flowplayer" itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
                 <video>
@@ -576,7 +576,7 @@ Please see srs_base.html for license information.
             </div>
         {% else %}
             <span itemprop="video" itemscope itemtype="http://schema.org/VideoObject">
-                <a href="{% url "srs.views.media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs.views.media" media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a>
+                <a href="{% url "srs/media" media.id %}" target="_blank"  itemprop="contentUrl" content="{% url "srs/media" media.id %}">Click to open "{{ media.media_basename }}" in a new window.</a>
             </span>
         {% endif %}
       {% endif %}
@@ -609,6 +609,7 @@ Please see srs_base.html for license information.
 
 {% block page_js %}
     {% js "js/dyn/srs_replay.js" %}
+    {% js "js/dyn/srs_post_comment.js" %}
   {% if has_video %}
     {% js_lib "flowplayer_5.4.3.min.js" %}
   {% endif %}
