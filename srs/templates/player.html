@@ -64,6 +64,8 @@ Please see srs_base.html for license information.
       </div>
     </div>
 
+<!-- rating -->
+
   {% if not errmsg %}
     <div class="row">
       <div class="col-xs-12 col-sm-6">
@@ -89,6 +91,8 @@ Please see srs_base.html for license information.
             </div>
         </div>
       </div>
+
+<!-- win/loss -->
 
       <div class="col-xs-12 col-sm-6">
         <div class="panel panel-default">
@@ -119,6 +123,179 @@ Please see srs_base.html for license information.
         </div>
       </div>
   {% endif %}
+
+<!-- BA Awards -->
+  {% if bawards %}
+    <div class="row">
+      <div class="col-sx-12 col-sm-12">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sx-12">
+                  <center><img src="{% static "img/bawards/awards.png" %}" alt="Awards" width="128" style="margin-top: 6px; margin-bottom: 6px;"/></center>
+                  <hr style="margin-top: 7px; margin-bottom: 12px;">
+                </div>
+              </div> <!-- row -->
+              <div class="row">
+        <!-- ecoKillAward1st -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/fuscup.png" %}" alt="ecoKillAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Destroying enemy resource production</h4>
+                      1st: {{ bawards.ecoKillAward1st }} times<br/>2nd: {{ bawards.ecoKillAward2nd }} times<br/>3rd: {{ bawards.ecoKillAward3rd }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- fightKillAward1st -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/bullcup.png" %}" alt="fightKillAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Destroying enemy units and defences</h4>
+                      1st: {{ bawards.fightKillAward1st }} times<br/>2nd: {{ bawards.fightKillAward2nd }} times<br/>3rd: {{ bawards.fightKillAward3rd }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- effKillAward1st -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/comwreath.png" %}" alt="effKillAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Effective use of resources</h4>
+                      1st: {{ bawards.effKillAward1st }} times<br/>2nd: {{ bawards.effKillAward2nd }} times<br/>3rd: {{ bawards.effKillAward3rd }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- cowAward -->
+                <div class="col-md-4" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/cow.png" %}" alt="cowAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Doing everything</h4>
+                      {{ bawards.cowAward }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- ecoAward -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/eco.png" %}" alt="ecoAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Produced the most resources</h4>
+                      {{ bawards.ecoAward }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- dmgRecAward -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/damage.png" %}" alt="dmgRecAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Took the most damage</h4>
+                      {{ bawards.dmgRecAward }} times
+                    </div>
+                  </div>
+                </div>
+        <!-- sleepAward -->
+                <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+                  <div class="media">
+                    <div class="pull-left">
+                      <img class="media-object" src="{% static "img/bawards/sleep.png" %}" alt="sleepAward" width="64">
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">Slept longest</h4>
+                      {{ bawards.sleepAward }} times
+                    </div>
+                  </div>
+                </div>
+              </div> <!-- row -->
+            </div> <!-- panel-body -->
+            </div> <!-- panel -->
+        </div>
+      </div> <!-- row -->
+  {% else %}
+<!-- No BA Awards -->
+  {% endif %}
+
+<!-- XTA Awards -->
+
+  {% if xtawards %}
+    <div class="row">
+      <div class="col-sx-12 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <center><img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Heroes in victory</span> &nbsp;&nbsp; <img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/></center>
+            <hr style="margin-top: 7px; margin-bottom: 12px;">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-condensed">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Number</th>
+                  </tr>
+                </thead>
+                <tbody>
+    {% for award, num in xtawards.0 %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ award }}</td>
+                    <td>{{ num }}</td>
+                  </tr>
+    {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!--col-sx-12 col-sm-6  -->
+      <div class="col-sx-12 col-sm-6">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <center><img src="{% static "img/xtawards/love-rose-4_128px.png" %}" alt="rose" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Lost in service</span> &nbsp;&nbsp; <img src="{% static "img/xtawards/love-rose-4_128px.png" %}" alt="rose" height="24"/></center>
+            <hr style="margin-top: 7px; margin-bottom: 12px;">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover table-condensed">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Unit</th>
+                    <th>Number</th>
+                  </tr>
+                </thead>
+                <tbody>
+    {% for award, num in xtawards.1 %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ award }}</td>
+                    <td>{{ num }}</td>
+                  </tr>
+    {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!--col-sx-12 col-sm-6  -->
+    </div> <!-- row -->
+  {% else %}
+<!-- No XTA Awards -->
+  {% endif %}
+
+<!-- Rating history -->
 
     <div class="row">
       <div class="col-xs-12">
@@ -172,6 +349,8 @@ Please see srs_base.html for license information.
       </div>
     </div>
 
+<!-- infolog uploads -->
+
   {% if user.userprofile.is_developer or playeraccount.get_user and playeraccount.get_user == user and playeraccount.get_user.infolog_uploader.exists %}
       <div class="row">
         <div class="col-md-12">
@@ -212,7 +391,8 @@ Please see srs_base.html for license information.
       </div>
   {% endif %}
 
-    <!-- rating history graph modal -->
+<!-- rating history graph modal -->
+
     <div class="modal fade" id="rhModal" tabindex="-1" role="dialog" aria-labelledby="rhnModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">

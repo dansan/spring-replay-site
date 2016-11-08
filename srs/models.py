@@ -11,7 +11,7 @@ import operator
 from os.path import basename
 import datetime
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -441,6 +441,35 @@ class PlayerAccount(models.Model):
             return User.objects.get(userprofile__accountid=self.accountid)
         except ObjectDoesNotExist:
             return None
+
+    @property
+    def bawards(self):
+        """
+        Find number of won BA awards (for all award types).
+
+        :return: dict: {'cowAward': 0, 'dmgRecAward': 2, 'ecoAward': 3, ...}
+        """
+        res = dict()
+        field_names = [field.name for field in BAwards._meta.get_fields() if "Award" in field.name and "Score" not in field.name]
+        for award in field_names:
+            kwargs = {"{}__account".format(award): self}
+            res[award] = BAwards.objects.filter(**kwargs).count()
+        return res
+
+    @property
+    def xtawards(self):
+        """
+        Find top 10 hero and "lost in service" units for this player. Sorted by headcount.
+
+        :return: tuple: heroes, lost. each is a list of tuples: ([(u'Sumo', 9), (u'Light Laser Tower', 8), ...], [(), ..])
+        """
+        awards = XTAwards.objects.filter(player__account=self, isAlive=1).values_list("unit", flat=True)
+        co = Counter(awards)
+        heroes = sorted(co.items(), key=operator.itemgetter(1), reverse=True)[:10]
+        awards = XTAwards.objects.filter(player__account=self, isAlive=0).values_list("unit", flat=True)
+        co = Counter(awards)
+        lost = sorted(co.items(), key=operator.itemgetter(1), reverse=True)[:10]
+        return heroes, lost
 
     class Meta:
         ordering = ['accountid']

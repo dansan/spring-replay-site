@@ -408,6 +408,12 @@ def player(request, accountid):
     c["playeraccount"] = pa
     c["PA"] = pa
     c["all_names"] = pa.get_names()
+    bawards = pa.bawards
+    if any(pa.bawards.values()):
+        c["bawards"] = bawards
+    xtawards = pa.xtawards
+    if any(xtawards):
+        c["xtawards"] = xtawards
 
     if not respect_privacy(request, accountid):
         c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")
