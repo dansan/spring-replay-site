@@ -15,6 +15,7 @@ import cPickle
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from netifaces import interfaces, ifaddresses, AF_INET
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
@@ -93,6 +94,16 @@ def demoskill2float(skill):
     return float(num)
 
 
+def _my_ip4_addresses():
+    ip_list = list()
+    for interface in interfaces():
+        if AF_INET not in ifaddresses(interface):
+            continue
+        for link in ifaddresses(interface)[AF_INET]:
+            ip_list.append(link['addr'])
+    return ip_list
+
+
 def _query_sldb(service, *args, **kwargs):
     """
     May raise an Exception after settings.SLDB_TIMEOUT seconds or if there was
@@ -104,9 +115,9 @@ def _query_sldb(service, *args, **kwargs):
     #         logger.debug("not connecting while in DEBUG")
     #         raise SLDBstatusError(service, -1)
 
-    # if not socket.gethostbyname(socket.getfqdn()) in settings.SLDB_ALLOWED_IPS:
-    #     # fail fast while developing
-    #     raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
+    if not any(ip in settings.SLDB_ALLOWED_IPS for ip in _my_ip4_addresses()):
+        # fail fast while developing
+        raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
 
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
