@@ -130,15 +130,11 @@ def replay(request, gameID):
                         trueskill_mu=mu,
                         trueskill_sigma=si
                     )
-                    rh, created = RatingHistory.objects.get_or_create(match=replay,
-                                                                      game=game,
-                                                                      match_type=match_type,
-                                                                      playeraccount=pa,
-                                                                      defaults=defaults)
-                    if not created:
-                        for k, v in defaults.items():
-                            setattr(rh, k, v)
-                        rh.save()
+                    RatingHistory.objects.update_or_create(match=replay,
+                                                           game=game,
+                                                           match_type=match_type,
+                                                           playeraccount=pa,
+                                                           defaults=defaults)
                 if pa.sldb_privacy_mode != player["privacyMode"]:
                     pa.sldb_privacy_mode = player["privacyMode"]
                     pa.save()

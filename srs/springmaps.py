@@ -16,7 +16,7 @@ import random
 from PIL import Image, ImageFont, ImageDraw, ImageColor
 import logging
 from shutil import copyfile
-from os.path import join as path_join
+from os.path import join as path_join, exists as path_exists
 
 from django.conf import settings
 from srs.models import Allyteam, Player
@@ -27,7 +27,8 @@ logger = logging.getLogger("srs.views")
 class SpringMaps:
     def __init__(self, mapname):
         self.map_name = mapname
-        self.full_img = None
+        self.full_image_filename = "{}.jpg".format(self.map_name)
+        self.full_image_filepath = path_join(settings.MAPS_PATH, self.full_image_filename)
         self.map_info = None
         self.thumb = None
 
@@ -52,26 +53,29 @@ class SpringMaps:
             self.map_info = proxy.springfiles.search(searchstring)
         except:
             logger.exception("FIXME: to broad exception handling.")
+            logger.warn("Could not retrieve map-info for map %r.", self.map_name)
             self.map_info = None
+        return self.map_info
 
     def fetch_img(self):
         """
         fetches map image from api.springfiles.com
         """
-        if not hasattr(self, "map_info"):
+        if not self.map_info:
             self.fetch_info()
-        self.full_img = "{}.jpg".format(self.map_name)
         if self.map_info:
-            urllib.urlretrieve(self.map_info[0]['mapimages'][0], path_join(settings.MAPS_PATH, self.full_img))
+            map_url = self.map_info[0]['mapimages'][0]
+            urllib.urlretrieve(map_url, self.full_image_filepath)
+            logger.info("Downloaded map image from %r into %r.", map_url, self.full_image_filepath)
         else:
-            # no img for this map available
-            copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), path_join(settings.MAPS_PATH, self.full_img))
-        return self.full_img
+            logger.warn("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
+            copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), self.full_image_filepath)
+        return self.full_image_filename
 
     def make_home_thumb(self):
-        if not hasattr(self, "full_img"):
+        if not self.map_info or not path_exists(self.full_image_filepath):
             self.fetch_img()
-        image = Image.open(path_join(settings.MAPS_PATH, self.full_img))
+        image = Image.open(self.full_image_filepath)
         size = settings.THUMBNAIL_SIZES["home"]
         image.thumbnail(size, Image.ANTIALIAS)
         self.thumb = "{}_home.jpg".format(self.map_name)
@@ -82,7 +86,7 @@ class SpringMaps:
         """
         create a map picture with start boxes (if any) and player start positions
         """
-        img = Image.open(path_join(settings.MAPS_PATH, self.full_img))
+        img = Image.open(self.full_image_filepath)
 
         full_img_x, full_img_y = img.size
         # map positions for players are in pixel

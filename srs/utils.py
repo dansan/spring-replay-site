@@ -8,6 +8,7 @@
 
 import logging
 from srs.models import RatingHistory, Replay
+from srs.springmaps import SpringMaps
 
 
 logger = logging.getLogger("srs.utils")
@@ -50,3 +51,16 @@ def fix_missing_winner(replay):
 def fix_missing_winner_all_replays():
     for replay in Replay.objects.exclude(allyteam__winner=True).filter(rated=True):
         fix_missing_winner(replay)
+
+
+def fix_missing_map(replay):
+    logger.info("fix_missing_map(%s)", replay)
+    sm = SpringMaps(replay.map_info.name)
+    sm.fetch_info()
+    if not sm.map_info:
+        logger.error("Could not retrieve map information.")
+        return
+    sm.fetch_img()
+    sm.make_home_thumb()
+    replay.map_info.metadata = sm.map_info[0]
+    replay.map_info.save()

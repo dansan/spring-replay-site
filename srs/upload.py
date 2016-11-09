@@ -453,7 +453,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
         logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
-        smap.full_img = MapImg.objects.get(startpostype=-1, map_info=replay.map_info).filename
+        smap.full_image_filename = MapImg.objects.get(startpostype=-1, map_info=replay.map_info).filename
     except ObjectDoesNotExist:
         # 1st time upload for this map: fetch info and full map, create thumb
         # for index page
@@ -620,16 +620,8 @@ def rate_match(replay):
                             "trueskill_sigma": pa_rating.trueskill_sigma,
                             "playername": player.name,
                             "match_date": replay.unixTime}
-                rh, created = RatingHistory.objects.get_or_create(playeraccount=player.account, match=replay, game=game,
-                                                                  match_type=replay.match_type_short, defaults=defaults)
-                if not created:
-                    save_it = False
-                    for k, v in defaults.items():
-                        if getattr(rh, k) != v:
-                            setattr(rh, k, v)
-                            save_it = True
-                    if save_it:
-                        rh.save()
+                RatingHistory.objects.update_or_create(playeraccount=player.account, match=replay, game=game,
+                                                       match_type=replay.match_type_short, defaults=defaults)
         else:
             logger.info(".. no skill tags found.")
             replay.rated = False
@@ -664,16 +656,7 @@ def rate_match(replay):
                     "trueskill_sigma": sigmaAfter,
                     "playername": playername,
                     "match_date": replay.unixTime}
-        rh, created = RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game,
-                                                          match_type=match_type, defaults=defaults)
-        if not created:
-            save_it = False
-            for k, v in defaults.items():
-                if getattr(rh, k) != v:
-                    setattr(rh, k, v)
-                    save_it = True
-            if save_it:
-                rh.save()
+        RatingHistory.objects.update_or_create(playeraccount=pa, match=replay, game=game, match_type=match_type, defaults=defaults)
         pa_rating = pa.get_rating(game, "L")  # Global
         if pa_rating.trueskill_mu != globalMuAfter or pa_rating.trueskill_sigma != globalSigmaAfter:
             pa_rating.trueskill_mu = globalMuAfter
@@ -683,16 +666,7 @@ def rate_match(replay):
                     "trueskill_sigma": globalSigmaAfter,
                     "playername": playername,
                     "match_date": replay.unixTime}
-        rh, created = RatingHistory.objects.get_or_create(playeraccount=pa, match=replay, game=game, match_type="L",
-                                                          defaults=defaults)
-        if not created:
-            save_it = False
-            for k, v in defaults.items():
-                if getattr(rh, k) != v:
-                    setattr(rh, k, v)
-                    save_it = True
-            if save_it:
-                rh.save()
+        RatingHistory.objects.update_or_create(playeraccount=pa, match=replay, game=game, match_type="L", defaults=defaults)
     if not replay.rated:
         replay.rated = True
         replay.save()
