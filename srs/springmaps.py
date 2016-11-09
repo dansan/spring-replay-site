@@ -60,7 +60,7 @@ class SpringMaps:
         """
         if not hasattr(self, "map_info"):
             self.fetch_info()
-        self.full_img = path_join(self.map_name, ".jpg")
+        self.full_img = "{}.jpg".format(self.map_name)
         if self.map_info:
             urllib.urlretrieve(self.map_info[0]['mapimages'][0], path_join(settings.MAPS_PATH, self.full_img))
         else:
@@ -74,7 +74,7 @@ class SpringMaps:
         image = Image.open(path_join(settings.MAPS_PATH, self.full_img))
         size = settings.THUMBNAIL_SIZES["home"]
         image.thumbnail(size, Image.ANTIALIAS)
-        self.thumb = path_join(self.map_name, "_home.jpg")
+        self.thumb = "{}_home.jpg".format(self.map_name)
         image.save(path_join(settings.MAPS_PATH, self.thumb), "JPEG")
         return self.thumb
 
