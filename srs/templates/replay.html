@@ -91,14 +91,13 @@ Please see srs_base.html for license information.
   {% if replay.notcomplete or is_draw or was_stopped %}
             <div class="alert alert-dismissable alert-warning">
               <button type="button" class="close" data-dismiss="alert">&times;</button>
-              <h4>Warning!</h4>
   {% endif %}
   {% if replay.notcomplete %}
               <p><span itemprop="result">Replay is incomplete or length of match less than 2 minutes. Not rated.</span></p>
   {% elif is_draw %}
               <div class="blind_winner" style="display:none; color:maroon; font-weight:bold"><p><span itemprop="result">The match was a draw!</span></p></div>
   {% elif was_stopped %}
-              <p><span itemprop="result">Sorry. The winner could not be figured out or the match was stopped.</span></p>
+              <p><span itemprop="result">Sorry. {% if "test" in replay.game_release.name %}Matches on test versions are not rated.{% else %}The winner could not be figured out or the match was stopped.{% endif %}</span></p>
   {% endif %}
   {% if replay.notcomplete or is_draw or was_stopped %}
             </div>

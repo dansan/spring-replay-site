@@ -51,8 +51,11 @@ def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifier
 class Tag(models.Model):
     name = models.CharField(max_length=128, unique=True)
 
-    def __unicode__(self):
+    def __repr__(self):
         return "Tag({}, {})".format(self.pk, self.name)
+
+    def __unicode__(self):
+        return self.name
 
     @models.permalink
     def get_absolute_url(self):
@@ -70,8 +73,11 @@ class Map(models.Model):
     width = models.IntegerField()
     metadata = PickledObjectField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __repr__(self):
         return "Map({}, {})".format(self.pk, self.name)
+
+    def __unicode__(self):
+        return self.name
 
     @models.permalink
     def get_absolute_url(self):
@@ -520,8 +526,11 @@ class MapModOption(models.Model):
     value = models.CharField(max_length=512)
     replay = models.ForeignKey(Replay)
 
-    def __unicode__(self):
+    def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self.pk, self.name)
+
+    def __unicode__(self):
+        return self.name
 
 
 # class Meta:
