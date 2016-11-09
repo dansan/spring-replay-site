@@ -16,6 +16,9 @@ logger = logging.getLogger("srs.utils")
 def fix_missing_winner(replay):
     logger.info("fix_missing_winner(%s)", replay)
     match_rating_history = RatingHistory.objects.filter(match=replay, match_type=replay.match_type_short)
+    if not match_rating_history.exists():
+        logger.info("No TS data available, no fix possible.")
+        return
     new_ratings = dict()
     old_ratings = dict()
     for at in replay.allyteam_set.all():
