@@ -16,6 +16,9 @@ logger = logging.getLogger("srs.utils")
 def fix_missing_winner(replay):
     logger.info("fix_missing_winner(%s)", replay)
     match_rating_history = RatingHistory.objects.filter(match=replay, match_type=replay.match_type_short)
+    if not match_rating_history.exists():
+        logger.info("No TS data available, no fix possible.")
+        return
     new_ratings = dict()
     old_ratings = dict()
     for at in replay.allyteam_set.all():
@@ -37,6 +40,10 @@ def fix_missing_winner(replay):
         if new_ratings[at] > old_ratings[at]:
             logger.info("Allyteam %s has won.", at)
             at.winner = True
+            at.save()
+        else:
+            logger.info("Allyteam %s has lost.", at)
+            at.winner = False
             at.save()
 
 
