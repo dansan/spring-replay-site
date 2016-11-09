@@ -38,6 +38,10 @@ def fix_missing_winner(replay):
             logger.info("Allyteam %s has won.", at)
             at.winner = True
             at.save()
+        else:
+            logger.info("Allyteam %s has lost.", at)
+            at.winner = False
+            at.save()
 
 
 def fix_missing_winner_all_replays():
