@@ -137,7 +137,7 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
     if not settings.DEBUG:
         try:
             timer.start("ping_google()")
-            ping_google()
+            ping_google("/sitemap.xml")
         except Exception as exc:
             logger.error("FIXME: to broad exception handling.")
             logger.exception("ping_google(): %s", exc)
