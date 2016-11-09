@@ -36,7 +36,7 @@ var browse_table = $( "#browse-table" ).dataTable({
 				  data = "no name";
 				  }
 			  console.log( )
-			  return '<a href="' + Django.url('srs/replay', full[5] ) + '"><img class="img-rounded" height=32 itemprop="image" src="' + Django.context.STATIC_URL + 'maps/' + full[6] + '_home.jpg" alt="pic of map ' + full[6] + '"/> ' + data + '</a>';
+			  return '<a href="' + Django.url('srs/replay', full[5] ) + '"><img class="img-rounded" height=32 itemprop="image" src="/static/maps/' + full[6] + '_home.jpg" alt="pic of map ' + full[6] + '"/> ' + data + '</a>';
 			  }
          },
          {
@@ -127,7 +127,7 @@ var select_map = $( '#select-map' ).selectize({
     create: false,
     render: {
         option: function(item, escape) {
-            return '<div>' + escape(item.name) + '<span class="pull-right"><img src="' + Django.context.STATIC_URL + 'maps/' + escape(item.name) + '_home.jpg" height="35"/></span></div>' ;
+            return '<div>' + escape(item.name) + '<span class="pull-right"><img src="/static/maps/' + escape(item.name) + '_home.jpg" height="35"/></span></div>' ;
         }
     },
     load: function(query, callback) {
