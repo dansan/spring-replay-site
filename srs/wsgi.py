@@ -15,6 +15,7 @@ from django.core.wsgi import get_wsgi_application
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "srs.settings")
 os.environ["DJANGO_SETTINGS_MODULE"] = "srs.settings"
 
-sys.path.append(realpath(realpath(dirname(__file__)) + "/.."))
+sys.path.append("/var/www/servers/replays-test.springrts.com/virtenv/lib/python2.7/site-packages/")
+sys.path.append(realpath(realpath(dirname(__file__))+"/.."))
 
 application = get_wsgi_application()
