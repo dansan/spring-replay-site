@@ -7,8 +7,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from srs.models import RatingHistory, Replay
+from srs.models import RatingHistory, Replay, SldbMatchSkillsCache
 from srs.springmaps import SpringMaps
+from srs.sldb import SLDBConnectionError, get_sldb_match_skills
 
 
 logger = logging.getLogger("srs.utils")
@@ -16,29 +17,29 @@ logger = logging.getLogger("srs.utils")
 
 def fix_missing_winner(replay):
     logger.info("fix_missing_winner(%s)", replay)
-    match_rating_history = RatingHistory.objects.filter(match=replay, match_type=replay.match_type_short)
-    if not match_rating_history.exists():
-        logger.info("No TS data available, no fix possible.")
+    SldbMatchSkillsCache.objects.filter(gameID=replay.gameID).delete()
+    try:
+        match_skills = get_sldb_match_skills([replay.gameID])
+        if match_skills:
+            match_skills = match_skills[0]
+    except SLDBConnectionError as exc:
+        logger.error("get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         return
-    new_ratings = dict()
-    old_ratings = dict()
+
+    if match_skills and match_skills["status"] == 0:
+        match_skills_by_pa = dict()
+        for player in match_skills["players"]:
+            match_skills_by_pa[player["account"]] = [s[0] for s in player["skills"][:2]]
+    else:
+        logger.error("No TS data for match from SLDB available, no fix possible.")
+        return
     for at in replay.allyteam_set.all():
-        new_at_ratings = match_rating_history.filter(playeraccount__in=[team.teamleader.account for team in at.team_set.all()])
-        new_ratings[at] = sum([r.trueskill_mu for r in new_at_ratings])
-        old_ratings[at] = 0
-        old_ratings_li = list()
-        for paid in at.team_set.values_list("player__account", flat=True):
-            try:
-                old_rating = RatingHistory.objects.filter(playeraccount__id=paid, game=replay.game_release.game,
-                                                                 match_type=replay.match_type_short,
-                                                                 match__unixTime__lt=replay.unixTime
-                                                                 ).order_by("-match__unixTime")[0].trueskill_mu
-            except IndexError:
-                old_rating = 25
-            old_ratings_li.append(old_rating)
-            old_ratings[at] += old_rating
-        logger.info("Allyteam %s has rating change %r -> %r." , at, old_ratings[at], new_ratings[at])
-        if new_ratings[at] > old_ratings[at]:
+        pas = [team.teamleader.account for team in at.team_set.all()]
+        at_sum_old = sum(match_skills_by_pa[pa][0] for pa in pas)
+        at_sum_new = sum(match_skills_by_pa[pa][1] for pa in pas)
+
+        logger.info("Allyteam %s has rating change %r -> %r.", at, at_sum_old, at_sum_new)
+        if at_sum_new > at_sum_old:
             logger.info("Allyteam %s has won.", at)
             at.winner = True
             at.save()
