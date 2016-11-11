@@ -149,7 +149,8 @@ def replay(request, gameID):
     # fill cache prefetching all entries from DB in one call
     all_players = Player.objects.filter(replay=replay)
     allyteams = Allyteam.objects.filter(replay=replay)
-    if not allyteams.filter(winner=True).exists() or allyteams.filter(winner=True, replay__versionString='103', num=0).exists():
+    if not allyteams.filter(winner=True).exists() or (
+            replay.upload_date.year >= 2016 and allyteams.filter(winner=True, num=0).exists()):
         # workaround for issue #89: guess winner from ratings
         fix_missing_winner(replay)
 

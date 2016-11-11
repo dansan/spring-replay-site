@@ -7,7 +7,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from srs.models import RatingHistory, Replay, SldbMatchSkillsCache
+from srs.models import Replay, SldbMatchSkillsCache
 from srs.springmaps import SpringMaps
 from srs.sldb import SLDBConnectionError, get_sldb_match_skills
 
