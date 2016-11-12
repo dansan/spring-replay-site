@@ -25,7 +25,7 @@ AUTHENTICATION_BACKENDS = ['lobbyauth.lobbybackend.LobbyBackend'] + global_setti
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
 INDEX_REPLAY_RANGE = 12
 AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10240000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280
 
 LOG_PATH = path_join(SRS_FILE_ROOT, 'log')
 DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
