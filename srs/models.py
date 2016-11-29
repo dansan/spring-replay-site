@@ -219,6 +219,8 @@ class Replay(models.Model):
             game_name = game.name
             version = self.gametype[len(game.name):]
         version = version.strip()
+        if not version:
+            version = "n/a"
 
         if version[0].upper() == "V" or version[0] == ".":
             version = version[1:]
