@@ -323,7 +323,7 @@ class Replay(models.Model):
             if playeraccount.accountid == 0:
                 player = Player.objects.filter(replay=self, account=playeraccount)[0]
             else:
-                raise
+                player = Player.objects.get(replay=self, account=playeraccount, spectator=False)
         try:
             team = Team.objects.filter(replay=self, teamleader=player)[0]
             if team.allyteam.winner:

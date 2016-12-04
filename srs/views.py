@@ -116,7 +116,7 @@ def replay(request, gameID):
                 mu, si = player["skills"][1]
                 if pa_skill.trueskill_mu != mu or pa_skill.trueskill_sigma != si:
                     try:
-                        playername = Player.objects.get(account=pa, replay=replay, spectator=True).name
+                        playername = Player.objects.get(account=pa, replay=replay, spectator=False).name
                     except ObjectDoesNotExist:
                         playername = "??"
                     pa_skill.trueskill_mu = mu
