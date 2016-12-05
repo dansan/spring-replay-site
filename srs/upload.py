@@ -796,7 +796,11 @@ def floats2rgbhex(floats):
 
 
 def del_replay(replay):
-    replay.map_img.delete()
+    try:
+        replay.map_img.delete()
+    except AttributeError:
+        # no image
+        pass
     for tag in replay.tags.all():
         if tag.replays() == 1 and tag.pk > 10:
             # this tag was used only by this replay and is not one of the default ones (see srs/sql/tag.sql)
