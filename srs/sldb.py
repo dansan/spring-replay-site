@@ -12,6 +12,7 @@ import socket
 from operator import methodcaller
 import datetime
 import cPickle
+import errno
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -125,10 +126,14 @@ def _query_sldb(service, *args, **kwargs):
     rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
         rpc_result = rpc(rpc_srv)
+    except IOError as exc:
+        if exc.errno != errno.EINTR:
+            raise
+        rpc_result = dict(status=9, exception=str(exc))
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("Exception in service: %s args: %s, kwargs: %s, Exception: %s", service, args, kwargs, exc)
-        raise exc
+        raise
     else:
         #         logger.debug("%s() returned: %s", service, rpc_result)
         pass
