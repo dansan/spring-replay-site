@@ -98,11 +98,13 @@ def replay(request, gameID):
     game = replay.game_release.game
     match_type = replay.match_type_short
 
+    sldb_connection_error = False
     try:
         match_skills = get_sldb_match_skills([replay.gameID])
         if match_skills:
             match_skills = match_skills[0]
     except SLDBConnectionError as exc:
+        sldb_connection_error = True
         logger.error("get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         match_skills = {"status": 3}
         # ignore, we'll just use the old values from the DB in the view
@@ -150,7 +152,7 @@ def replay(request, gameID):
     all_players = Player.objects.filter(replay=replay)
     allyteams = Allyteam.objects.filter(replay=replay)
     if not allyteams.filter(winner=True).exists() or (
-            replay.upload_date.year >= 2016 and allyteams.filter(winner=True, num=0).exists()):
+            replay.upload_date.year >= 2016 and allyteams.filter(winner=True, num=0).exists()) and not sldb_connection_error:
         # workaround for issue #89: guess winner from ratings
         fix_missing_winner(replay)
 

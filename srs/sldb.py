@@ -28,7 +28,11 @@ logger = logging.getLogger("srs.sldb")
 # It has a XMLRPC interface that the website uses: https://github.com/Yaribz/SLDB/blob/master/XMLRPC
 #
 
-class SLDBstatusError(Exception):
+class SLDBError(Exception):
+    pass
+
+
+class SLDBstatusError(SLDBError):
     def __init__(self, service, status):
         self.service = service
         self.status = status
@@ -37,7 +41,7 @@ class SLDBstatusError(Exception):
         return "%s() returned status %d." % (self.service, self.status)
 
 
-class SLDBbadArgumentError(Exception):
+class SLDBbadArgumentError(SLDBError):
     def __init__(self, arg, val):
         self.argument = arg
         self.value = val
@@ -46,7 +50,7 @@ class SLDBbadArgumentError(Exception):
         return "Bad argument '%s': %s" % (self.argument, self.value)
 
 
-class SLDBConnectionError(Exception):
+class SLDBConnectionError(SLDBError):
     pass
 
 
@@ -126,6 +130,10 @@ def _query_sldb(service, *args, **kwargs):
     rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
         rpc_result = rpc(rpc_srv)
+    except socket.timeout as exc:
+        raise SLDBConnectionError(
+            "Timeout ({} sec) reached while calling SLDB. service={} args={} kwargs={} exc={}".format(
+                settings.SLDB_TIMEOUT, service, args, kwargs, exc))
     except IOError as exc:
         if exc.errno != errno.EINTR:
             raise
