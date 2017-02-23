@@ -63,6 +63,8 @@ def ajax_playerrating_tbl_src(request, accountid):
         logger.error("FIXME: to broad exception handling.")
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
         return HttpResponse(json.dumps(empty_result))
+    if accountid == 0:
+        return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
     except Exception as exc:
@@ -115,6 +117,8 @@ def ajax_winloss_tbl_src(request, accountid):
         accountid = int(accountid)
     except ValueError as exc:
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
+        return HttpResponse(json.dumps(empty_result))
+    if accountid == 0:
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
@@ -181,6 +185,8 @@ def ajax_playerreplays_tbl_src(request, accountid):
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
+        return HttpResponse(json.dumps(empty_result))
+    if accountid == 0:
         return HttpResponse(json.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
