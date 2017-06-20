@@ -84,7 +84,7 @@ Please see srs_base.html for license information.
       <div class="col-sm-6">
         <div class="panel panel-default">
           <div class="panel-body">
-            <button type="button" class="btn btn-default btn-block text-warning clickme_winner" style="margin-bottom: 20px;">Show winner, TrueSkill rating changes{% if replay.bawards or xtaward_heroes or xtaward_los %} and awards{% endif %}.</button>
+            <button type="button" class="btn btn-default btn-block text-warning clickme_winner" style="margin-bottom: 20px;">Show winner, TrueSkill rating changes{% if replay.bawards or xtaward_heroes or xtaward_los or replay.cursed_awards %} and awards{% endif %}.</button>
 
 <!-- Warnings -->
 
@@ -409,6 +409,40 @@ Please see srs_base.html for license information.
         </div> <!-- panel -->
       </div> <!--col-sx-12 col-sm-6  -->
     </div> <!-- row -->
+  {% endif %}
+
+<!-- cursed awards -->
+
+  {% if replay.cursed_awards %}
+    <div class="row">
+      <div class="panel panel-default blind_winner" style="display:none;">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sx-12">
+              <center><img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/> &nbsp;&nbsp; <span style="font-size: larger; font-weight: bold;">Cursed Awards</span> &nbsp;&nbsp; <img src="{% static "img/trophy_32.png" %}" alt="trophy" height="24"/></center>
+              <hr style="margin-top: 7px; margin-bottom: 12px;">
+            </div>
+          </div> <!-- row -->
+          <div class="row">
+    {% for ca_type, ca in replay.cursed_awards %}
+            <div class="col-sx-12 col-sm-6 col-md-4 col-lg-3" style="margin-bottom: 15px;">
+              <div class="media">
+                <div class="pull-left">
+                  <img class="media-object" src="{% static ca.img %}" alt="{{ ca_type }}" height="40" width="30">
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">{{ ca.name }}</h4>
+        {%  for player in ca.players %}
+                  <span style="font-weight:bold; color: #{{ player.0.team.rgbcolor }};">{{ player.0.name }}: {{ player.1 }}</span><br/>
+        {% endfor %}
+                </div>
+              </div>
+            </div>
+    {% endfor %}
+          </div> <!-- row -->
+        </div> <!-- panel-body -->
+        </div> <!-- panel -->
+      </div> <!-- row -->
   {% endif %}
 
 <!-- COMMENTS -->

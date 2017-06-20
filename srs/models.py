@@ -362,6 +362,32 @@ class Replay(models.Model):
         except ObjectDoesNotExist:
             return None
 
+    @property
+    def cursed_awards(self):
+        """
+        :return: [('shell', {
+            'players': [(<Player a>, 12), (<Player b>, 34)],
+            'img': 'trophy_shell.png',
+            'name': 'Turtle Shell'
+            }),
+        ...]
+        """
+        res = dict()
+        ca_fields = CursedAwards.sorted_field_names()
+        try:
+            for ca in CursedAwards.objects.filter(replay=self):
+                for fn in ca_fields:
+                    cav = getattr(ca, fn)
+                    if cav:
+                        res.setdefault(fn, {})['name'] = CursedAwards.field_to_name[fn]
+                        res[fn]['img'] = os.path.join('img/cursed_awards', CursedAwards.field_to_image[fn])
+                        res[fn].setdefault('players', []).append((ca.player, cav))
+                        if len(res[fn]['players']) > 1:
+                            res[fn]['players'] = sorted(res[fn]['players'], key=operator.itemgetter(1), reverse=True)
+        except ObjectDoesNotExist:
+            return None
+        return sorted(res.items(), key=operator.itemgetter(0))
+
 
 class AdditionalReplayInfo(models.Model):
     """
@@ -473,11 +499,31 @@ class PlayerAccount(models.Model):
         """
         awards = XTAwards.objects.filter(player__account=self, isAlive=1).values_list("unit", flat=True)
         co = Counter(awards)
-        heroes = sorted(co.items(), key=operator.itemgetter(1), reverse=True)[:10]
+        heroes = co.most_common(10)
         awards = XTAwards.objects.filter(player__account=self, isAlive=0).values_list("unit", flat=True)
         co = Counter(awards)
-        lost = sorted(co.items(), key=operator.itemgetter(1), reverse=True)[:10]
+        lost = co.most_common(10)
         return heroes, lost
+
+    @property
+    def cursed_awards(self):
+        """
+        Find number of won cursed awards (for all award types).
+
+        :return: [{'type': 'air', 'name': '..', 'img': images/..', 'count': 12}, ...]
+        """
+        awards = CursedAwards.objects.filter(player__account=self)
+        co = Counter()
+        for award in awards:
+            co.update(award.as_dict(True).keys())
+        return [
+            {
+                'type': c[0],
+                'name': CursedAwards.field_to_name[c[0]],
+                'img': os.path.join('img/cursed_awards', CursedAwards.field_to_image[c[0]]),
+                'count': c[1]
+            } for c in co.most_common()
+        ]
 
     class Meta:
         ordering = ['accountid']
@@ -845,6 +891,113 @@ class XTAwards(models.Model):
     def __unicode__(self):
         return u"XTAwards({}) Replay: {} | isAlive: {} | player: {} | unit: {} | kills: {} | age: {}".format(
             self.pk, self.replay.pk, self.isAlive, self.player.name, self.unit, self.kills, self.age)
+
+
+class CursedAwards(models.Model):
+    replay = models.ForeignKey(Replay)
+    player = models.ForeignKey(Player)
+
+    air = models.PositiveIntegerField(default=0)
+    bug = models.PositiveIntegerField(default=0)
+    cap = models.PositiveIntegerField(default=0)
+    dran = models.PositiveIntegerField(default=0)
+    drankill = models.PositiveIntegerField(default=0)
+    emp = models.PositiveIntegerField(default=0)
+    fire = models.PositiveIntegerField(default=0)
+    friend = models.PositiveIntegerField(default=0)
+    heart = models.PositiveIntegerField(default=0)
+    hero = models.PositiveIntegerField(default=0)
+    herokill = models.PositiveIntegerField(default=0)
+    hover = models.PositiveIntegerField(default=0)
+    kam = models.PositiveIntegerField(default=0)
+    lycan = models.PositiveIntegerField(default=0)
+    mex = models.PositiveIntegerField(default=0)
+    mexkill = models.PositiveIntegerField(default=0)
+    nux = models.PositiveIntegerField(default=0)
+    ouch = models.PositiveIntegerField(default=0)
+    point = models.PositiveIntegerField(default=0)
+    pwn = models.PositiveIntegerField(default=0)
+    rezz = models.PositiveIntegerField(default=0)
+    share = models.PositiveIntegerField(default=0)
+    shell = models.PositiveIntegerField(default=0)
+    slow = models.PositiveIntegerField(default=0)
+    sweeper = models.PositiveIntegerField(default=0)
+
+    field_to_image = dict(
+        air='trophy_air.png',
+        bug='trophy_bug.png',
+        cap='trophy_cap.png',
+        dran='trophy_dran.png',
+        drankill='trophy_dragon.png',
+        emp='trophy_emp.png',
+        fire='trophy_fire.png',
+        friend='trophy_friend.png',
+        heart='trophy_heart.png',
+        hero='trophy_hero.png',
+        herokill='trophy_herokill.png',
+        hover='trophy_hover.png',
+        kam='trophy_kam.png',
+        lycan='trophy_lycan.png',
+        mex='trophy_mex.png',
+        mexkill='trophy_mexkill.png',
+        nux='trophy_nux.png',
+        ouch='trophy_ouch.png',
+        point='trophy_point.png',
+        pwn='trophy_pwn.png',
+        rezz='trophy_rezz.png',
+        share='trophy_share.png',
+        shell='trophy_shell.png',
+        slow='trophy_slow.png',
+        sweeper='trophy_sweeper.png',
+    )
+
+    field_to_name = dict(
+        air='Airforce General',
+        bug='Bug Hunter',
+        cap='Mind Magician',
+        dran='Dragons & Angels',
+        drankill='Dragon & Angel Slayer',
+        emp='Stun Wizard',
+        fire='Master Grill-Chef',
+        friend='Friendly Fire Award',
+        heart='Queen Heart Breaker',
+        hero='Heros do the job',
+        herokill='Hero Hunter',
+        hover='Hover Admiral',
+        kam='Kamikaze Award',
+        lycan='Werewolf Hunter',
+        mex='Mineral Prospector',
+        mexkill='Loot & Pillage',
+        nux='Apocalyptic Achievement Award',
+        ouch='Big Purple Heart',
+        point='This is my Land',
+        pwn='Total Pain',
+        rezz='Vile Necromancer',
+        share='Share Bear',
+        shell='Turtle Shell',
+        slow='Traffic Cop',
+        sweeper='Land Sweeper',
+    )
+
+    @classmethod
+    def sorted_field_names(cls):
+        return sorted([f.name for f in cls._meta.fields if f.name not in ('id', 'replay', 'player')])
+
+    def as_dict(self, only_positive=False):
+        res = dict()
+        for field_name in self.sorted_field_names():
+            val = getattr(self, field_name)
+            if only_positive and not val > 0:
+                continue
+            res[field_name] = val
+        return res
+
+    def __unicode__(self):
+        return u"CursedAwards({}, {}, {})".format(
+            self.pk,
+            self.replay.pk,
+            [(f.name, f.value_from_object(self)) for f in self._meta.fields if f.name not in ('id', 'replay', 'player') and f.value_from_object(self) > 0]
+        )
 
 
 def get_owner_list(uploader):

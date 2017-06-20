@@ -27,7 +27,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django_comments.models import Comment
 
-from srs.models import Allyteam, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
+from srs.models import Allyteam, CursedAwards, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
 from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBConnectionError
@@ -278,6 +278,7 @@ def replay(request, gameID):
         logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)
+    c["cursed_awards"] = CursedAwards.objects.filter(replay=replay)
 
     page_history = request.session.get("page_history")
     if page_history and isinstance(page_history, list):
@@ -413,6 +414,9 @@ def player(request, accountid):
     xtawards = pa.xtawards
     if any(xtawards):
         c["xtawards"] = xtawards
+    cursed_awards = pa.cursed_awards
+    if cursed_awards:
+        c["cursed_awards"] = cursed_awards
 
     if not respect_privacy(request, accountid):
         c["ts_history_games"] = pa.get_all_games_no_bots().exclude(sldb_name="")

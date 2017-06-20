@@ -408,7 +408,14 @@ class Parse_demo_file():
                                                         "toID": messageData["toID"],
                                                         "message": messageData["message"][:-1]})
                     elif messageData["cmd"] == "luamsg":
-                        if messageData["msgid"] == 138:
+                        if messageData["msgid"] == 49 and messageData["msg"].startswith("180"):
+                            # https://springrts.com/phpbb/viewtopic.php?f=54&t=36150&p=581964#p581964
+                            # CursedID-TeamID:awardtype/counter:awardtype/counter: ...
+                            # e.g. "180-0:hero/150:hover/803:rezz/28"
+                            teamid = re.findall(r'^180-(\d+):?.*$', messageData["msg"])[0]
+                            cursed_awards = re.findall(r':((\w+)/(\d+))*', messageData["msg"])
+                            self.additional.setdefault("cursed_awards", {})[teamid] = [(ca[1], ca[2]) for ca in cursed_awards]
+                        elif messageData["msgid"] == 138:
                             # faction change
                             playername = clean(messageData['playerName'])
                             faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
@@ -511,6 +518,7 @@ class Parse_demo_file():
                             except KeyError:
                                 self.additional["xtawards"] = [xtawards]
                         else:
+                            # logger.debug('unknown luamsg messageData["msgid"]=%r messageData["msg"]=%r', messageData["msgid"], messageData["msg"])
                             pass
             except Exception as exc:
                 logger.error("FIXME: to broad exception handling.")

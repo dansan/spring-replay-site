@@ -26,7 +26,7 @@ from django.conf import settings
 import django.utils.timezone
 
 from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, \
-    PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming
+    PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming, CursedAwards
 import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
 from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBConnectionError
@@ -562,14 +562,26 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         ba_awards.save()
 
     # XTAwards
-    if "xtawards" in demofile.additional:
-        for xta_award in demofile.additional["xtawards"]:
-            team = Team.objects.get(replay=replay, num=xta_award["team"])
-            player = Player.objects.get(replay=replay, team=team)
-            xt, cr = XTAwards.objects.get_or_create(replay=replay, isAlive=xta_award["isAlive"], player=player,
+    for xta_award in demofile.additional.get("xtawards", []):
+        team = Team.objects.get(replay=replay, num=xta_award["team"])
+        player = Player.objects.get(replay=replay, team=team)
+        # users can get the same award multiple times for the same unit
+        xt, cr = XTAwards.objects.get_or_create(replay=replay, isAlive=xta_award["isAlive"], player=player,
                                                     unit=xta_award["name"], kills=xta_award["kills"],
                                                     age=xta_award["age"])
-            logger.debug("XTA created: %s, award: %s", cr, xt)
+        logger.debug("XTA award %s: %s", "created" if cr else "updated", xt)
+
+    # cursed awards
+    for teamid, cursed_awards in demofile.additional.get("cursed_awards", {}).items():
+        team = Team.objects.get(replay=replay, num=teamid)
+        player = Player.objects.get(replay=replay, team=team)
+        clean_ca = [ca for ca in cursed_awards if hasattr(CursedAwards, ca[0])]
+        ca_kwargs = dict(clean_ca)
+        if set(ca[0] for ca in cursed_awards) - set(ca[0] for ca in clean_ca):
+            logger.error('cursed_awards has unknown awardtype: %r', set(ca[0] for ca in cursed_awards) - set(ca[0] for ca in clean_ca))
+        if ca_kwargs:
+            c_a, cr = CursedAwards.objects.get_or_create(replay=replay, player=player, defaults=ca_kwargs)
+            logger.debug("Cursed awards %s: %s", "created" if cr else "updated", c_a)
 
     timer.stop("  demofile.additional")
 
