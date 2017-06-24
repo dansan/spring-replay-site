@@ -17,7 +17,7 @@ from httplib import HTTPException
 
 from eztables.views import DatatablesView, JSON_MIMETYPE
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -211,14 +211,17 @@ def ajax_playerreplays_tbl_src(request, accountid):
 
     replays = list()
     for replay in qs[params["iDisplayStart"]:params["iDisplayStart"] + params["iDisplayLength"]]:
-        replays.append([replay.title,
-                        replay.unixTime.strftime("%Y-%m-%d %H:%M:%S"),
-                        replay._playername(pa),
-                        replay.game.name,
-                        replay.match_type,
-                        replay._result(pa),
-                        replay._faction(pa),
-                        replay.gameID])
+        try:
+            replays.append([replay.title,
+                            replay.unixTime.strftime("%Y-%m-%d %H:%M:%S"),
+                            replay._playername(pa),
+                            replay.game.name,
+                            replay.match_type,
+                            replay._result(pa),
+                            replay._faction(pa),
+                            replay.gameID])
+        except ObjectDoesNotExist:
+            return HttpResponseNotFound('<h1>Player not found</h1>')
     return HttpResponse(json.dumps({"sEcho": params["sEcho"],
                                     "iTotalRecords": Replay.objects.filter(
                                         player__account__accountid=accountid).count(),
