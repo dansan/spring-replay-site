@@ -615,8 +615,12 @@ def upload_platform_stats(demofile):
     """
     Run this *after* store_demofile_data().
     """
-    client = coreapi.Client(auth=settings.PLATFORM_STATS_CREDENTIALS)
-    schema = client.get(settings.PLATFORM_STATS_URL)
+    try:
+        client = coreapi.Client(auth=settings.PLATFORM_STATS_CREDENTIALS)
+        schema = client.get(settings.PLATFORM_STATS_URL)
+    except Exception as exc:
+        logger.error('Cannot connect to platform stats server, when uploading stats for match %r: %s', demofile.header["gameID"], exc)
+        raise
     action = ["machine", "create"]
 
     for pl_num, pl_data in demofile.additional['ba_platform_stats'].items():
@@ -638,6 +642,7 @@ def upload_platform_stats(demofile):
             client.action(schema, action, params=params)
         except Exception as exc:
             logger.exception('Failed uploading platform stats for player %s (%r): %r', player['name'], player['accountid'], exc)
+            raise
         logger.info('Uploaded platform stats for player %s (%r).', player['name'], player['accountid'])
 
 
