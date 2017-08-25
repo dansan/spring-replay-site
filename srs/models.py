@@ -24,7 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from picklefield.fields import PickledObjectField
-from djutils.decorators import async
+from background_task import background
 
 from srs.mail import send_mail
 
@@ -1006,7 +1006,7 @@ def get_owner_list(uploader):
     return res
 
 
-@async
+@background
 def update_stats(force=False):
     """
     some very expensive operations -> this runs only once per day

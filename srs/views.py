@@ -474,8 +474,7 @@ def hall_of_fame(request, abbreviation):
         try:
             sist = SiteStats.objects.get(id=1)
         except ObjectDoesNotExist:
-            update_stats()
-            sist = SiteStats.objects.get(id=1)
+            sist = update_stats.now()
 
         c["bawards"] = sist.bawards
         c["bawards_lu"] = sist.last_modified
@@ -630,7 +629,7 @@ def browse_archive(request, bfilter):
     try:
         sist = SiteStats.objects.get(id=1)
     except ObjectDoesNotExist:
-        sist = update_stats()
+        sist = update_stats.now()
 
     tags = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
     c["top_tags"] = list()

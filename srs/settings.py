@@ -21,7 +21,7 @@ DATETIME_FORMAT = DATE_FORMAT
 SHORT_DATE_FORMAT = 'd.m.Y'
 # SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
-AUTHENTICATION_BACKENDS = ['lobbyauth.lobbybackend.LobbyBackend'] + global_settings.AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = ['lobbyauth.lobbybackend.LobbyBackend'] + list(global_settings.AUTHENTICATION_BACKENDS)
 XMLRPC_METHODS = (('srs.upload.xmlrpc_upload', 'xmlrpc_upload'),)
 INDEX_REPLAY_RANGE = 12
 AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
@@ -84,7 +84,8 @@ INSTALLED_APPS = [
     'djangojs',
     'eztables',
     'django_extensions',
-    'jsonrpc'
+    'jsonrpc',
+    'background_task',
 ]
 
 TEMPLATES = [
