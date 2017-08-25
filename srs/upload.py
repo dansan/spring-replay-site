@@ -435,7 +435,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             # team without player: this is a bot - create a Player for it
             logger.debug("replay(%d) team[%s] (Team(%d)) has no teamplayers, must be a bot", replay.pk, tnum, team.pk)
             bot_pa = PlayerAccount.objects.get(accountid=0)
-            Player.objects.create(account=bot_pa, name="Bot (of " + team.teamleader.name + ")", rank=1, spectator=False,
+            Player.objects.create(account=bot_pa, name="Bot (of {})".format(team.teamleader.name), rank=1, spectator=False,
                                   team=team, replay=replay)
 
             # add a "Bot" tag
