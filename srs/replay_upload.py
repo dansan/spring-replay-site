@@ -19,9 +19,9 @@ import xmlrpclib
 from time import sleep
 
 # argparse for python installations <2.7
-from os.path import realpath, dirname
+from os.path import realpath, dirname, join as joinpath
 
-sys.path.append(realpath(dirname(__file__)) + "/contrib")
+sys.path.append(joinpath(realpath(dirname(__file__)), "contrib"))
 import argparse
 
 

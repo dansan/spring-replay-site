@@ -169,10 +169,10 @@ def save_uploaded_file(ufile, filename):
     suff = filename.split("_")[-1]
     filemagic = magic.from_buffer(ufile, mime=True)
     if filemagic.endswith("gzip"):
-        (fd, path) = mkstemp(suffix="_" + suff, prefix=filename[:-len(suff) - 1] + "__")
+        (fd, path) = mkstemp(suffix="_{}".format(suff), prefix="{}__".format(filename[:-len(suff) - 1]))
         f = os.fdopen(fd, "wb")
     else:
-        (fd, path) = mkstemp(suffix="_" + suff + ".gz", prefix=filename[:-len(suff) - 1] + "__")
+        (fd, path) = mkstemp(suffix="_{}.gz".format(suff), prefix="{}__".format(filename[:-len(suff) - 1]))
         f = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
     written_bytes = f.write(ufile)
     f.close()
@@ -551,24 +551,24 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             if type(demo_awards[award_name]) == tuple:
                 aw1, aw2, aw3 = demo_awards[award_name]
                 if aw1[0] > -1:
-                    setattr(ba_awards, award_name + "1st", players[aw1[0]])
-                    setattr(ba_awards, award_name + "1stScore", aw1[1])
+                    setattr(ba_awards, "{}1st".format(award_name), players[aw1[0]])
+                    setattr(ba_awards, "{}1stScore".format(award_name), aw1[1])
                 else:
-                    setattr(ba_awards, award_name + "1st", None)
+                    setattr(ba_awards, "{}1st".format(award_name), None)
                 if aw2[0] > -1:
-                    setattr(ba_awards, award_name + "2nd", players[aw2[0]])
-                    setattr(ba_awards, award_name + "2ndScore", aw2[1])
+                    setattr(ba_awards, "{}2nd".format(award_name), players[aw2[0]])
+                    setattr(ba_awards, "{}2ndScore".format(award_name), aw2[1])
                 else:
-                    setattr(ba_awards, award_name + "2nd", None)
+                    setattr(ba_awards, "{}2nd".format(award_name), None)
                 if aw3[0] > -1:
-                    setattr(ba_awards, award_name + "3rd", players[aw3[0]])
-                    setattr(ba_awards, award_name + "3rdScore", aw3[1])
+                    setattr(ba_awards, "{}3rd".format(award_name), players[aw3[0]])
+                    setattr(ba_awards, "{}3rdScore".format(award_name), aw3[1])
                 else:
-                    setattr(ba_awards, award_name + "3rd", None)
+                    setattr(ba_awards, "{}3rd".format(award_name), None)
             else:
                 if demo_awards[award_name][0] > -1:
                     setattr(ba_awards, award_name, players[demo_awards[award_name][0]])
-                    setattr(ba_awards, award_name + "Score", demo_awards[award_name][1])
+                    setattr(ba_awards, "{}Score".format(award_name), demo_awards[award_name][1])
                 else:
                     setattr(ba_awards, award_name, None)
         ba_awards.save()
@@ -824,20 +824,20 @@ def save_desc(replay, short, long_text, autotag):
     replay.short_text = short
     replay.long_text = long_text
     if not short:
-        short = "%s on %s" % (replay.match_type, replay.map_info.name)
+        short = "{} on {}".format(replay.match_type, replay.map_info.name)
         if replay.match_type != "1v1":
-            short = replay.num_players + " " + short
+            short = "{} {}".format(replay.num_players, short)
         replay.title = short
     else:
         logger.debug("short")
         if autotag in short.split():
             replay.title = short
         else:
-            replay.title = autotag + " " + short
+            replay.title = "{} {}".format(autotag, short)
 
     num_tag = replay.num_players
     if num_tag not in short.split():
-        replay.title = num_tag + " " + short
+        replay.title = "{} {}".format(num_tag, short)
 
 
 def clamp(val, low, high):
@@ -849,7 +849,7 @@ def floats2rgbhex(floats):
     for color in floats.split():
         hexstr = str(hex(clamp(int(float(color) * 255), 0, 255))[2:])
         if len(hexstr) < 2:
-            hexstr = "0" + hexstr
+            hexstr = "0{}".format(hexstr)
         rgb += hexstr
     return rgb
 

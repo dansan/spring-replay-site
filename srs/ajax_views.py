@@ -205,9 +205,9 @@ def ajax_playerreplays_tbl_src(request, accountid):
         else:
             order = ""
         if params["iSortCol_0"] == 0:
-            qs = qs.order_by(order + "title")
+            qs = qs.order_by("{}title".format(order))
         elif params["iSortCol_0"] == 1:
-            qs = qs.order_by(order + "unixTime")
+            qs = qs.order_by("{}unixTime".format(order))
 
     replays = list()
     for replay in qs[params["iDisplayStart"]:params["iDisplayStart"] + params["iDisplayLength"]]:

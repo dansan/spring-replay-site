@@ -152,7 +152,7 @@ class SpringMaps:
             for player in players:
                 pl_img_pos_x = player.startposx / map_img_mult_x
                 pl_img_pos_y = player.startposz / map_img_mult_y  # z is in spring what y is in img
-                team_color = ImageColor.getrgb("#" + player.team.rgbcolor)
+                team_color = ImageColor.getrgb("#{}".format(player.team.rgbcolor))
                 # center number and circle above startpoint --> move up and left by text-size/2
                 text_w, text_h = font.getsize(str(player.team.num))
                 if player.team.num > 9:

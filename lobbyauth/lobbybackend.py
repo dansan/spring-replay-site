@@ -75,9 +75,9 @@ class LobbyBackend(ModelBackend):
                                 "%s)", username, user_with_name, user_with_name.last_name)
                     # search for unused username
                     counter = 0
-                    while User.objects.filter(username=username + "_" + str(counter)).exists():
+                    while User.objects.filter(username="{}_{}".format(username, counter)).exists():
                         counter += 1
-                    username = username + "_" + str(counter)
+                    username = "{}_{}".format(username, counter)
                 except ObjectDoesNotExist:
                     # no user already exists that has the same username
                     pass

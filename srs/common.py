@@ -42,5 +42,5 @@ def all_page_infos(request):
         game_pref = request.session["game_pref"]
         c["game_pref"] = game_pref
         c["game_pref_obj"] = get_object_or_404(Game, id=game_pref)
-        c["game_pref_browse"] = "game=" + str(game_pref)
+        c["game_pref_browse"] = "game={}".format(game_pref)
     return c

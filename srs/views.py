@@ -11,6 +11,7 @@ import gzip
 import magic
 import re
 import operator
+import os.path
 
 import MySQLdb
 
@@ -90,7 +91,7 @@ def replay(request, gameID):
         c["replay"] = replay
         c["comment_obj"] = replay
     except ObjectDoesNotExist:
-        raise Http404("No replay with gameID '" + strip_tags(gameID) + "' found.")
+        raise Http404("No replay with gameID {!r} found.".format(strip_tags(gameID)))
 
     if not replay.published:
         return render(request, 'replay_unpublished.html', c)
@@ -302,7 +303,7 @@ def replay_by_id(request, replayid):
         r = Replay.objects.get(id=replayid)
         return HttpResponseRedirect(r.get_absolute_url())
     except ObjectDoesNotExist:
-        raise Http404("No replay with ID '" + strip_tags(replayid) + "' found.")
+        raise Http404("No replay with ID {!r} found.".format(strip_tags(replayid)))
 
 
 @login_required
@@ -313,7 +314,7 @@ def edit_replay(request, gameID):
         replay = Replay.objects.prefetch_related().get(gameID=gameID)
         c["replay"] = replay
     except ObjectDoesNotExist:
-        raise Http404("No replay with ID '{}' found.".format(strip_tags(gameID)))
+        raise Http404("No replay with ID {!r} found.".format(strip_tags(gameID)))
 
     if request.user != replay.uploader:
         return render(request, 'edit_replay_wrong_user.html', c)
@@ -353,7 +354,7 @@ def download(request, gameID):
     replay.download_count += 1
     replay.save()
 
-    path = replay.path + "/" + replay.filename
+    path = os.path.join(replay.path, replay.filename)
     try:
         filemagic = magic.from_file(path, mime=True)
     except IOError:
@@ -403,7 +404,7 @@ def player(request, accountid):
     c = all_page_infos(request)
     accountid = int(accountid)
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
-    c['pagetitle'] = "Player " + pa.preffered_name
+    c['pagetitle'] = "Player {}".format(pa.preffered_name)
     c["pagedescription"] = "Statistics and match history of player %s" % pa.preffered_name
     c["playeraccount"] = pa
     c["PA"] = pa
@@ -425,20 +426,20 @@ def player(request, accountid):
 
 def ts_history_graph(request, game_abbr, accountid, match_type):
     if respect_privacy(request, accountid):
-        with open(settings.IMG_PATH + "/tsh_privacy.png", "rb") as pic:
+        with open(os.path.join(settings.IMG_PATH, "tsh_privacy.png"), "rb") as pic:
             response = HttpResponse(pic.read(), content_type='image/png')
         return response
     path = str()
     accountid = int(accountid)
     if match_type not in ["1", "T", "F", "G", "L"]:
         logger.error("Bad argument 'match_type': '%s'.", match_type)
-        path = settings.IMG_PATH + "/tsh_error.png"
+        path = os.path.join(settings.IMG_PATH, "tsh_error.png")
     else:
         try:
             graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
         except SLDBConnectionError as exc:
             logger.error("get_sldb_player_ts_history_graphs(%r, %d): %s", game_abbr, accountid, exc)
-            path = settings.IMG_PATH + "/tsh_error.png"
+            path = os.path.join(settings.IMG_PATH, "tsh_error.png")
     if not path:
         path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
     with open(path, "rb") as pic:
@@ -624,7 +625,7 @@ def browse_archive(request, bfilter):
 
     for browse_filter in ["t_today", "t_yesterday", "t_this_month", "t_last_month", "t_this_year", "t_last_year",
                           "t_ancient"]:
-        c[browse_filter] = replay_filter(Replay.objects.all(), "date " + browse_filter)
+        c[browse_filter] = replay_filter(Replay.objects.all(), "date {}".format(browse_filter))
 
     try:
         sist = SiteStats.objects.get(id=1)
@@ -688,7 +689,7 @@ def browse_archive(request, bfilter):
                         Game.objects.get(id=filter_[1])
                     elif filter_[0] == "gameversion":
                         gr = GameRelease.objects.get(id=filter_[1])
-                        c["game_abbreviation"] = gr.game.abbreviation + " " + gr.version
+                        c["game_abbreviation"] = "{} {}".format(gr.game.abbreviation, gr.version)
                     elif filter_[0] == "player":
                         PlayerAccount.objects.get(id=filter_[1])
                     elif filter_[0] == "autohost":

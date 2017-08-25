@@ -13,6 +13,7 @@ from operator import methodcaller
 import datetime
 import cPickle
 import errno
+import os.path
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -448,12 +449,12 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
     graph = SldbPlayerTSGraphCache(game=game, account=pa)
     for match_type, result in query.items():
         if result["status"] == 0:
-            path = settings.TS_HISTORY_GRAPHS_PATH + "/%d_%s_%s_%s.png" % (
-                accountid, game_abbr, match_type, now.strftime("%Y-%m-%d"))
+            path = os.path.join(settings.TS_HISTORY_GRAPHS_PATH, "%d_%s_%s_%s.png" % (
+                accountid, game_abbr, match_type, now.strftime("%Y-%m-%d")))
             open(path, "w").write(result["graph"].data)
         else:
-            path = settings.IMG_PATH + "/tsh_nodata.png"
-        setattr(graph, "filepath_" + match_type.lower(), path)
+            path = os.path.join(settings.IMG_PATH, "tsh_nodata.png")
+        setattr(graph, "filepath_{}".format(match_type.lower()), path)
     graph.save()
     logger.debug("Created SldbPlayerTSGraphCache: %s", graph)
     return graph.as_dict()

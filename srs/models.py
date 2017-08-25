@@ -208,9 +208,9 @@ class Replay(models.Model):
                 if in_version or gr_name_part.upper().startswith("TEST") or gr_name_part.upper().startswith("RC") or \
                                 gr_name_part[0] in version_start:
                     in_version = True
-                    version += gr_name_part + " "
+                    version += "{} ".format(gr_name_part)
                 else:
-                    game_name += gr_name_part + " "
+                    game_name += "{} ".format(gr_name_part)
 
             game_name = game_name.rstrip()
             while game_name[-1] in [" ", "-"]:
@@ -284,7 +284,7 @@ class Replay(models.Model):
             allyteams = Allyteam.objects.filter(replay=self)
             at_sizes = [PlayerAccount.objects.filter(player__team__allyteam=at).count() for at in allyteams]
             at_sizes.sort()
-            return str(reduce(lambda x, y: str(x) + "v" + str(y), at_sizes))
+            return str(reduce(lambda x, y: "{}v{}".format(x, y), at_sizes))
         except:
             logger.exception("FIXME: to broad exception handling.")
             return "?v?"
@@ -423,7 +423,7 @@ class PlayerAccount(models.Model):
     sldb_privacy_mode = models.SmallIntegerField(default=1)
 
     def __unicode__(self):
-        return u"PlayerAccount({}: {})".format(self.accountid, reduce(lambda x, y: x + "|" + y, self.get_names())[:40])
+        return u"PlayerAccount({}: {})".format(self.accountid, reduce(lambda x, y: "{}|{}".format(x, y), self.get_names())[:40])
 
     @models.permalink
     def get_absolute_url(self):
@@ -1119,12 +1119,12 @@ def update_stats(force=False):
 
 
 # TODO: use a proxy model for this
-User.get_absolute_url = lambda self: "/player/" + str(self.userprofile.accountid) + "/"
+User.get_absolute_url = lambda self: "/player/{}/".format(self.userprofile.accountid)
 User.replays_uploaded = lambda self: Replay.objects.filter(uploader=self).count()
 
 # TODO: use a proxy model for this
 Comment.replay = lambda self: self.content_object.__unicode__()
-Comment.comment_short = lambda self: self.comment[:50] + "..."
+Comment.comment_short = lambda self: "{}...".format(self.comment[:50])
 
 
 class SrsTiming(object):
