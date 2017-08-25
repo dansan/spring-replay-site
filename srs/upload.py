@@ -486,8 +486,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             startpos = ""
             height = 170
             width = 340
-            shutil.copy(path_join(settings.MAPS_PATH, "__no_map_img.jpg"), path_join(settings.MAPS_PATH, smap.mapname, ".jpg"))
-            full_img = path_join(settings.MAPS_PATH, smap.mapname, ".jpg")
+            shutil.copy(path_join(settings.MAPS_PATH, "__no_map_img.jpg"), path_join(settings.MAPS_PATH, smap.map_name, ".jpg"))
+            full_img = path_join(settings.MAPS_PATH, smap.map_name, ".jpg")
 
         smap.make_home_thumb()
         if smap.map_info:
