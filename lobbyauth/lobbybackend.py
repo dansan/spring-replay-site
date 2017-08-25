@@ -20,28 +20,36 @@
 import logging
 import socket
 from django.contrib.auth.models import User
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from xmlrpclib import ServerProxy, ProtocolError
 from models import UserProfile
 
+
 url = 'https://springrts.com/api/uber/xmlrpc'
 logger = logging.getLogger("srs.auth")
+UserModel = get_user_model()
 
 
-class LobbyBackend():
+class LobbyBackend(ModelBackend):
     """
     Authentication backend for django, to use the springrts lobby database.
     """
 
-    def authenticate(self, username=None, password=None):
+    def authenticate(self, request, username=None, password=None, **kwargs):
         """
         Authenticate a user.
+
+        :param request: Django Request object
         :param str username: lobby account username (case sensitive)
         :param str password: lobby account password (case sensitive)
         :return: User if success or None if bad password/error
         :rtype: django.contrib.auth.models.User or None
         """
         logger.info("username=%s password=xxxxxx", username)
+        if username is None:
+            username = kwargs.get(UserModel.USERNAME_FIELD)
         if username == "admin" or username == "root":
             # we reserve this one for us (local django db auth)
             logger.info("username = '%s', not using lobbybackend", username)
@@ -118,12 +126,12 @@ class LobbyBackend():
 
     def get_user(self, user_id):
         try:
-            user = User.objects.get(pk=user_id)
-            return user
+            return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
 
-    def xmlrpc_getaccountinfo(self, username, password):
+    @staticmethod
+    def xmlrpc_getaccountinfo(username, password):
         """
         Check credentials against lobby database
         :param str username: lobby account username (case sensitive)

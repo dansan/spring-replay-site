@@ -7,7 +7,7 @@ running on the SpringRTS engine (http://springrts.com).
 
 Runs on Django / Python (https://www.djangoproject.com/).
 
-Development is done using Django 1.6 and Python 2.7. It may or may not run with other versions.
+Development is done using Django 1.11 and Python 2.7. It may or may not run with other versions.
 Latest source code can be found `on Github <https://github.com/dansan/spring-replay-site/>`_.
 
 License
@@ -38,8 +38,6 @@ Dependencies
 
 - Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 - DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
-- suds: https://fedorahosted.org/suds/ (dev-python/suds / python-suds / etc)
-    - I applied https://fedorahosted.org/suds/ticket/359/ (1/2 hunks succeeded -> fixed) 
 - django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc/
 - python-magic: http://pypi.python.org/pypi/python-magic/ (version is around 0.4 - do NOT use python-magic-5.xx)
 - timezone defs: dev-python/pytz | python-tz
@@ -87,7 +85,13 @@ Installation
 
 .. code-block:: bash
 
-    (srs) $ ./manage.py syncdb
+    (srs) $ ./manage.py makemigrations background_task
     (srs) $ ./manage.py migrate
+
+.. code-block:: bash
+
+    (srs) $ crontab -e
+
+    0 0 * * * .../virtenvs/srs-head/bin/python2.7 .../spring-replay-site/manage.py process_tasks --duration 86100 --log-std
 
 - go to the /admin/ page and create a Lobbyauth->User_profile for your admin user
