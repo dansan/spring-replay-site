@@ -19,31 +19,23 @@ import gzip
 import struct
 import logging
 
+
 if not hasattr(magic, "from_file"):
     print("Please install python-magic (with pip, version should be around 0.4, NOT 5.xx)!")
     exit(1)
 
 try:
-    from django.core.exceptions import ImproperlyConfigured
-    try:
-        from django.conf import settings
-        DEBUG = settings.DEBUG
-    except (ImportError, ImproperlyConfigured):
-        # commandline use
-        DEBUG = True
-except ImportError:
-    # django not installed
-    DEBUG = True
-
-try:
     from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
         ScriptRestrictions, ScriptTeam
     from srs.demoparser import Demoparser
+    from srs.settings import DEBUG
 except ImportError:
     # commandline use
     from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
         ScriptRestrictions, ScriptTeam
     from demoparser import Demoparser
+    # direct import of settings module (not through Django means) to allow usage without Django installation
+    from settings import DEBUG
 
 
 logger = logging.getLogger("srs.upload")
@@ -548,9 +540,10 @@ def main(argv=None):
             return 1
 
         DEBUG = True  # command line use is always dev intended
-        replay = Parse_demo_file(argv[-1])
-        replay.check_magic()
-        replay.parse()
+        demo_file = Parse_demo_file(argv[-1])
+        demo_file.check_magic()
+        demo_file.parse()
+        demo_file.upload_platform_stats()
 
         if "--winning-test-header" in argv:
             print('"versionString","version","winningAllyTeamsSize","numallyteams","winningAllyTeams","gametype",'
@@ -560,28 +553,28 @@ def main(argv=None):
 
         if "--winning-test" in argv:
             print('"{}","{}","{}","{}","{}","{}","{}","{}","{}"'.format(
-                replay.header["versionString"],
-                replay.header["version"],
-                replay.header["winningAllyTeamsSize"],
-                replay.game_setup["host"]["numallyteams"],
-                ",".join(map(str, replay.winningAllyTeams)),
-                replay.game_setup["host"]["gametype"],
-                replay.game_setup["host"]["autohostname"],
-                replay.header["gameID"],
-                replay.header["unixTime"],))
+                demo_file.header["versionString"],
+                demo_file.header["version"],
+                demo_file.header["winningAllyTeamsSize"],
+                demo_file.game_setup["host"]["numallyteams"],
+                ",".join(map(str, demo_file.winningAllyTeams)),
+                demo_file.game_setup["host"]["gametype"],
+                demo_file.game_setup["host"]["autohostname"],
+                demo_file.header["gameID"],
+                demo_file.header["unixTime"],))
             return 0
 
         pp = pprint.PrettyPrinter(depth=6)
         print "#################### header ##########################"
-        pp.pprint(replay.header)
+        pp.pprint(demo_file.header)
         print "################## game_setup ########################"
-        pp.pprint(replay.game_setup)
+        pp.pprint(demo_file.game_setup)
         print "############### winningAllyTeams #####################"
-        pp.pprint(replay.winningAllyTeams)
+        pp.pprint(demo_file.winningAllyTeams)
         print "################## additional ########################"
-        if len(replay.additional["chat"]) > 4:
-            replay.additional["chat"] = "chat removed for shorter output"
-        pp.pprint(replay.additional)
+        if len(demo_file.additional["chat"]) > 4:
+            demo_file.additional["chat"] = "chat removed for shorter output"
+        pp.pprint(demo_file.additional)
         return 0
 
 
