@@ -85,6 +85,15 @@ class BadFileType(ParseError):
 
 
 class Parse_demo_file():
+    BA_platform_data_to_API = {
+        'CPU': 'cpuName',
+        'CPU cores': 'cpuCores',
+        'RAM': 'ram',
+        'GPU': 'glRenderer',
+        'GPU VRAM': 'gpuMemorySize',
+        'OS': 'osFamily',
+    }
+
     def __init__(self, filename):
         self.filename = filename
         self.demofile = None
@@ -302,6 +311,40 @@ class Parse_demo_file():
             return False
         return {'modGameTime': modGameTime, 'length': length, 'data': data}
 
+    @classmethod
+    def _ba_stats_to_platform_api(cls, ba_stats_str):
+        stats = {}
+        for m in re.finditer(r'^(?P<name>\w+): *(?P<value>.*)$', ba_stats_str[3:], re.MULTILINE):
+            pl_stats = m.groupdict()
+            if re.match(r'.*bit.*Hz', pl_stats['value']):
+                # found resolution, color depth etc: >>1920x1058:24bit @60Hz (windowed)<<
+                stats['resolution_x'] = pl_stats['name'].split('x')[0]
+                stats['resolution_y'] = pl_stats['name'].split('x')[1]
+                m = re.match(r'(?P<bit>\d+)bit @(?P<hz>\d+)Hz (?P<windowed>\(.*\))*', pl_stats['value']).groupdict()
+                stats['color_depth'] = m['bit']
+                stats['refresh_rate'] = m['hz']
+                stats['windowed'] = bool(m['windowed'])
+            else:
+                stats[cls.BA_platform_data_to_API[pl_stats['name']]] = pl_stats['value']
+        try:
+            # remove surplus spaces
+            stats['cpuName'] = ' '.join(stats['cpuName'].split())
+        except KeyError:
+            pass
+        try:
+            # remove surplus 'MB'
+            stats['ram'] = stats['ram'][:-2]
+        except KeyError:
+            pass
+        for attr in ('gpuMemorySize', 'resolution_x', 'resolution_y', 'color_depth', 'refresh_rate',
+                     'sdlVersionCompiledMajor', 'sdlVersionCompiledMinor', 'sdlVersionCompiledPatch',
+                     'sdlVersionLinkedMajor', 'sdlVersionLinkedMinor', 'sdlVersionLinkedPatch', 'ram'):
+            try:
+                stats[attr] = int(stats[attr])
+            except (KeyError, ValueError):
+                pass
+        return stats
+
     def parse_demostream(self):
         def _save_playerinfo(playername, key, value):
             if playername in self.players:
@@ -331,8 +374,11 @@ class Parse_demo_file():
         packet = True
         currentFrame = 0
         playerIDToName = {}
+        ba_platform_stats = {}
         if DEBUG:
-            kop = open('/tmp/msg.data', 'w')
+            kop = open('/tmp/msg.data', 'wb')
+            stats_fp = open('/tmp/stats.log', 'wb')
+            stats_fp.write('gameID: {}\n'.format(self.header['gameID']))
         demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
@@ -400,7 +446,21 @@ class Parse_demo_file():
                                                         "toID": messageData["toID"],
                                                         "message": messageData["message"][:-1]})
                     elif messageData["cmd"] == "luamsg":
-                        if messageData["msgid"] == 49 and messageData["msg"].startswith("180"):
+                        if messageData["msgid"] == 36:
+                            if DEBUG:
+                                stats_fp.write('{}: >>{}<<\n'.format(messageData['playerNum'], messageData["msg"]))
+                            if messageData["msg"][:6] == '$y$CPU':
+                                # found BA platform stats
+                                stats = self._ba_stats_to_platform_api(messageData["msg"])
+                                if 'cpuName' in stats and 'osFamily' in stats:
+                                    self.additional.setdefault('ba_platform_stats', {})[messageData['playerNum']] = stats
+                                else:
+                                    logger.warn(
+                                        'Platform stats missing cpuName or osFamily in %r generated from msg=%r',
+                                        stats,
+                                        messageData["msg"]
+                                    )
+                        elif messageData["msgid"] == 49 and messageData["msg"].startswith("180"):
                             # https://springrts.com/phpbb/viewtopic.php?f=54&t=36150&p=581964#p581964
                             # CursedID-TeamID:awardtype/counter:awardtype/counter: ...
                             # e.g. "180-0:hero/150:hover/803:rezz/28"
@@ -516,8 +576,10 @@ class Parse_demo_file():
                 logger.error("FIXME: to broad exception handling.")
                 logger.exception("Exception parsing packet '%s': %s", packet, exc)
                 #raise e
+
         if DEBUG:
             kop.close()
+            stats_fp.close()
 
         for pnum, player in self.players.items():
             if not hasattr(player, "connected"):

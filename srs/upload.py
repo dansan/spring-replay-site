@@ -25,6 +25,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import django.utils.timezone
 
+import coreapi
+
 from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, \
     PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming, CursedAwards
 import srs.parse_demo_file as parse_demo_file
@@ -123,6 +125,16 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
         return "4 server error, please try again later, or contact admin"
     finally:
         timer.stop("store_demofile_data()")
+
+    if 'ba_platform_stats' in demofile.additional:
+        try:
+            timer.start("upload_platform_stats()")
+            upload_platform_stats(demofile)
+        except Exception as exc:
+            logger.error("Error uploading platform stats for replay(%d | %s): %s", replay.id, replay, exc)
+        finally:
+            timer.stop("upload_platform_stats()")
+
     demofile = None
 
     logger.info("New replay created: pk=%d gameID=%s", replay.pk, replay.gameID)
@@ -599,6 +611,36 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     return replay
 
 
+def upload_platform_stats(demofile):
+    """
+    Run this *after* store_demofile_data().
+    """
+    client = coreapi.Client(auth=settings.PLATFORM_STATS_CREDENTIALS)
+    schema = client.get(settings.PLATFORM_STATS_URL)
+    action = ["machine", "create"]
+
+    for pl_num, pl_data in demofile.additional['ba_platform_stats'].items():
+        try:
+            player = demofile.game_setup['player'][pl_num]
+        except KeyError:
+            logger.error('No player found for playerNum %r in BA platform stat.', pl_num)
+            continue
+        if player['accountid'] < 1:
+            logger.warn('Not uploading platform stats for player %s (%r).', player['name'], player['accountid'])
+            continue
+        params = {
+            'accountId': int(player['accountid']),
+            'cpuName': pl_data.pop('cpuName'),
+            'osFamily': pl_data.pop('osFamily'),
+            'platformData': pl_data,
+        }
+        try:
+            client.action(schema, action, params=params)
+        except Exception as exc:
+            logger.exception('Failed uploading platform stats for player %s (%r): %r', player['name'], player['accountid'], exc)
+        logger.info('Uploaded platform stats for player %s (%r).', player['name'], player['accountid'])
+
+
 def rate_match(replay):
     game = replay.game
 
@@ -835,4 +877,12 @@ def reparse(replay):
         raise exc
     if not replay.gameID == demofile.header["gameID"]:
         raise Exception("self.gameID(%s) != demofile.header[gameID](%s)" % (replay.gameID, demofile.header["gameID"]))
+
     store_demofile_data(demofile, None, None, None, None, None, None)
+
+    if 'ba_platform_stats' in demofile.additional:
+        try:
+            upload_platform_stats(demofile)
+        except Exception as exc:
+            logger.error("Error uploading platform stats for replay(%d | %s): %s", replay.id, replay, exc)
+    logger.info('Finished reparse(%r).', replay)

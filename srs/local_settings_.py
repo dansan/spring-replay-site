@@ -51,6 +51,9 @@ SLDB_ALLOWED_IPS = ["78.46.100.156"]
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "replays.springrts.com", "replays-test.springrts.com",
                  "replays.admin-box.com", "replays-test.admin-box.com", "78.46.100.156"]
 
+PLATFORM_STATS_CREDENTIALS = ('username', 'password')
+PLATFORM_STATS_URL = "http://127.0.0.1:8999/schema/"
+
 # STATICFILES_DIRS = []
 
 # logging.disable(logging.DEBUG)
