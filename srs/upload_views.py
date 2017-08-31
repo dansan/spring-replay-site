@@ -62,6 +62,10 @@ def upload(request):
                         replays.append((False, 'Uploaded replay already exists: <a href="{}">{}</a>.'.format(
                             exc.replay.get_absolute_url(), exc.replay.title)))
                         continue
+                    except Exception as exc:
+                        form._errors = {'file': [u'Server error: {}'.format(exc)]}
+                        replays.append((False, 'Server error. Please contact admin.'))
+                        continue
                     finally:
                         timer.stop("upload()")
                     logger.info("timings:\n%s", timer)

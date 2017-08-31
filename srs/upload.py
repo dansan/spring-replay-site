@@ -122,7 +122,7 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
     except:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("Error in store_demofile_data()")
-        return "4 server error, please try again later, or contact admin"
+        raise
     finally:
         timer.stop("store_demofile_data()")
 
@@ -546,31 +546,34 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     if "awards" in demofile.additional:
         ba_awards, _ = BAwards.objects.get_or_create(replay=replay)
         demo_awards = demofile.additional["awards"]
-        for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward",
-                           "sleepAward"]:
-            if type(demo_awards[award_name]) == tuple:
-                aw1, aw2, aw3 = demo_awards[award_name]
-                if aw1[0] > -1:
-                    setattr(ba_awards, "{}1st".format(award_name), players[aw1[0]])
-                    setattr(ba_awards, "{}1stScore".format(award_name), aw1[1])
+        try:
+            for award_name in ["ecoKillAward", "fightKillAward", "effKillAward", "cowAward", "ecoAward", "dmgRecAward",
+                               "sleepAward"]:
+                if type(demo_awards[award_name]) == tuple:
+                    aw1, aw2, aw3 = demo_awards[award_name]
+                    if aw1[0] > -1:
+                        setattr(ba_awards, "{}1st".format(award_name), players[aw1[0]])
+                        setattr(ba_awards, "{}1stScore".format(award_name), aw1[1])
+                    else:
+                        setattr(ba_awards, "{}1st".format(award_name), None)
+                    if aw2[0] > -1:
+                        setattr(ba_awards, "{}2nd".format(award_name), players[aw2[0]])
+                        setattr(ba_awards, "{}2ndScore".format(award_name), aw2[1])
+                    else:
+                        setattr(ba_awards, "{}2nd".format(award_name), None)
+                    if aw3[0] > -1:
+                        setattr(ba_awards, "{}3rd".format(award_name), players[aw3[0]])
+                        setattr(ba_awards, "{}3rdScore".format(award_name), aw3[1])
+                    else:
+                        setattr(ba_awards, "{}3rd".format(award_name), None)
                 else:
-                    setattr(ba_awards, "{}1st".format(award_name), None)
-                if aw2[0] > -1:
-                    setattr(ba_awards, "{}2nd".format(award_name), players[aw2[0]])
-                    setattr(ba_awards, "{}2ndScore".format(award_name), aw2[1])
-                else:
-                    setattr(ba_awards, "{}2nd".format(award_name), None)
-                if aw3[0] > -1:
-                    setattr(ba_awards, "{}3rd".format(award_name), players[aw3[0]])
-                    setattr(ba_awards, "{}3rdScore".format(award_name), aw3[1])
-                else:
-                    setattr(ba_awards, "{}3rd".format(award_name), None)
-            else:
-                if demo_awards[award_name][0] > -1:
-                    setattr(ba_awards, award_name, players[demo_awards[award_name][0]])
-                    setattr(ba_awards, "{}Score".format(award_name), demo_awards[award_name][1])
-                else:
-                    setattr(ba_awards, award_name, None)
+                    if demo_awards[award_name][0] > -1:
+                        setattr(ba_awards, award_name, players[demo_awards[award_name][0]])
+                        setattr(ba_awards, "{}Score".format(award_name), demo_awards[award_name][1])
+                    else:
+                        setattr(ba_awards, award_name, None)
+        except KeyError as exc:
+            logger.exception('KeyError while saving BAwards: %r', exc)
         ba_awards.save()
 
     # XTAwards
