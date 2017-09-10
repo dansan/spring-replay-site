@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 import django.contrib.sitemaps.views
 
-from srs.feeds import LatestUploadsFeed, UploaderFeed, SRSLatestCommentFeed
+from srs.feeds import LatestUploadsFeed, GameFeed, UploaderFeed, SRSLatestCommentFeed
 from srs.sitemap import ReplaySitemap, PlayerAccountSitemap, HofSitemap
 from srs.views import all_comments, browse_archive, download, edit_replay, hall_of_fame, index, index_replay_range, login, logout, media, player, replay, replay_by_id, sldb_privacy_mode, ts_history_graph, user_settings
 from srs.ajax_views import BrowseReplaysDTView, CommentDTView, ajax_map_lookup, ajax_player_lookup, ajax_playerrating_tbl_src, ajax_playerreplays_tbl_src, ajax_winloss_tbl_src, gamerelease_modal, hof_tbl_src, maplinks_modal, modlinks_modal, ratinghistorygraph_modal
@@ -37,6 +37,7 @@ urlpatterns = [url(r'^$', index, name='srs/index'),
                url(r'^modlinks_modal/(?P<gameID>[0-9a-f]+)/$', modlinks_modal, name='srs/modlinks_modal'),
                url(r'^feeds/latest_comments/$', SRSLatestCommentFeed(), name='srs/feeds/latest_comments'),
                url(r'^feeds/latest/$', LatestUploadsFeed(), name='srs/feeds/latest'),
+               url(r'^feeds/game/(?P<game>[\w ]+)/$', GameFeed(), name='srs/feeds/game'),
                url(r'^feeds/uploader/(?P<username>[\w\ .:()\[\]-]+)/$', UploaderFeed(), name='srs/feeds/uploader'),
                url(r'^sldb_privacy_mode/$', sldb_privacy_mode, name='srs/sldb_privacy_mode'),
                url(r'^browse/(?P<bfilter>.*)$', browse_archive, name='srs/browse_archive'),

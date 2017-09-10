@@ -632,7 +632,7 @@ class Game(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return 'srs/game', [self.name]
+        return 'srs/browse_archive', ['game={}'.format(self.pk)]
 
     class Meta:
         ordering = ['name']

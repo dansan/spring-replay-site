@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django_comments.feeds import LatestCommentFeed
 
-from models import Replay
+from models import Game, GameRelease, Replay
 
 
 class LatestUploadsFeed(Feed):
@@ -25,6 +25,38 @@ class LatestUploadsFeed(Feed):
 
     def item_title(self, replay):
         return super(LatestUploadsFeed, self).item_title(replay.title)
+
+    def item_pubdate(self, item):
+        return item.unixTime
+
+    def item_author_name(self, item):
+        if item.autohostname:
+            return item.autohostname
+        else:
+            return str()
+
+
+class GameFeed(Feed):
+    description_template = 'feeds_replay_description.html'
+
+    def get_object(self, request, game):
+        return get_object_or_404(Game, name=game)
+
+    def title(self, game):
+        return "Replay uploads for %s" % game.name
+
+    def link(self, game):
+        return game.get_absolute_url()
+
+    def description(self, game):
+        return "Newest %s replays" % game.name
+
+    def items(self, game):
+        gr_names = GameRelease.objects.filter(game=game).values_list('name', flat=True)
+        return Replay.objects.filter(gametype__in=gr_names).order_by('-upload_date')[:20]
+
+    def item_title(self, replay):
+        return super(GameFeed, self).item_title(replay.title)
 
     def item_pubdate(self, item):
         return item.unixTime
