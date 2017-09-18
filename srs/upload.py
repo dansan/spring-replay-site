@@ -84,6 +84,10 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
 
 
 def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
+    # renice to 10
+    current_niceness = os.nice(0)
+    os.nice(max(0, 10 - current_niceness))
+
     timer.start("parse_uploaded_file()")
     timer.start("parse_demo_file.Parse_demo_file()")
     demofile = parse_demo_file.Parse_demo_file(path)
