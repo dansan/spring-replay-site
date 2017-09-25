@@ -35,14 +35,15 @@ short version:
     endGameCommand:python replay_upload.py -v -r %result -d %gameDuration "%type on %map" "autouploaded" "%type,%structure" "%demoFile" "<owner>"
     endGameCommandEnv:XMLRPC_USER=%ahName;XMLRPC_PASSWORD=%ahPassword
     endGameCommandMsg:(0)Demo file uploaded to http://replays.springrts.com/replay/%gameId|(1-9)Failed to upload demo file!
-* WARNING: this configuration will send your autohost password to the replay
-  site for authentication. If you don't want this to happen, you can create a
-  new Spring account just to upload the replays (replace %ahName and %ahPassword
-  by this account name and password in previous step).
-* if you choose to use a separate user account for uploading, it must have at
-  least some minutes of ingame time, or a automated cleanup program will remove
-  it after 3 month! So if you choose to use a separate user account you must
-  play or spectate at least one game with it!
+* if you wish to use another user account than the autohosts for authentication
+  to the replay site, you can use any other Spring account (replace %ahName and
+  %ahPassword previous step). If you choose to use a separate user account for
+  uploading, it must have at least some minutes of ingame time, or an automated
+  cleanup program will remove it after 3 month! So if you choose to use a
+  separate user account you must play or spectate at least one game with it!
+  As using two accounts make debugging problems more difficult it is
+  recommended to use the same account for uploading and the autohost, that is
+  %ahName / %ahPassword as in the exampole above.
 * if you wish to use bandwidth throttling, read the section "Bandwidth throttling"
 * restart SPADS
 
