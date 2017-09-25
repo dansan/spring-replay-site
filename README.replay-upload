@@ -1,7 +1,7 @@
 HOWTO make SPADS upload replays of games to replays.springrts.com
 =================================================================
 
-SPADS supports automatic uploading of "Spring Demo Files" (*.sdf) to the replays
+SPADS supports automatic uploading of "Spring Demo Files" (*.sdf[z]) to the replays
 website using an external Python script.
 
 Software requirements:
@@ -38,7 +38,11 @@ short version:
 * WARNING: this configuration will send your autohost password to the replay
   site for authentication. If you don't want this to happen, you can create a
   new Spring account just to upload the replays (replace %ahName and %ahPassword
-  by this account name and password in previous step)
+  by this account name and password in previous step).
+* if you choose to use a separate user account for uploading, it must have at
+  least some minutes of ingame time, or a automated cleanup program will remove
+  it after 3 month! So if you choose to use a separate user account you must
+  play or spectate at least one game with it!
 * if you wish to use bandwidth throttling, read the section "Bandwidth throttling"
 * restart SPADS
 
@@ -136,3 +140,10 @@ Error codes
 4 server or network error
 5 no error, but the match did not start or was shorter than 3 min. and thus the replay was not uploaded
 6 could not read spring demo file from disk
+
+
+Support
+-------
+Please report problems regarding replay upload to one of
+* Github: https://github.com/dansan/spring-replay-site/issues
+* Forum: https://springrts.com/phpbb/viewforum.php?f=88
