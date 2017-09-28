@@ -6,7 +6,7 @@
 # Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #
 # example cmdline call:
@@ -26,12 +26,12 @@ import argparse
 
 
 def main(argv=None):
-    XMLRPC_URL = "http://replays.springrts.com/xmlrpc/"
+    XMLRPC_URL = "https://replays.springrts.com/xmlrpc/"
 
     parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.",
                                      epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a "
                                             "lobby accounts credentials. XMLRPC_URL can also be set in your environment"
-                                            ", use 'http://replays-test.springrts.com/xmlrpc/' for upload testing "
+                                            ", use 'https://replays-test.springrts.com/xmlrpc/' for upload testing "
                                             "purposes.")
     parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %%gameDuration)", type=int,
                         default=9999)
