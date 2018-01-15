@@ -6,19 +6,11 @@ Please see srs_base.html for license information.
 -->
 {% endcomment %}
 
-{% block page_css %}
-  <style>
-  td, th {
-      padding: 5px;
-  }
-  </style>
-{% endblock %}
-
 {% block pagetitle %}Privacy Mode{% endblock %}
 
 {% block maincontent%}
     <div class="row">
-      <div class="col-sm-8 col-sm-offset-2">
+      <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-lg-6 col-sm-offset-4">
         <h1 class="page-header">SLDB Privacy Mode</h1>
   {% if current_privacy_mode >= 0 %}
     {% if in_post %}
@@ -35,15 +27,13 @@ Please see srs_base.html for license information.
     {% endfor %}
 
         <form action="{{ selfurl }}" method="post">{% csrf_token %}
-          <div class="table-responsive">
-            <table  class="table table-hover">
+          <div class="btn-group btn-group-toggle" data-toggle="buttons">
     {% for radio in form.mode %}
-              <tr>
-                  <td>{{ radio.tag }}</td>
-                  <td>{{ radio.choice_label|safe }}</td>
-              </tr>
+            <label class="btn btn-default btn-block{% if radio.data.selected %} active{% endif %}">
+      {{ radio.tag }}
+      {{ radio.choice_label|safe }}
+            </label>
     {% endfor %}
-            </table>
           </div>
           <p><br/><button type="submit" class="btn btn-primary">Submit</button></p>
         </form>

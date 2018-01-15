@@ -41,20 +41,14 @@ class EditReplayForm(forms.Form):
     tags = forms.CharField(widget=forms.TextInput(attrs={'size': '53'}), label="Tags (comma separated)", required=False)
 
 
-# class RadioSelectTableRenderer(forms.widgets.RadioFieldRenderer):
-#     def render(self):
-#         return mark_safe(u'\n'.join([u'<tr><td>%s</td></tr>' % force_unicode(w) for w in self]))
-
-
 class SLDBPrivacyForm(forms.Form):
     MODE_CHOICES = ((0,
-                     '<b>Privacy disabled</b>: your exact trueskill rating is shown to everyone on the replay website and in "!status" output on the autohosts.'),
+                     '<p><b>Privacy disabled</b>:<br>Your exact trueskill rating is shown to<br>everyone on the replay website and in<br>"!status" output on the autohosts.</p>'),
                     (1,
-                     '<b>Basic privacy enabled <u>(default)</u></b>: players and website visitors only see a rough estimate of your trueskill rating. If you log into the website you will still see your own exact ratings. On the autohosts only privileged users can still see an exact value in !status output.'),
+                     '<b>Basic privacy enabled <u>(default)</u></b>:<br>Players and website visitors only see a<br>rough estimate of your trueskill rating.<br>If you log into the website you will still<br>see your own exact ratings. On the autohosts<br>only privileged users can still see an exact value<br>in "!status" output.'),
                     (2,
-                     '<b>Full privacy enabled</b>: same as "Basic privacy", but even privileged autohost users see only a rough estimate in !status output.'))
-    mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES)#,
-#                             widget=forms.RadioSelect(renderer=RadioSelectTableRenderer))
+                     '<b>Full privacy enabled</b>:<br>Same as "Basic privacy", but even<br>privileged autohost users see only a rough<br>estimate in "!status" output.'))
+    mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect())
 
 
 def _game_choices():

@@ -582,6 +582,9 @@ def media(request, mediaid):
 @login_required
 @never_cache
 def sldb_privacy_mode(request):
+    """
+    0: Privacy disabled, 1: Basic privacy (default), 2: Full privacy
+    """
     c = all_page_infos(request)
 
     accountid = request.user.userprofile.accountid
