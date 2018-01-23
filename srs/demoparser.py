@@ -352,4 +352,5 @@ class Demoparser(object):
             cmd = "NETMSG_GAME_FRAME_PROGRESS"
             return self.write(locals(), "cmd")
         else:
-            logger.error("Unknown cmd found. packet: %s cmd: %s data: %s", packet, cmd, data)
+            pass
+            # logger.debug("Unknown cmd found. packet: %s cmd: %s data: %s", packet, cmd, data)
