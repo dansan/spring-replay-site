@@ -1,4 +1,5 @@
 User-agent: *
+Crawl-Delay: 10
 Disallow: /admin/
 Disallow: /xmlrpc/
 Disallow: /infolog/
@@ -7,4 +8,13 @@ user-agent: AhrefsBot
 Disallow: /
 
 User-agent: spbot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: dotbot
 Disallow: /
