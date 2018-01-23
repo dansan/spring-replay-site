@@ -436,6 +436,7 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
         logger.debug("Cache miss for SldbPlayerTSGraphCache.objects.get(account=%s, game=%s)", pa, game.sldb_name)
 
     # fetch new graphs
+    settings.SLDB_TIMEOUT = 10  # give SLDB more time for this
     query = _query_sldb("getPlayerSkillGraphs", game_abbr, accountid)
     # this returns either:
     # {   'TeamFFA': {'status': 0, 'graph': <xmlrpclib.Binary instance>},
