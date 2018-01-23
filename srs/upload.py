@@ -15,6 +15,7 @@ import pprint
 import magic
 import datetime
 import os
+import errno
 from os.path import join as path_join
 
 from django.db.models import Min
@@ -117,8 +118,18 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
         pass
 
     new_filename = os.path.basename(path).replace(" ", "_")
-    newpath = os.path.join(settings.REPLAYS_PATH, new_filename)
+    year = str(datetime.date.today().year)
+    month = str(datetime.date.today().month)
+    target_dir = os.path.join(settings.REPLAYS_PATH, year, month)
+    try:
+        os.makedirs(target_dir, 0o755)
+    except OSError as exc:
+        if getattr(exc, 'errno', 0) != errno.EEXIST:
+            logger.exception('Creating directory %r.', target_dir)
+            raise
+    newpath = os.path.join(target_dir, new_filename)
     shutil.move(path, newpath)
+    logger.info('Moved %r to %r.', path, newpath)
     os.chmod(newpath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
     try:
         timer.start("store_demofile_data()")
