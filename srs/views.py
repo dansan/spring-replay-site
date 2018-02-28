@@ -358,7 +358,7 @@ def download(request, gameID):
     try:
         filemagic = magic.from_file(path, mime=True)
     except IOError:
-        errmsg = 'File for replay(%d) "%s" not found.' % (replay.id, replay)
+        errmsg = 'File for replay(id=%r) %r not found: %r' % (replay.id, replay, path)
         logger.error(errmsg)
         raise Http404(errmsg)
     if filemagic.endswith("gzip") and not replay.filename.endswith(".sdfz"):
