@@ -1096,7 +1096,9 @@ def update_stats(force=False):
         bawards_stats = dict([(field, defaultdict(int)) for field in bawards_fields])
         for field in bawards_fields:
             arg = {"{}__isnull".format(field): False}
-            for pa in PlayerAccount.objects.filter(player__in=BAwards.objects.filter(**arg).values(field)):
+            for pa in PlayerAccount.objects.filter(
+                    player__in=BAwards.objects.exclude(replay__player__account__accountid=0).filter(**arg).values(field)
+            ):
                 bawards_stats[field][pa] += 1
             # converting dict to list, sort, keep only top 10
             bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
