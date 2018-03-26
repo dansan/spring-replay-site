@@ -31,7 +31,7 @@ from django_comments.models import Comment
 from srs.models import Allyteam, CursedAwards, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBConnectionError
+from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBError
 from srs.ajax_views import replay_filter
 from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
 from srs.utils import fix_missing_winner
@@ -104,7 +104,7 @@ def replay(request, gameID):
         match_skills = get_sldb_match_skills([replay.gameID])
         if match_skills:
             match_skills = match_skills[0]
-    except SLDBConnectionError as exc:
+    except SLDBError as exc:
         sldb_connection_error = True
         logger.error("get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         match_skills = {"status": 3}
@@ -394,7 +394,7 @@ def respect_privacy(request, accountid):
                 privacy = False
             else:
                 privacy = True
-        except SLDBConnectionError as exc:
+        except SLDBError as exc:
             logger.error("Could not retrieve privacyMode for accountid '%s' from SLDB: %s", accountid, exc)
             privacy = True
     return privacy
@@ -437,7 +437,7 @@ def ts_history_graph(request, game_abbr, accountid, match_type):
     else:
         try:
             graphs = get_sldb_player_ts_history_graphs(game_abbr, accountid)
-        except SLDBConnectionError as exc:
+        except SLDBError as exc:
             logger.error("get_sldb_player_ts_history_graphs(%r, %d): %s", game_abbr, accountid, exc)
             path = os.path.join(settings.IMG_PATH, "tsh_error.png")
     if not path:
@@ -456,7 +456,7 @@ def hall_of_fame(request, abbreviation):
     elif game.sldb_name != "":
         try:
             c["leaderboards"] = get_sldb_leaderboards(game)
-        except SLDBConnectionError as exc:
+        except SLDBError as exc:
             logger.error("get_sldb_leaderboards(%r): %s", game, exc)
     else:
         c["errmsg"] = "No ratings available for this game. Please choose one from the menu."
@@ -590,7 +590,7 @@ def sldb_privacy_mode(request):
     accountid = request.user.userprofile.accountid
     try:
         c["current_privacy_mode"] = get_sldb_pref(accountid, "privacyMode")
-    except SLDBConnectionError as exc:
+    except SLDBError as exc:
         logger.error("get_sldb_pref(%r, \"privacyMode\"): %s", accountid, exc)
         c["current_privacy_mode"] = -1
     logger.debug("current_privacy_mode: %s (user: %s)", str(c["current_privacy_mode"]), request.user)

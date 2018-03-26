@@ -29,7 +29,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from srs.common import all_page_infos
 from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, \
     Game
-from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBConnectionError
+from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBError
 
 
 logger = logging.getLogger("srs.views")
@@ -80,7 +80,7 @@ def ajax_playerrating_tbl_src(request, accountid):
             user = request.user if request.user.is_authenticated() else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
-            except SLDBConnectionError as exc:
+            except SLDBError as exc:
                 logger.error("Retrieving skill for player %s for game %s: %s", pa, game, exc)
                 continue
             else:
@@ -130,7 +130,7 @@ def ajax_winloss_tbl_src(request, accountid):
     for game in pa.get_all_games().exclude(sldb_name=""):
         try:
             player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
-        except SLDBConnectionError as exc:
+        except SLDBError as exc:
             logger.error("Retrieving stats for player %s for game %s: %s", pa, game, exc)
             continue
         else:

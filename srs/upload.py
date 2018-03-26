@@ -32,7 +32,7 @@ from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, Map
     PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming, CursedAwards
 import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
-from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBConnectionError
+from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBError
 
 logger = logging.getLogger("srs.upload")
 
@@ -677,7 +677,7 @@ def rate_match(replay):
                         "status"])
         else:
             raise Exception("no SLDB data")
-    except SLDBConnectionError as exc:
+    except SLDBError as exc:
         logger.error("in get_sldb_match_skills([%r]): %s", replay.gameID, exc)
         # use "skill" tag from demo data if available
         logger.info("Trying to use skill tag from demofile")

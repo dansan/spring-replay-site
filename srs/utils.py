@@ -9,7 +9,7 @@
 import logging
 from srs.models import Replay, SldbMatchSkillsCache
 from srs.springmaps import SpringMaps
-from srs.sldb import SLDBConnectionError, get_sldb_match_skills
+from srs.sldb import SLDBError, get_sldb_match_skills
 
 
 logger = logging.getLogger("srs.utils")
@@ -22,7 +22,7 @@ def fix_missing_winner(replay):
         match_skills = get_sldb_match_skills([replay.gameID])
         if match_skills:
             match_skills = match_skills[0]
-    except SLDBConnectionError as exc:
+    except SLDBError as exc:
         logger.error("get_sldb_match_skills(%s): %s", [replay.gameID], exc)
         return
 
