@@ -37,7 +37,7 @@ class SpringMaps:
         fetches map information from api.springfiles.com, stores it in self.map_info
         - may raise an Exception when connecting to server
         """
-        proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
+        proxy = ServerProxy('https://api.springfiles.com/xmlrpc.php', verbose=False)
         searchstring = {
             "category": "map",
             #         "logical" : "or",

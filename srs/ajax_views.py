@@ -252,7 +252,7 @@ def mapmodlinks(gameID):
     result = dict()
 
     try:
-        proxy = ServerProxy('http://api.springfiles.com/xmlrpc.php', verbose=False)
+        proxy = ServerProxy('https://api.springfiles.com/xmlrpc.php', verbose=False)
 
         searchstring = {"springname": gamename.replace(" ", "*"), "category": "game",
                         "torrent": False, "metadata": False, "nosensitive": True, "images": False}
