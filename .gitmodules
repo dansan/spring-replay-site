@@ -1,3 +1,9 @@
 [submodule "infolog-upload"]
 	path = infolog_upload
 	url = git@github.com:dansan/infolog-upload.git
+[submodule "SpringStatsViewer"]
+	path = SpringStatsViewer
+	url = git@github.com:springfiles/SpringStatsViewer.git
+[submodule "srs/SpringStatsViewer"]
+	path = srs/SpringStatsViewer
+	url = git@github.com:springfiles/SpringStatsViewer.git
