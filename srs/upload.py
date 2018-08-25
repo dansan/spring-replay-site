@@ -35,7 +35,6 @@ import srs.springmaps as springmaps
 from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBError
 
 logger = logging.getLogger("srs.upload")
-
 timer = None
 
 
@@ -84,7 +83,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     return msg
 
 
-def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
+def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True, reparse_if_exists=False):
     # renice to 10
     current_niceness = os.nice(0)
     os.nice(max(0, 10 - current_niceness))
@@ -102,10 +101,14 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         if replay.was_succ_uploaded:
             logger.warn("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
-            try:
-                os.remove(path)
-            except OSError as exc:
-                logger.warn("Could not remove file '%s': %s", path, exc)
+            if reparse_if_exists:
+                logger.warn("Reparsing...")
+                return reparse(replay)
+            if move:
+                try:
+                    os.remove(path)
+                except OSError as exc:
+                    logger.warn("Could not remove file '%s': %s", path, exc)
             raise AlreadyExistsError(demofile, replay, '3 uploaded replay already exists as "{}" at "{}"'.format(
                 replay.__unicode__(), replay.get_absolute_url()))
         else:
@@ -128,8 +131,12 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac):
             logger.exception('Creating directory %r.', target_dir)
             raise
     newpath = os.path.join(target_dir, new_filename)
-    shutil.move(path, newpath)
-    logger.info('Moved %r to %r.', path, newpath)
+    if move:
+        shutil.move(path, newpath)
+        logger.info('Moved %r to %r.', path, newpath)
+    else:
+        shutil.copy2(path, newpath)
+        logger.info('Copied %r to %r.', path, newpath)
     os.chmod(newpath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
     try:
         timer.start("store_demofile_data()")
@@ -909,3 +916,4 @@ def reparse(replay):
         except Exception as exc:
             logger.error("Error uploading platform stats for replay(%d | %s): %s", replay.id, replay, exc)
     logger.info('Finished reparse(%r).', replay)
+    return replay, '0 replay at "{}"'.format(replay.get_absolute_url())
