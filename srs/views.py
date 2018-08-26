@@ -28,13 +28,16 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django_comments.models import Comment
 
-from srs.models import Allyteam, CursedAwards, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption, NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats, SldbPlayerTSGraphCache, Tag, Team, UploadTmp, XTAwards, get_owner_list, update_stats
+from srs.models import (Allyteam, CursedAwards, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption,
+                        NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats,
+                        SldbPlayerTSGraphCache, Tag, Team, TeamStats, UploadTmp, XTAwards, get_owner_list, update_stats)
 from srs.common import all_page_infos
 from srs.upload import save_tags, set_autotag, save_desc
 from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBError
 from srs.ajax_views import replay_filter
 from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
 from srs.utils import fix_missing_winner
+from srs.match_stats import MatchStatsGeneration
 
 #add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger("srs.views")
@@ -711,3 +714,17 @@ def browse_archive(request, bfilter):
     else:
         c["filters"] = ""
     return render(request, 'browse_archive.html', c)
+
+
+def team_stat_div(request, ts_id):
+    ts = TeamStats.objects.get(pk=ts_id)
+    ts_reversed = [
+        {
+            'name': _ts['name'],
+            'x': _ts['x'],
+            'y': [val/15.0 if index == 0 else (val - _ts['y'][index-1])/15.0 for index, val in enumerate(_ts['y'])]
+        }
+        for _ts in ts.decompressed
+    ]
+    div_str = MatchStatsGeneration.get_team_stat_plot(TeamStats.graphid2label[ts.stat_type], ts_reversed)  # ts.decompressed)
+    return HttpResponse(content=div_str)

@@ -10,6 +10,8 @@
 
 import re
 import sys
+import zlib
+import json
 from struct import unpack
 from time import localtime, strftime
 from datetime import timedelta
@@ -18,6 +20,8 @@ import magic
 import gzip
 import struct
 import logging
+import threading
+from srs.match_stats import MatchStatsGeneration
 
 
 if not hasattr(magic, "from_file"):
@@ -114,6 +118,10 @@ class Parse_demo_file():
                            "quit": dict(),
                            "kicked": dict(),
                            "timeout": dict()}
+        self.player_stats = None
+        self.team_stats = None
+        self.stats_thread = None
+        self.tmp_stats = {}
 
     def read_blob(self, seek_size, blob_size):
         self.demofile.seek(seek_size)
@@ -172,15 +180,21 @@ class Parse_demo_file():
         #  'versionString': '103',
         #  'wallclockTime': '0:30:43',
         #  'winningAllyTeamsSize': 1}
+        self.start_stats_thread()
         with myopen(self.filename, "rb") as self.demofile:
             self.parse_header()            # pos:       0 -     352 (0 -> headerSize)
             self.parse_script()            # pos:     352 -    4885 (headerSize -> + scriptSize)
             self.parse_demostream()        # pos:    4885 - 3093743 (headerSize + scriptSize -> + demoStreamSize | END)
             #                                                        352 + 4533 + 3088877 = 3093762
-            self.parse_player_stats()      # pos:       ? -       ? (numPlayers * playerStatElemSize = playerStatSize -> 23 * 20 = 460)
-            self.parse_team_stats()        # pos:       ? -       ? (teamStatSize = numTeams * char/uint (size of teams stats)
+            # self.parse_player_stats()      # pos:       ? -       ? (numPlayers * playerStatElemSize = playerStatSize -> 23 * 20 = 460)
+            # self.parse_team_stats()        # pos:       ? -       ? (teamStatSize = numTeams * char/uint (size of teams stats)
             #                                                                       + numTeams * teams stats * teamStatElemSize)
             self.parse_winningAllyTeams()  # pos: 3093762 - 3093763 (headerSize + scriptSize + demoStreamSize -> + winningAllyTeamsSize)
+        logger.debug('Waiting for stats thread...')
+        self.join_stats_thread()
+        logger.info('Stats thread finished.')
+        logger.debug('len(self.player_stats)=%d', len(self.player_stats))
+        logger.debug('len(self.team_stats)=%d', len(self.team_stats))
 
     def parse_header(self):
         #
@@ -585,11 +599,46 @@ class Parse_demo_file():
             if not hasattr(player, "connected"):
                 self.additional["not_connected"][pnum] = player
 
+    def start_stats_thread(self):
+        if not self.stats_thread:
+            self.tmp_stats = {}
+            self.stats_thread = threading.Thread(
+                target=self.get_match_stats,
+                args=(self.filename, self.tmp_stats)
+            )
+            self.stats_thread.start()
+        return self.stats_thread
+
+    def join_stats_thread(self):
+        if self.stats_thread:
+            self.stats_thread.join()
+            self.stats_thread = None
+            self.player_stats = self.tmp_stats['player_stats']
+            self.team_stats = self.tmp_stats['team_stats']
+            self.tmp_stats = {}
+
+    @staticmethod
+    def get_match_stats(filename, stats):
+        match_stats_generation = MatchStatsGeneration(filename)
+        stats['player_stats'], stats['team_stats'] = match_stats_generation.make_stats()
+
     def parse_player_stats(self):
-        pass  # TODO
+        if not self.player_stats:
+            self.start_stats_thread()
+            self.join_stats_thread()
+        return self.player_stats
 
     def parse_team_stats(self):
-        pass  # TODO
+        if not self.team_stats:
+            self.start_stats_thread()
+            self.join_stats_thread()
+        return self.team_stats
+
+    def player_stats_as_jsonz(self):
+        return zlib.compress(json.dumps(self.player_stats))
+
+    def team_stats_as_jsonz(self):
+        return dict((k, zlib.compress(json.dumps(v))) for k, v in self.team_stats.items())
 
 
 def main(argv=None):

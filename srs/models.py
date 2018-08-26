@@ -11,7 +11,9 @@ import operator
 from os.path import basename
 import datetime
 import os
-from collections import defaultdict, Counter
+import zlib
+import json
+from collections import defaultdict, Counter, OrderedDict
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -387,6 +389,57 @@ class Replay(models.Model):
         except ObjectDoesNotExist:
             return None
         return sorted(res.items(), key=operator.itemgetter(0))
+
+
+class PlayerStats(models.Model):
+    replay = models.ForeignKey(Replay)
+    stats = models.BinaryField(blank=True, null=True, default=None)
+
+    @property
+    def decompressed(self):
+        return json.loads(zlib.decompress(self.stats))
+
+    def __unicode__(self):
+        return u'PlayerStats(pk={}, replay.pk={}, {!r}...)'.format(self.pk, self.replay.pk, self.stats[:4])
+
+
+class TeamStats(models.Model):
+    replay = models.ForeignKey(Replay)
+    stat_type = models.CharField(max_length=32)
+    stats = models.BinaryField(blank=True, null=True, default=None)
+
+    graphid2label = OrderedDict((
+        ('metalUsed', 'Metal Used'),
+        ('metalProduced', 'Metal Produced'),
+        ('metalExcess', 'Metal Excess'),
+        ('metalReceived', 'Metal Received'),
+        ('metalSent', 'Metal Sent'),
+        ('energyUsed', 'Energy Used'),
+        ('energyProduced', 'Energy Produced'),
+        ('energyExcess', 'Energy Excess'),
+        ('energyReceived', 'Energy Received'),
+        ('energySent', 'Energy Sent'),
+        ('damageDealt', 'Damage Dealt'),
+        ('damageReceived', 'Damage Received'),
+        ('unitsProduced', 'Units Produced'),
+        ('unitsKilled', 'Units Killed'),
+        ('unitsDied', 'Units Died'),
+        ('unitsReceived', 'Units Received'),
+        ('unitsSent', 'Units Sent'),
+        ('unitsCaptured', 'Units Captured'),
+        ('unitsOutCaptured', 'Units Stolen'),
+    ))
+
+    @property
+    def decompressed(self):
+        return json.loads(zlib.decompress(self.stats))
+
+    @property
+    def label(self):
+        return self.graphid2label[self.stat_type]
+
+    def __unicode__(self):
+        return u'TeamStats(pk={}, replay.pk={}, stat_type={}, {!r}...)'.format(self.pk, self.replay.pk, self.stat_type, self.stats[:4])
 
 
 class AdditionalReplayInfo(models.Model):

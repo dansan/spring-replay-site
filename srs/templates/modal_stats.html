@@ -1,0 +1,57 @@
+{% comment %}
+<!--
+Please see srs_base.html for license information.
+-->
+{% endcomment %}
+          {% js_lib "plotly.min.js" %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Statistics</h4>
+          </div>
+          <div class="modal-body">
+{% if error %}
+            <p class="text-danger"><h5>Error retrieving information</h5></p>
+            <p class="text-danger">{{ error|safe }}</p>
+{% else %}
+            <h5>Player Statistics</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-condensed">
+                    <thead>
+                        <tr>
+    {% for stat_name in player_stats_header %}
+                            <th>{{ stat_name }}</th>
+    {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+    {% for name, color, stats in player_stats %}
+                      <tr>
+                        <td><span{% if color %} style="color: #{{ color }};"{% endif %}>{{ name }}</span></td>
+        {% for stat in stats %}
+                        <td>{{ stat|floatformat:1 }}</td>
+        {% endfor %}
+                      </tr>
+    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <h5>Team Statistics</h5>
+    {% if error_ts %}
+            <p class="text-danger">{{ error_ts|safe }}</p>
+    {% else %}
+        {% for label, ts_pk in team_stats %}
+            <div id="ts-{{ ts_pk }}">
+            </div>
+        {% endfor %}
+            <script>
+        {% for label, ts_pk in team_stats %}
+            $(document).ready(function(){$("#ts-{{ ts_pk }}").load("{% url 'srs/team_stat_div' ts_pk %}");});
+            $(window).resize(function(){$(".plotly-graph-div").each(function() {Plotly.Plots.resize(this)});});
+        {% endfor %}
+            </script>
+    {% endif %}
+{% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>

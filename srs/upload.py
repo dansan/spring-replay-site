@@ -28,8 +28,9 @@ import django.utils.timezone
 
 import coreapi
 
-from srs.models import AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player, \
-    PlayerAccount, RatingHistory, Replay, Tag, Team, UploadTmp, XTAwards, SrsTiming, CursedAwards
+from srs.models import (AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player,
+                        PlayerAccount, PlayerStats, RatingHistory, Replay, Tag, Team, TeamStats, UploadTmp, XTAwards,
+                        SrsTiming, CursedAwards)
 import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
 from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBError
@@ -629,6 +630,13 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
         elif k == "awards":
             v = ba_awards
         logger.info("demofile.additional[%r]: %s", k, pp.pformat(v))
+
+    ps, created = PlayerStats.objects.get_or_create(replay=replay, defaults={'stats': demofile.player_stats_as_jsonz()})
+    logger.debug('%s %s', 'Created' if created else 'Updated', ps)
+    if demofile.team_stats:
+        for k, v in demofile.team_stats_as_jsonz().items():
+            ts, created = TeamStats.objects.get_or_create(replay=replay, stat_type=k, defaults={'stats': v})
+            logger.debug('%s %s', 'Created' if created else 'Updated', ts)
 
     replay.published = True
     replay.save()

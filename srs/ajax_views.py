@@ -26,9 +26,8 @@ from django.db.models import Q
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import ObjectDoesNotExist
 
-from srs.common import all_page_infos
-from srs.models import PlayerAccount, Map, Rating, Replay, GameRelease, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, \
-    Game
+from srs.models import (Game, GameRelease, Player, PlayerAccount, PlayerStats, Map, Rating, Replay,
+                        SldbLeaderboardPlayer, SldbPlayerTSGraphCache, TeamStats)
 from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBError
 
 
@@ -230,18 +229,18 @@ def ajax_playerreplays_tbl_src(request, accountid):
 
 
 def gamerelease_modal(request, gameid):
-    c = all_page_infos(request)
-    c["gameversions"] = GameRelease.objects.filter(game__id=gameid).order_by("-id")
+    c = {'gameversions': GameRelease.objects.filter(game__id=gameid).order_by("-id")}
     return render(request, 'modal_gameversions.html', c)
 
 
 def ratinghistorygraph_modal(request, game_abbr, accountid, match_type):
-    c = all_page_infos(request)
-    c["game_abbr"] = game_abbr
-    c["game_verbose"] = Game.objects.get(sldb_name=game_abbr).name
-    c["accountid"] = accountid
-    c["match_type"] = match_type
-    c["match_type_verbose"] = SldbPlayerTSGraphCache.match_type2sldb_name[match_type]
+    c = {
+        'game_abbr': game_abbr,
+        'game_verbose': Game.objects.get(sldb_name=game_abbr).name,
+        'accountid': accountid,
+        'match_type': match_type,
+        'match_type_verbose': SldbPlayerTSGraphCache.match_type2sldb_name[match_type],
+    }
     return render(request, 'modal_rating_history_graph.html', c)
 
 
@@ -270,8 +269,7 @@ def mapmodlinks(gameID):
 
 
 def maplinks_modal(request, gameID):
-    c = all_page_infos(request)
-
+    c = {}
     mml = mapmodlinks(gameID)
     for k, v in mml.items():
         c[k] = v
@@ -280,13 +278,53 @@ def maplinks_modal(request, gameID):
 
 
 def modlinks_modal(request, gameID):
-    c = all_page_infos(request)
-
+    c = {}
     mml = mapmodlinks(gameID)
     for k, v in mml.items():
         c[k] = v
 
     return render(request, 'modal_modlinks.html', c)
+
+
+def stats_modal(request, gameID):
+    c = {}
+    try:
+        # player stats
+        ps = PlayerStats.objects.get(replay__gameID=gameID).decompressed
+        # team stats
+        ts = dict(
+            (_ts['stat_type'], _ts['pk'])
+            for _ts in TeamStats.objects.filter(replay__gameID=gameID).values('pk', 'stat_type')
+        )  # evaluate filter immediately to get all TeamStats objects with one SQL query
+    except (PlayerStats.DoesNotExist, TeamStats.DoesNotExist):
+        c['error'] = 'No statistics have been found for this match. That happens when the replay file is very old, ' \
+                     'incomplete or broken.'
+    else:
+        # player stats
+        stat_order = ('mouseClicks', 'mousePixels', 'keyPresses', 'numCommands', 'unitCommands')
+        c['player_stats_header'] = ('Player', 'MC/min', 'MP/min', 'KP/min', 'Cmd/min', 'Units/cmd')
+        player_colors = dict(
+            (player.name.lower(), player.team.rgbcolor)
+            for player in Player.objects.filter(replay__gameID=gameID, spectator=False)
+        )
+        c['player_stats'] = (
+            (
+                player,
+                player_colors.get(player.lower(), ''),
+                [p_stats[s]/float(p_stats['numCommands']) if s == 'unitCommands' else p_stats[s]/60.0 for s in stat_order]
+            )
+            for player, p_stats in ps.items()
+        )
+        # team stats
+        # sort by stats type
+        c['team_stats'] = []
+        for graphid, label in TeamStats.graphid2label.items():
+            try:
+                c['team_stats'].append((label, ts[graphid]))
+            except KeyError:
+                c['error_ts'] = 'No or incomplete team statistics. That happens when the replay file is very old, ' \
+                                'incomplete or broken.'
+    return render(request, 'modal_stats.html', c)
 
 
 def replay_filter(queryset, filter_name):

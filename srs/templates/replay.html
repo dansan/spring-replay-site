@@ -73,6 +73,7 @@ Please see srs_base.html for license information.
               <p><span itemscope itemtype="http://schema.org/DataDownload"><a class="btn btn-default" role="button" href="{% url "srs/download" replay.gameID %}" title="download this replay" itemprop="contentUrl"><span class="ionicons ion-refresh"></span> replay</a></span>
                 <button class="btn btn-default" data-toggle="modal" data-target="#mapModal" href="{% url "srs/maplinks_modal" replay.gameID %}" title="download this map ({{ replay.map_info.name }})"><span class="ionicons ion-map"></span> map</button>
                 <button class="btn btn-default" data-toggle="modal" data-target="#modModal" href="{% url "srs/modlinks_modal" replay.gameID %}" title="download this game ({{ replay.gametype }})"><span class="ionicons ion-game-controller-b"></span> game</button>
+                <button class="btn btn-default" data-toggle="modal" data-target="#statsModal" href="{% url "srs/stats_modal" replay.gameID %}" title="Player and team statistics"><span class="ionicons ion-stats-bars"></span> stats</button>
               </p>
               {% if user == replay.uploader %}<p class="text-success">Your upload: <a href="{% url "srs/edit_replay" replay.gameID %}">Edit text / tags</a></p>{% endif %}
               {% if user.is_staff %}<p class="text-success"><a href="{% url 'admin:srs_replay_change' replay.pk %}">replay @admin site</a></p>{% endif %}
@@ -134,7 +135,7 @@ Please see srs_base.html for license information.
         {% endif %}
         {% for p, pl_old, pl_new in players %}
                   <tr class="body linehl bold{% if at.winner %} blind_winner_team{% endif %}">
-                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }}</span> <a href="{{ p.get_absolute_url }}" style="text-decoration: None;" itemprop="url"><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %}>{{ p.name }}</span></a>{% else %}</span><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %}>{{ p.name }}</span>{% endif %}{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
+                    <td itemprop="agent" itemscope itemtype="http://schema.org/Person"><span style="color: #{{ p.team.rgbcolor }};">{% if p.account.accountid != 0 %}{{ p.team.num }} <a href="{{ p.get_absolute_url }}" style="text-decoration: None;" itemprop="url"><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %} style="color: #{{ p.team.rgbcolor }};">{{ p.name }}</span></a>{% else %}</span><span itemprop="name"{% if at.winner %} class="blind_winner_team"{% endif %} style="color: #{{ p.team.rgbcolor }};">{{ p.name }}</span>{% endif %}</span>{% if is_draw %}<link itemprop="additionalType" href="http://schema.org/TieAction"/>{% else %}{% if at.winner %}<link itemprop="additionalType" href="http://schema.org/WinAction"/>{% else %}<link itemprop="additionalType" href="http://schema.org/LoseAction"/>{% endif %}{% endif %}</td>
                     <td>{{ p.team.side|ljust:"4" }}</td>
           {% if has_bot %}
                     <td></td>
@@ -621,7 +622,7 @@ Please see srs_base.html for license information.
     </div> <!-- row -->
   {% endif %}
 
-<!-- Map & Mod download modals -->
+<!-- Map and Mod download and Stats modals -->
 
     <div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -633,6 +634,14 @@ Please see srs_base.html for license information.
 
     <div class="modal fade" id="modModal" tabindex="-1" role="dialog" aria-labelledby="modModalLabel" aria-hidden="true">
       <div class="modal-dialog">
+        <div class="modal-content">
+        <!-- this div will be filled using jQuery's load with URL from button -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
         <!-- this div will be filled using jQuery's load with URL from button -->
         </div>

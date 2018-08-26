@@ -5,8 +5,13 @@ import django.contrib.sitemaps.views
 
 from srs.feeds import LatestUploadsFeed, GameFeed, UploaderFeed, SRSLatestCommentFeed
 from srs.sitemap import ReplaySitemap, PlayerAccountSitemap, HofSitemap
-from srs.views import all_comments, browse_archive, download, edit_replay, hall_of_fame, index, index_replay_range, login, logout, media, player, replay, replay_by_id, sldb_privacy_mode, ts_history_graph, user_settings
-from srs.ajax_views import BrowseReplaysDTView, CommentDTView, ajax_map_lookup, ajax_player_lookup, ajax_playerrating_tbl_src, ajax_playerreplays_tbl_src, ajax_winloss_tbl_src, gamerelease_modal, hof_tbl_src, maplinks_modal, modlinks_modal, ratinghistorygraph_modal
+from srs.views import (all_comments, browse_archive, download, edit_replay, hall_of_fame, index, index_replay_range,
+                       login, logout, media, player, replay, replay_by_id, sldb_privacy_mode, team_stat_div,
+                       ts_history_graph, user_settings)
+from srs.ajax_views import (BrowseReplaysDTView, CommentDTView, ajax_map_lookup, ajax_player_lookup,
+                            ajax_playerrating_tbl_src, ajax_playerreplays_tbl_src, ajax_winloss_tbl_src,
+                            gamerelease_modal, hof_tbl_src, maplinks_modal, modlinks_modal, ratinghistorygraph_modal,
+                            stats_modal)
 from srs.upload_views import upload, upload_media
 import django_xmlrpc.views
 
@@ -35,6 +40,7 @@ urlpatterns = [url(r'^$', index, name='srs/index'),
                url(r'^xmlrpc/$', django_xmlrpc.views.handle_xmlrpc, name='srs/xmlrpc'),
                url(r'^maplinks_modal/(?P<gameID>[0-9a-f]+)/$', maplinks_modal, name='srs/maplinks_modal'),
                url(r'^modlinks_modal/(?P<gameID>[0-9a-f]+)/$', modlinks_modal, name='srs/modlinks_modal'),
+               url(r'^stats_modal/(?P<gameID>[0-9a-f]+)/$', stats_modal, name='srs/stats_modal'),
                url(r'^feeds/latest_comments/$', SRSLatestCommentFeed(), name='srs/feeds/latest_comments'),
                url(r'^feeds/latest/$', LatestUploadsFeed(), name='srs/feeds/latest'),
                url(r'^feeds/game/(?P<game>[\w ]+)/$', GameFeed(), name='srs/feeds/game'),
@@ -50,6 +56,7 @@ urlpatterns = [url(r'^$', index, name='srs/index'),
                    ts_history_graph, name='srs/ts_history_graph'),
                url(r'^ts_history_modal/(?P<game_abbr>[A-Z0-9]+)/(?P<accountid>[\d]+)/(?P<match_type>[1TFGL])/$',
                    ratinghistorygraph_modal, name='srs/ratinghistorygraph_modal'),
+               url(r'^team_stat_div/(?P<ts_id>[\d-]+)/$', team_stat_div, name='srs/team_stat_div'),
                url(r'^gamerelease/(?P<gameid>[\d-]+)/$', gamerelease_modal, name='srs/gamerelease_modal'),
                url(r'^hall_of_fame/(?P<abbreviation>[\w\ .:()\[\]-]+)/$', hall_of_fame, name='srs/hall_of_fame'),
                url(r'^hof_tbl_src/(?P<leaderboardid>[\d-]+)/$', hof_tbl_src, name='srs/hof_tbl_src'),
