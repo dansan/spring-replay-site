@@ -631,12 +631,15 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
             v = ba_awards
         logger.info("demofile.additional[%r]: %s", k, pp.pformat(v))
 
-    ps, created = PlayerStats.objects.get_or_create(replay=replay, defaults={'stats': demofile.player_stats_as_jsonz()})
-    logger.debug('%s %s', 'Created' if created else 'Updated', ps)
-    if demofile.team_stats:
-        for k, v in demofile.team_stats_as_jsonz().items():
-            ts, created = TeamStats.objects.get_or_create(replay=replay, stat_type=k, defaults={'stats': v})
-            logger.debug('%s %s', 'Created' if created else 'Updated', ts)
+    if demofile.player_stats:
+        ps, created = PlayerStats.objects.get_or_create(replay=replay, defaults={'stats': demofile.player_stats_as_jsonz()})
+        logger.debug('%s %s', 'Created' if created else 'Updated', ps)
+        if demofile.team_stats:
+            for k, v in demofile.team_stats_as_jsonz().items():
+                ts, created = TeamStats.objects.get_or_create(replay=replay, stat_type=k, defaults={'stats': v})
+                logger.debug('%s %s', 'Created' if created else 'Updated', ts)
+    else:
+        logger.error('No player stats.')
 
     replay.published = True
     replay.save()
