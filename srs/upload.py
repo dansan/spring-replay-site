@@ -84,7 +84,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     return msg
 
 
-def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True, reparse_if_exists=False):
+def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True, reparse_if_exists=True):
     # renice to 10
     current_niceness = os.nice(0)
     os.nice(max(0, 10 - current_niceness))
@@ -103,8 +103,8 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True
         if replay.was_succ_uploaded:
             logger.warn("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
             if reparse_if_exists:
-                logger.warn("Reparsing...")
-                return reparse(replay)
+                logger.warn("########### Reparsing... ###########")
+                return reparse(replay, path, tags, subject, comment, owner_ac)
             if move:
                 try:
                     os.remove(path)
@@ -141,7 +141,7 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True
     os.chmod(newpath, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
     try:
         timer.start("store_demofile_data()")
-        replay = store_demofile_data(demofile, tags, newpath, new_filename, subject, comment, owner_ac)
+        replay = store_demofile_data(demofile, tags, newpath, subject, comment, owner_ac)
     except:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("Error in store_demofile_data()")
@@ -203,7 +203,7 @@ def save_uploaded_file(ufile, filename):
     return path, len(ufile)
 
 
-def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
+def store_demofile_data(demofile, tags, path, short, long_text, user):
     """
     Store all data about this replay in the database,
     if replay exists, all argument except 'demofile' are ignored
@@ -900,11 +900,12 @@ def del_replay(replay):
     UploadTmp.objects.filter(replay=replay).delete()
 
 
-def reparse(replay):
+def reparse(replay, path=None, tags=None, subject=None, comment=None, owner_ac=None):
     """
     Update data from stored demofile (to use new features)
     """
-    path = path_join(replay.path, replay.filename)
+    path = path or path_join(replay.path, replay.filename)
+
     try:
         demofile = parse_demo_file.Parse_demo_file(path)
         demofile.check_magic()
@@ -915,8 +916,14 @@ def reparse(replay):
         raise exc
     if not replay.gameID == demofile.header["gameID"]:
         raise Exception("self.gameID(%s) != demofile.header[gameID](%s)" % (replay.gameID, demofile.header["gameID"]))
-
-    store_demofile_data(demofile, None, None, None, None, None, None)
+    store_demofile_data(
+        demofile,
+        tags or ','.join(replay.tags.all().values_list('name', flat=True)),
+        path,
+        subject or replay.title,
+        comment or replay.long_text,
+        owner_ac or replay.uploader
+    )
 
     if 'ba_platform_stats' in demofile.additional:
         try:
