@@ -726,5 +726,9 @@ def team_stat_div(request, ts_id):
         }
         for _ts in ts.decompressed
     ]
-    div_str = MatchStatsGeneration.get_team_stat_plot(TeamStats.graphid2label[ts.stat_type], ts_reversed)  # ts.decompressed)
+    div_str = MatchStatsGeneration.get_team_stat_plot(
+        TeamStats.graphid2label[ts.stat_type],
+        ts_reversed,
+        'markers' if ts.stat_type in ('unitsReceived', 'unitsSent', 'unitsCaptured', 'unitsOutCaptured') else 'lines'
+    )
     return HttpResponse(content=div_str)

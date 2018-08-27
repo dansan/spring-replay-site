@@ -87,10 +87,10 @@ class MatchStatsGeneration(object):
         return playerstats_res, teamstats_plotly_kwargs
 
     @staticmethod
-    def get_team_stat_plot(title, plotly_kwargs):
-        # type: (str, List[Dict[str, Union[str, List[float]]]]) -> str
+    def get_team_stat_plot(title, plotly_kwargs, graph_type='lines'):
+        # type: (str, List[Dict[str, Union[str, List[float]]]], Optional[str]) -> str
         plot_data = [
-            go.Scatter(**kwargs)
+            go.Scatter(mode=graph_type, **kwargs)
             for kwargs in plotly_kwargs
         ]
         layout = go.Layout(
