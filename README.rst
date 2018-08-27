@@ -33,6 +33,7 @@ Dependencies
 - selectize.js: https://github.com/brianreavis/selectize.js/
 - bootstrap-daterangepicker: https://github.com/dangrossman/bootstrap-daterangepicker/
 - Moment.js: http://momentjs.com/
+- requests: http://docs.python-requests.org/en/master/ (apt: python-requests)
 
 (regarding python: make a virtenv and use requirements.txt)
 

@@ -11,13 +11,13 @@
 import sys
 from xmlrpclib import ServerProxy
 import pprint
-import urllib
 import random
 from PIL import Image, ImageFont, ImageDraw, ImageColor
 import logging
 from shutil import copyfile
 from os.path import join as path_join, exists as path_exists
 
+import requests
 from django.conf import settings
 from srs.models import Allyteam, Player
 
@@ -65,8 +65,15 @@ class SpringMaps:
             self.fetch_info()
         if self.map_info:
             map_url = self.map_info[0]['mapimages'][0]
-            urllib.urlretrieve(map_url, self.full_image_filepath)
-            logger.info("Downloaded map image from %r into %r.", map_url, self.full_image_filepath)
+            logger.info("Downloaded map image from %r into %r...", map_url, self.full_image_filepath)
+            response = requests.get(map_url, stream=True)
+            if response.status_code == 200:
+                with open(self.full_image_filepath, 'wb') as fp:
+                    for chunk in response:
+                        fp.write(chunk)
+            else:
+                logger.error('Could not download image %r. Setting image to "map_img_not_avail.jpg".')
+                copyfile(path_join(settings.IMG_PATH, 'map_img_not_avail.jpg'), self.full_image_filepath)
         else:
             logger.warn("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
             copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), self.full_image_filepath)
