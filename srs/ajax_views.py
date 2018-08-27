@@ -311,7 +311,9 @@ def stats_modal(request, gameID):
             (
                 player,
                 player_colors.get(player.lower(), ''),
-                [p_stats[s]/float(p_stats['numCommands']) if s == 'unitCommands' else p_stats[s]/60.0 for s in stat_order]
+                [0.0 if p_stats['numCommands'] == 0 else
+                 p_stats[s]/float(p_stats['numCommands']) if s == 'unitCommands' else p_stats[s]/60.0 for s in stat_order
+                 ]
             )
             for player, p_stats in ps.items()
         )
