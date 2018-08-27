@@ -324,8 +324,8 @@ def stats_modal(request, gameID):
             try:
                 c['team_stats'].append((label, ts[graphid]))
             except KeyError:
-                c['error_ts'] = 'No or incomplete team statistics. That happens when the replay file is very old, ' \
-                                'incomplete or broken.'
+                c['error_ts'] = 'No or incomplete team statistics. Autohosts don\'t create them. Upload your own ' \
+                                'demofile to see them.'
     return render(request, 'modal_stats.html', c)
 
 

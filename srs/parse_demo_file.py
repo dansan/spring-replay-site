@@ -118,6 +118,7 @@ class Parse_demo_file():
                            "quit": dict(),
                            "kicked": dict(),
                            "timeout": dict()}
+        self.script = ''
         self.player_stats = None
         self.team_stats = None
         self.stats_thread = None

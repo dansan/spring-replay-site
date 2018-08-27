@@ -130,7 +130,7 @@ class Replay(models.Model):
     published = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return "Replay({}, {}, {})".format(self.pk, self.gameID, self.title)
+        return "Replay({}, {!r}, {!r})".format(self.pk, self.gameID, self.title)
 
     def to_dict(self):
         return {"id": self.id,

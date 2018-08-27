@@ -208,10 +208,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     Store all data about this replay in the database,
     if replay exists, all argument except 'demofile' are ignored
     """
-    logger.info("tags='%s' path='%s' filename='%s' short='%s' long_text='%s' user='%s'",
-                tags, path, filename, short, long_text, user)
-    logger.info("gameID='%s'", demofile.header["gameID"])
     global timer
+    logger.info('gameID=%r tags=%r path=%r short=%r long_text=%r user=%r', demofile.header['gameID'], tags, path, short, long_text, user)
     if not timer:
         timer = SrsTiming()
     #     pp = pprint.PrettyPrinter(depth=6)
@@ -219,7 +217,7 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         replay.download_count = 0
-        logger.debug("reparsing existing Replay(%d) %s (%s)", replay.id, replay, replay.gameID)
+        logger.debug("reparsing existing %s", replay)
     except ObjectDoesNotExist:
         replay = Replay()
         logger.debug("new Replay: gameID: %s", demofile.header["gameID"])
@@ -552,9 +550,8 @@ def store_demofile_data(demofile, tags, path, filename, short, long_text, user):
     # auto add tag 1v1 2v2 etc.
     autotag = set_autotag(replay)
 
-    if short is not None and long_text is not None:
-        # save descriptions
-        save_desc(replay, short, long_text, autotag)
+    # save descriptions
+    save_desc(replay, short, long_text, autotag)
     timer.stop("  tags + descriptions")
 
     timer.start("  demofile.additional")
@@ -790,8 +787,8 @@ def rate_matches(replays):
             for match in current32:
                 try:
                     rate_match(match)
-                except Exception, e:
-                    logger.exception(e)
+                except Exception as exc:
+                    logger.exception(exc)
             logger.info("done 32")
             current32 = list()
 

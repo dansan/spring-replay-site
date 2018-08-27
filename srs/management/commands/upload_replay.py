@@ -16,7 +16,10 @@ import os.path
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from srs.models import SrsTiming
-from srs.upload import parse_uploaded_file, timer
+from srs.upload import parse_uploaded_file, timer as timer_
+
+
+timer = timer_
 
 
 class Command(BaseCommand):
@@ -34,9 +37,11 @@ class Command(BaseCommand):
         if not os.path.exists(path):
             raise CommandError('File {!r} does not exist.'.format(path))
 
-        timer = SrsTiming()
+        if not timer:
+            timer = SrsTiming()
         timer.start("cmdline_upload()")
         UserModel = get_user_model()
         user = UserModel.objects.get(username='root')
         replay, msg = parse_uploaded_file(path, timer, None, None, 'Uploaded on cmdline.', user, False, True)
         self.stdout.write('Replay(id={}): {}'.format(replay.pk, msg))
+        timer.stop("cmdline_upload()")

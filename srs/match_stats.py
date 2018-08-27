@@ -15,7 +15,7 @@ from SpringStatsViewer.SpringDemoFile import DemoFileReader
 from srs.models import TeamStats
 
 try:
-        from typing import Dict, List, Tuple, Union
+        from typing import Dict, List, Optional, Tuple, Union
         from SpringStatsViewer.SpringDemoFile import PlayerStatistics, TeamStatistics
 except ImportError:
         pass
@@ -61,7 +61,7 @@ class MatchStatsGeneration(object):
         if self.demofile.header() and self.demofile.script() and not self.demofile.incomplete and not self.demofile.crashed:
             playerstats = self.demofile.playerstats()
             if playerstats:
-                logger.debug('** We have playerstats.')
+                logger.debug('** We have playerstats: {!r}'.format(playerstats))
                 playerstats_res = dict((k, v.__dict__) for k, v in playerstats.items())
                 teamstats = self.demofile.teamstats()
                 if teamstats and self.checkteamstatlength(self.demofile):
