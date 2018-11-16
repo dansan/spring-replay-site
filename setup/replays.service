@@ -1,0 +1,17 @@
+[Unit]
+Description=replays.springrts.com daemon
+After=network.target
+
+[Service]
+PIDFile=/run/replays/pid
+User=replays
+Group=replays
+RuntimeDirectory=replays
+WorkingDirectory=/var/www/servers/replays.springrts.com/spring-replay-site
+ExecStart=/var/www/servers/replays-test.springrts.com/virtenv/bin/gunicorn --pid /run/replays/pid --config /var/www/servers/replays.springrts.com/spring-replay-site/setup/gunicorn_conf.py srs.wsgi
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
