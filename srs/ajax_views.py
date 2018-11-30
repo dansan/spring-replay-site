@@ -253,7 +253,7 @@ def downloadlinks(gameID, category):
                 'category': 'game',
                 'nosensitive': 'on',
             }
-            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            response = requests.get('https://api.springfiles.com/json.php', params=args)
             c['result'] = response.json()
         elif category == 'map':
             args = {
@@ -261,14 +261,14 @@ def downloadlinks(gameID, category):
                 'category': 'map',
                 'nosensitive': 'on',
             }
-            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            response = requests.get('https://api.springfiles.com/json.php', params=args)
             c['result'] = response.json()
 
         elif category == 'engine':
             args = {
                 'version': replay.versionString.replace(' ', '*'),
             }
-            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            response = requests.get('https://api.springfiles.com/json.php', params=args)
             result = OrderedDict((
                 ('engine_linux', {'label': 'Linux 32 bit', 'mirrors': []}),
                 ('engine_linux64', {'label': 'Linux 64 bit', 'mirrors': []}),
