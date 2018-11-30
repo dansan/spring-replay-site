@@ -270,11 +270,11 @@ def downloadlinks(gameID, category):
             }
             response = requests.get('https://api.springfiles.com/json.php', params=args)
             result = OrderedDict((
-                ('engine_linux', {'label': 'Linux 32 bit', 'mirrors': []}),
-                ('engine_linux64', {'label': 'Linux 64 bit', 'mirrors': []}),
-                ('engine_macosx', {'label': 'Mac OS X', 'mirrors': []}),
-                ('engine_windows', {'label': 'Windows 32 bit', 'mirrors': []}),
-                ('engine_windows64', {'label': 'Windows 64 bit', 'mirrors': []}),
+                ('engine_linux', {'label': 'Linux 32 bit', 'icon': 'ion-social-tux', 'mirrors': []}),
+                ('engine_linux64', {'label': 'Linux 64 bit', 'icon': 'ion-social-tux', 'mirrors': []}),
+                ('engine_macosx', {'label': 'Mac OS X', 'icon': 'ion-social-apple', 'mirrors': []}),
+                ('engine_windows', {'label': 'Windows 32 bit', 'icon': 'ion-social-windows', 'mirrors': []}),
+                ('engine_windows64', {'label': 'Windows 64 bit', 'icon': 'ion-social-windows', 'mirrors': []}),
             ))
             for engine_info in response.json():
                 result[engine_info['category']]['mirrors'] = engine_info['mirrors']

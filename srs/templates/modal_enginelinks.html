@@ -14,9 +14,9 @@ Please see srs_base.html for license information.
 {% else %}
   {% for engine_info in result %}
       {% for mirror in engine_info.mirrors %}
-            <p>{{ engine_info.label }}: <a href="{{ mirror }}">mirror {{ forloop.counter }}</a></p>
+            <p><span class="ionicons {{ engine_info.icon }}"></span> {{ engine_info.label }}: <a href="{{ mirror }}">mirror {{ forloop.counter }}</a></p>
       {% empty %}
-            <p>{{ engine_info.label }}: no download available</p>
+            <p><span class="ionicons {{ engine_info.icon }}"></span> {{ engine_info.label }}: no download available</p>
       {% endfor %}
   {% endfor %}
 {% endif %}
