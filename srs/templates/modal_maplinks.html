@@ -1,5 +1,5 @@
 {% comment %}
-<!-- 
+<!--
 Please see srs_base.html for license information.
 -->
 {% endcomment %}
@@ -12,7 +12,7 @@ Please see srs_base.html for license information.
             <p class="text-danger"><h5>Error retrieving information</h5></p>
             <p class="text-danger">{{ con_error|safe }}</p>
 {% else %}
-  {% for map in map_info %}
+  {% for map in result %}
             <h5>{{ map.springname }}</h5>
     {% for mirror in map.mirrors %}
             <p><a href="{{ mirror }}">{{ mirror }}</a></p>

@@ -11,7 +11,7 @@ from srs.views import (all_comments, browse_archive, download, edit_replay, hall
 from srs.ajax_views import (BrowseReplaysDTView, CommentDTView, ajax_map_lookup, ajax_player_lookup,
                             ajax_playerrating_tbl_src, ajax_playerreplays_tbl_src, ajax_winloss_tbl_src,
                             gamerelease_modal, hof_tbl_src, maplinks_modal, modlinks_modal, ratinghistorygraph_modal,
-                            stats_modal)
+                            stats_modal, enginelinks_modal)
 from srs.upload_views import upload, upload_media
 import django_xmlrpc.views
 
@@ -40,6 +40,7 @@ urlpatterns = [url(r'^$', index, name='srs/index'),
                url(r'^xmlrpc/$', django_xmlrpc.views.handle_xmlrpc, name='srs/xmlrpc'),
                url(r'^maplinks_modal/(?P<gameID>[0-9a-f]+)/$', maplinks_modal, name='srs/maplinks_modal'),
                url(r'^modlinks_modal/(?P<gameID>[0-9a-f]+)/$', modlinks_modal, name='srs/modlinks_modal'),
+               url(r'^enginelinks_modal/(?P<gameID>[0-9a-f]+)/$', enginelinks_modal, name='srs/enginelinks_modal'),
                url(r'^stats_modal/(?P<gameID>[0-9a-f]+)/$', stats_modal, name='srs/stats_modal'),
                url(r'^feeds/latest_comments/$', SRSLatestCommentFeed(), name='srs/feeds/latest_comments'),
                url(r'^feeds/latest/$', LatestUploadsFeed(), name='srs/feeds/latest'),

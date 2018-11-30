@@ -10,10 +10,9 @@ import datetime
 import json
 from operator import or_
 import logging
-from xmlrpclib import ServerProxy
-
+from collections import OrderedDict
+import requests
 import MySQLdb
-from httplib import HTTPException
 
 from eztables.views import DatatablesView, JSON_MIMETYPE
 
@@ -244,46 +243,72 @@ def ratinghistorygraph_modal(request, game_abbr, accountid, match_type):
     return render(request, 'modal_rating_history_graph.html', c)
 
 
-def mapmodlinks(gameID):
+def downloadlinks(gameID, category):
+    c = {}
     replay = get_object_or_404(Replay, gameID=gameID)
-    gamename = replay.gametype
-    mapname = replay.map_info.name
-    result = dict()
-
     try:
-        proxy = ServerProxy('https://api.springfiles.com/xmlrpc.php', verbose=False)
+        if category == 'game':
+            args = {
+                'springname': replay.gametype.replace(' ', '*'),
+                'category': 'game',
+                'nosensitive': 'on',
+            }
+            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            c['result'] = response.json()
+        elif category == 'map':
+            args = {
+                'springname': replay.map_info.name.replace(' ', '*'),
+                'category': 'map',
+                'nosensitive': 'on',
+            }
+            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            c['result'] = response.json()
 
-        searchstring = {"springname": gamename.replace(" ", "*"), "category": "game",
-                        "torrent": False, "metadata": False, "nosensitive": True, "images": False}
-        result['game_info'] = proxy.springfiles.search(searchstring)
-
-        searchstring = {"springname": mapname.replace(" ", "*"), "category": "map",
-                        "torrent": False, "metadata": False, "nosensitive": True, "images": False}
-        result['map_info'] = proxy.springfiles.search(searchstring)
-    except (IOError, HTTPException):
-        result['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: " \
-                              "<a href=\"http://springfiles.com/finder/1/%s\">game</a>  " \
-                              "<a href=\"http://springfiles.com/finder/1/%s\">map</a>." % (gamename, mapname)
-
-    return result
+        elif category == 'engine':
+            args = {
+                'version': replay.versionString.replace(' ', '*'),
+            }
+            response = requests.get('http://api.springfiles.com/json.php', params=args)
+            result = OrderedDict((
+                ('engine_linux', {'label': 'Linux 32 bit', 'mirrors': []}),
+                ('engine_linux64', {'label': 'Linux 64 bit', 'mirrors': []}),
+                ('engine_macosx', {'label': 'Mac OS X', 'mirrors': []}),
+                ('engine_windows', {'label': 'Windows 32 bit', 'mirrors': []}),
+                ('engine_windows64', {'label': 'Windows 64 bit', 'mirrors': []}),
+            ))
+            for engine_info in response.json():
+                result[engine_info['category']]['mirrors'] = engine_info['mirrors']
+            c['result'] = [d for d in result.values()]
+            logger.debug('response.url=%r', response.url)
+            logger.debug('c=%r', c)
+        else:
+            logger.error('Unknown category %r.', category)
+            c['result'] = {}
+    except requests.exceptions.RequestException:
+        logger.exception('Error downloading map, mod or engine info.')
+        gamename = replay.gametype
+        mapname = replay.map_info.name
+        enginename = replay.versionString.replace('maintenance', '').strip()
+        c['con_error'] = "Error connecting to springfiles.com. Please retry later, or try searching yourself: " \
+                         "<a href=\"http://springfiles.com/finder/1/%s\">game</a>  " \
+                         "<a href=\"http://springfiles.com/finder/1/%s\">map</a>  " \
+                         "<a href=\"http://springfiles.com/finder/1/%s\">engine</a>." % (gamename, mapname, enginename)
+    return c
 
 
 def maplinks_modal(request, gameID):
-    c = {}
-    mml = mapmodlinks(gameID)
-    for k, v in mml.items():
-        c[k] = v
-
+    c = downloadlinks(gameID, 'map')
     return render(request, 'modal_maplinks.html', c)
 
 
 def modlinks_modal(request, gameID):
-    c = {}
-    mml = mapmodlinks(gameID)
-    for k, v in mml.items():
-        c[k] = v
-
+    c = downloadlinks(gameID, 'game')
     return render(request, 'modal_modlinks.html', c)
+
+
+def enginelinks_modal(request, gameID):
+    c = downloadlinks(gameID, 'engine')
+    return render(request, 'modal_enginelinks.html', c)
 
 
 def stats_modal(request, gameID):
