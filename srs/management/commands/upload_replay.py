@@ -9,7 +9,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Django manage.py command to update one/some/all School object(s).
+Django manage.py command to upload a sdf.
 """
 
 import os.path
