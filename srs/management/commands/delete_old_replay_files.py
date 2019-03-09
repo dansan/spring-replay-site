@@ -30,12 +30,10 @@ class Command(BaseCommand):
         now = datetime.datetime.now(tz)
         start_date = datetime.datetime(1970, 1, 1, tzinfo=tz)
         end_date = now - datetime.timedelta(days=3*365)
-        replays = Replay.objects.filter(unixTime__range=(start_date, end_date)).order_by('pk')
+        replays = Replay.objects.exclude(path='', filename='').filter(unixTime__range=(start_date, end_date)).order_by('pk')
         total = replays.count()
-        current = 0  # not using enumerate() to prevent fetching complete SQL result set
         logger.info('Going to delete %d replay files...', total)
-        for replay in replays:
-            current += 1
+        for current, replay in enumerate(replays, start=1):
             path = os.path.join(replay.path, replay.filename)
             logger.info('Deleting %d/%d: %s %s %s %s (%r)...', current, total, replay.pk,
                         replay.unixTime.strftime('%Y-%m-%d %H:%M:%S'), replay.gameID, replay.title, path)
@@ -46,6 +44,6 @@ class Command(BaseCommand):
             else:
                 replay.path = ''
                 replay.filename = ''
-                replay.save()
-            time.sleep(0.5)  # be gentile to the lobby servers I/O
+                replay.save(update_fields=('filename', 'path'))
+            time.sleep(0.25)  # be gentile to the lobby servers I/O
         logger.info('Finished deleting old replays.')
