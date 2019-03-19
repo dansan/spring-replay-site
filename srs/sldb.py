@@ -21,7 +21,7 @@ from netifaces import interfaces, ifaddresses, AF_INET
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
-logger = logging.getLogger("srs.sldb")
+logger = logging.getLogger(__name__)
 
 
 #

@@ -12,7 +12,7 @@ from srs.springmaps import SpringMaps
 from srs.sldb import SLDBError, get_sldb_match_skills
 
 
-logger = logging.getLogger("srs.utils")
+logger = logging.getLogger(__name__)
 
 
 def fix_missing_winner(replay):

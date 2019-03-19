@@ -21,7 +21,7 @@ import requests
 from django.conf import settings
 from srs.models import Allyteam, Player
 
-logger = logging.getLogger("srs.views")
+logger = logging.getLogger(__name__)
 
 
 class SpringMaps:

@@ -56,7 +56,7 @@ class Result():
             return 'Result(player={} team={} died={} quit={})'.format(self.player.nick, self.team, self.died, self.quit)
         except:
             import logging
-            logger = logging.getLogger("srs.script")
+            logger = logging.getLogger(__name__)
             logger.exception("FIXME: to broad exception handling.")
             return 'Result(team={} died={} quit={})'.format(self.team, self.died, self.quit)
 

@@ -35,7 +35,7 @@ import srs.parse_demo_file as parse_demo_file
 import srs.springmaps as springmaps
 from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBError
 
-logger = logging.getLogger("srs.upload")
+logger = logging.getLogger(__name__)
 timer = None
 
 

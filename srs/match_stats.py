@@ -21,7 +21,7 @@ except ImportError:
         pass
 
 
-logger = logging.getLogger("srs.upload")
+logger = logging.getLogger(__name__)
 
 
 class MatchStatsGeneration(object):

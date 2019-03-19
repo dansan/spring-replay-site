@@ -30,7 +30,7 @@ from srs.models import (Game, GameRelease, Player, PlayerAccount, PlayerStats, M
 from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBError
 
 
-logger = logging.getLogger("srs.views")
+logger = logging.getLogger(__name__)
 
 
 def ajax_player_lookup(request, name):

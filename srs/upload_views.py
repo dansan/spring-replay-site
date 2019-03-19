@@ -21,7 +21,7 @@ from srs.common import all_page_infos
 from srs.forms import UploadFileForm, UploadMediaForm
 import srs.parse_demo_file as parse_demo_file
 
-logger = logging.getLogger("srs.views")
+logger = logging.getLogger(__name__)
 
 timer = None
 

@@ -32,7 +32,7 @@ from srs.mail import send_mail
 
 from infolog_upload.notifications import Notifications
 
-logger = logging.getLogger("srs.models")
+logger = logging.getLogger(__name__)
 
 
 def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifiers-benchmark

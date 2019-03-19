@@ -28,7 +28,7 @@ from models import UserProfile
 
 
 url = 'https://springrts.com/api/uber/xmlrpc'
-logger = logging.getLogger("srs.auth")
+logger = logging.getLogger(__name__)
 UserModel = get_user_model()
 
 

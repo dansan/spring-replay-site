@@ -40,7 +40,7 @@ from srs.utils import fix_missing_winner
 from srs.match_stats import MatchStatsGeneration
 
 #add_to_builtins('djangojs.templatetags.js')
-logger = logging.getLogger("srs.views")
+logger = logging.getLogger(__name__)
 
 gameid_re = re.compile("^[0-9a-f]{32}$")
 

@@ -24,6 +24,6 @@ l1.setFormatter(logging.Formatter(fmt=settings.DEBUG_FORMAT, datefmt=settings.LO
 l2 = TimedRotatingFileHandler(os.path.join(settings.LOG_PATH, 'srs_info.log'), when='d', interval=1, backupCount=14)  # type: logging.Handler
 l2.setLevel(logging.INFO)
 l2.setFormatter(logging.Formatter(fmt=settings.INFO_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT))
-logger = logging.getLogger("srs")
+logger = logging.getLogger(__name__.split('.', 1)[0])
 logger.addHandler(l1)
 logger.addHandler(l2)

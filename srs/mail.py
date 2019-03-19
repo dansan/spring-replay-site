@@ -11,7 +11,7 @@ import logging
 from django.core.mail import EmailMessage
 from django.conf import settings
 
-logger = logging.getLogger("srs")
+logger = logging.getLogger(__name__)
 
 
 def send_mail(recipient_list, subject, mail_text, headers=None, cc=None, bcc=None, sender=settings.DEFAULT_FROM_EMAIL):

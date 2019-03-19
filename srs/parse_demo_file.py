@@ -42,7 +42,7 @@ except ImportError:
     from settings import DEBUG
 
 
-logger = logging.getLogger("srs.upload")
+logger = logging.getLogger(__name__)
 
 
 #

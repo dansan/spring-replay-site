@@ -20,7 +20,7 @@ import struct
 import zlib
 import logging
 
-logger = logging.getLogger("srs.upload")
+logger = logging.getLogger(__name__)
 
 
 class PlayerDict(dict):

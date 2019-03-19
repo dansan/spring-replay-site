@@ -7,14 +7,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
-from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
-
 from srs.models import Game
 
 import logging
 
-logger = logging.getLogger("srs.views")
+logger = logging.getLogger(__name__)
 
 
 class UploadFileForm(forms.Form):
