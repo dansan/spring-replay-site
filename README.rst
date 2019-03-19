@@ -61,8 +61,8 @@ Installation
     $ sudo aptitude install libzmq-dev libfreetype6-dev
     $ virtualenv srs
     $ . srs/bin/activate
-    (srs) $ pip install -r requirements.txt
 
+- install from git:
 - install django-eztables from https://github.com/dansan/django-eztables.git
 - install django-utils from https://github.com/dansan/django-utils.git
 - install django.js from https://github.com/veeloinc/django.js.git
@@ -72,6 +72,12 @@ Installation
     (srs) $ pip install git+git://github.com/dansan/django-eztables.git
     (srs) $ pip install git+git://github.com/dansan/django-utils.git
     (srs) $ pip install git+git://github.com/veeloinc/django.js.git
+
+- install requirements:
+
+.. code-block:: bash
+
+    (srs) $ pip install -r requirements.txt
 
 - patch ``srs/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
 
@@ -93,6 +99,9 @@ Installation
 
     (srs) $ crontab -e
 
-    0 0 * * * .../virtenvs/srs-head/bin/python2.7 .../spring-replay-site/manage.py process_tasks --duration 86100 --log-std
+    MAILTO="me@myemail.com"
+
+    0 0 * * *  ionice -c3 nice -n 19 .../virtenvs/srs-head/bin/python2.7 .../spring-replay-site/manage.py process_tasks --duration 86100 --log-std
+    30 1 * * * ionice -c3 nice -n 19 .../virtenv/bin/python2.7 /var/www/servers/replays.springrts.com/spring-replay-site/manage.py delete_old_replay_files
 
 - go to the /admin/ page and create a Lobbyauth->User_profile for your admin user

@@ -1,6 +1,6 @@
 configparser>=3.5.0
 coreapi>=2.3.1
-Django>=1.10.3
+Django<2.0
 django-background-tasks>=1.1.11
 django-contrib-comments>=1.7.3
 django-extensions>=1.7.4
