@@ -21,13 +21,19 @@ from netifaces import interfaces, ifaddresses, AF_INET
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
+try:
+    from typing import Optional
+except ImportError:
+    pass
+
+"""
+SLDB is a service provided by a lobby bot written by Bibim: https://github.com/Yaribz/SLDB
+It has a XMLRPC interface that the website uses: https://github.com/Yaribz/SLDB/blob/master/XMLRPC
+"""
+
 logger = logging.getLogger(__name__)
+_last_sldb_timeout = None  # type: Optional[datetime.datetime]
 
-
-#
-# SLDB is a service provided by a lobby bot written by Bibim: https://github.com/Yaribz/SLDB
-# It has a XMLRPC interface that the website uses: https://github.com/Yaribz/SLDB/blob/master/XMLRPC
-#
 
 class SLDBError(Exception):
     pass
@@ -117,13 +123,18 @@ def _query_sldb(service, *args, **kwargs):
     """
     #    logger.debug("service: %s, args: %s, kwargs: %s", service, args, kwargs)
 
-    #     if settings.DEBUG:
-    #         logger.debug("not connecting while in DEBUG")
-    #         raise SLDBstatusError(service, -1)
+    global _last_sldb_timeout
 
     if not any(ip in settings.SLDB_ALLOWED_IPS for ip in _my_ip4_addresses()):
         # fail fast while developing
         raise SLDBConnectionError("This host is not allowed to connect to SLDB.")
+
+    if _last_sldb_timeout:
+        time_diff = datetime.datetime.now() - _last_sldb_timeout
+        if time_diff < datetime.timedelta(seconds=settings.SLDB_QUERY_PAUSE_ON_TIMEOUT):
+            raise SLDBConnectionError('Waiting another {} seconds after last SLDB timeout.'.format(
+                settings.SLDB_QUERY_PAUSE_ON_TIMEOUT - time_diff.seconds))
+        _last_sldb_timeout = None
 
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
@@ -132,6 +143,7 @@ def _query_sldb(service, *args, **kwargs):
     try:
         rpc_result = rpc(rpc_srv)
     except socket.timeout as exc:
+        _last_sldb_timeout = datetime.datetime.now()
         raise SLDBConnectionError(
             "Timeout ({} sec) reached while calling SLDB. service={} args={} kwargs={} exc={}".format(
                 settings.SLDB_TIMEOUT, service, args, kwargs, exc))
