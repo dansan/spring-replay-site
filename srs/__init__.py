@@ -3,7 +3,9 @@ import os.path
 from logging.handlers import TimedRotatingFileHandler
 import settings
 
-logging.basicConfig(level=logging.DEBUG, format=settings.DEBUG_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT)
+logging.basicConfig(level=logging.INFO, format=settings.DEBUG_FORMAT, datefmt=settings.LOG_DATETIME_FORMAT)
+
+logging.getLogger('xmlrpc.views').setLevel(logging.WARNING)
 
 if settings.DEBUG:
     ro = TimedRotatingFileHandler(os.path.join(settings.LOG_PATH, 'root_debug.log'), when='d', interval=1, backupCount=14)  # type: logging.Handler
