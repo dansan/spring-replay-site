@@ -1,19 +1,20 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import xmlrpclib
+from xmlrpc.client import ServerProxy
 import socket
 from operator import methodcaller
 import datetime
-import cPickle
+import pickle
 import errno
 import os.path
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,10 +22,6 @@ from netifaces import interfaces, ifaddresses, AF_INET
 
 from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
 
-try:
-    from typing import Optional
-except ImportError:
-    pass
 
 """
 SLDB is a service provided by a lobby bot written by Bibim: https://github.com/Yaribz/SLDB
@@ -138,7 +135,7 @@ def _query_sldb(service, *args, **kwargs):
 
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
-    rpc_srv = xmlrpclib.ServerProxy(settings.SLDB_URL)
+    rpc_srv = ServerProxy(settings.SLDB_URL)
     rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
         rpc_result = rpc(rpc_srv)
@@ -297,7 +294,7 @@ def get_sldb_match_skills(gameIDs):
             cache_miss[gameid] = cache_entry
         else:
             #             logger.debug("MatchSkills cache hit  for %s", gameid)
-            sldbmatch_unpickled = cPickle.loads(str(cache_entry.text))
+            sldbmatch_unpickled = pickle.loads(str(cache_entry.text))
             result.append(sldbmatch_unpickled)
 
     if cache_miss:
@@ -313,7 +310,7 @@ def get_sldb_match_skills(gameIDs):
                         si = float(player["skills"][i].split("|")[1])
                         player["skills"][i] = [mu, si]
                 dbentry = cache_miss[match["gameId"]]
-                dbentry.text = cPickle.dumps(match)
+                dbentry.text = pickle.dumps(match)
                 dbentry.save()
                 result.append(match)
 

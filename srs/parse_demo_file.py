@@ -3,7 +3,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -20,6 +20,7 @@ import gzip
 import struct
 import logging
 import threading
+from typing import Union
 import ujson
 from srs.match_stats import MatchStatsGeneration
 
@@ -32,14 +33,15 @@ try:
     from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
         ScriptRestrictions, ScriptTeam
     from srs.demoparser import Demoparser
-    from srs.settings import DEBUG
+    from django.conf import settings
+    DEBUG = settings.DEBUG
 except ImportError:
     # commandline use
-    from script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+    from .script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
         ScriptRestrictions, ScriptTeam
-    from demoparser import Demoparser
+    from .demoparser import Demoparser
     # direct import of settings module (not through Django means) to allow usage without Django installation
-    from settings import DEBUG
+    from ..spring_replay_site.settings import DEBUG
 
 
 logger = logging.getLogger(__name__)
@@ -124,7 +126,7 @@ class Parse_demo_file():
         self.stats_thread = None
         self.tmp_stats = {}
 
-    def read_blob(self, seek_size, blob_size):
+    def read_blob(self, seek_size: int, blob_size: int) -> bytes:
         self.demofile.seek(seek_size)
         return self.demofile.read(blob_size)
 
@@ -145,7 +147,7 @@ class Parse_demo_file():
         with myopen(self.filename, "rb") as demofile:
             demofile.seek(0)
             _magic = demofile.read(16)
-            if not _magic.startswith("spring demofile"):
+            if not _magic.startswith(b"spring demofile"):
                 raise BadFileType("Not a spring demofile.")
 
     def parse(self):
@@ -202,7 +204,7 @@ class Parse_demo_file():
         # struct DemoFileHeader from rts/System/LoadSave/demofile.h
         #
         self.header['magic'] = self.read_blob(0, 16)                             # char magic[16]; ///< DEMOFILE_MAGIC
-        if not self.header['magic'].startswith("spring demofile"):
+        if not self.header['magic'].startswith(b"spring demofile"):
             raise Exception("Not a spring demofile.")
         self.header['version'] = self.read_blob_into_int(16, 4)[0]               # int version; ///< DEMOFILE_VERSION
         self.header['headerSize'] = self.read_blob_into_int(20, 4)[0]            # int headerSize; ///< Size of the DemoFileHeader, minor version number.
@@ -233,9 +235,8 @@ class Parse_demo_file():
 #        while i < self.header['numPlayers']:
 #            player_stats[i] = self.read_blob(self.demofile.tell(), self.header['playerStatElemSize'])
 #            i += 1
-
-        self.header['magic']         = str(self.header['magic']).partition("\x00")[0]
-        self.header['versionString'] = str(self.header['versionString']).partition("\x00")[0]
+        self.header['magic']         = self.header['magic'].decode("utf-8").partition("\x00")[0]
+        self.header['versionString'] = self.header['versionString'].decode("utf-8").partition("\x00")[0]
         self.header['gameID']        = "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x" % unpack("16B", self.header['gameID'])
         self.header['unixTime']      = "%s" % strftime("%Y-%m-%d %H:%M:%S", localtime(unpack("Q", self.header['unixTime'])[0]))
         self.header['gameTime']      = "%s" % str(timedelta(seconds=self.header['gameTime']))
@@ -258,37 +259,33 @@ class Parse_demo_file():
 
     def parse_script(self):
         script = self.read_blob(self.header['headerSize'], self.header['scriptSize'])
-        game = re.match('^\[game\]\n\{(?P<data>.*)\}\n', script, re.DOTALL).groupdict()
-        game_data = game['data'].replace('\n', '').replace('[options]{}', '')
-        section_iter = re.finditer('\[(?P<name>.*?)\]\{(?P<data>.*?)\}', game_data, re.DOTALL)
+        game = re.match(rb'^\[game\]\n\{(?P<data>.*)\}\n', script, re.DOTALL).groupdict()
+        game_data = game['data'].replace(b'\n', b'').replace(b'[options]{}', b'')
+        section_iter = re.finditer(rb'\[(?P<name>.*?)\]\{(?P<data>.*?)\}', game_data, re.DOTALL)
 
         self.script = Script()
 
-        while True:
-            try:
-                section_ = section_iter.next()
-            except StopIteration:
-                break
+        for section_ in section_iter:
             section = section_.groupdict()
             if section and section['data'].strip():
-                if section['name'].startswith('player'):
+                if section['name'].startswith(b'player'):
                     player = ScriptPlayer(section['name'], section['data'])
                     if player.spectator:
                         self.script.spectators[player.name] = player
                     else:
                         self.script.players[player.name] = player
                     self.game_setup["player"][player.num] = player.__dict__
-                elif section['name'].startswith('ai'):
+                elif section['name'].startswith(b'ai'):
                     bot = ScriptAI(section['name'], section['data'])
                     if not hasattr(bot, "name"):
                         bot.name = section['name']
                     self.script.bots[bot.name] = bot
                     self.game_setup["ai"][bot.name] = bot.__dict__
-                elif section['name'].startswith('allyteam'):
+                elif section['name'].startswith(b'allyteam'):
                     ally = ScriptAlly(section['name'], section['data'])
                     self.script.allies.append(ally)
                     self.game_setup["allyteam"][ally.num] = ally.__dict__
-                elif section['name'].startswith('team'):
+                elif section['name'].startswith(b'team'):
                     team = ScriptTeam(section['name'], section['data'])
                     self.script.teams.append(team)
                     self.game_setup["team"][team.num] = team.__dict__
@@ -301,7 +298,7 @@ class Parse_demo_file():
                 elif section['name'] == 'modoptions':
                     self.script.modoptions = ScriptModoptions(section['name'], section['data'])
                     self.game_setup["modoptions"] = self.script.modoptions.__dict__
-        game_txt = game['data'].split("}")[-1:][0].replace('\n', '')
+        game_txt = game['data'].split(b"}")[-1:][0].replace(b'\n', b'')
         self.game_setup['host'] = ScriptGamesetup("game_setup_host", game_txt).__dict__
         self.script.other['mapname'] = self.game_setup['host']['mapname']
         self.script.other['modname'] = self.game_setup['host']['gametype']
@@ -316,7 +313,7 @@ class Parse_demo_file():
         return self.demofile.tell()
 
     def _readPacket(self):
-        maxSize = (self.header['demoStreamSize'] or sys.maxint)
+        maxSize = (self.header['demoStreamSize'] or sys.maxsize)
         if maxSize:
             modGameTime, length = struct.unpack('<fI', self._read(8))
             if self._tell() + length - self.header['headerSize'] - self.header['scriptSize'] == maxSize:
@@ -329,13 +326,13 @@ class Parse_demo_file():
     @classmethod
     def _ba_stats_to_platform_api(cls, ba_stats_str):
         stats = {}
-        for m in re.finditer(r'^(?P<name>\w+): *(?P<value>.*)$', ba_stats_str[3:], re.MULTILINE):
+        for m in re.finditer(rb'^(?P<name>\w+): *(?P<value>.*)$', ba_stats_str[3:], re.MULTILINE):
             pl_stats = m.groupdict()
-            if re.match(r'.*bit.*Hz', pl_stats['value']):
+            if re.match(rb'.*bit.*Hz', pl_stats['value']):
                 # found resolution, color depth etc: >>1920x1058:24bit @60Hz (windowed)<<
-                stats['resolution_x'] = pl_stats['name'].split('x')[0]
-                stats['resolution_y'] = pl_stats['name'].split('x')[1]
-                m = re.match(r'(?P<bit>\d+)bit @(?P<hz>\d+)Hz (?P<windowed>\(.*\))*', pl_stats['value']).groupdict()
+                stats['resolution_x'] = pl_stats['name'].split(b'x')[0]
+                stats['resolution_y'] = pl_stats['name'].split(b'x')[1]
+                m = re.match(rb'(?P<bit>\d+)bit @(?P<hz>\d+)Hz (?P<windowed>\(.*\))*', pl_stats['value']).groupdict()
                 stats['color_depth'] = m['bit']
                 stats['refresh_rate'] = m['hz']
                 stats['windowed'] = bool(m['windowed'])
@@ -343,7 +340,7 @@ class Parse_demo_file():
                 stats[cls.BA_platform_data_to_API[pl_stats['name']]] = pl_stats['value']
         try:
             # remove surplus spaces
-            stats['cpuName'] = ' '.join(stats['cpuName'].split())
+            stats['cpuName'] = b' '.join(stats['cpuName'].split())
         except KeyError:
             pass
         try:
@@ -370,7 +367,7 @@ class Parse_demo_file():
                 setattr(self.spectators[playername], key, value)
 
         def _dictify(obj):
-            if type(obj) == dict:
+            if isinstance(obj, dict):
                 return obj
             else:
                 return obj.__dict__
@@ -380,8 +377,7 @@ class Parse_demo_file():
         self.bots = self.script.bots
         self.teams = self.script.teams
         self.allies = self.script.allies
-        self.options = dict(_dictify(self.script.modoptions).items()
-                            + _dictify(self.script.other).items() + _dictify(self.script.mapoptions).items())
+        self.options = dict(list(_dictify(self.script.modoptions).items()) + list(_dictify(self.script.other).items()) + list(_dictify(self.script.mapoptions).items()))
         self.restrictions = self.script.restrictions
         self.gameid = self.header['gameID']
 
@@ -393,17 +389,20 @@ class Parse_demo_file():
         if DEBUG:
             kop = open('/tmp/msg.data', 'wb')
             stats_fp = open('/tmp/stats.log', 'wb')
-            stats_fp.write('gameID: {}\n'.format(self.header['gameID']))
+            stats_fp.write('gameID: {}\n'.format(self.header['gameID']).encode())
         demoparser = Demoparser()
         while packet:
             packet = self._readPacket()
             try:
                 messageData = demoparser.parsePacket(packet)
                 if DEBUG:
-                    kop.write(str(messageData) + '\n')
+                    kop.write(repr(messageData).encode() + b'\n')
 
-                def clean(name):
-                    return name.replace('\x00', '')
+                def clean(name: Union[bytes, str]) -> str:
+                    if isinstance(name, bytes):
+                        return name.replace(b'\x00', b'').decode()
+                    else:
+                        return name.replace('\x00', '')
 
                 if messageData:
                     try:
@@ -442,7 +441,7 @@ class Parse_demo_file():
                             continue
                         if messageData['action'] == 'team_died':  # team died event
                             deadTeam = messageData['param']
-                            for name, rank in self.players.iteritems():
+                            for name, rank in self.players.items():
                                 if rank.team == deadTeam:
                                     self.players[name].died = currentFrame
                         elif messageData['action'] == 'giveaway':
@@ -463,29 +462,29 @@ class Parse_demo_file():
                     elif messageData["cmd"] == "luamsg":
                         if messageData["msgid"] == 36:
                             if DEBUG:
-                                stats_fp.write('{}: >>{}<<\n'.format(messageData['playerNum'], messageData["msg"]))
+                                stats_fp.write('{}: >>{}<<\n'.format(messageData['playerNum'], messageData["msg"]).encode())
                             if messageData["msg"][:6] == '$y$CPU':
                                 # found BA platform stats
                                 stats = self._ba_stats_to_platform_api(messageData["msg"])
                                 if 'cpuName' in stats and 'osFamily' in stats:
                                     self.additional.setdefault('ba_platform_stats', {})[messageData['playerNum']] = stats
                                 else:
-                                    logger.warn(
+                                    logger.warning(
                                         'Platform stats missing cpuName or osFamily in %r generated from msg=%r',
                                         stats,
                                         messageData["msg"]
                                     )
-                        elif messageData["msgid"] == 49 and messageData["msg"].startswith("180"):
+                        elif messageData["msgid"] == 49 and messageData["msg"].startswith(b"180"):
                             # https://springrts.com/phpbb/viewtopic.php?f=54&t=36150&p=581964#p581964
                             # CursedID-TeamID:awardtype/counter:awardtype/counter: ...
                             # e.g. "180-0:hero/150:hover/803:rezz/28"
-                            teamid = re.findall(r'^180-(\d+):?.*$', messageData["msg"])[0]
-                            cursed_awards = re.findall(r':((\w+)/(\d+))*', messageData["msg"])
+                            teamid = re.findall(rb'^180-(\d+):?.*$', messageData["msg"])[0]
+                            cursed_awards = re.findall(rb':((\w+)/(\d+))*', messageData["msg"])
                             self.additional.setdefault("cursed_awards", {})[teamid] = [(ca[1], ca[2]) for ca in cursed_awards]
                         elif messageData["msgid"] == 138:
                             # faction change
                             playername = clean(messageData['playerName'])
-                            faction = struct.unpack("<%iB"%(len(messageData["msg"][1:])), messageData["msg"][1:])
+                            faction = struct.unpack("<%iB" % (len(messageData["msg"][1:])), messageData["msg"][1:])
                             logger.debug("%s(%d) changed faction to '%s'", playername, messageData['playerNum'], faction)
                             self.additional["faction_change"][playername] = (self.players[playername], faction)
                         elif messageData["msgid"] == 161:
@@ -514,14 +513,14 @@ class Parse_demo_file():
                                 for pos in range(1, len(str_B)):
                                     if int(str_B[pos]) > 160:
                                         def f_(s):
-                                            if s.find(".") >= 0:
+                                            if s.find(b".") >= 0:
                                                 return float(s)
                                             else:
                                                 return int(s)
 
                                         end = pos
                                         awards_data.append(str_B[start])
-                                        s_ = "".join(str_c[start + 1:end]).split(":")
+                                        s_ = b"".join(str_c[start + 1:end]).split(b":")
                                         try:
                                             awards_data.append([int(s_[0]) - 1, f_(s_[1])])
                                         except IndexError:
@@ -533,7 +532,7 @@ class Parse_demo_file():
                                         start = end
                                 else:
                                     awards_data.append(str_B[start])
-                                    s_ = "".join(str_c[start + 1:]).split(":")
+                                    s_ = b"".join(str_c[start + 1:]).split(b":")
                                     try:
                                         awards_data.append([int(s_[0]) - 1, f_(s_[1])])
                                     except IndexError:
@@ -554,7 +553,7 @@ class Parse_demo_file():
                                 self.additional["awards"] = awards
                             except Exception as exc:
                                 logger.error("FIXME: to broad exception handling.")
-                                logger.exception("detecting BA Awards, messageData: %s, Exception: %s", messageData, exc)
+                                logger.exception("detecting BA Awards, messageData: %r, Exception: %s", messageData, exc)
                         elif messageData["msgid"] == 199:
                             # XTA Awards, 2014-04-01
                             # forum thread: http://springrts.com/phpbb/viewtopic.php?f=71&t=28019&start=120#p555847
@@ -573,7 +572,7 @@ class Parse_demo_file():
                             #   4: name of unit to get award (Commander)
                             #   5: number of kills (43)
                             #   6: age of unit when game ends (1)
-                            xta_isAlive, xta_team, xta_name, xta_kills, xta_age = messageData["msg"][2:].split(":")
+                            xta_isAlive, xta_team, xta_name, xta_kills, xta_age = messageData["msg"][2:].split(b":")
                             xtawards = {"isAlive": int(xta_isAlive),
                                         "team"   : int(xta_team),
                                         "name"   : xta_name,
@@ -648,7 +647,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
         if len(argv) == 1 or argv[-1] in ["--winning-test", "--winning-test-header"]:
-            print "Usage: %s [--winning-test] [--winning-test-header] demofile" % (argv[0])
+            print("Usage: %s [--winning-test] [--winning-test-header] demofile" % (argv[0]))
             return 1
 
         DEBUG = True  # command line use is always dev intended
@@ -677,13 +676,13 @@ def main(argv=None):
             return 0
 
         pp = pprint.PrettyPrinter(depth=6)
-        print "#################### header ##########################"
+        print("#################### header ##########################")
         pp.pprint(demo_file.header)
-        print "################## game_setup ########################"
+        print("################## game_setup ########################")
         pp.pprint(demo_file.game_setup)
-        print "############### winningAllyTeams #####################"
+        print("############### winningAllyTeams #####################")
         pp.pprint(demo_file.winningAllyTeams)
-        print "################## additional ########################"
+        print("################## additional ########################")
         if len(demo_file.additional["chat"]) > 4:
             demo_file.additional["chat"] = "chat removed for shorter output"
         pp.pprint(demo_file.additional)

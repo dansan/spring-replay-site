@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -43,10 +43,11 @@ class Demoparser(object):
         return returnval
 
     def parsePacket(self, packet):
-        if not packet or not packet['data']: return
+        if not packet or not packet['data']:
+            return
         data = packet['data']
 
-        cmd = ord(data[0])
+        cmd = data[0]
         data = data[1:]
         if cmd == 1:
             cmd = 'keyframe'
@@ -71,7 +72,7 @@ class Demoparser(object):
             size, playerNum = struct.unpack('<BB', data[:2])
             playerName = data[2:]
             if not playerNum in self.players:
-                self.players[playerNum] = playerName.strip('\0')
+                self.players[playerNum] = playerName.strip(b'\0')
             return self.write(locals(), 'cmd', 'size', 'playerNum', 'playerName')
         elif cmd == 7:
             cmd = 'chat'
@@ -120,7 +121,7 @@ class Demoparser(object):
             msgsize, playerNum, unitIDCount = struct.unpack('<hBh', data[:5])
             pos = (unitIDCount * 2) + 5
             d = data[5:pos]
-            print 'pos %d data %s' % (pos, d)
+            print('pos %d data %s' % (pos, d))
             unitIDs = struct.unpack('<%dh' % (unitIDCount), data[5:pos])
             commandCount = struct.unpack('<h', data[pos:pos + 2])[0]
             pos += 2
@@ -143,7 +144,7 @@ class Demoparser(object):
                               'unitIDCount', 'unitIDs')
         elif cmd == 17:
             cmd = 'memdump'
-            print 'OMG A MEMORY DUMP'
+            print('OMG A MEMORY DUMP')
             return self.write(locals(), 'cmd')
         elif cmd == 19:
             cmd = 'user_speed'
@@ -170,9 +171,9 @@ class Demoparser(object):
             return self.write(locals(), 'cmd', 'playerNum', 'playerName', 'status', 'heading', 'pitch')
         elif cmd == 25:
             cmd = 'attemptconnect'
-            size = struct.unpack('<H', data[0])[0]
-            name, password, version = data[1:].split('\0', 2)
-            version = version.strip('\0')
+            size = struct.unpack('<H', data[:1])[0]
+            name, password, version = data[1:].split(b'\0', 2)
+            version = version.strip(b'\0')
             return self.write(locals(), 'cmd', 'size', 'name', 'password', 'version')
         elif cmd == 26:
             cmd = 'share'
@@ -258,13 +259,14 @@ class Demoparser(object):
             size, playerNum, script, mode = struct.unpack('<HBHB', data[:6])
             msg = data[6:]
             playerName = self.players[playerNum] or ''
-            (msgid,) = struct.unpack("<B", msg[0])
+            (msgid,) = struct.unpack("<B", msg[:1])
             return self.write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'script', 'mode', 'msg', 'msgid')
         elif cmd == 51:
             cmd = 'team'
             playerNum, action = struct.unpack('<BB', data[:2])
             param = None
-            if action != 2: param = ord(data[2])
+            if action != 2:
+                param = data[2]
 
             if action == 1:
                 action = 'giveaway'
@@ -287,7 +289,7 @@ class Demoparser(object):
             return self.write(locals(), 'cmd', 'playerNum', 'playerName', 'action', 'param')
         elif cmd == 52:
             cmd = 'gamedata'
-            # f = open('gamedata.dat', 'wb')
+            # f = open('gamedata.dat', 'w')
             # f.return self.write(chr(52)+data)
             # f.close()
             size, compressedSize = struct.unpack('<HH', data[:4])
@@ -296,19 +298,19 @@ class Demoparser(object):
             # print data
             # print __import__('binascii').hexlify(data)
             # return
-            # mapName, modName, data = data.split('\0', 2)
+            # mapName, modName, data = data.split(b'\0', 2)
             # print mapName, modName
             if len(data) == 12:  # 0.80 or later
                 mapChecksum, modChecksum, randomSeed = struct.unpack('<3i', data)
                 return self.write(locals(), 'cmd', 'size', 'compressedSize', 'setupText', 'mapChecksum', 'modChecksum',
                                   'randomSeed')
             elif False:
-                print __import__('binascii').hexlify(data)
-                script, mapName, modName, data = data.split('\0', 3)
-                print script, mapName, modName
-                print len(data)
+                print(__import__('binascii').hexlify(data))
+                script, mapName, modName, data = data.split(b'\0', 3)
+                print(script, mapName, modName)
+                print(len(data))
                 mapChecksum, modChecksum, randomSeed = struct.unpack('<3i', data)
-                print mapChecksum, modChecksum, randomSeed
+                print(mapChecksum, modChecksum, randomSeed)
             # print size, compressedSize, setupText, mapChecksum, modChecksum, randomSeed
             else:
                 data = 'unparsed, old replay format'
@@ -323,7 +325,7 @@ class Demoparser(object):
         elif cmd == 54:
             cmd = 'ccommand'
             size, playerNum = struct.unpack('<Hi', data[:6])
-            command, extra = data[6:].split('\0', 1)
+            command, extra = data[6:].split(b'\0', 1)
             playerName = self.players[playerNum] or ''
             return self.write(locals(), 'cmd', 'size', 'playerNum', 'playerName', 'command', 'extra')
         elif cmd == 60:

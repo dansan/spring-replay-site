@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -17,6 +17,7 @@
 #
 
 import re
+from typing import Union
 from collections import defaultdict
 
 
@@ -61,7 +62,7 @@ class Result():
             return 'Result(team={} died={} quit={})'.format(self.team, self.died, self.quit)
 
 
-def try_make_numeric(val):
+def try_make_numeric(val: str) -> Union[int, float, str]:
     if val.isdigit():
         return int(val)
     else:
@@ -76,6 +77,10 @@ class ScriptObject(object):
     req_keys = []
 
     def __init__(self, section, data):
+        if isinstance(section, bytes):
+            section = section.decode("utf-8")
+        if isinstance(data, bytes):
+            data = data.decode("utf-8")
         if section not in ["mapoptions", "modoptions", "restrict", "game_setup_host"]:
             _i = 0
             while not section[_i].isdigit():
@@ -108,8 +113,8 @@ class ScriptPlayer(ScriptObject):
             # demofile from zero-k
             self.accountid = self.lobbyid
         else:
-            print "Missing required key 'lobbyid' or 'accountid' in section '%s': '%s'. Single Player match?" % (
-                section, data)
+            print("Missing required key 'lobbyid' or 'accountid' in section '%s': '%s'. Single Player match?" % (
+                section, data))
             self.accountid = None
 
         if hasattr(self, "rank"):
@@ -118,13 +123,13 @@ class ScriptPlayer(ScriptObject):
             # demofile from zero-k
             self.rank = self.lobbyrank
         else:
-            print "Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'." % (section, data)
+            print("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'." % (section, data))
             self.rank = None
 
         if hasattr(self, "countrycode"):
             pass
         else:
-            print "Missing required key 'countrycode' in section '%s': '%s'." % (section, data)
+            print("Missing required key 'countrycode' in section '%s': '%s'." % (section, data))
             self.countrycode = None
 
     def __repr__(self):

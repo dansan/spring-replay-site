@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django_comments.feeds import LatestCommentFeed
 
-from models import Game, GameRelease, Replay
+from .models import Game, GameRelease, Replay
 
 
 class LatestUploadsFeed(Feed):

@@ -1,5 +1,6 @@
 {% extends 'srs_base.html' %}
 {% load cache %}
+{% load static %}
 {% load comments %}
 
 {% comment %}
@@ -76,5 +77,5 @@ Please see srs_base.html for license information.
 {% endcache %}
 
 {% block page_js %}
-  {% js "js/dyn/srs_index.js" %}
+  <script src="{% static "js/dyn/srs_index.js" %}"></script>
 {% endblock %}

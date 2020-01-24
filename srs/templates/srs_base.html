@@ -5,7 +5,7 @@
 This file is part of the "spring relay site / srs" program. It is published
 under the GPLv3.
 
-Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -32,11 +32,11 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
     <link rel="alternate" type="application/rss+xml" title="RSS latest uploads of {{ user }}" href="/feeds/uploader/{{ user }}/" />
 {% endif %}
 
-    {% css "css/libs/ui-darkness/jquery-ui-1.10.4.custom.css" %}
-    {% css "css/libs/bootstrap.css" %}
-    {% css "css/libs/selectize.bootstrap3.css" %}
+    <link rel="stylesheet" href="{% static "css/libs/ui-darkness/jquery-ui-1.10.4.custom.css" %}">
+    <link rel="stylesheet" href="{% static "css/libs/bootstrap.css" %}">
+    <link rel="stylesheet" href="{% static "css/libs/selectize.bootstrap3.css" %}">
 {% block page_css %}{% endblock %}
-    {% css "css/dyn/style.css" %}
+    <link rel="stylesheet" href="{% static "css/dyn/style.css" %}">
 
     {% if game_pref and game_pref > 0 %}
     <meta name="game_pref" content="{{ game_pref }}"/>
@@ -44,9 +44,9 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 
     <!-- HTML5, ECMAScript 5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
-      {% js "js/libs/html5shiv.js" %}
-      {% js "js/libs/respond.min.js" %}
-      {% js "js/libs/es5-shim.min.js" %}
+      <script src="{% static "js/libs/html5shiv.js" %}"></script>
+      <script src="{% static "js/libs/respond.min.js" %}"></script>
+      <script src="{% static "js/libs/es5-shim.min.js" %}"></script>
     <![endif]-->
 </head>
 <body>
@@ -176,13 +176,11 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
 <!-- ------
        JS
      ------ -->
-  {% js_lib "jquery-2.0.3.js" %}
-  {% django_js_init %}
-  {% js "js/djangojs/django.js" %}
-  {% js_lib "jquery-ui-1.10.4.custom.min.js" %}
-  {% js_lib "bootstrap.min.js" %}
-  {% js_lib "selectize.min.js" %}
-  {% js "js/dyn/srs_base.js" %}
+  <script src="{% static "js/libs/jquery-1.11.0.min.js" %}"></script>
+  <script src="{% static "js/libs/jquery-ui-1.10.4.custom.min.js" %}"></script>
+  <script src="{% static "js/libs/bootstrap.min.js" %}"></script>
+  <script src="{% static "js/libs/selectize.min.js" %}"></script>
+  <script src="{% static "js/dyn/srs_base.js" %}"></script>
 
 {% block page_js %}{% endblock %}
 <!-- -----
@@ -190,7 +188,7 @@ CREDITS FOR THE ORIGINAL WEB DESIGN GO TO:
      ----- -->
 
   <!-- If you wish to not be tracked, you can opt out using the "Links" -> "Privacy | Tracking opt out" link. -->
-  {% js "js/libs/piwik_track.js" %}
+  <script src="{% static "js/libs/piwik_track.js" %}"></script>
   <noscript>
      <p><img src="/piwik/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></p>
   </noscript>

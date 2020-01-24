@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -80,7 +80,7 @@ def xmlrpc_upload(username, password, filename, demofile, subject, comment, tags
     try:
         replay, msg = parse_uploaded_file(path, timer, tags, subject, comment, owner_ac)
     except UploadError as exc:
-        return exc.message
+        return str(exc)
     return msg
 
 
@@ -101,15 +101,17 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True
     try:
         replay = Replay.objects.get(gameID=demofile.header["gameID"])
         if replay.was_succ_uploaded:
-            logger.warn("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
+            logger.warning("Replay already existed: pk=%d gameID=%s", replay.pk, replay.gameID)
             if reparse_if_exists:
-                logger.warn("########### Reparsing... ###########")
-                return reparse(replay, path, tags, subject, comment, owner_ac)
+                logger.warning("########### Reparsing... ###########")
+                res = reparse(replay, path, tags, subject, comment, owner_ac)
+                timer.stop("parse_uploaded_file()")
+                return res
             if move:
                 try:
                     os.remove(path)
                 except OSError as exc:
-                    logger.warn("Could not remove file '%s': %s", path, exc)
+                    logger.warning("Could not remove file '%s': %s", path, exc)
             raise AlreadyExistsError(demofile, replay, '3 uploaded replay already exists as "{}" at "{}"'.format(
                 replay.__unicode__(), replay.get_absolute_url()))
         else:
@@ -164,8 +166,8 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True
     try:
         timer.start("rate_match()")
         rate_match(replay)
-    except Exception, e:
-        logger.error("Error rating replay(%d | %s): %s", replay.id, replay, e)
+    except Exception as exc:
+        logger.error("Error rating replay(%d | %s): %s", replay.id, replay, exc)
     finally:
         timer.stop("rate_match()")
 
@@ -191,12 +193,16 @@ def save_uploaded_file(ufile, filename):
     """
     suff = filename.split("_")[-1]
     filemagic = magic.from_buffer(ufile, mime=True)
+    if isinstance(ufile, bytes):
+        open_mode = "wb"
+    else:
+        open_mode = "w"
     if filemagic.endswith("gzip"):
         (fd, path) = mkstemp(suffix="_{}".format(suff), prefix="{}__".format(filename[:-len(suff) - 1]))
-        f = os.fdopen(fd, "wb")
+        f = os.fdopen(fd, open_mode)
     else:
         (fd, path) = mkstemp(suffix="_{}.gz".format(suff), prefix="{}__".format(filename[:-len(suff) - 1]))
-        f = gzip.GzipFile(filename=None, mode="wb", compresslevel=6, fileobj=os.fdopen(fd, "wb"))
+        f = gzip.GzipFile(filename=None, mode="w", compresslevel=6, fileobj=os.fdopen(fd, open_mode))
     written_bytes = f.write(ufile)
     f.close()
     logger.debug("stored file with %r bytes in %r", written_bytes, path)
@@ -245,7 +251,6 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
     if path is not None:
         replay.filename = os.path.basename(path)
         replay.path = os.path.dirname(path)
-
         replay.save()
         UploadTmp.objects.create(replay=replay)
 
@@ -277,8 +282,10 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
 
     # save map and mod options
     def truncate_option(k, v):
-        if len(str(k)) > 512: k = "string to long, sorry"
-        if len(str(v)) > 512: v = "string to long, sorry"
+        if len(str(k)) > 512:
+            k = "string to long, sorry"
+        if len(str(v)) > 512:
+            v = "string to long, sorry"
         return k, v
 
     timer.start("  map+modoptions")
@@ -487,7 +494,9 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
         logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
         smap.full_image_filename = MapImg.objects.get(startpostype=-1, map_info=replay.map_info).filename
-    except ObjectDoesNotExist:
+        if not os.path.exists(smap.full_image_filepath):
+            raise FileNotFoundError
+    except (ObjectDoesNotExist, FileNotFoundError) as exc:
         # 1st time upload for this map: fetch info and full map, create thumb
         # for index page
         smap.fetch_info()
@@ -515,11 +524,12 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
             metadata = smap.map_info[0]
         else:
             metadata = dict()
-        replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos,
-                                             height=height, width=width, metadata2=metadata)
-        MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
-        logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
-        replay.save()
+        if isinstance(exc, ObjectDoesNotExist):
+            replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos,
+                                                 height=height, width=width, metadata2=metadata)
+            MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
+            logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
+            replay.save()
     #
     # startpostype = 0: Fixed            |
     # startpostype = 1: Random           |
@@ -663,7 +673,7 @@ def upload_platform_stats(demofile):
             logger.error('No player found for playerNum %r in BA platform stat.', pl_num)
             continue
         if player['accountid'] < 1:
-            logger.warn('Not uploading platform stats for player %s (%r).', player['name'], player['accountid'])
+            logger.warning('Not uploading platform stats for player %s (%r).', player['name'], player['accountid'])
             continue
         params = {
             'accountId': int(player['accountid']),
@@ -817,7 +827,8 @@ def set_accountid(player):
             # be noticed and corrected
             min_acc_id = PlayerAccount.objects.aggregate(Min("accountid"))['accountid__min']
             logger.debug("min_acc_id = %d", min_acc_id)
-            if not min_acc_id or min_acc_id > 0: min_acc_id = 0
+            if not min_acc_id or min_acc_id > 0:
+                min_acc_id = 0
             player["accountid"] = min_acc_id - 1
         logger.info("set accountid: %d for player %s", player["accountid"], player["name"])
 

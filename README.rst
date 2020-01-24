@@ -2,12 +2,14 @@
 Spring Replay Site
 ==================
 
+|python| |license| |django|
+
 Website to upload, download, search and comment replays created by games
 running on the SpringRTS engine (http://springrts.com).
 
-Runs on Django / Python (https://www.djangoproject.com/).
+Runs on Django 3 and Python 3 (https://www.djangoproject.com/).
 
-Development is done using Django 1.11 and Python 2.7. It may or may not run with other versions.
+Development is done using Django 3.0 and Python 3.8. It may or may not run with other versions.
 Latest source code can be found `on Github <https://github.com/dansan/spring-replay-site/>`_.
 
 License
@@ -23,6 +25,7 @@ Website
 =======
 
 The live site can be found at http://replays.springrts.com/ , a test site can be found at http://replays-test.springrts.com/
+
 Associated forum thread on the SpringRTS developers forum: http://springrts.com/phpbb/viewtopic.php?f=71&t=28019
 
 Dependencies
@@ -34,73 +37,90 @@ Dependencies
 - bootstrap-daterangepicker: https://github.com/dangrossman/bootstrap-daterangepicker/
 - Moment.js: http://momentjs.com/
 - requests: http://docs.python-requests.org/en/master/ (apt: python-requests)
-
-(regarding python: make a virtenv and use requirements.txt)
-
-- Pillow 2.x: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
+- Pillow: https://pypi.python.org/pypi/Pillow/ (dev-python/pillow, pip install Pillow, enable JPEG, ZLIB and freetype support)
 - DB-support: dev-python/mysql-python / python-mysqldb / sqlite/postgres/etc
 - django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc/
 - python-magic: http://pypi.python.org/pypi/python-magic/ (version is around 0.4 - do NOT use python-magic-5.xx)
 - timezone defs: dev-python/pytz | python-tz
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django-utils: https://github.com/dansan/django-utils/
-- django.js: pip install git+https://github.com/veeloinc/django.js.git
-- South: http://south.aeracode.org/
 - django_extensions
 - jsonrpc
-- ipython
-- watchdog
-- Werkzeug
 
 Installation
 ============
 
-.. code-block:: bash
+Python 3.8
+^^^^^^^^^^
+To install Python 3.8 in a Debian system that does not yet have it in the distro repos::
+
+    $ echo 'deb-src http://ftp.de.debian.org/debian/ testing main contrib non-free' >> /etc/apt/sources.list.d/testing.list
+    $ apt-get build-dep python3.8
+    $ wget https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+    $ tar xzf Python-3.8.1.tgz
+    $ cd Python-3.8.1
+    # append "--prefix=~/python3.8" to the ./configure command...
+    # if you don't have system wide write permissions:
+    $ ./configure --enable-optimizations --with-ensurepip=install
+    $ nice make -j $(nproc)
+    # zzz ~1h...
+    $ make altinstall  # maybe use "sudo"
+
+Virtualenv
+^^^^^^^^^^
+Then create a virtualenv to install the projects dependencies into::
 
     $ sudo aptitude install libzmq-dev libfreetype6-dev
-    $ virtualenv srs
+    $ python3.8 -m venv srs
     $ . srs/bin/activate
+    (srs) $ pip install -U pip
 
-- install from git:
+Python packages
+^^^^^^^^^^^^^^^
+Some software has to be installed from git:
+
 - install django-eztables from https://github.com/dansan/django-eztables.git
 - install django-utils from https://github.com/dansan/django-utils.git
 - install django.js from https://github.com/veeloinc/django.js.git
 
-.. code-block:: bash
+Install from git::
 
     (srs) $ pip install git+git://github.com/dansan/django-eztables.git
     (srs) $ pip install git+git://github.com/dansan/django-utils.git
     (srs) $ pip install git+git://github.com/veeloinc/django.js.git
 
-- install requirements:
-
-.. code-block:: bash
+Now install further requirements::
 
     (srs) $ pip install -r requirements.txt
 
-- patch ``srs/lib/python2.7/site-packages/eztables/views.py`` using ``eztables-GET.patch``.
+The ``django-eztables`` packages ``views.py`` needs to be patched using ``eztables-GET.patch``::
 
-.. code-block:: bash
-
-    (srs) $ cd srs
     (srs) $ patch -p0  < .../eztables-GET.patch
 
-- create database in xxSQL
-- copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there (at least DATABASES and ADMINS).
-- install database schemas and static files:
+To setup the SQL database copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there (at least ``DATABASES`` and ``ADMINS``).
 
-.. code-block:: bash
+The install the database schemas and static files::
 
     (srs) $ ./manage.py makemigrations background_task
     (srs) $ ./manage.py migrate
-
-.. code-block:: bash
-
     (srs) $ crontab -e
+
+Add the following to your crontab::
 
     MAILTO="me@myemail.com"
 
-    0 0 * * *  ionice -c3 nice -n 19 .../virtenvs/srs-head/bin/python2.7 .../spring-replay-site/manage.py process_tasks --duration 86100 --log-std
-    30 1 * * * ionice -c3 nice -n 19 .../virtenv/bin/python2.7 /var/www/servers/replays.springrts.com/spring-replay-site/manage.py delete_old_replay_files
+    0 0 * * *  ionice -c3 nice -n 19 .../virtenvs/srs/bin/python3.8 .../spring-replay-site/manage.py process_tasks --duration 86100 --log-std
+    30 1 * * * ionice -c3 nice -n 19 .../virtenv/bin/python3.8 /var/www/servers/replays.springrts.com/spring-replay-site/manage.py delete_old_replay_files
 
-- go to the /admin/ page and create a Lobbyauth->User_profile for your admin user
+Finally go to the /admin/ page and create a ``Lobbyauth->User_profile`` for your admin user.
+
+
+.. |license| image:: https://img.shields.io/badge/License-GPLv3-orange.svg
+    :alt: GNU General Public License 3
+    :target: https://www.gnu.org/licenses/gpl-3.0
+.. |python| image:: https://img.shields.io/badge/python-3.8-blue.svg
+    :alt: Python 3.8
+    :target: https://www.python.org/downloads/release/python-381/
+.. |django| image:: https://www.djangoproject.com/m/img/badges/djangosite80x15.gif
+    :alt: A Django site
+    :target: http://www.djangoproject.com/

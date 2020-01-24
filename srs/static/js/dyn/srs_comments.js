@@ -2,7 +2,7 @@
  * This file is part of the "spring relay site / srs" program. It is published
  * under the GPLv3.
  * 
- * Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+ * Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -18,7 +18,7 @@ var browse_table = $( "#comments-table" ).dataTable({
 	"bScrollCollapse": true,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "srs/comment_tbl_src$" ),
+	"sAjaxSource": "/comment_tbl_src$",
 	"bRegex" : true,
 	"aoColumns": [
 	              { "bSearchable": false },
@@ -47,7 +47,7 @@ var browse_table = $( "#comments-table" ).dataTable({
 		  "aTargets": [ 1 ],
 		  "mData": 1,
 		  "mRender": function ( data, type, full ) {
-			  return '<a href="' + Django.url('srs/player', full[3] ) + '">Player</a> | <a href="' + Django.url('srs/replay_by_id', full[4] ) + '">Match</a>';
+			  return '<a href="' + '/player/' + full[3] + '">Player</a> | <a href="' + '/replay_by_id/' + full[4] + '">Match</a>';
 			  }
          }
          ]

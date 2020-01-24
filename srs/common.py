@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -19,7 +19,7 @@ def all_page_infos(request):
         gameid = int(request.GET["game_pref"])
         request.session.modified = True  # force a reload in the client to update the top menu
         request.session["game_pref"] = gameid
-        if (request.user.is_authenticated() and
+        if (request.user.is_authenticated and
                 request.user.userprofile.game_pref != gameid and
                 not request.user.userprofile.game_pref_fixed):
             request.user.userprofile.game_pref = gameid
@@ -27,7 +27,7 @@ def all_page_infos(request):
     except (TypeError, ValueError, MultiValueDictKeyError):
         # request.GET["game_pref"] not set (or not an int)
         pass
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             c["logged_in_pa"] = PlayerAccount.objects.get(accountid=request.user.userprofile.accountid)
         except ObjectDoesNotExist:

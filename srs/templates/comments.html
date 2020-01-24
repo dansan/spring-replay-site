@@ -1,4 +1,5 @@
 {% extends 'srs_base.html' %}
+{% load static %}
 {% load eztables %}
 
 {% comment %}
@@ -8,7 +9,7 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/libs/datatables.bootstrap.css" %}
+    <link rel="stylesheet" href="{% static "css/libs/datatables.bootstrap.css" %}">
 {% endblock %}
 
 {% block pagetitle %}All comments{% endblock %}
@@ -44,8 +45,8 @@ Please see srs_base.html for license information.
 {% endblock %}
 
 {% block page_js %}
-  {% datatables_js %}
-  {% datatables_bootstrap_js %}
-  {% js_lib "moment.min.js" %}
-  {% js "js/dyn/srs_comments.js" %}
+  <script src="{% static "js/libs/datatables/jquery.dataTables.js" %}"></script>
+  <script src="{% static "js/libs/datatables/datatables.bootstrap.js" %}"></script>
+  <script src="{% static "js/libs/moment.min.js" %}"></script>
+  <script src="{% static "js/dyn/srs_comments.js" %}"></script>
 {% endblock %}

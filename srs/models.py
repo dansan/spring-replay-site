@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -13,13 +13,16 @@ import datetime
 import os
 import zlib
 from collections import defaultdict, Counter, OrderedDict
+from functools import reduce
 
 from django.db import models
 from django.contrib.auth.models import User
 from django_comments.models import Comment
 from django.db.models.signals import post_delete, post_save
+from django.db.models.deletion import CASCADE
 from django.dispatch import receiver
 from django.db.models import Count
+from django.urls import reverse
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -89,9 +92,8 @@ class Tag(models.Model):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/tag', [self.name]
+        return reverse('srs/tag', args=[self.name])
 
     @property
     def replay_count(self):
@@ -111,9 +113,8 @@ class Map(models.Model):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/rmap', [self.name]
+        return reverse('srs/rmap', args=[self.name])
 
     @property
     def replay_count(self):
@@ -126,7 +127,7 @@ class Map(models.Model):
 class MapImg(models.Model):
     filename = models.CharField(max_length=128)
     startpostype = models.IntegerField(blank=True, null=True, verbose_name='-1 means full image')
-    map_info = models.ForeignKey(Map)
+    map_info = models.ForeignKey(Map, on_delete=CASCADE)
 
     def __unicode__(self):
         return "MapImg({}, {}, {})".format(self.pk, self.map_info.name, self.startpostype)
@@ -136,7 +137,7 @@ class MapImg(models.Model):
 
 
 class Replay(models.Model):
-    versionString = models.CharField(max_length=32)
+    versionString = models.CharField(max_length=128)
     gameID = models.CharField(max_length=32, unique=True)
     unixTime = models.DateTimeField(verbose_name='date of match', db_index=True)
     wallclockTime = models.CharField(max_length=32, verbose_name='length of match')
@@ -147,10 +148,10 @@ class Replay(models.Model):
     short_text = models.CharField(max_length=50, db_index=True)
     long_text = models.CharField(max_length=513, db_index=True)
     notcomplete = models.BooleanField(default=True)
-    map_info = models.ForeignKey(Map, blank=True, null=True)
-    map_img = models.ForeignKey(MapImg, blank=True, null=True)
+    map_info = models.ForeignKey(Map, blank=True, null=True, on_delete=CASCADE)
+    map_img = models.ForeignKey(MapImg, blank=True, null=True, on_delete=CASCADE)
     tags = models.ManyToManyField(Tag)
-    uploader = models.ForeignKey(User)
+    uploader = models.ForeignKey(User, on_delete=CASCADE)
     upload_date = models.DateTimeField(auto_now_add=True, db_index=True)
     filename = models.CharField(max_length=256)
     path = models.CharField(max_length=256)
@@ -182,9 +183,8 @@ class Replay(models.Model):
                 "uploader": self.uploader.username,
                 "upload_date": self.upload_date}
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/replay', [str(self.gameID)]
+        return reverse('srs/replay', args=[str(self.gameID)])
 
     @property
     def was_succ_uploaded(self):
@@ -422,7 +422,7 @@ class Replay(models.Model):
 
 
 class PlayerStats(models.Model):
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     stats = models.BinaryField(blank=True, null=True, default=None)
 
     @property
@@ -434,7 +434,7 @@ class PlayerStats(models.Model):
 
 
 class TeamStats(models.Model):
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     stat_type = models.CharField(max_length=32)
     stats = models.BinaryField(blank=True, null=True, default=None)
 
@@ -477,7 +477,7 @@ class AdditionalReplayInfo(models.Model):
     Infos that are only relevant to a few Replay objects are not worth their
     own attribute in the Replay class.
     """
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     key = models.CharField(max_length=32)
     value = models.CharField(max_length=512)
 
@@ -492,7 +492,7 @@ class Allyteam(models.Model):
     startrectright = models.FloatField(blank=True, null=True)
     startrecttop = models.FloatField(blank=True, null=True)
     winner = models.BooleanField(default=False)
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     num = models.SmallIntegerField()
 
     def __unicode__(self):
@@ -508,9 +508,8 @@ class PlayerAccount(models.Model):
     def __unicode__(self):
         return u"PlayerAccount({}: {})".format(self.accountid, reduce(lambda x, y: "{}|{}".format(x, y), self.get_names())[:40])
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/player', [self.accountid]
+        return reverse('srs/player', args=[self.accountid])
 
     @property
     def replay_count(self):
@@ -613,14 +612,14 @@ class PlayerAccount(models.Model):
 
 
 class Player(models.Model):
-    account = models.ForeignKey(PlayerAccount, blank=True, null=True)
+    account = models.ForeignKey(PlayerAccount, blank=True, null=True, on_delete=CASCADE)
     name = models.CharField(max_length=128, db_index=True)
     rank = models.SmallIntegerField()
     skill = models.CharField(max_length=16, blank=True)
     skilluncertainty = models.SmallIntegerField(default=-1, blank=True)
     spectator = models.BooleanField(default=False)
-    team = models.ForeignKey("Team", blank=True, null=True)
-    replay = models.ForeignKey(Replay)
+    team = models.ForeignKey("Team", blank=True, null=True, on_delete=CASCADE)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     startposx = models.FloatField(blank=True, null=True)
     startposy = models.FloatField(blank=True, null=True)
     startposz = models.FloatField(blank=True, null=True)
@@ -628,24 +627,23 @@ class Player(models.Model):
     def __unicode__(self):
         return "Player({}, {})".format(self.id, self.name)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/player', [self.account.accountid]
+        return reverse('srs/player', args=[self.account.accountid])
 
     class Meta:
         ordering = ['name']
 
 
 class Team(models.Model):
-    allyteam = models.ForeignKey(Allyteam)
+    allyteam = models.ForeignKey(Allyteam, on_delete=CASCADE)
     handicap = models.IntegerField()
     rgbcolor = models.CharField(max_length=23)
     side = models.CharField(max_length=32)
     startposx = models.IntegerField(blank=True, null=True)
     startposy = models.IntegerField(blank=True, null=True)
     startposz = models.IntegerField(blank=True, null=True)
-    teamleader = models.ForeignKey(Player, related_name="+")
-    replay = models.ForeignKey(Replay)
+    teamleader = models.ForeignKey(Player, related_name="+", on_delete=CASCADE)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     num = models.SmallIntegerField()
 
     def __unicode__(self):
@@ -655,7 +653,7 @@ class Team(models.Model):
 class MapModOption(models.Model):
     name = models.CharField(max_length=128)
     value = models.CharField(max_length=512)
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
 
     def __repr__(self):
         return "{}({}, {})".format(self.__class__.__name__, self.pk, self.name)
@@ -685,7 +683,7 @@ class NewsItem(models.Model):
 
 
 class UploadTmp(models.Model):
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
 
     def __unicode__(self):
         return "UploadTmp({}, {})".format(self.pk, self.replay)
@@ -720,9 +718,8 @@ class Game(models.Model):
     def __unicode__(self):
         return "Game({}, {}, {})".format(self.pk, self.abbreviation, self.name[:70])
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/browse_archive', ['game={}'.format(self.pk)]
+        return reverse('srs/browse_archive', args=['game={}'.format(self.pk)])
 
     class Meta:
         ordering = ['name']
@@ -731,14 +728,13 @@ class Game(models.Model):
 class GameRelease(models.Model):
     name = models.CharField(max_length=256, db_index=True)
     version = models.CharField(max_length=64)
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey(Game, on_delete=CASCADE)
 
     def __unicode__(self):
         return "GameRelease({}, {}, {}, {})".format(self.pk, self.name[:70], self.version, self.game)
 
-    @models.permalink
     def get_absolute_url(self):
-        return 'srs/gamerelease', [self.name]
+        return reverse('srs/gamerelease', args=[self.name])
 
     @property
     def replay_count(self):
@@ -749,7 +745,7 @@ class GameRelease(models.Model):
 
 
 class RatingBase(models.Model):
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey(Game, on_delete=CASCADE)
     MATCH_TYPE_CHOICES = (('1', u'1v1'),
                           ('T', u'Team'),
                           ('F', u'FFA'),
@@ -757,7 +753,7 @@ class RatingBase(models.Model):
                           ('L', u'Global'),
                           )
     match_type = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
-    playeraccount = models.ForeignKey(PlayerAccount)
+    playeraccount = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
     playername = models.CharField(max_length=128, blank=True, null=True,
                                   db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
 
@@ -791,7 +787,7 @@ class Rating(RatingBase):
 
 
 class RatingHistory(RatingBase):
-    match = models.ForeignKey(Replay)
+    match = models.ForeignKey(Replay, on_delete=CASCADE)
     match_date = models.DateTimeField(blank=True, null=True,
                                       db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
 
@@ -803,8 +799,8 @@ class RatingHistory(RatingBase):
 
 
 class AdditionalReplayOwner(models.Model):
-    uploader = models.ForeignKey(User)
-    additional_owner = models.ForeignKey(PlayerAccount)
+    uploader = models.ForeignKey(User, on_delete=CASCADE)
+    additional_owner = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
 
     def __unicode__(self):
         return u"AdditionalReplayOwner({}) uploader: {}, additional_owner: {}".format(self.id, self.uploader,
@@ -815,8 +811,8 @@ class AdditionalReplayOwner(models.Model):
 
 
 class ExtraReplayMedia(models.Model):
-    replay = models.ForeignKey(Replay)
-    uploader = models.ForeignKey(User)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
+    uploader = models.ForeignKey(User, on_delete=CASCADE)
     upload_date = models.DateTimeField(auto_now_add=True, db_index=True)
     comment = models.CharField(max_length=513)
     media = models.FileField(upload_to="media/%Y/%m/%d", blank=True)
@@ -842,7 +838,7 @@ class ExtraReplayMedia(models.Model):
 
 class SldbLeaderboardGame(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
-    game = models.ForeignKey(Game)
+    game = models.ForeignKey(Game, on_delete=CASCADE)
     match_type = models.CharField(max_length=1, choices=RatingBase.MATCH_TYPE_CHOICES, db_index=True)
 
     def __unicode__(self):
@@ -850,8 +846,8 @@ class SldbLeaderboardGame(models.Model):
 
 
 class SldbLeaderboardPlayer(models.Model):
-    leaderboard = models.ForeignKey(SldbLeaderboardGame)
-    account = models.ForeignKey(PlayerAccount)
+    leaderboard = models.ForeignKey(SldbLeaderboardGame, on_delete=CASCADE)
+    account = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
     rank = models.IntegerField()
     trusted_skill = models.FloatField()
     estimated_skill = models.FloatField()
@@ -886,8 +882,8 @@ class SldbMatchSkillsCache(models.Model):
 
 class SldbPlayerTSGraphCache(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
-    account = models.ForeignKey(PlayerAccount)
-    game = models.ForeignKey(Game)
+    account = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
+    game = models.ForeignKey(Game, on_delete=CASCADE)
     filepath_global = models.CharField(max_length=256)
     filepath_duel = models.CharField(max_length=256)
     filepath_ffa = models.CharField(max_length=256)
@@ -908,7 +904,7 @@ class SldbPlayerTSGraphCache(models.Model):
                 try:
                     os.remove(filepath)
                 except OSError as exc:
-                    logger.warn("Cannot remove file '%s' of cache entry %d: %s", filepath, self.id, exc)
+                    logger.warning("Cannot remove file '%s' of cache entry %d: %s", filepath, self.id, exc)
 
     @staticmethod
     def purge_old():
@@ -934,32 +930,32 @@ class SldbPlayerTSGraphCache(models.Model):
 
 
 class BAwards(models.Model):
-    replay = models.ForeignKey(Replay)
-    ecoKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
+    ecoKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     ecoKillAward1stScore = models.IntegerField(default=-1)
-    ecoKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     ecoKillAward2ndScore = models.IntegerField(default=-1)
-    ecoKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     ecoKillAward3rdScore = models.IntegerField(default=-1)
-    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     fightKillAward1stScore = models.IntegerField(default=-1)
-    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     fightKillAward2ndScore = models.IntegerField(default=-1)
-    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     fightKillAward3rdScore = models.IntegerField(default=-1)
-    effKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     effKillAward1stScore = models.FloatField(default=-1)
-    effKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     effKillAward2ndScore = models.FloatField(default=-1)
-    effKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    effKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     effKillAward3rdScore = models.FloatField(default=-1)
-    cowAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    cowAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     cowAwardScore = models.IntegerField(default=-1)
-    ecoAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    ecoAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     ecoAwardScore = models.IntegerField(default=-1)
-    dmgRecAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    dmgRecAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     dmgRecAwardScore = models.FloatField(default=-1)
-    sleepAward = models.ForeignKey(Player, blank=True, null=True, related_name="+")
+    sleepAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
     sleepAwardScore = models.IntegerField(default=-1)
 
     def __unicode__(self):
@@ -971,9 +967,9 @@ class BAwards(models.Model):
 
 
 class XTAwards(models.Model):
-    replay = models.ForeignKey(Replay)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
     isAlive = models.SmallIntegerField(default=-1)
-    player = models.ForeignKey(Player)
+    player = models.ForeignKey(Player, on_delete=CASCADE)
     unit = models.CharField(max_length=1024)
     kills = models.IntegerField(default=-1)
     age = models.IntegerField(default=-1)
@@ -984,8 +980,8 @@ class XTAwards(models.Model):
 
 
 class CursedAwards(models.Model):
-    replay = models.ForeignKey(Replay)
-    player = models.ForeignKey(Player)
+    replay = models.ForeignKey(Replay, on_delete=CASCADE)
+    player = models.ForeignKey(Player, on_delete=CASCADE)
 
     air = models.PositiveIntegerField(default=0)
     bug = models.PositiveIntegerField(default=0)
@@ -1237,7 +1233,10 @@ class SrsTiming(object):
         return sorted(self.times.values(), key=operator.itemgetter(0))
 
     def __str__(self):
-        return "\n".join(["{}: {}.{}".format(t[2], t[1].seconds, t[1].microseconds / 100000) for t in self.sorted_list])
+        return "\n".join([
+            f"{t[2]}: {t[1].seconds}.{int(t[1].microseconds / 10000)}"
+            for t in self.sorted_list
+        ])
 
 
 # HEAVY DEBUG

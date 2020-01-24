@@ -2,7 +2,7 @@
  * This file is part of the "spring relay site / srs" program. It is published
  * under the GPLv3.
  * 
- * Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+ * Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -20,7 +20,7 @@ var playerrating_table = $( "#playerrating-table" ).dataTable({
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url('srs/ajax_playerrating_tbl_src', accountid),
+	"sAjaxSource": '/ajax_playerrating_tbl_src/' + accountid,
 });
 
 var winloss_table = $( "#winloss-table" ).dataTable({
@@ -32,7 +32,7 @@ var winloss_table = $( "#winloss-table" ).dataTable({
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "srs/ajax_winloss_tbl_src", accountid ),
+	"sAjaxSource": "/ajax_winloss_tbl_src/" + accountid,
 });
 
 var playerreplays_table = $( "#playerreplays-table" ).dataTable({
@@ -45,7 +45,7 @@ var playerreplays_table = $( "#playerreplays-table" ).dataTable({
 	"bScrollCollapse": true,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "srs/ajax_playerreplays_tbl_src", accountid ),
+	"sAjaxSource": "/ajax_playerreplays_tbl_src/" + accountid,
 	"bRegex" : true,
 	"aoColumns": [
 	              null,
@@ -64,7 +64,7 @@ var playerreplays_table = $( "#playerreplays-table" ).dataTable({
 			  if ( data == "" ) {
 				  data = "no name"
 			  }
-			  return '<a href="' + Django.url('srs/replay', full[7] ) + '">' + data + '</a>';
+			  return '<a href="' + '/replay/' + full[7] + '">' + data + '</a>';
 		  }
 	  },
 	  {
