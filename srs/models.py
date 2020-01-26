@@ -12,7 +12,6 @@ from os.path import basename
 import datetime
 import os
 import zlib
-import json
 from collections import defaultdict, Counter, OrderedDict
 
 from django.db import models
@@ -27,6 +26,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from picklefield.fields import PickledObjectField
 from background_task import background
+import ujson
 
 from srs.mail import send_mail
 
@@ -48,6 +48,37 @@ def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifier
         seen[marker] = 1
         result.append(item)
     return result
+
+
+class JSONTextField(models.TextField):
+    def from_db_value(self, value, expression, connection, context):
+        if not value:
+            return None
+        return self.to_python(value)
+
+    def get_prep_value(self, value):
+        if isinstance(value, dict):
+            try:
+                del value["torrent"]
+            except KeyError:
+                pass
+            try:
+                value["timestamp"] = value["timestamp"].value
+            except KeyError:
+                pass
+        return ujson.dumps(value)
+
+    def to_python(self, value):
+        if isinstance(value, dict) or value is None:
+            return value
+        res = ujson.loads(value)
+        if isinstance(res, dict) and "timestamp" in res:
+            res["timestamp"] = datetime.datetime.strptime(res["timestamp"], "%Y%m%dT%H:%M:%S")
+        return res
+
+    def value_to_string(self, obj):
+        value = self.value_from_object(obj)
+        return self.get_prep_value(value)
 
 
 class Tag(models.Model):
@@ -74,6 +105,7 @@ class Map(models.Model):
     height = models.IntegerField()
     width = models.IntegerField()
     metadata = PickledObjectField(blank=True, null=True)
+    metadata2 = JSONTextField(blank=True, null=True, default=None)
 
     def __repr__(self):
         return "Map({}, {})".format(self.pk, self.name)
@@ -397,7 +429,7 @@ class PlayerStats(models.Model):
 
     @property
     def decompressed(self):
-        return json.loads(zlib.decompress(self.stats))
+        return ujson.loads(zlib.decompress(self.stats))
 
     def __unicode__(self):
         return u'PlayerStats(pk={}, replay.pk={}, {!r}...)'.format(self.pk, self.replay.pk, self.stats[:4])
@@ -432,7 +464,7 @@ class TeamStats(models.Model):
 
     @property
     def decompressed(self):
-        return json.loads(zlib.decompress(self.stats))
+        return ujson.loads(zlib.decompress(self.stats))
 
     @property
     def label(self):

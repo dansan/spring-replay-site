@@ -227,6 +227,9 @@ def replay(request, gameID):
     c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
+    if not replay.map_info.metadata2:
+        replay.map_info.metadata2 = replay.map_info.metadata
+        replay.map_info.save(update_fields=("metadata2",))
     c["replay_details"] = True
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
     if c["was_stopped"]:
@@ -250,15 +253,15 @@ def replay(request, gameID):
     try:
         c["metadata"].append(("Size", "{} x {}".format(map_px_x, map_px_y)))
         try:
-            c["metadata"].append(("Wind", "{} - {}".format(replay.map_info.metadata["metadata"]["MinWind"],
-                                                           replay.map_info.metadata["metadata"]["MaxWind"])))
+            c["metadata"].append(("Wind", "{} - {}".format(replay.map_info.metadata2["metadata"]["MinWind"],
+                                                           replay.map_info.metadata2["metadata"]["MaxWind"])))
         except KeyError:
             pass
         try:
-            c["metadata"].append(("Tidal", str(replay.map_info.metadata["metadata"]["TidalStrength"])))
+            c["metadata"].append(("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"])))
         except KeyError:
             pass
-        for k, v in replay.map_info.metadata["metadata"].items():
+        for k, v in replay.map_info.metadata2["metadata"].items():
             if type(v) == str and not v.strip():
                 continue
             elif type(v) == list and not v:
@@ -270,15 +273,16 @@ def replay(request, gameID):
             else:
                 c["metadata"].append((k.strip(), v))
         try:
-            if replay.map_info.metadata["version"]:
-                c["metadata"].append(("Version", replay.map_info.metadata["version"]))
+            if replay.map_info.metadata2["version"]:
+                c["metadata"].append(("Version", replay.map_info.metadata2["version"]))
         except KeyError:
             pass
     except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
-        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %s", replay.id,
+        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %r", replay.id,
                      replay.map_info.metadata)
+        logger.error("replay.map_info.metadata2: %r", replay.map_info.metadata2)
         logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)

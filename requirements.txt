@@ -18,3 +18,4 @@ python-magic>=0.4.12
 pytz>=2016.7
 requests>=2.18.4
 Werkzeug>=0.15.0
+ujson>=1.35

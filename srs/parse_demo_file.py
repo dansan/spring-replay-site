@@ -11,7 +11,6 @@
 import re
 import sys
 import zlib
-import json
 from struct import unpack
 from time import localtime, strftime
 from datetime import timedelta
@@ -21,6 +20,7 @@ import gzip
 import struct
 import logging
 import threading
+import ujson
 from srs.match_stats import MatchStatsGeneration
 
 
@@ -636,10 +636,10 @@ class Parse_demo_file():
         return self.team_stats
 
     def player_stats_as_jsonz(self):
-        return zlib.compress(json.dumps(self.player_stats))
+        return zlib.compress(ujson.dumps(self.player_stats))
 
     def team_stats_as_jsonz(self):
-        return dict((k, zlib.compress(json.dumps(v))) for k, v in self.team_stats.items())
+        return dict((k, zlib.compress(ujson.dumps(v))) for k, v in self.team_stats.items())
 
 
 def main(argv=None):

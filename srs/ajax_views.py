@@ -24,6 +24,7 @@ from django_comments.models import Comment
 from django.db.models import Q
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import ObjectDoesNotExist
+import ujson
 
 from srs.models import (Game, GameRelease, Player, PlayerAccount, PlayerStats, Map, Rating, Replay,
                         SldbLeaderboardPlayer, SldbPlayerTSGraphCache, TeamStats)
@@ -36,12 +37,12 @@ logger = logging.getLogger(__name__)
 def ajax_player_lookup(request, name):
     pa = PlayerAccount.objects.exclude(accountid=0).filter(player__name__icontains=name).distinct().select_related(
         "player__name").order_by('player__name').only("accountid", "player__name").values("accountid", "player__name")
-    return HttpResponse(json.dumps({'player': list(pa)}))
+    return HttpResponse(ujson.dumps({'player': list(pa)}))
 
 
 def ajax_map_lookup(request, name):
     maps = Map.objects.filter(name__icontains=name).distinct().values("id", "name")
-    return HttpResponse(json.dumps({'maps': list(maps)}))
+    return HttpResponse(ujson.dumps({'maps': list(maps)}))
 
 
 def ajax_playerrating_tbl_src(request, accountid):
@@ -54,21 +55,21 @@ def ajax_playerrating_tbl_src(request, accountid):
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("trouble reading 'sEcho': %s", exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     try:
         accountid = int(accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     if accountid == 0:
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
 
     ratings = list()
     if pa.accountid > 0:
@@ -94,7 +95,7 @@ def ajax_playerrating_tbl_src(request, accountid):
                                         Rating.objects.filter(match_type=mt).first().get_match_type_display(),
                                         skills["skills"][i][0]])
 
-    return HttpResponse(json.dumps({"sEcho": sEcho,
+    return HttpResponse(ujson.dumps({"sEcho": sEcho,
                                     "iTotalRecords": len(ratings),
                                     "iTotalDisplayRecords": len(ratings),
                                     "aaData": ratings}))
@@ -110,19 +111,19 @@ def ajax_winloss_tbl_src(request, accountid):
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("trouble reading 'sEcho': %s", exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     try:
         accountid = int(accountid)
     except ValueError as exc:
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     if accountid == 0:
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
     except ObjectDoesNotExist as exc:
         logger.error("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
 
     win_loss_data = list()
     for game in pa.get_all_games().exclude(sldb_name=""):
@@ -150,7 +151,7 @@ def ajax_winloss_tbl_src(request, accountid):
                                       player_stats[match_type][2],
                                       '%3.0f' % ratio + " %"])
 
-    return HttpResponse(json.dumps({"sEcho": sEcho,
+    return HttpResponse(ujson.dumps({"sEcho": sEcho,
                                     "iTotalRecords": len(win_loss_data),
                                     "iTotalDisplayRecords": len(win_loss_data),
                                     "aaData": win_loss_data}))
@@ -176,22 +177,22 @@ def ajax_playerreplays_tbl_src(request, accountid):
         except Exception as exc:
             logger.error("FIXME: to broad exception handling.")
             logger.exception("trouble reading request.GET['%s']='%s', Exception: %s", k, v, exc)
-            return HttpResponse(json.dumps(empty_result))
+            return HttpResponse(ujson.dumps(empty_result))
     empty_result["sEcho"] = params["sEcho"]
     try:
         accountid = int(accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("accountid '%s' is not an integer: %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     if accountid == 0:
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
     try:
         pa = PlayerAccount.objects.get(accountid=accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
 
     qs = Replay.objects.filter(player__account__accountid=accountid)
     if params["sSearch"]:
@@ -220,7 +221,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
                             replay.gameID])
         except ObjectDoesNotExist:
             return HttpResponseNotFound('<h1>Player not found</h1>')
-    return HttpResponse(json.dumps({"sEcho": params["sEcho"],
+    return HttpResponse(ujson.dumps({"sEcho": params["sEcho"],
                                     "iTotalRecords": Replay.objects.filter(
                                         player__account__accountid=accountid).count(),
                                     "iTotalDisplayRecords": qs.count(),
@@ -506,7 +507,7 @@ def hof_tbl_src(request, leaderboardid):
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
         logger.exception("trouble reading 'sEcho': %s", exc)
-        return HttpResponse(json.dumps(empty_result))
+        return HttpResponse(ujson.dumps(empty_result))
 
     lps = list(SldbLeaderboardPlayer.objects.filter(leaderboard__id=int(leaderboardid)).values_list("rank",
                                                                                                     "account__preffered_name",
@@ -515,7 +516,7 @@ def hof_tbl_src(request, leaderboardid):
                                                                                                     "uncertainty",
                                                                                                     "inactivity",
                                                                                                     "account__accountid"))
-    return HttpResponse(json.dumps({"sEcho": sEcho,
+    return HttpResponse(ujson.dumps({"sEcho": sEcho,
                                     "iTotalRecords": len(lps),
                                     "iTotalDisplayRecords": len(lps),
                                     "aaData": lps}))

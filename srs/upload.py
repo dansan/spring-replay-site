@@ -516,7 +516,7 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
         else:
             metadata = dict()
         replay.map_info = Map.objects.create(name=demofile.game_setup["host"]["mapname"], startpos=startpos,
-                                             height=height, width=width, metadata=metadata)
+                                             height=height, width=width, metadata=metadata, metadata2=metadata)
         MapImg.objects.create(filename=full_img, startpostype=-1, map_info=replay.map_info)
         logger.debug("replay(%d) created new map_info and MapImg: map_info.pk=%d", replay.pk, replay.map_info.pk)
         replay.save()
