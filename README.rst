@@ -42,7 +42,6 @@ Dependencies
 - django-xmlrpc: https://github.com/Fantomas42/django-xmlrpc/
 - python-magic: http://pypi.python.org/pypi/python-magic/ (version is around 0.4 - do NOT use python-magic-5.xx)
 - timezone defs: dev-python/pytz | python-tz
-- django-picklefield: https://pypi.python.org/pypi/django-picklefield/
 - django-eztables: https://github.com/noirbizarre/django-eztables/
 - django-utils: https://github.com/dansan/django-utils/
 - django.js: pip install git+https://github.com/veeloinc/django.js.git

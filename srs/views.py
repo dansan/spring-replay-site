@@ -480,7 +480,7 @@ def hall_of_fame(request, abbreviation):
         except ObjectDoesNotExist:
             sist = update_stats.now()
 
-        c["bawards"] = sist.bawards
+        c["bawards"] = sist.bawards_decoded
         c["bawards_lu"] = sist.last_modified
     c["thisgame"] = game
     return render(request, "hall_of_fame.html", c)

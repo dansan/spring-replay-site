@@ -24,7 +24,6 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
-from picklefield.fields import PickledObjectField
 from background_task import background
 import ujson
 
@@ -699,10 +698,17 @@ class SiteStats(models.Model):
     tags = models.CharField(max_length=1000)
     maps = models.CharField(max_length=1000)
     active_players = models.CharField(max_length=1000)
-    all_players = PickledObjectField()
+    all_players = JSONTextField()
     comments = models.CharField(max_length=1000)
     games = models.CharField(max_length=1000)
-    bawards = PickledObjectField()
+    bawards = JSONTextField()
+
+    @property
+    def bawards_decoded(self):
+        return dict(
+            (award, ((PlayerAccount.objects.get(pk=ps[0]), ps[1]) for ps in player_stats))
+            for award, player_stats in self.bawards.items()
+        )
 
 
 class Game(models.Model):
@@ -1178,12 +1184,13 @@ def update_stats(force=False):
         bawards_fields = [field.name for field in BAwards._meta.get_fields()
                           if "Award" in field.name and "Score" not in field.name]
         bawards_stats = dict([(field, defaultdict(int)) for field in bawards_fields])
+        bawards_no_bots = BAwards.objects.exclude(replay__player__account__accountid=0)
         for field in bawards_fields:
             arg = {"{}__isnull".format(field): False}
-            for pa in PlayerAccount.objects.filter(
-                    player__in=BAwards.objects.exclude(replay__player__account__accountid=0).filter(**arg).values(field)
-            ):
-                bawards_stats[field][pa] += 1
+            for pa_pk in PlayerAccount.objects.filter(
+                    player__in=bawards_no_bots.filter(**arg).values(field)
+            ).values_list("pk", flat=True):
+                bawards_stats[field][pa_pk] += 1
             # converting dict to list, sort, keep only top 10
             bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
         timer.stop("bawards")
