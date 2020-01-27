@@ -301,8 +301,8 @@ def replay(request, gameID):
     except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
-        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata2: %r", replay.id,
-                     replay.map_info.metadata2)
+        logger.error("Problem with metadata (replay.id '%d' map.id %d), replay.map_info.metadata2: %r", replay.id,
+                     replay.map_info.id, replay.map_info.metadata2)
         logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)

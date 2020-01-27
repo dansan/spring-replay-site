@@ -53,7 +53,7 @@ def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifier
 
 
 class JSONTextField(models.TextField):
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         if not value:
             return None
         return self.to_python(value)
