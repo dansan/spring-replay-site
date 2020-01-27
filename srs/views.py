@@ -227,9 +227,6 @@ def replay(request, gameID):
     c["upload_broken"] = UploadTmp.objects.filter(replay=replay).exists()
     c["mapoptions"] = MapOption.objects.filter(replay=replay).order_by("name")
     c["modoptions"] = ModOption.objects.filter(replay=replay).order_by("name")
-    if not replay.map_info.metadata2:
-        replay.map_info.metadata2 = replay.map_info.metadata
-        replay.map_info.save(update_fields=("metadata2",))
     c["replay_details"] = True
     c["was_stopped"] = not allyteams.filter(winner=True).exists()
     if c["was_stopped"]:
@@ -280,9 +277,8 @@ def replay(request, gameID):
     except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
-        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata: %r", replay.id,
-                     replay.map_info.metadata)
-        logger.error("replay.map_info.metadata2: %r", replay.map_info.metadata2)
+        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata2: %r", replay.id,
+                     replay.map_info.metadata2)
         logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)

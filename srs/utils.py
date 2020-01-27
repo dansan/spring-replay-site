@@ -63,6 +63,5 @@ def fix_missing_map(replay):
         return
     sm.fetch_img()
     sm.make_home_thumb()
-    replay.map_info.metadata = sm.map_info[0]
     replay.map_info.metadata2 = sm.map_info[0]
     replay.map_info.save()

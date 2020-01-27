@@ -104,7 +104,6 @@ class Map(models.Model):
     startpos = models.CharField(max_length=1024, blank=True, null=True)
     height = models.IntegerField()
     width = models.IntegerField()
-    metadata = PickledObjectField(blank=True, null=True)
     metadata2 = JSONTextField(blank=True, null=True, default=None)
 
     def __repr__(self):
