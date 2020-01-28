@@ -158,6 +158,8 @@ def replay(request, gameID):
             # update skill data in DB
             logger.debug("got match data for %s from sldb", replay)
             for player in match_skills["players"]:
+                if isinstance(player["account"], dict):
+                    player["account"] = PlayerAccount.objects.get(pk=player["account"]["pk"])
                 pa = player["account"]
                 pa_skill = pa.get_rating(game, match_type)
                 mu, si = player["skills"][1]
@@ -546,15 +548,15 @@ def download(request, gameID):
         logger.error(errmsg)
         raise Http404(errmsg)
     if filemagic.endswith("gzip") and not replay.filename.endswith(".sdfz"):
-        demofile = gzip.open(path, "r")
+        myopen = gzip.open
     else:
-        demofile = open(path, "r")
+        myopen = open
     if replay.filename.endswith(".gz"):
         filename = replay.filename[:-3]
     else:
         filename = replay.filename
-
-    response = HttpResponse(demofile.read(), content_type="application/x-spring-demo")
+    with myopen(path, "rb") as demofile:
+        response = HttpResponse(demofile.read(), content_type="application/x-spring-demo")
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
     return response
 
@@ -619,7 +621,7 @@ def player(request, accountid):
 
 def ts_history_graph(request, game_abbr, accountid, match_type):
     if respect_privacy(request, accountid):
-        with open(os.path.join(settings.IMG_PATH, "tsh_privacy.png"), "r") as pic:
+        with open(os.path.join(settings.IMG_PATH, "tsh_privacy.png"), "rb") as pic:
             response = HttpResponse(pic.read(), content_type="image/png")
         return response
     path = str()
@@ -640,7 +642,7 @@ def ts_history_graph(request, game_abbr, accountid, match_type):
             path = os.path.join(settings.IMG_PATH, "tsh_error.png")
     if not path:
         path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
-    with open(path, "r") as pic:
+    with open(path, "rb") as pic:
         response = HttpResponse(pic.read(), content_type="image/png")
     return response
 

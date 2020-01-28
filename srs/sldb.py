@@ -10,7 +10,6 @@ import datetime
 import errno
 import logging
 import os.path
-import pickle
 import socket
 from operator import methodcaller
 from typing import Optional
@@ -19,6 +18,7 @@ from xmlrpc.client import ServerProxy
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from netifaces import AF_INET, ifaddresses, interfaces
+import ujson
 
 from .models import (
     Game,
@@ -330,11 +330,11 @@ def get_sldb_match_skills(gameIDs):
             cache_miss[gameid] = cache_entry
         else:
             #             logger.debug("MatchSkills cache hit  for %s", gameid)
-            sldbmatch_unpickled = pickle.loads(str(cache_entry.text))
-            result.append(sldbmatch_unpickled)
+            sldbmatch_decoded = ujson.loads(cache_entry.text)
+            result.append(sldbmatch_decoded)
 
     if cache_miss:
-        match_skills = _query_sldb("getMatchSkills", cache_miss.keys())
+        match_skills = _query_sldb("getMatchSkills", list(cache_miss.keys()))
         for match in match_skills:
             if match["status"] != 0:
                 logger.error(
@@ -353,7 +353,7 @@ def get_sldb_match_skills(gameIDs):
                         si = float(player["skills"][i].split("|")[1])
                         player["skills"][i] = [mu, si]
                 dbentry = cache_miss[match["gameId"]]
-                dbentry.text = pickle.dumps(match)
+                dbentry.text = ujson.dumps(match)
                 dbentry.save()
                 result.append(match)
 
@@ -547,7 +547,7 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
                 "%d_%s_%s_%s.png"
                 % (accountid, game_abbr, match_type, now.strftime("%Y-%m-%d")),
             )
-            open(path, "w").write(result["graph"].data)
+            open(path, "wb").write(result["graph"].data)
         else:
             path = os.path.join(settings.IMG_PATH, "tsh_nodata.png")
         setattr(graph, "filepath_{}".format(match_type.lower()), path)

@@ -10,6 +10,7 @@ import datetime
 import json
 import logging
 from collections import OrderedDict
+from functools import reduce
 from operator import or_
 
 import MySQLdb
@@ -378,7 +379,7 @@ def downloadlinks(gameID, category):
             )
             for engine_info in response.json():
                 result[engine_info["category"]]["mirrors"] = engine_info["mirrors"]
-            c["result"] = [d for d in result.values()]
+            c["result"] = list(result.values())
             logger.debug("response.url=%r", response.url)
             logger.debug("c=%r", c)
         else:

@@ -54,8 +54,11 @@ Python 3.8
 ^^^^^^^^^^
 To install Python 3.8 in a Debian system that does not yet have it in the distro repos::
 
-    $ echo 'deb-src http://ftp.de.debian.org/debian/ testing main contrib non-free' >> /etc/apt/sources.list.d/testing.list
-    $ apt-get build-dep python3.8
+    $ cat /etc/apt/sources.list >> /etc/apt/sources.list.d/testing.list
+    $ vi  /etc/apt/sources.list.d/testing.list-> replace "deb" with "deb-src"
+    # apt-get update
+    $ apt-get build-dep python3.8 / 3.5 / 3.6 / 3.7
+    # rm /etc/apt/sources.list.d/testing.list
     $ wget https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
     $ tar xzf Python-3.8.1.tgz
     $ cd Python-3.8.1
@@ -91,11 +94,12 @@ Install from git::
 
 Now install further requirements::
 
-    (srs) $ pip install -r requirements.txt
+    (srs) $ pip install -U -r requirements.txt
 
 The ``django-eztables`` packages ``views.py`` needs to be patched using ``eztables-GET.patch``::
 
-    (srs) $ patch -p0  < .../eztables-GET.patch
+    (srs) $ vi /home/replays/venv/lib/python3.8/site-packages/eztables/views.py
+    #patch the content of eztables-GET.patch
 
 To setup the SQL database copy ``local_settings_.py`` to ``local_settings.py``, and overwrite default settings there (at least ``DATABASES`` and ``ADMINS``).
 
