@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import picklefield.fields
+import picklefield.fields  # removed with #124 (pip install django-picklefield==2.0)
 
 
 class Migration(migrations.Migration):
