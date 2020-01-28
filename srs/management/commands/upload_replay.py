@@ -25,24 +25,22 @@ timer = timer_
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument(
-            'demofile',
-            type=str,
-            help='Path to demofile.'
-        )
+        parser.add_argument("demofile", type=str, help="Path to demofile.")
 
     def handle(self, *args, **options):
         global timer
 
-        path = options['demofile']
+        path = options["demofile"]
         if not os.path.exists(path):
-            raise CommandError('File {!r} does not exist.'.format(path))
+            raise CommandError("File {!r} does not exist.".format(path))
 
         if not timer:
             timer = SrsTiming()
         timer.start("cmdline_upload()")
         UserModel = get_user_model()
-        user = UserModel.objects.get(username='root')
-        replay, msg = parse_uploaded_file(path, timer, None, None, 'Uploaded on cmdline.', user, False, True)
-        self.stdout.write('Replay(id={}): {}'.format(replay.pk, msg))
+        user = UserModel.objects.get(username="root")
+        replay, msg = parse_uploaded_file(
+            path, timer, None, None, "Uploaded on cmdline.", user, False, True
+        )
+        self.stdout.write("Replay(id={}): {}".format(replay.pk, msg))
         timer.stop("cmdline_upload()")

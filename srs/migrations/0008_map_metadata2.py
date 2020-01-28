@@ -10,13 +10,13 @@ import srs.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('srs', '0007_teamstats'),
+        ("srs", "0007_teamstats"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='map',
-            name='metadata2',
+            model_name="map",
+            name="metadata2",
             field=srs.models.JSONTextField(blank=True, default=None, null=True),
         ),
     ]

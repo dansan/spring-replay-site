@@ -17,10 +17,10 @@ from .models import TeamStats
 from .SpringStatsViewer.SpringDemoFile import DemoFileReader
 
 try:
-        from typing import Dict, List, Optional, Tuple, Union
-        from SpringStatsViewer.SpringDemoFile import PlayerStatistics, TeamStatistics
+    from typing import Dict, List, Optional, Tuple, Union
+    from SpringStatsViewer.SpringDemoFile import PlayerStatistics, TeamStatistics
 except ImportError:
-        pass
+    pass
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,10 @@ class MatchStatsGeneration(object):
         # type: (Dict[str, List[TeamStatistics]]) -> Dict[str, Dict[str, List[float]]]
         res = OrderedDict()  # type: Dict
         for ts_attr, label in TeamStats.graphid2label.items():
-            res[ts_attr] = dict((player, [getattr(s, ts_attr) for s in stats]) for player, stats in teamstats.items())
+            res[ts_attr] = dict(
+                (player, [getattr(s, ts_attr) for s in stats])
+                for player, stats in teamstats.items()
+            )
         return res
 
     @staticmethod
@@ -59,15 +62,22 @@ class MatchStatsGeneration(object):
     def make_stats(self):
         # type: () -> Tuple[Dict[str, Dict[str, int]], Dict[str, List[Dict[str, Union[str, List[float]]]]]]
         playerstats_res = {}  # type: Dict[str, Dict[str, int]]
-        teamstats_plotly_kwargs = {}  # type: Dict[str, List[Dict[str, Union[str, List[float]]]]]
-        if self.demofile.header() and self.demofile.script() and not self.demofile.incomplete and not self.demofile.crashed:
+        teamstats_plotly_kwargs = (
+            {}
+        )  # type: Dict[str, List[Dict[str, Union[str, List[float]]]]]
+        if (
+            self.demofile.header()
+            and self.demofile.script()
+            and not self.demofile.incomplete
+            and not self.demofile.crashed
+        ):
             playerstats = self.demofile.playerstats()
             if playerstats:
-                logger.debug('** We have playerstats: {!r}'.format(playerstats))
+                logger.debug("** We have playerstats: {!r}".format(playerstats))
                 playerstats_res = dict((k, v.__dict__) for k, v in playerstats.items())
                 teamstats = self.demofile.teamstats()
                 if teamstats and self.checkteamstatlength(self.demofile):
-                    logger.debug('** We have teamstats.')
+                    logger.debug("** We have teamstats.")
                     graphs = self.make_teamstat_graphs(teamstats)
                     # create x-axis units
                     teamstatperiod_in_minutes = self.demofile.teamstatperiod / 60.0
@@ -83,31 +93,28 @@ class MatchStatsGeneration(object):
                         ]  # type: List[Dict[str, Union[str, List[float]]]]
                         teamstats_plotly_kwargs[ts_type] = plot_data_kwargs
                 else:
-                    logger.debug('** We have NO teamstats.')
+                    logger.debug("** We have NO teamstats.")
             else:
-                logger.debug('** We have NO playerstats.')
+                logger.debug("** We have NO playerstats.")
         return playerstats_res, teamstats_plotly_kwargs
 
     @staticmethod
-    def get_team_stat_plot(title, plotly_kwargs, graph_type='lines'):
+    def get_team_stat_plot(title, plotly_kwargs, graph_type="lines"):
         # type: (str, List[Dict[str, Union[str, List[float]]]], Optional[str]) -> str
-        plot_data = [
-            go.Scatter(mode=graph_type, **kwargs)
-            for kwargs in plotly_kwargs
-        ]
+        plot_data = [go.Scatter(mode=graph_type, **kwargs) for kwargs in plotly_kwargs]
         layout = go.Layout(
             title=title,
             autosize=True,
             # paper_bgcolor='#1c1e22',
             # plot_bgcolor='#2e3338',
             # legend = {'bgcolor': '#2e3338'},
-            xaxis={'title': 'minute'},
-            yaxis={'title': 'per second'},
+            xaxis={"title": "minute"},
+            yaxis={"title": "per second"},
         )
         return plotly.offline.plot(
-            figure_or_data=go.Figure(data=plot_data,layout=layout),
+            figure_or_data=go.Figure(data=plot_data, layout=layout),
             auto_open=False,
-            output_type='div',
+            output_type="div",
             include_plotlyjs=False,
             show_link=False,
         )

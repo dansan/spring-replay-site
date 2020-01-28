@@ -28,21 +28,42 @@ except ImportError:
 
 
 def parse_cmdline():
-    parser = argparse.ArgumentParser(description="Upload a spring demo file to the replays site.",
-                                     epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a "
-                                            "lobby accounts credentials. XMLRPC_URL can also be set in your environment"
-                                            ", use 'https://replays-test.springrts.com/xmlrpc/' for upload testing "
-                                            "purposes.")
-    parser.add_argument("-d", "--duration", help="game duration in seconds (SPADS: %%gameDuration)", type=int,
-                        default=9999)
-    parser.add_argument("-r", "--result", help="end game result ('gameOver','undecided') (SPADS: %%result)", default="")
-    parser.add_argument("-t", "--throttle", help="throttle upload to x byte/s, 0 means no throttling", type=int)
-    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser = argparse.ArgumentParser(
+        description="Upload a spring demo file to the replays site.",
+        epilog="Please set XMLRPC_USER and XMLRPC_PASSWORD in your OS environment to a "
+        "lobby accounts credentials. XMLRPC_URL can also be set in your environment"
+        ", use 'https://replays-test.springrts.com/xmlrpc/' for upload testing "
+        "purposes.",
+    )
+    parser.add_argument(
+        "-d",
+        "--duration",
+        help="game duration in seconds (SPADS: %%gameDuration)",
+        type=int,
+        default=9999,
+    )
+    parser.add_argument(
+        "-r",
+        "--result",
+        help="end game result ('gameOver','undecided') (SPADS: %%result)",
+        default="",
+    )
+    parser.add_argument(
+        "-t",
+        "--throttle",
+        help="throttle upload to x byte/s, 0 means no throttling",
+        type=int,
+    )
+    parser.add_argument(
+        "-v", "--verbose", help="increase output verbosity", action="store_true"
+    )
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")
     parser.add_argument("path", help="path of .sdf")
-    parser.add_argument("owner", help="lobby account that will be saved as the uploader")
+    parser.add_argument(
+        "owner", help="lobby account that will be saved as the uploader"
+    )
     args = parser.parse_args()
 
     if (args.result == "undecided" and args.duration < 300) or args.duration < 180:
@@ -71,10 +92,19 @@ def main():
             sp = "at %.2f kb/s" % (args.throttle / 1024.0)
         else:
             sp = "without upload throttling"
-        print("[Replay Upload] Uploading file {!r}\n  authenticating as {!r}\n  to {!r}\n  for owner {!r}\n with "
-              "subject {!r}\n  comment {!r}\n  and tags {!r}\n  {}.".format(args.path, XMLRPC_USER, XMLRPC_URL,
-                                                                            args.owner, args.title, args.comment,
-                                                                            args.tags, sp))
+        print(
+            "[Replay Upload] Uploading file {!r}\n  authenticating as {!r}\n  to {!r}\n  for owner {!r}\n with "
+            "subject {!r}\n  comment {!r}\n  and tags {!r}\n  {}.".format(
+                args.path,
+                XMLRPC_USER,
+                XMLRPC_URL,
+                args.owner,
+                args.title,
+                args.comment,
+                args.tags,
+                sp,
+            )
+        )
 
     try:
         with open(args.path, "r") as fp:
@@ -88,14 +118,16 @@ def main():
             import pycurl
             import pyCURLTransport
         except ImportError:
-            print("""
+            print(
+                """
 [Replay Upload] ERROR: Please install pycurl to use bandwidth throttling.
   Homepage: http://pycurl.sourceforge.net/
   Debian/Ubuntu/Fedora/Arch: python-pycurl
   Gentoo: dev-python/pycurl
   Windows: compile from source or search binary packages (watch out for OS version
            and 32/64 bit). Success was reported with package from
-           http://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl""")
+           http://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl"""
+            )
             return 1
 
         curltrans = pyCURLTransport.PyCURLTransport()
@@ -106,10 +138,22 @@ def main():
 
     try:
         rpc_srv = xmlrpc.client.ServerProxy(XMLRPC_URL, transport=trans)
-        result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title,
-                                       args.comment, args.tags, args.owner)
+        result = rpc_srv.xmlrpc_upload(
+            XMLRPC_USER,
+            XMLRPC_PASSWORD,
+            os.path.basename(args.path),
+            demofile,
+            args.title,
+            args.comment,
+            args.tags,
+            args.owner,
+        )
     except Exception as exc:
-        print("[Replay Upload] Error sending data to replay site. Exception:\n{}\n".format(exc))
+        print(
+            "[Replay Upload] Error sending data to replay site. Exception:\n{}\n".format(
+                exc
+            )
+        )
         return 1
 
     if args.verbose:

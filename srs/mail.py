@@ -14,15 +14,31 @@ from django.core.mail import EmailMessage
 logger = logging.getLogger(__name__)
 
 
-def send_mail(recipient_list, subject, mail_text, headers=None, cc=None, bcc=None, sender=settings.DEFAULT_FROM_EMAIL):
-    emailmsg = EmailMessage(subject=subject,
-                            body=mail_text,
-                            from_email=sender,
-                            to=recipient_list,
-                            headers=headers,
-                            cc=cc,
-                            bcc=bcc)
+def send_mail(
+    recipient_list,
+    subject,
+    mail_text,
+    headers=None,
+    cc=None,
+    bcc=None,
+    sender=settings.DEFAULT_FROM_EMAIL,
+):
+    emailmsg = EmailMessage(
+        subject=subject,
+        body=mail_text,
+        from_email=sender,
+        to=recipient_list,
+        headers=headers,
+        cc=cc,
+        bcc=bcc,
+    )
 
     emailmsg.send()
 
-    logger.info("sent email from '%s' about '%s' to '%s' and bcc '%s'", sender, subject, recipient_list, bcc)
+    logger.info(
+        "sent email from '%s' about '%s' to '%s' and bcc '%s'",
+        sender,
+        subject,
+        recipient_list,
+        bcc,
+    )

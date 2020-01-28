@@ -21,7 +21,7 @@ from collections import defaultdict
 from typing import Union
 
 
-class Result():
+class Result:
     def __init__(self):
         self.team = -1
         self.disconnect = -1
@@ -54,12 +54,17 @@ class Result():
 
     def __repr__(self):
         try:
-            return 'Result(player={} team={} died={} quit={})'.format(self.player.nick, self.team, self.died, self.quit)
+            return "Result(player={} team={} died={} quit={})".format(
+                self.player.nick, self.team, self.died, self.quit
+            )
         except:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.exception("FIXME: to broad exception handling.")
-            return 'Result(team={} died={} quit={})'.format(self.team, self.died, self.quit)
+            return "Result(team={} died={} quit={})".format(
+                self.team, self.died, self.quit
+            )
 
 
 def try_make_numeric(val: str) -> Union[int, float, str]:
@@ -87,7 +92,7 @@ class ScriptObject(object):
                 _i += 1
             self.num = int(section[_i:])
 
-        kvs = re.findall('(?P<key>.*?)=(?P<value>.*?);', data.strip(), re.DOTALL)
+        kvs = re.findall("(?P<key>.*?)=(?P<value>.*?);", data.strip(), re.DOTALL)
         for key, value in kvs:
             setattr(self, key, try_make_numeric(value))
 
@@ -95,7 +100,7 @@ class ScriptObject(object):
             raise Exception("Missing required key in section '%s'." % section)
 
     def __repr__(self):
-            return "{}({})".format(self.__class__.__name__, self.__dict__)
+        return "{}({})".format(self.__class__.__name__, self.__dict__)
 
 
 class ScriptPlayer(ScriptObject):
@@ -113,8 +118,10 @@ class ScriptPlayer(ScriptObject):
             # demofile from zero-k
             self.accountid = self.lobbyid
         else:
-            print("Missing required key 'lobbyid' or 'accountid' in section '%s': '%s'. Single Player match?" % (
-                section, data))
+            print(
+                "Missing required key 'lobbyid' or 'accountid' in section '%s': '%s'. Single Player match?"
+                % (section, data)
+            )
             self.accountid = None
 
         if hasattr(self, "rank"):
@@ -123,18 +130,26 @@ class ScriptPlayer(ScriptObject):
             # demofile from zero-k
             self.rank = self.lobbyrank
         else:
-            print("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'." % (section, data))
+            print(
+                "Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."
+                % (section, data)
+            )
             self.rank = None
 
         if hasattr(self, "countrycode"):
             pass
         else:
-            print("Missing required key 'countrycode' in section '%s': '%s'." % (section, data))
+            print(
+                "Missing required key 'countrycode' in section '%s': '%s'."
+                % (section, data)
+            )
             self.countrycode = None
 
     def __repr__(self):
         if hasattr(self, "name"):
-            return "ScriptPlayer({}, {})".format(getattr(self, "name", "-"), getattr(self, "accountid", "-"))
+            return "ScriptPlayer({}, {})".format(
+                getattr(self, "name", "-"), getattr(self, "accountid", "-")
+            )
         else:
             return super(self, self.__repr__)
 

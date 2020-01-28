@@ -31,41 +31,75 @@ def upload(request):
     global timer
     c = all_page_infos(request)
     UploadFormSet = formset_factory(UploadFileForm, extra=5)
-    if request.method == 'POST':
+    if request.method == "POST":
         formset = UploadFormSet(request.POST, request.FILES)
         replays = []
         if formset.is_valid():
             for form in formset:
                 if form.cleaned_data:
-                    logger.info("upload by request.user=%r form.cleaned_data=%r", request.user, form.cleaned_data)
-                    ufile = form.cleaned_data['file']
-                    short = form.cleaned_data['short']
-                    long_text = form.cleaned_data['long_text']
-                    tags = form.cleaned_data['tags']
+                    logger.info(
+                        "upload by request.user=%r form.cleaned_data=%r",
+                        request.user,
+                        form.cleaned_data,
+                    )
+                    ufile = form.cleaned_data["file"]
+                    short = form.cleaned_data["short"]
+                    long_text = form.cleaned_data["long_text"]
+                    tags = form.cleaned_data["tags"]
                     timer = SrsTiming()
                     timer.start("upload()")
                     (path, written_bytes) = save_uploaded_file(ufile.read(), ufile.name)
-                    logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user,
-                                os.path.basename(path), short[:20])
+                    logger.info(
+                        "User '%s' uploaded file '%s' with title '%s', parsing it now.",
+                        request.user,
+                        os.path.basename(path),
+                        short[:20],
+                    )
                     if written_bytes != ufile.size:
-                        logger.warning("written_bytes=%r != ufile.size=%r", written_bytes, ufile.size)
+                        logger.warning(
+                            "written_bytes=%r != ufile.size=%r",
+                            written_bytes,
+                            ufile.size,
+                        )
                     try:
-                        replay, msg = parse_uploaded_file(path, timer, tags, short, long_text, request.user)
+                        replay, msg = parse_uploaded_file(
+                            path, timer, tags, short, long_text, request.user
+                        )
                         logger.debug("replay=%r msg=%r", replay, msg)
                         replays.append((True, replay))
                     except BadFileType:
-                        form._errors = {'file': [u'Not a spring demofile: %s.' % ufile.name]}
-                        replays.append((False, 'Not a spring demofile: %s.' % ufile.name))
+                        form._errors = {
+                            "file": ["Not a spring demofile: %s." % ufile.name]
+                        }
+                        replays.append(
+                            (False, "Not a spring demofile: %s." % ufile.name)
+                        )
                         continue
                     except AlreadyExistsError as exc:
-                        form._errors = {'file': [u'Uploaded replay already exists: "{}"'.format(exc.replay.title)]}
-                        replays.append((False, 'Uploaded replay already exists: <a href="{}">{}</a>.'.format(
-                            exc.replay.get_absolute_url(), exc.replay.title)))
+                        form._errors = {
+                            "file": [
+                                'Uploaded replay already exists: "{}"'.format(
+                                    exc.replay.title
+                                )
+                            ]
+                        }
+                        replays.append(
+                            (
+                                False,
+                                'Uploaded replay already exists: <a href="{}">{}</a>.'.format(
+                                    exc.replay.get_absolute_url(), exc.replay.title
+                                ),
+                            )
+                        )
                         continue
                     except Exception as exc:
-                        form._errors = {'file': [u'Server error: {}'.format(exc)]}
-                        replays.append((False, 'Server error. Please contact admin.'))
-                        logger.exception("Exception >> %s << when parsing form.cleaned_data=%r", exc, form.cleaned_data)
+                        form._errors = {"file": ["Server error: {}".format(exc)]}
+                        replays.append((False, "Server error. Please contact admin."))
+                        logger.exception(
+                            "Exception >> %s << when parsing form.cleaned_data=%r",
+                            exc,
+                            form.cleaned_data,
+                        )
                         continue
                     finally:
                         timer.stop("upload()")
@@ -80,14 +114,14 @@ def upload(request):
                 # fall through to get back on page with error msg
                 pass
         else:
-            c['replays'] = replays
+            c["replays"] = replays
             c["replay_details"] = True
-            return render(request, 'multi_upload_success.html', c)
+            return render(request, "multi_upload_success.html", c)
     else:
         # form = UploadFileForm()
         formset = UploadFormSet()
-    c['formset'] = formset
-    return render(request, 'upload.html', c)
+    c["formset"] = formset
+    return render(request, "upload.html", c)
 
 
 @login_required
@@ -102,7 +136,7 @@ def upload_media(request, gameID):
     c["replay"] = replay
     c["replay_details"] = True
 
-    if request.method == 'POST':
+    if request.method == "POST":
         logger.debug("request.FILES: %s", request.FILES)
         formset = UploadMediaFormSet(request.POST, request.FILES)
         if formset.is_valid():
@@ -110,25 +144,39 @@ def upload_media(request, gameID):
             for form in formset:
                 if form.cleaned_data:
                     logger.info("form.cleaned_data=%s", form.cleaned_data)
-                    media = form.cleaned_data['media_file']
-                    image = form.cleaned_data['image_file']
-                    comment = form.cleaned_data['comment']
+                    media = form.cleaned_data["media_file"]
+                    image = form.cleaned_data["image_file"]
+                    comment = form.cleaned_data["comment"]
                     if media:
                         media.seek(0)
                         media_magic_text = magic.from_buffer(media.read(1024))
                         media.seek(0)
-                        media_magic_mime = magic.from_buffer(media.read(1024), mime=True)
+                        media_magic_mime = magic.from_buffer(
+                            media.read(1024), mime=True
+                        )
                         media.seek(0)
                     else:
                         media_magic_text = None
                         media_magic_mime = None
-                    erm = ExtraReplayMedia.objects.create(replay=replay, uploader=request.user, comment=comment,
-                                                          media=media, image=image, media_magic_text=media_magic_text,
-                                                          media_magic_mime=media_magic_mime)
+                    erm = ExtraReplayMedia.objects.create(
+                        replay=replay,
+                        uploader=request.user,
+                        comment=comment,
+                        media=media,
+                        image=image,
+                        media_magic_text=media_magic_text,
+                        media_magic_mime=media_magic_mime,
+                    )
                     c["media_files"].append(erm)
-                    logger.info("User '%s' uploaded for replay:'%s' media:'%s' img:'%s' with comment:'%s'.",
-                                request.user, replay, erm.media, erm.image, erm.comment[:20])
-            return render(request, 'upload_media_success.html', c)
+                    logger.info(
+                        "User '%s' uploaded for replay:'%s' media:'%s' img:'%s' with comment:'%s'.",
+                        request.user,
+                        replay,
+                        erm.media,
+                        erm.image,
+                        erm.comment[:20],
+                    )
+            return render(request, "upload_media_success.html", c)
         else:
             logger.error("formset.errors: %s", formset.errors)
             logger.error("request.FILES: %s", request.FILES)
@@ -136,4 +184,4 @@ def upload_media(request, gameID):
     else:
         formset = UploadMediaFormSet()
     c["formset"] = formset
-    return render(request, 'upload_media.html', c)
+    return render(request, "upload_media.html", c)

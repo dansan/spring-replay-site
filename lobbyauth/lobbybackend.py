@@ -28,7 +28,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from .models import UserProfile
 
-url = 'https://springrts.com/api/uber/xmlrpc'
+url = "https://springrts.com/api/uber/xmlrpc"
 logger = logging.getLogger(__name__)
 UserModel = get_user_model()
 
@@ -59,50 +59,81 @@ class LobbyBackend(ModelBackend):
         logger.debug("accountinfo returned by xml-rpc: '%s'", accountinfo)
         if accountinfo["status"] == 0:
             accountid = accountinfo["accountid"]
-            logger.info("XML-RPC-login success for username: %s, returned accountid: %d", username, accountid)
+            logger.info(
+                "XML-RPC-login success for username: %s, returned accountid: %d",
+                username,
+                accountid,
+            )
             if accountid == 0:
                 logger.info("New/Unknown account: accountid == 0, login not allowed.")
                 return None
             try:
                 user = User.objects.get(last_name=str(accountid))
             except ObjectDoesNotExist:
-                logger.info("New account for username: %s. Accountinfo returned by xml-rpc: '%s'", username,
-                            accountinfo)
+                logger.info(
+                    "New account for username: %s. Accountinfo returned by xml-rpc: '%s'",
+                    username,
+                    accountinfo,
+                )
                 try:
                     user_with_name = User.objects.get(username=username)
                     # a user already exists that has a username that another account with a different accountID
                     # (once) had -> modify username
-                    logger.info("Someone has the same username ('%s') but different accountID, user: '%s' (accountID: "
-                                "%s)", username, user_with_name, user_with_name.last_name)
+                    logger.info(
+                        "Someone has the same username ('%s') but different accountID, user: '%s' (accountID: "
+                        "%s)",
+                        username,
+                        user_with_name,
+                        user_with_name.last_name,
+                    )
                     # search for unused username
                     counter = 0
-                    while User.objects.filter(username="{}_{}".format(username, counter)).exists():
+                    while User.objects.filter(
+                        username="{}_{}".format(username, counter)
+                    ).exists():
                         counter += 1
                     username = "{}_{}".format(username, counter)
                 except ObjectDoesNotExist:
                     # no user already exists that has the same username
                     pass
-                user = User.objects.create_user(username=username, email="django@needs.this",
-                                                password="NoNeedToStoreEvenHashedPasswords")
+                user = User.objects.create_user(
+                    username=username,
+                    email="django@needs.this",
+                    password="NoNeedToStoreEvenHashedPasswords",
+                )
                 # email, so comments form doesn't ask for it
                 user.is_staff = False
                 user.is_superuser = False
                 user.last_name = str(accountid)
-                logger.info("created User(%d) %s (accountID: %s)", user.id, user.username, user.last_name)
+                logger.info(
+                    "created User(%d) %s (accountID: %s)",
+                    user.id,
+                    user.username,
+                    user.last_name,
+                )
                 user.save()
 
             timerank = self._ingame_time_2_rank(accountinfo["ingame_time"])
             aliases = ",".join(accountinfo["aliases"])
             country = accountinfo["country"]
 
-            userprofile, up_created = UserProfile.objects.get_or_create(accountid=accountid,
-                                                                        defaults={"user": user,
-                                                                                  "timerank": timerank,
-                                                                                  "aliases": aliases,
-                                                                                  "country": country})
+            userprofile, up_created = UserProfile.objects.get_or_create(
+                accountid=accountid,
+                defaults={
+                    "user": user,
+                    "timerank": timerank,
+                    "aliases": aliases,
+                    "country": country,
+                },
+            )
             if up_created:
-                logger.info("created UserProfile(%d) for User(%d) %s (%s)",
-                            userprofile.id, user.id, user.username, user.last_name)
+                logger.info(
+                    "created UserProfile(%d) for User(%d) %s (%s)",
+                    userprofile.id,
+                    user.id,
+                    user.username,
+                    user.last_name,
+                )
             else:
                 if accountinfo["aliases"] and userprofile.aliases:
                     # merge aliases stored on lobby server and replay server if both are not empty
@@ -122,7 +153,10 @@ class LobbyBackend(ModelBackend):
             logger.info("Connection problem.")
             return None
         else:
-            logger.error("This should not happen. accountinfo[status]=%s", str(accountinfo["status"]))
+            logger.error(
+                "This should not happen. accountinfo[status]=%s",
+                str(accountinfo["status"]),
+            )
             return None
 
     def get_user(self, user_id):
@@ -149,13 +183,13 @@ class LobbyBackend(ModelBackend):
         except ProtocolError as pe:
             # 403 will happen when not running @ replay VM
             logger.exception("ProtocolError: %s", pe)
-            return {'status': 2}
+            return {"status": 2}
         except socket.error as se:
             logger.exception("socket error: errno: %d text: %s", se.errno, se.strerror)
-            return {'status': 2}
+            return {"status": 2}
         except:
             logger.exception("FIXME: to broad exception handling.")
-            return {'status': 2}
+            return {"status": 2}
 
     @staticmethod
     def _ingame_time_2_rank(ingame_time):

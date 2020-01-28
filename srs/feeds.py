@@ -18,10 +18,10 @@ class LatestUploadsFeed(Feed):
     title = "Spring replay uploads"
     link = "/"
     description = "Newest replay uploads"
-    description_template = 'feeds_replay_description.html'
+    description_template = "feeds_replay_description.html"
 
     def items(self):
-        return Replay.objects.order_by('-upload_date')[:20]
+        return Replay.objects.order_by("-upload_date")[:20]
 
     def item_title(self, replay):
         return super(LatestUploadsFeed, self).item_title(replay.title)
@@ -37,7 +37,7 @@ class LatestUploadsFeed(Feed):
 
 
 class GameFeed(Feed):
-    description_template = 'feeds_replay_description.html'
+    description_template = "feeds_replay_description.html"
 
     def get_object(self, request, game):
         return get_object_or_404(Game, name=game)
@@ -52,8 +52,10 @@ class GameFeed(Feed):
         return "Newest %s replays" % game.name
 
     def items(self, game):
-        gr_names = GameRelease.objects.filter(game=game).values_list('name', flat=True)
-        return Replay.objects.filter(gametype__in=gr_names).order_by('-upload_date')[:20]
+        gr_names = GameRelease.objects.filter(game=game).values_list("name", flat=True)
+        return Replay.objects.filter(gametype__in=gr_names).order_by("-upload_date")[
+            :20
+        ]
 
     def item_title(self, replay):
         return super(GameFeed, self).item_title(replay.title)
@@ -69,7 +71,7 @@ class GameFeed(Feed):
 
 
 class UploaderFeed(Feed):
-    description_template = 'feeds_replay_description.html'
+    description_template = "feeds_replay_description.html"
 
     def get_object(self, request, username):
         return get_object_or_404(User, username=username)
@@ -84,7 +86,7 @@ class UploaderFeed(Feed):
         return "Newest replays uploaded by %s" % user.username
 
     def items(self, user):
-        return Replay.objects.filter(uploader=user).order_by('-upload_date')[:20]
+        return Replay.objects.filter(uploader=user).order_by("-upload_date")[:20]
 
     def item_title(self, replay):
         return super(UploaderFeed, self).item_title(replay.title)
@@ -100,13 +102,16 @@ class UploaderFeed(Feed):
 
 
 class SRSLatestCommentFeed(LatestCommentFeed):
-
     def item_author_name(self, item):
         return item.user.username
 
     def item_title(self, item):
         dots = "..." if len(item.comment) > 50 else ""
-        return super(SRSLatestCommentFeed, self).item_title(item.user.username + ": " + item.comment[:50] + dots)
+        return super(SRSLatestCommentFeed, self).item_title(
+            item.user.username + ": " + item.comment[:50] + dots
+        )
 
     def item_description(self, item):
-        return super(SRSLatestCommentFeed, self).item_description(item.user.username + ": " + item.comment)
+        return super(SRSLatestCommentFeed, self).item_description(
+            item.user.username + ": " + item.comment
+        )

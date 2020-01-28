@@ -8,28 +8,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('srs', '0001_initial'),
+        ("srs", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='newsitem',
-            name='post_date',
+            model_name="newsitem",
+            name="post_date",
             field=models.DateTimeField(auto_now=True, db_index=True),
         ),
         migrations.AlterField(
-            model_name='newsitem',
-            name='show',
+            model_name="newsitem",
+            name="show",
             field=models.BooleanField(db_index=True, default=True),
         ),
         migrations.AlterField(
-            model_name='newsitem',
-            name='text',
-            field=models.CharField(max_length=1024),
+            model_name="newsitem", name="text", field=models.CharField(max_length=1024),
         ),
         migrations.AlterField(
-            model_name='playeraccount',
-            name='accountid',
+            model_name="playeraccount",
+            name="accountid",
             field=models.IntegerField(db_index=True, unique=True),
         ),
     ]

@@ -17,20 +17,32 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='UserProfile',
+            name="UserProfile",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('accountid', models.IntegerField(unique=True)),
-                ('timerank', models.IntegerField()),
-                ('aliases', models.CharField(max_length=2048)),
-                ('country', models.CharField(max_length=2)),
-                ('game_pref', models.SmallIntegerField(default=0)),
-                ('game_pref_fixed', models.BooleanField(default=False)),
-                ('is_developer', models.BooleanField(default=False)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("accountid", models.IntegerField(unique=True)),
+                ("timerank", models.IntegerField()),
+                ("aliases", models.CharField(max_length=2048)),
+                ("country", models.CharField(max_length=2)),
+                ("game_pref", models.SmallIntegerField(default=0)),
+                ("game_pref_fixed", models.BooleanField(default=False)),
+                ("is_developer", models.BooleanField(default=False)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'ordering': ('user__username',),
-            },
+            options={"ordering": ("user__username",),},
         ),
     ]

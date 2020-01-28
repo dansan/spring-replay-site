@@ -33,4 +33,7 @@ class Command(BaseCommand):
             a_map.save(update_fields=("metadata2",))
             time.sleep(0.2)  # be gentile to the lobby servers I/O
         logger.info("Finished migrating metadata fields.")
-        logger.info("Maps with empty 'metadata2' fields: %d", Map.objects.filter(metadata2=None).count())
+        logger.info(
+            "Maps with empty 'metadata2' fields: %d",
+            Map.objects.filter(metadata2=None).count(),
+        )

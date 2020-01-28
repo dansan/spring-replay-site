@@ -10,18 +10,16 @@ import srs.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('srs', '0009_remove_map_metadata'),
+        ("srs", "0009_remove_map_metadata"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='sitestats',
-            name='all_players',
+            model_name="sitestats",
+            name="all_players",
             field=srs.models.JSONTextField(),
         ),
         migrations.AlterField(
-            model_name='sitestats',
-            name='bawards',
-            field=srs.models.JSONTextField(),
+            model_name="sitestats", name="bawards", field=srs.models.JSONTextField(),
         ),
     ]

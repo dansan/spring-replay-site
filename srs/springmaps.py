@@ -41,7 +41,7 @@ class SpringMaps:
         fetches map information from api.springfiles.com, stores it in self.map_info
         - may raise an Exception when connecting to server
         """
-        proxy = ServerProxy('https://api.springfiles.com/xmlrpc.php', verbose=False)
+        proxy = ServerProxy("https://api.springfiles.com/xmlrpc.php", verbose=False)
         searchstring = {
             "category": "map",
             #         "logical" : "or",
@@ -51,7 +51,8 @@ class SpringMaps:
             "torrent": False,
             "metadata": True,
             "nosensitive": True,
-            "images": True}
+            "images": True,
+        }
 
         try:
             self.map_info = proxy.springfiles.search(searchstring)
@@ -68,19 +69,33 @@ class SpringMaps:
         if not self.map_info:
             self.fetch_info()
         if self.map_info:
-            map_url = self.map_info[0]['mapimages'][0]
-            logger.info("Downloaded map image from %r into %r...", map_url, self.full_image_filepath)
+            map_url = self.map_info[0]["mapimages"][0]
+            logger.info(
+                "Downloaded map image from %r into %r...",
+                map_url,
+                self.full_image_filepath,
+            )
             response = requests.get(map_url, stream=True)
             if response.status_code == 200:
-                with open(self.full_image_filepath, 'wb') as fp:
+                with open(self.full_image_filepath, "wb") as fp:
                     for chunk in response:
                         fp.write(chunk)
             else:
-                logger.error('Could not download image %r. Setting image to "map_img_not_avail.jpg".')
-                copyfile(path_join(settings.IMG_PATH, 'map_img_not_avail.jpg'), self.full_image_filepath)
+                logger.error(
+                    'Could not download image %r. Setting image to "map_img_not_avail.jpg".'
+                )
+                copyfile(
+                    path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
+                    self.full_image_filepath,
+                )
         else:
-            logger.warning("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
-            copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), self.full_image_filepath)
+            logger.warning(
+                "We have no map-info, setting image to 'map_img_not_avail.jpg'."
+            )
+            copyfile(
+                path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
+                self.full_image_filepath,
+            )
         return self.full_image_filename
 
     def make_home_thumb(self):
@@ -118,51 +133,88 @@ class SpringMaps:
         #
         # create start boxes
         #
-        allyteams = Allyteam.objects.filter(replay=replay,
-                                            startrectleft__isnull=False,
-                                            startrecttop__isnull=False,
-                                            startrectright__isnull=False,
-                                            startrectbottom__isnull=False)
+        allyteams = Allyteam.objects.filter(
+            replay=replay,
+            startrectleft__isnull=False,
+            startrecttop__isnull=False,
+            startrectright__isnull=False,
+            startrectbottom__isnull=False,
+        )
         if allyteams.exists():
             # 6 defined colors
-            colors = [(200, 0, 0), (0, 200, 0), (0, 0, 200), (200, 200, 0), (200, 0, 200), (0, 200, 200)]
+            colors = [
+                (200, 0, 0),
+                (0, 200, 0),
+                (0, 0, 200),
+                (200, 200, 0),
+                (200, 0, 200),
+                (0, 200, 200),
+            ]
             if Allyteam.objects.filter(replay=replay).count() > 6:
                 # random colors for the remaining AllyTeams
                 for _ in range(0, Allyteam.objects.filter(replay=replay).count() - 6):
-                    colors.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+                    colors.append(
+                        (
+                            random.randint(0, 255),
+                            random.randint(0, 255),
+                            random.randint(0, 255),
+                        )
+                    )
             c_count = 0
             for at in allyteams:
                 # transparency mask
-                team_layer = Image.new('RGBA',
-                                       (int(at.startrectright * full_img_x) - int(at.startrectleft * full_img_x),
-                                        int(at.startrectbottom * full_img_y) - int(at.startrecttop * full_img_y)),
-                                       (256, 256, 256, 96))
+                team_layer = Image.new(
+                    "RGBA",
+                    (
+                        int(at.startrectright * full_img_x)
+                        - int(at.startrectleft * full_img_x),
+                        int(at.startrectbottom * full_img_y)
+                        - int(at.startrecttop * full_img_y),
+                    ),
+                    (256, 256, 256, 96),
+                )
                 # draw border of box (no transparency)
                 draw = ImageDraw.Draw(team_layer)
                 tl_x, tl_y = team_layer.size
                 for i in range(4):  # 4px border
-                    draw.rectangle([(0 + i, 0 + i), (tl_x - i, tl_y - i)], fill=None, outline=(256, 256, 256, 256))
+                    draw.rectangle(
+                        [(0 + i, 0 + i), (tl_x - i, tl_y - i)],
+                        fill=None,
+                        outline=(256, 256, 256, 256),
+                    )
                 del draw
                 # overlay map with partly transparent box
-                img.paste(colors[c_count],
-                          box=(int(at.startrectleft * full_img_x),
-                               int(at.startrecttop * full_img_y),
-                               int(at.startrectright * full_img_x),
-                               int(at.startrectbottom * full_img_y)),
-                          mask=team_layer)
+                img.paste(
+                    colors[c_count],
+                    box=(
+                        int(at.startrectleft * full_img_x),
+                        int(at.startrecttop * full_img_y),
+                        int(at.startrectright * full_img_x),
+                        int(at.startrectbottom * full_img_y),
+                    ),
+                    mask=team_layer,
+                )
                 c_count += 1
 
         draw = ImageDraw.Draw(img)
-        players = Player.objects.filter(replay=replay, spectator=False, startposx__isnull=False,
-                                        startposz__isnull=False)
+        players = Player.objects.filter(
+            replay=replay,
+            spectator=False,
+            startposx__isnull=False,
+            startposz__isnull=False,
+        )
         if players.exists():
             #
             # draw players actual start positions
             #
-            font = ImageFont.truetype(path_join(settings.FONTS_PATH, "VeraMono.ttf"), 28)
+            font = ImageFont.truetype(
+                path_join(settings.FONTS_PATH, "VeraMono.ttf"), 28
+            )
             for player in players:
                 pl_img_pos_x = player.startposx / map_img_mult_x
-                pl_img_pos_y = player.startposz / map_img_mult_y  # z is in spring what y is in img
+                pl_img_pos_y = (
+                    player.startposz / map_img_mult_y
+                )  # z is in spring what y is in img
                 team_color = ImageColor.getrgb("#{}".format(player.team.rgbcolor))
                 # center number and circle above startpoint --> move up and left by text-size/2
                 text_w, text_h = font.getsize(str(player.team.num))
@@ -170,37 +222,66 @@ class SpringMaps:
                     w = 15
                 else:
                     w = 0
-                draw.ellipse((pl_img_pos_x - 12 - text_w / 2, pl_img_pos_y - 8 - text_h / 2,
-                              pl_img_pos_x + 30 + w - text_w / 2, pl_img_pos_y + 36 - text_h / 2
-                              ),
-                             outline=team_color,
-                             fill=None)
-                draw.ellipse((pl_img_pos_x - 11 - text_w / 2, pl_img_pos_y - 7 - text_h / 2,
-                              pl_img_pos_x + 29 + w - text_w / 2, pl_img_pos_y + 35 - text_h / 2
-                              ),
-                             outline=team_color,
-                             fill=None)
-                draw.ellipse((pl_img_pos_x - 10 - text_w / 2, pl_img_pos_y - 6 - text_h / 2,
-                              pl_img_pos_x + 28 + w - text_w / 2, pl_img_pos_y + 34 - text_h / 2
-                              ),
-                             outline=team_color,
-                             fill=None)
-                draw.ellipse((pl_img_pos_x - 9 - text_w / 2, pl_img_pos_y - 5 - text_h / 2,
-                              pl_img_pos_x + 27 + w - text_w / 2, pl_img_pos_y + 33 - text_h / 2
-                              ),
-                             outline=team_color,
-                             fill="black")
-                draw.text((pl_img_pos_x - text_w / 2, pl_img_pos_y - text_h / 2), str(player.team.num), font=font)
+                draw.ellipse(
+                    (
+                        pl_img_pos_x - 12 - text_w / 2,
+                        pl_img_pos_y - 8 - text_h / 2,
+                        pl_img_pos_x + 30 + w - text_w / 2,
+                        pl_img_pos_y + 36 - text_h / 2,
+                    ),
+                    outline=team_color,
+                    fill=None,
+                )
+                draw.ellipse(
+                    (
+                        pl_img_pos_x - 11 - text_w / 2,
+                        pl_img_pos_y - 7 - text_h / 2,
+                        pl_img_pos_x + 29 + w - text_w / 2,
+                        pl_img_pos_y + 35 - text_h / 2,
+                    ),
+                    outline=team_color,
+                    fill=None,
+                )
+                draw.ellipse(
+                    (
+                        pl_img_pos_x - 10 - text_w / 2,
+                        pl_img_pos_y - 6 - text_h / 2,
+                        pl_img_pos_x + 28 + w - text_w / 2,
+                        pl_img_pos_y + 34 - text_h / 2,
+                    ),
+                    outline=team_color,
+                    fill=None,
+                )
+                draw.ellipse(
+                    (
+                        pl_img_pos_x - 9 - text_w / 2,
+                        pl_img_pos_y - 5 - text_h / 2,
+                        pl_img_pos_x + 27 + w - text_w / 2,
+                        pl_img_pos_y + 33 - text_h / 2,
+                    ),
+                    outline=team_color,
+                    fill="black",
+                )
+                draw.text(
+                    (pl_img_pos_x - text_w / 2, pl_img_pos_y - text_h / 2),
+                    str(player.team.num),
+                    font=font,
+                )
         else:
             #
             # draw start positions saved in map
             #
-            for startpos in [(float(pair.split(",")[0]), float(pair.split(",")[1])) for pair in
-                             replay.map_info.startpos.split("|")]:
+            for startpos in [
+                (float(pair.split(",")[0]), float(pair.split(",")[1]))
+                for pair in replay.map_info.startpos.split("|")
+            ]:
                 draw_pos_x = startpos[0] / map_img_mult_x
                 draw_pos_y = startpos[1] / map_img_mult_y
-                draw.ellipse((draw_pos_x - 5, draw_pos_y - 5, draw_pos_x + 5, draw_pos_y + 5), outline="white",
-                             fill="green")
+                draw.ellipse(
+                    (draw_pos_x - 5, draw_pos_y - 5, draw_pos_x + 5, draw_pos_y + 5),
+                    outline="white",
+                    fill="green",
+                )
         del draw
 
         # img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
@@ -209,7 +290,9 @@ class SpringMaps:
             img.save(path_join(settings.MAPS_PATH, filename), "JPEG")
         except:
             logger.exception("FIXME: to broad exception handling.")
-            logger.exception("Could not save '%s'", path_join(settings.MAPS_PATH, filename))
+            logger.exception(
+                "Could not save '%s'", path_join(settings.MAPS_PATH, filename)
+            )
         return filename
 
 

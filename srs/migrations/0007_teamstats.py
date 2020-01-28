@@ -9,17 +9,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('srs', '0006_playerstats'),
+        ("srs", "0006_playerstats"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TeamStats',
+            name="TeamStats",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('stat_type', models.CharField(max_length=32)),
-                ('stats', models.BinaryField(blank=True, default=None, null=True)),
-                ('replay', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='srs.Replay')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("stat_type", models.CharField(max_length=32)),
+                ("stats", models.BinaryField(blank=True, default=None, null=True)),
+                (
+                    "replay",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
+                    ),
+                ),
             ],
         ),
     ]

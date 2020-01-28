@@ -37,10 +37,14 @@ from .mail import send_mail
 logger = logging.getLogger(__name__)
 
 
-def uniqify_list(seq, idfun=None):  # from http://www.peterbe.com/plog/uniqifiers-benchmark
+def uniqify_list(
+    seq, idfun=None
+):  # from http://www.peterbe.com/plog/uniqifiers-benchmark
     if idfun is None:
+
         def idfun(x):
             return x
+
     seen = {}
     result = []
     for item in seq:
@@ -75,7 +79,9 @@ class JSONTextField(models.TextField):
             return value
         res = ujson.loads(value)
         if isinstance(res, dict) and "timestamp" in res:
-            res["timestamp"] = datetime.datetime.strptime(res["timestamp"], "%Y%m%dT%H:%M:%S")
+            res["timestamp"] = datetime.datetime.strptime(
+                res["timestamp"], "%Y%m%dT%H:%M:%S"
+            )
         return res
 
     def value_to_string(self, obj):
@@ -93,7 +99,7 @@ class Tag(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('srs/tag', args=[self.name])
+        return reverse("srs/tag", args=[self.name])
 
     @property
     def replay_count(self):
@@ -114,23 +120,27 @@ class Map(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('srs/rmap', args=[self.name])
+        return reverse("srs/rmap", args=[self.name])
 
     @property
     def replay_count(self):
         return Replay.objects.filter(map_info=self).count()
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
 
 class MapImg(models.Model):
     filename = models.CharField(max_length=128)
-    startpostype = models.IntegerField(blank=True, null=True, verbose_name='-1 means full image')
+    startpostype = models.IntegerField(
+        blank=True, null=True, verbose_name="-1 means full image"
+    )
     map_info = models.ForeignKey(Map, on_delete=CASCADE)
 
     def __unicode__(self):
-        return "MapImg({}, {}, {})".format(self.pk, self.map_info.name, self.startpostype)
+        return "MapImg({}, {}, {})".format(
+            self.pk, self.map_info.name, self.startpostype
+        )
 
     def get_absolute_url(self):
         return "{}maps/{}".format(settings.STATIC_URL, self.filename)
@@ -139,9 +149,11 @@ class MapImg(models.Model):
 class Replay(models.Model):
     versionString = models.CharField(max_length=128)
     gameID = models.CharField(max_length=32, unique=True)
-    unixTime = models.DateTimeField(verbose_name='date of match', db_index=True)
-    wallclockTime = models.CharField(max_length=32, verbose_name='length of match')
-    autohostname = models.CharField(max_length=128, blank=True, null=True, db_index=True)
+    unixTime = models.DateTimeField(verbose_name="date of match", db_index=True)
+    wallclockTime = models.CharField(max_length=32, verbose_name="length of match")
+    autohostname = models.CharField(
+        max_length=128, blank=True, null=True, db_index=True
+    )
     gametype = models.CharField(max_length=256, db_index=True)
     startpostype = models.IntegerField(blank=True, null=True)
     title = models.CharField(max_length=256, db_index=True)
@@ -164,35 +176,39 @@ class Replay(models.Model):
         return "Replay({}, {!r}, {!r})".format(self.pk, self.gameID, self.title)
 
     def to_dict(self):
-        return {"id": self.id,
-                "versionString": self.versionString,
-                "gameID": self.gameID,
-                "unixTime": self.unixTime,
-                "wallclockTime": self.wallclockTime,
-                "autohostname": self.autohostname,
-                "gametype": self.gametype,
-                "startpostype": self.startpostype,
-                "title": self.title,
-                "short_text": self.short_text,
-                "long_text": self.long_text,
-                "map_name": self.map_info.name,
-                "map_startpos": self.map_info.startpos,
-                "map_width": self.map_info.width,
-                "map_height": self.map_info.height,
-                "tags": ",".join(self.tags.all().values_list("name", flat=True)) if self.tags.exists() else "",
-                "uploader": self.uploader.username,
-                "upload_date": self.upload_date}
+        return {
+            "id": self.id,
+            "versionString": self.versionString,
+            "gameID": self.gameID,
+            "unixTime": self.unixTime,
+            "wallclockTime": self.wallclockTime,
+            "autohostname": self.autohostname,
+            "gametype": self.gametype,
+            "startpostype": self.startpostype,
+            "title": self.title,
+            "short_text": self.short_text,
+            "long_text": self.long_text,
+            "map_name": self.map_info.name,
+            "map_startpos": self.map_info.startpos,
+            "map_width": self.map_info.width,
+            "map_height": self.map_info.height,
+            "tags": ",".join(self.tags.all().values_list("name", flat=True))
+            if self.tags.exists()
+            else "",
+            "uploader": self.uploader.username,
+            "upload_date": self.upload_date,
+        }
 
     def get_absolute_url(self):
-        return reverse('srs/replay', args=[str(self.gameID)])
+        return reverse("srs/replay", args=[str(self.gameID)])
 
     @property
     def was_succ_uploaded(self):
         return not UploadTmp.objects.filter(replay=self).exists()
 
     class Meta:
-        get_latest_by = 'upload_date'
-        ordering = ['-upload_date']
+        get_latest_by = "upload_date"
+        ordering = ["-upload_date"]
 
     @property
     def game(self):
@@ -210,24 +226,35 @@ class Replay(models.Model):
         # look for existing game name
         game = None
         for i in range(len(self.gametype)):
-            _game = Game.objects.filter(name=self.gametype[:-1 * i])
+            _game = Game.objects.filter(name=self.gametype[: -1 * i])
             if _game.count() == 1:
                 game = _game.first()
                 break
             elif _game.count() > 1:
-                msg = "Found %r Games with name %r: %r.\ngametype: %r\ngameID: %r\nmatch: %r." % (_game.count(),
-                                                                                                  self.gametype[
-                                                                                                  :-1 * i],
-                                                                                                  _game, self.gametype,
-                                                                                                  self.gameID,
-                                                                                                  self.__unicode__())
+                msg = (
+                    "Found %r Games with name %r: %r.\ngametype: %r\ngameID: %r\nmatch: %r."
+                    % (
+                        _game.count(),
+                        self.gametype[: -1 * i],
+                        _game,
+                        self.gametype,
+                        self.gameID,
+                        self.__unicode__(),
+                    )
+                )
                 logger.error(msg)
-                send_mail([x[1] for x in settings.ADMINS], "SRS: ambiguous game name", msg)
+                send_mail(
+                    [x[1] for x in settings.ADMINS], "SRS: ambiguous game name", msg
+                )
             else:
                 pass
         if not game:
             logger.debug("not game")
-            msg = "Unknown gametype: %r\ngameID: %r\nmatch: %r." % (self.gametype, self.gameID, self.__unicode__())
+            msg = "Unknown gametype: %r\ngameID: %r\nmatch: %r." % (
+                self.gametype,
+                self.gameID,
+                self.__unicode__(),
+            )
             logger.error(msg)
             send_mail([x[1] for x in settings.ADMINS], "SRS: Unknown game name", msg)
 
@@ -237,8 +264,12 @@ class Replay(models.Model):
             for gr_name_part in self.gametype.split():
                 version_start = ["v", "V", "b", "("]
                 version_start.extend(map(str, range(10)))
-                if in_version or gr_name_part.upper().startswith("TEST") or gr_name_part.upper().startswith("RC") or \
-                                gr_name_part[0] in version_start:
+                if (
+                    in_version
+                    or gr_name_part.upper().startswith("TEST")
+                    or gr_name_part.upper().startswith("RC")
+                    or gr_name_part[0] in version_start
+                ):
                     in_version = True
                     version += "{} ".format(gr_name_part)
                 else:
@@ -249,7 +280,7 @@ class Replay(models.Model):
                 game_name = game_name[:-1]
         else:
             game_name = game.name
-            version = self.gametype[len(game.name):]
+            version = self.gametype[len(game.name) :]
         version = version.strip()
         if not version:
             version = "n/a"
@@ -257,16 +288,24 @@ class Replay(models.Model):
         if version[0].upper() == "V" or version[0] == ".":
             version = version[1:]
 
-        game, _ = Game.objects.get_or_create(name=game_name, defaults={
-            "abbreviation": reduce(lambda x, y: x + y, [gn[0].upper() for gn in game_name.split()])})
-        return GameRelease.objects.create(name=self.gametype, game=game, version=version)
+        game, _ = Game.objects.get_or_create(
+            name=game_name,
+            defaults={
+                "abbreviation": reduce(
+                    lambda x, y: x + y, [gn[0].upper() for gn in game_name.split()]
+                )
+            },
+        )
+        return GameRelease.objects.create(
+            name=self.gametype, game=game, version=version
+        )
 
     @property
     def match_type(self):
         """returns string (from searching through tags): 1v1 / Team / FFA / TeamFFA'"""
         # quick and dirty using tags
         try:
-            tag = self.tags.filter(name__regex=r'^[0-9]v[0-9]$')[0]
+            tag = self.tags.filter(name__regex=r"^[0-9]v[0-9]$")[0]
             if tag.name == "1v1":
                 return "1v1"
             else:
@@ -274,12 +313,12 @@ class Replay(models.Model):
         except IndexError:
             pass
         try:
-            tag = self.tags.get(name__regex=r'^TeamFFA$')
+            tag = self.tags.get(name__regex=r"^TeamFFA$")
             return tag.name
         except ObjectDoesNotExist:
             pass
         try:
-            tag = self.tags.get(name__regex=r'^FFA$')
+            tag = self.tags.get(name__regex=r"^FFA$")
             return tag.name
         except ObjectDoesNotExist:
             pass
@@ -287,13 +326,22 @@ class Replay(models.Model):
         # thoroughly using player/team count
         allyteams = Allyteam.objects.filter(replay=self)
         if allyteams.count() == 2:
-            if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(accountid=0).count() == 2:
+            if (
+                PlayerAccount.objects.filter(player__team__allyteam__in=allyteams)
+                .exclude(accountid=0)
+                .count()
+                == 2
+            ):
                 return "1v1"
             else:
                 return "Team"
         elif allyteams.count() > 2:
-            if PlayerAccount.objects.filter(player__team__allyteam__in=allyteams).exclude(
-                    accountid=0).count() == allyteams.count():
+            if (
+                PlayerAccount.objects.filter(player__team__allyteam__in=allyteams)
+                .exclude(accountid=0)
+                .count()
+                == allyteams.count()
+            ):
                 return "FFA"
             else:
                 return "TeamFFA"
@@ -314,7 +362,10 @@ class Replay(models.Model):
         """returns string (from counting players): 1v1 / 1v5 / 6v6 / 2v2v2v2 / ..."""
         try:
             allyteams = Allyteam.objects.filter(replay=self)
-            at_sizes = [PlayerAccount.objects.filter(player__team__allyteam=at).count() for at in allyteams]
+            at_sizes = [
+                PlayerAccount.objects.filter(player__team__allyteam=at).count()
+                for at in allyteams
+            ]
             at_sizes.sort()
             return str(reduce(lambda x, y: "{}v{}".format(x, y), at_sizes))
         except:
@@ -325,7 +376,9 @@ class Replay(models.Model):
     def match_end(self):
         length = self.wallclockTime.split(":")
         try:
-            length2 = datetime.timedelta(seconds=int(length[2]), minutes=int(length[1]), hours=int(length[0]))
+            length2 = datetime.timedelta(
+                seconds=int(length[2]), minutes=int(length[1]), hours=int(length[0])
+            )
         except KeyError:
             return self.unixTime
         return self.unixTime + length2
@@ -342,7 +395,8 @@ class Replay(models.Model):
 
     def _playername(self, playeraccount):
         player = Player.objects.filter(replay=self, account=playeraccount)[
-            0]  # not using get() for the case of a spec-cheater
+            0
+        ]  # not using get() for the case of a spec-cheater
         return player.name
 
     def _faction_result(self, playeraccount):
@@ -355,7 +409,9 @@ class Replay(models.Model):
             if playeraccount.accountid == 0:
                 player = Player.objects.filter(replay=self, account=playeraccount)[0]
             else:
-                player = Player.objects.get(replay=self, account=playeraccount, spectator=False)
+                player = Player.objects.get(
+                    replay=self, account=playeraccount, spectator=False
+                )
         try:
             team = Team.objects.filter(replay=self, teamleader=player)[0]
             if team.allyteam.winner:
@@ -373,7 +429,10 @@ class Replay(models.Model):
         """
         This is used by PlayersReplayTable
         """
-        if not hasattr(self, "_faction_cache") or not self._faction_cache[0] == playeraccount:
+        if (
+            not hasattr(self, "_faction_cache")
+            or not self._faction_cache[0] == playeraccount
+        ):
             self._faction_result(playeraccount)
         return self._faction_cache[1]
 
@@ -383,7 +442,10 @@ class Replay(models.Model):
         """
         This is used by PlayersReplayTable
         """
-        if not hasattr(self, "_result_cache") or not self._result_cache[0] == playeraccount:
+        if (
+            not hasattr(self, "_result_cache")
+            or not self._result_cache[0] == playeraccount
+        ):
             self._faction_result(playeraccount)
         return self._result_cache[1]
 
@@ -411,11 +473,17 @@ class Replay(models.Model):
                 for fn in ca_fields:
                     cav = getattr(ca, fn)
                     if cav:
-                        res.setdefault(fn, {})['name'] = CursedAwards.field_to_name[fn]
-                        res[fn]['img'] = os.path.join('img/cursed_awards', CursedAwards.field_to_image[fn])
-                        res[fn].setdefault('players', []).append((ca.player, cav))
-                        if len(res[fn]['players']) > 1:
-                            res[fn]['players'] = sorted(res[fn]['players'], key=operator.itemgetter(1), reverse=True)
+                        res.setdefault(fn, {})["name"] = CursedAwards.field_to_name[fn]
+                        res[fn]["img"] = os.path.join(
+                            "img/cursed_awards", CursedAwards.field_to_image[fn]
+                        )
+                        res[fn].setdefault("players", []).append((ca.player, cav))
+                        if len(res[fn]["players"]) > 1:
+                            res[fn]["players"] = sorted(
+                                res[fn]["players"],
+                                key=operator.itemgetter(1),
+                                reverse=True,
+                            )
         except ObjectDoesNotExist:
             return None
         return sorted(res.items(), key=operator.itemgetter(0))
@@ -430,7 +498,9 @@ class PlayerStats(models.Model):
         return ujson.loads(zlib.decompress(self.stats))
 
     def __unicode__(self):
-        return u'PlayerStats(pk={}, replay.pk={}, {!r}...)'.format(self.pk, self.replay.pk, self.stats[:4])
+        return "PlayerStats(pk={}, replay.pk={}, {!r}...)".format(
+            self.pk, self.replay.pk, self.stats[:4]
+        )
 
 
 class TeamStats(models.Model):
@@ -438,27 +508,29 @@ class TeamStats(models.Model):
     stat_type = models.CharField(max_length=32)
     stats = models.BinaryField(blank=True, null=True, default=None)
 
-    graphid2label = OrderedDict((
-        ('metalUsed', 'Metal Used'),
-        ('metalProduced', 'Metal Produced'),
-        ('metalExcess', 'Metal Excess'),
-        ('metalReceived', 'Metal Received'),
-        ('metalSent', 'Metal Sent'),
-        ('energyUsed', 'Energy Used'),
-        ('energyProduced', 'Energy Produced'),
-        ('energyExcess', 'Energy Excess'),
-        ('energyReceived', 'Energy Received'),
-        ('energySent', 'Energy Sent'),
-        ('damageDealt', 'Damage Dealt'),
-        ('damageReceived', 'Damage Received'),
-        ('unitsProduced', 'Units Produced'),
-        ('unitsKilled', 'Units Killed'),
-        ('unitsDied', 'Units Died'),
-        ('unitsReceived', 'Units Received'),
-        ('unitsSent', 'Units Sent'),
-        ('unitsCaptured', 'Units Captured'),
-        ('unitsOutCaptured', 'Units Stolen'),
-    ))
+    graphid2label = OrderedDict(
+        (
+            ("metalUsed", "Metal Used"),
+            ("metalProduced", "Metal Produced"),
+            ("metalExcess", "Metal Excess"),
+            ("metalReceived", "Metal Received"),
+            ("metalSent", "Metal Sent"),
+            ("energyUsed", "Energy Used"),
+            ("energyProduced", "Energy Produced"),
+            ("energyExcess", "Energy Excess"),
+            ("energyReceived", "Energy Received"),
+            ("energySent", "Energy Sent"),
+            ("damageDealt", "Damage Dealt"),
+            ("damageReceived", "Damage Received"),
+            ("unitsProduced", "Units Produced"),
+            ("unitsKilled", "Units Killed"),
+            ("unitsDied", "Units Died"),
+            ("unitsReceived", "Units Received"),
+            ("unitsSent", "Units Sent"),
+            ("unitsCaptured", "Units Captured"),
+            ("unitsOutCaptured", "Units Stolen"),
+        )
+    )
 
     @property
     def decompressed(self):
@@ -469,7 +541,9 @@ class TeamStats(models.Model):
         return self.graphid2label[self.stat_type]
 
     def __unicode__(self):
-        return u'TeamStats(pk={}, replay.pk={}, stat_type={}, {!r}...)'.format(self.pk, self.replay.pk, self.stat_type, self.stats[:4])
+        return "TeamStats(pk={}, replay.pk={}, stat_type={}, {!r}...)".format(
+            self.pk, self.replay.pk, self.stat_type, self.stats[:4]
+        )
 
 
 class AdditionalReplayInfo(models.Model):
@@ -477,12 +551,15 @@ class AdditionalReplayInfo(models.Model):
     Infos that are only relevant to a few Replay objects are not worth their
     own attribute in the Replay class.
     """
+
     replay = models.ForeignKey(Replay, on_delete=CASCADE)
     key = models.CharField(max_length=32)
     value = models.CharField(max_length=512)
 
     def __unicode__(self):
-        return u"AdditionalReplayInfo({}, {}): '{}'='{}'".format(self.pk, self.replay, self.key, self.value)
+        return "AdditionalReplayInfo({}, {}): '{}'='{}'".format(
+            self.pk, self.replay, self.key, self.value
+        )
 
 
 class Allyteam(models.Model):
@@ -496,7 +573,7 @@ class Allyteam(models.Model):
     num = models.SmallIntegerField()
 
     def __unicode__(self):
-        return u"Allyteam({}) win:{}".format(self.id, self.winner)
+        return "Allyteam({}) win:{}".format(self.id, self.winner)
 
 
 class PlayerAccount(models.Model):
@@ -506,10 +583,13 @@ class PlayerAccount(models.Model):
     sldb_privacy_mode = models.SmallIntegerField(default=1)
 
     def __unicode__(self):
-        return u"PlayerAccount({}: {})".format(self.accountid, reduce(lambda x, y: "{}|{}".format(x, y), self.get_names())[:40])
+        return "PlayerAccount({}: {})".format(
+            self.accountid,
+            reduce(lambda x, y: "{}|{}".format(x, y), self.get_names())[:40],
+        )
 
     def get_absolute_url(self):
-        return reverse('srs/player', args=[self.accountid])
+        return reverse("srs/player", args=[self.accountid])
 
     @property
     def replay_count(self):
@@ -521,11 +601,15 @@ class PlayerAccount(models.Model):
 
     def get_rating(self, game, match_type):
         try:
-            rating, _ = Rating.objects.get_or_create(playeraccount=self, game=game, match_type=match_type)
+            rating, _ = Rating.objects.get_or_create(
+                playeraccount=self, game=game, match_type=match_type
+            )
             return rating
         except MultipleObjectsReturned:
             # this shouldn't happen, was a bug, now delete last object and return first
-            ratings = Rating.objects.filter(playeraccount=self, game=game, match_type=match_type)
+            ratings = Rating.objects.filter(
+                playeraccount=self, game=game, match_type=match_type
+            )
             ratings.last().delete()
             return ratings.first()
 
@@ -543,14 +627,22 @@ class PlayerAccount(models.Model):
             return [self.preffered_name]
 
     def get_all_games(self):
-        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).values_list("gametype",
-                                                                                                     flat=True)
-        return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
+        gametypes = Replay.objects.filter(
+            player__account=self, player__spectator=False
+        ).values_list("gametype", flat=True)
+        return Game.objects.filter(
+            gamerelease__name__in=uniqify_list(gametypes)
+        ).distinct()
 
     def get_all_games_no_bots(self):
-        gametypes = Replay.objects.filter(player__account=self, player__spectator=False).exclude(
-            tags=Tag.objects.get(name="Bot")).values_list("gametype", flat=True)
-        return Game.objects.filter(gamerelease__name__in=uniqify_list(gametypes)).distinct()
+        gametypes = (
+            Replay.objects.filter(player__account=self, player__spectator=False)
+            .exclude(tags=Tag.objects.get(name="Bot"))
+            .values_list("gametype", flat=True)
+        )
+        return Game.objects.filter(
+            gamerelease__name__in=uniqify_list(gametypes)
+        ).distinct()
 
     def get_user(self):
         try:
@@ -566,7 +658,11 @@ class PlayerAccount(models.Model):
         :return: dict: {'cowAward': 0, 'dmgRecAward': 2, 'ecoAward': 3, ...}
         """
         res = dict()
-        field_names = [field.name for field in BAwards._meta.get_fields() if "Award" in field.name and "Score" not in field.name]
+        field_names = [
+            field.name
+            for field in BAwards._meta.get_fields()
+            if "Award" in field.name and "Score" not in field.name
+        ]
         for award in field_names:
             kwargs = {"{}__account".format(award): self}
             res[award] = BAwards.objects.filter(**kwargs).count()
@@ -579,10 +675,14 @@ class PlayerAccount(models.Model):
 
         :return: tuple: heroes, lost. each is a list of tuples: ([(u'Sumo', 9), (u'Light Laser Tower', 8), ...], [(), ..])
         """
-        awards = XTAwards.objects.filter(player__account=self, isAlive=1).values_list("unit", flat=True)
+        awards = XTAwards.objects.filter(player__account=self, isAlive=1).values_list(
+            "unit", flat=True
+        )
         co = Counter(awards)
         heroes = co.most_common(10)
-        awards = XTAwards.objects.filter(player__account=self, isAlive=0).values_list("unit", flat=True)
+        awards = XTAwards.objects.filter(player__account=self, isAlive=0).values_list(
+            "unit", flat=True
+        )
         co = Counter(awards)
         lost = co.most_common(10)
         return heroes, lost
@@ -600,15 +700,18 @@ class PlayerAccount(models.Model):
             co.update(award.as_dict(True).keys())
         return [
             {
-                'type': c[0],
-                'name': CursedAwards.field_to_name[c[0]],
-                'img': os.path.join('img/cursed_awards', CursedAwards.field_to_image[c[0]]),
-                'count': c[1]
-            } for c in co.most_common()
+                "type": c[0],
+                "name": CursedAwards.field_to_name[c[0]],
+                "img": os.path.join(
+                    "img/cursed_awards", CursedAwards.field_to_image[c[0]]
+                ),
+                "count": c[1],
+            }
+            for c in co.most_common()
         ]
 
     class Meta:
-        ordering = ['accountid']
+        ordering = ["accountid"]
 
 
 class Player(models.Model):
@@ -628,10 +731,10 @@ class Player(models.Model):
         return "Player({}, {})".format(self.id, self.name)
 
     def get_absolute_url(self):
-        return reverse('srs/player', args=[self.account.accountid])
+        return reverse("srs/player", args=[self.account.accountid])
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
 
 class Team(models.Model):
@@ -664,6 +767,7 @@ class MapModOption(models.Model):
 
 # class Meta:
 #         abstract = True
+
 
 class MapOption(MapModOption):
     pass
@@ -704,7 +808,10 @@ class SiteStats(models.Model):
     @property
     def bawards_decoded(self):
         return dict(
-            (award, ((PlayerAccount.objects.get(pk=ps[0]), ps[1]) for ps in player_stats))
+            (
+                award,
+                ((PlayerAccount.objects.get(pk=ps[0]), ps[1]) for ps in player_stats),
+            )
             for award, player_stats in self.bawards.items()
         )
 
@@ -719,10 +826,10 @@ class Game(models.Model):
         return "Game({}, {}, {})".format(self.pk, self.abbreviation, self.name[:70])
 
     def get_absolute_url(self):
-        return reverse('srs/browse_archive', args=['game={}'.format(self.pk)])
+        return reverse("srs/browse_archive", args=["game={}".format(self.pk)])
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
 
 class GameRelease(models.Model):
@@ -731,31 +838,37 @@ class GameRelease(models.Model):
     game = models.ForeignKey(Game, on_delete=CASCADE)
 
     def __unicode__(self):
-        return "GameRelease({}, {}, {}, {})".format(self.pk, self.name[:70], self.version, self.game)
+        return "GameRelease({}, {}, {}, {})".format(
+            self.pk, self.name[:70], self.version, self.game
+        )
 
     def get_absolute_url(self):
-        return reverse('srs/gamerelease', args=[self.name])
+        return reverse("srs/gamerelease", args=[self.name])
 
     @property
     def replay_count(self):
         return Replay.objects.filter(gametype=self.name).count()
 
     class Meta:
-        ordering = ['name', 'version']
+        ordering = ["name", "version"]
 
 
 class RatingBase(models.Model):
     game = models.ForeignKey(Game, on_delete=CASCADE)
-    MATCH_TYPE_CHOICES = (('1', u'1v1'),
-                          ('T', u'Team'),
-                          ('F', u'FFA'),
-                          ('G', u'TeamFFA'),
-                          ('L', u'Global'),
-                          )
-    match_type = models.CharField(max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True)
+    MATCH_TYPE_CHOICES = (
+        ("1", "1v1"),
+        ("T", "Team"),
+        ("F", "FFA"),
+        ("G", "TeamFFA"),
+        ("L", "Global"),
+    )
+    match_type = models.CharField(
+        max_length=1, choices=MATCH_TYPE_CHOICES, db_index=True
+    )
     playeraccount = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
-    playername = models.CharField(max_length=128, blank=True, null=True,
-                                  db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
+    playername = models.CharField(
+        max_length=128, blank=True, null=True, db_index=True
+    )  # this fields is redundant, but neccessary for db-side ordering of tables
 
     trueskill_mu = models.FloatField(default=25.0)
     trueskill_sigma = models.FloatField(default=25.0 / 3)
@@ -773,12 +886,18 @@ class RatingBase(models.Model):
             return 0
 
     def __unicode__(self):
-        return "{}({}, {}, {}) TS: ({}, {})".format(self.__class__.__name__, self.pk, self.playername,
-                                                    self.game.abbreviation, self.match_type,
-                                                    self.trueskill_mu, self.trueskill_sigma)
+        return "{}({}, {}, {}) TS: ({}, {})".format(
+            self.__class__.__name__,
+            self.pk,
+            self.playername,
+            self.game.abbreviation,
+            self.match_type,
+            self.trueskill_mu,
+            self.trueskill_sigma,
+        )
 
     class Meta:
-        ordering = ['-trueskill_mu']
+        ordering = ["-trueskill_mu"]
         abstract = True
 
 
@@ -788,14 +907,17 @@ class Rating(RatingBase):
 
 class RatingHistory(RatingBase):
     match = models.ForeignKey(Replay, on_delete=CASCADE)
-    match_date = models.DateTimeField(blank=True, null=True,
-                                      db_index=True)  # this fields is redundant, but neccessary for db-side ordering of tables
+    match_date = models.DateTimeField(
+        blank=True, null=True, db_index=True
+    )  # this fields is redundant, but neccessary for db-side ordering of tables
 
     def __unicode__(self):
-        return "RatingHistory({}, {}): {}".format(self.pk, self.match_date, super(RatingHistory, self))
+        return "RatingHistory({}, {}): {}".format(
+            self.pk, self.match_date, super(RatingHistory, self)
+        )
 
     class Meta:
-        ordering = ['-match_date', 'playername']
+        ordering = ["-match_date", "playername"]
 
 
 class AdditionalReplayOwner(models.Model):
@@ -803,11 +925,12 @@ class AdditionalReplayOwner(models.Model):
     additional_owner = models.ForeignKey(PlayerAccount, on_delete=CASCADE)
 
     def __unicode__(self):
-        return u"AdditionalReplayOwner({}) uploader: {}, additional_owner: {}".format(self.id, self.uploader,
-                                                                                      self.additional_owner)
+        return "AdditionalReplayOwner({}) uploader: {}, additional_owner: {}".format(
+            self.id, self.uploader, self.additional_owner
+        )
 
     class Meta:
-        ordering = ['uploader__username']
+        ordering = ["uploader__username"]
 
 
 class ExtraReplayMedia(models.Model):
@@ -829,20 +952,30 @@ class ExtraReplayMedia(models.Model):
         return basename(self.image.name)
 
     def __unicode__(self):
-        return u"ExtraReplayMedia({}) replay: {} media: {} image: {} by: {} on: {}".format(
-            self.pk, self.replay, self.media, self.image, self.uploader, self.upload_date)
+        return "ExtraReplayMedia({}) replay: {} media: {} image: {} by: {} on: {}".format(
+            self.pk,
+            self.replay,
+            self.media,
+            self.image,
+            self.uploader,
+            self.upload_date,
+        )
 
     class Meta:
-        ordering = ['-upload_date']
+        ordering = ["-upload_date"]
 
 
 class SldbLeaderboardGame(models.Model):
     last_modified = models.DateTimeField(auto_now_add=True)
     game = models.ForeignKey(Game, on_delete=CASCADE)
-    match_type = models.CharField(max_length=1, choices=RatingBase.MATCH_TYPE_CHOICES, db_index=True)
+    match_type = models.CharField(
+        max_length=1, choices=RatingBase.MATCH_TYPE_CHOICES, db_index=True
+    )
 
     def __unicode__(self):
-        return u"SldbLeaderboardGame({}, {}, {})".format(self.pk, self.game, self.match_type)
+        return "SldbLeaderboardGame({}, {}, {})".format(
+            self.pk, self.game, self.match_type
+        )
 
 
 class SldbLeaderboardPlayer(models.Model):
@@ -855,11 +988,12 @@ class SldbLeaderboardPlayer(models.Model):
     inactivity = models.IntegerField()
 
     def __unicode__(self):
-        return u"SldbLeaderboardPlayer({}, {}, {}, {}, {})".format(self.pk, self.leaderboard, self.rank, self.account,
-                                                                  self.trusted_skill)
+        return "SldbLeaderboardPlayer({}, {}, {}, {}, {})".format(
+            self.pk, self.leaderboard, self.rank, self.account, self.trusted_skill
+        )
 
     class Meta:
-        ordering = ['rank']
+        ordering = ["rank"]
 
 
 class SldbMatchSkillsCache(models.Model):
@@ -868,7 +1002,9 @@ class SldbMatchSkillsCache(models.Model):
     text = models.TextField()
 
     def __unicode__(self):
-        return u"SldbMatchSkillsCache({}, {}, {})".format(self.pk, self.gameID, self.text)
+        return "SldbMatchSkillsCache({}, {}, {})".format(
+            self.pk, self.gameID, self.text
+        )
 
     @staticmethod
     def purge_old():
@@ -876,8 +1012,11 @@ class SldbMatchSkillsCache(models.Model):
         Remove >= 30 minutes old entries
         """
         SldbMatchSkillsCache.objects.filter(
-            last_modified__lt=datetime.datetime.now(tz=Replay.objects.latest().unixTime.tzinfo) - datetime.timedelta(
-                minutes=30)).delete()
+            last_modified__lt=datetime.datetime.now(
+                tz=Replay.objects.latest().unixTime.tzinfo
+            )
+            - datetime.timedelta(minutes=30)
+        ).delete()
 
 
 class SldbPlayerTSGraphCache(models.Model):
@@ -890,13 +1029,27 @@ class SldbPlayerTSGraphCache(models.Model):
     filepath_team = models.CharField(max_length=256)
     filepath_teamffa = models.CharField(max_length=256)
 
-    match_type2sldb_name = {"1": "Duel", "T": "Team", "F": "FFA", "G": "Global", "L": "TeamFFA"}
+    match_type2sldb_name = {
+        "1": "Duel",
+        "T": "Team",
+        "F": "FFA",
+        "G": "Global",
+        "L": "TeamFFA",
+    }
 
     def __unicode__(self):
-        return u"SldbPlayerTSGraphCache({}) {} | {} | {}".format(self.pk, self.account, self.game, self.filepath_global)
+        return "SldbPlayerTSGraphCache({}) {} | {} | {}".format(
+            self.pk, self.account, self.game, self.filepath_global
+        )
 
     def remove_files(self):
-        for filepath in (self.filepath_global, self.filepath_duel, self.filepath_ffa, self.filepath_team, self.filepath_teamffa):
+        for filepath in (
+            self.filepath_global,
+            self.filepath_duel,
+            self.filepath_ffa,
+            self.filepath_team,
+            self.filepath_teamffa,
+        ):
             if "static/img/" in filepath:
                 # don't remove static error / info images
                 continue
@@ -904,17 +1057,28 @@ class SldbPlayerTSGraphCache(models.Model):
                 try:
                     os.remove(filepath)
                 except OSError as exc:
-                    logger.warning("Cannot remove file '%s' of cache entry %d: %s", filepath, self.id, exc)
+                    logger.warning(
+                        "Cannot remove file '%s' of cache entry %d: %s",
+                        filepath,
+                        self.id,
+                        exc,
+                    )
 
     @staticmethod
     def purge_old():
         """
         Remove >= 30 days old entries
         """
-        old_entries = SldbPlayerTSGraphCache.objects.filter(last_modified__lt=datetime.datetime.now(
-            tz=Replay.objects.latest().unixTime.tzinfo) - datetime.timedelta(days=30))
+        old_entries = SldbPlayerTSGraphCache.objects.filter(
+            last_modified__lt=datetime.datetime.now(
+                tz=Replay.objects.latest().unixTime.tzinfo
+            )
+            - datetime.timedelta(days=30)
+        )
         if old_entries.exists():
-            logger.debug("Deleting stale SldbPlayerTSGraphCache objects: %s", old_entries)
+            logger.debug(
+                "Deleting stale SldbPlayerTSGraphCache objects: %s", old_entries
+            )
             for entry in old_entries:
                 entry.remove_files()
             old_entries.delete()
@@ -925,45 +1089,86 @@ class SldbPlayerTSGraphCache(models.Model):
             "Duel": self.filepath_duel,
             "FFA": self.filepath_ffa,
             "Team": self.filepath_team,
-            "TeamFFA": self.filepath_teamffa
+            "TeamFFA": self.filepath_teamffa,
         }
 
 
 class BAwards(models.Model):
     replay = models.ForeignKey(Replay, on_delete=CASCADE)
-    ecoKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    ecoKillAward1st = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     ecoKillAward1stScore = models.IntegerField(default=-1)
-    ecoKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    ecoKillAward2nd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     ecoKillAward2ndScore = models.IntegerField(default=-1)
-    ecoKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    ecoKillAward3rd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     ecoKillAward3rdScore = models.IntegerField(default=-1)
-    fightKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    fightKillAward1st = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     fightKillAward1stScore = models.IntegerField(default=-1)
-    fightKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    fightKillAward2nd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     fightKillAward2ndScore = models.IntegerField(default=-1)
-    fightKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    fightKillAward3rd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     fightKillAward3rdScore = models.IntegerField(default=-1)
-    effKillAward1st = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    effKillAward1st = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     effKillAward1stScore = models.FloatField(default=-1)
-    effKillAward2nd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    effKillAward2nd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     effKillAward2ndScore = models.FloatField(default=-1)
-    effKillAward3rd = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    effKillAward3rd = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     effKillAward3rdScore = models.FloatField(default=-1)
-    cowAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    cowAward = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     cowAwardScore = models.IntegerField(default=-1)
-    ecoAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    ecoAward = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     ecoAwardScore = models.IntegerField(default=-1)
-    dmgRecAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    dmgRecAward = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     dmgRecAwardScore = models.FloatField(default=-1)
-    sleepAward = models.ForeignKey(Player, blank=True, null=True, related_name="+", on_delete=CASCADE)
+    sleepAward = models.ForeignKey(
+        Player, blank=True, null=True, related_name="+", on_delete=CASCADE
+    )
     sleepAwardScore = models.IntegerField(default=-1)
 
     def __unicode__(self):
-        return u"BAwards({}) Replay: {} | EcoKill: {},{},{} | FightKill: {},{},{} | EffKill: {},{},{} | Cow: {} | " \
-               u"Eco: {} | DmgRec: {} | Sleep: {}".format(
-            self.pk, self.replay.pk, self.ecoKillAward1st, self.ecoKillAward2nd, self.ecoKillAward3rd,
-            self.fightKillAward1st, self.fightKillAward2nd, self.fightKillAward3rd, self.effKillAward1st,
-            self.effKillAward2nd, self.effKillAward3rd, self.cowAward, self.ecoAward, self.dmgRecAward, self.sleepAward)
+        return (
+            "BAwards({}) Replay: {} | EcoKill: {},{},{} | FightKill: {},{},{} | EffKill: {},{},{} | Cow: {} | "
+            "Eco: {} | DmgRec: {} | Sleep: {}".format(
+                self.pk,
+                self.replay.pk,
+                self.ecoKillAward1st,
+                self.ecoKillAward2nd,
+                self.ecoKillAward3rd,
+                self.fightKillAward1st,
+                self.fightKillAward2nd,
+                self.fightKillAward3rd,
+                self.effKillAward1st,
+                self.effKillAward2nd,
+                self.effKillAward3rd,
+                self.cowAward,
+                self.ecoAward,
+                self.dmgRecAward,
+                self.sleepAward,
+            )
+        )
 
 
 class XTAwards(models.Model):
@@ -975,8 +1180,15 @@ class XTAwards(models.Model):
     age = models.IntegerField(default=-1)
 
     def __unicode__(self):
-        return u"XTAwards({}) Replay: {} | isAlive: {} | player: {} | unit: {} | kills: {} | age: {}".format(
-            self.pk, self.replay.pk, self.isAlive, self.player.name, self.unit, self.kills, self.age)
+        return "XTAwards({}) Replay: {} | isAlive: {} | player: {} | unit: {} | kills: {} | age: {}".format(
+            self.pk,
+            self.replay.pk,
+            self.isAlive,
+            self.player.name,
+            self.unit,
+            self.kills,
+            self.age,
+        )
 
 
 class CursedAwards(models.Model):
@@ -1010,64 +1222,70 @@ class CursedAwards(models.Model):
     sweeper = models.PositiveIntegerField(default=0)
 
     field_to_image = dict(
-        air='trophy_air.png',
-        bug='trophy_bug.png',
-        cap='trophy_cap.png',
-        dran='trophy_dran.png',
-        drankill='trophy_dragon.png',
-        emp='trophy_emp.png',
-        fire='trophy_fire.png',
-        friend='trophy_friend.png',
-        heart='trophy_heart.png',
-        hero='trophy_hero.png',
-        herokill='trophy_herokill.png',
-        hover='trophy_hover.png',
-        kam='trophy_kam.png',
-        lycan='trophy_lycan.png',
-        mex='trophy_mex.png',
-        mexkill='trophy_mexkill.png',
-        nux='trophy_nux.png',
-        ouch='trophy_ouch.png',
-        point='trophy_point.png',
-        pwn='trophy_pwn.png',
-        rezz='trophy_rezz.png',
-        share='trophy_share.png',
-        shell='trophy_shell.png',
-        slow='trophy_slow.png',
-        sweeper='trophy_sweeper.png',
+        air="trophy_air.png",
+        bug="trophy_bug.png",
+        cap="trophy_cap.png",
+        dran="trophy_dran.png",
+        drankill="trophy_dragon.png",
+        emp="trophy_emp.png",
+        fire="trophy_fire.png",
+        friend="trophy_friend.png",
+        heart="trophy_heart.png",
+        hero="trophy_hero.png",
+        herokill="trophy_herokill.png",
+        hover="trophy_hover.png",
+        kam="trophy_kam.png",
+        lycan="trophy_lycan.png",
+        mex="trophy_mex.png",
+        mexkill="trophy_mexkill.png",
+        nux="trophy_nux.png",
+        ouch="trophy_ouch.png",
+        point="trophy_point.png",
+        pwn="trophy_pwn.png",
+        rezz="trophy_rezz.png",
+        share="trophy_share.png",
+        shell="trophy_shell.png",
+        slow="trophy_slow.png",
+        sweeper="trophy_sweeper.png",
     )
 
     field_to_name = dict(
-        air='Airforce General',
-        bug='Bug Hunter',
-        cap='Mind Magician',
-        dran='Dragons & Angels',
-        drankill='Dragon & Angel Slayer',
-        emp='Stun Wizard',
-        fire='Master Grill-Chef',
-        friend='Friendly Fire Award',
-        heart='Queen Heart Breaker',
-        hero='Heros do the job',
-        herokill='Hero Hunter',
-        hover='Hover Admiral',
-        kam='Kamikaze Award',
-        lycan='Werewolf Hunter',
-        mex='Mineral Prospector',
-        mexkill='Loot & Pillage',
-        nux='Apocalyptic Achievement Award',
-        ouch='Big Purple Heart',
-        point='This is my Land',
-        pwn='Total Pain',
-        rezz='Vile Necromancer',
-        share='Share Bear',
-        shell='Turtle Shell',
-        slow='Traffic Cop',
-        sweeper='Land Sweeper',
+        air="Airforce General",
+        bug="Bug Hunter",
+        cap="Mind Magician",
+        dran="Dragons & Angels",
+        drankill="Dragon & Angel Slayer",
+        emp="Stun Wizard",
+        fire="Master Grill-Chef",
+        friend="Friendly Fire Award",
+        heart="Queen Heart Breaker",
+        hero="Heros do the job",
+        herokill="Hero Hunter",
+        hover="Hover Admiral",
+        kam="Kamikaze Award",
+        lycan="Werewolf Hunter",
+        mex="Mineral Prospector",
+        mexkill="Loot & Pillage",
+        nux="Apocalyptic Achievement Award",
+        ouch="Big Purple Heart",
+        point="This is my Land",
+        pwn="Total Pain",
+        rezz="Vile Necromancer",
+        share="Share Bear",
+        shell="Turtle Shell",
+        slow="Traffic Cop",
+        sweeper="Land Sweeper",
     )
 
     @classmethod
     def sorted_field_names(cls):
-        return sorted([f.name for f in cls._meta.fields if f.name not in ('id', 'replay', 'player')])
+        return sorted(
+            [
+                f.name
+                for f in cls._meta.fields
+                if f.name not in ("id", "replay", "player")
+            ]
+        )
 
     def as_dict(self, only_positive=False):
         res = dict()
@@ -1079,10 +1297,15 @@ class CursedAwards(models.Model):
         return res
 
     def __unicode__(self):
-        return u"CursedAwards({}, {}, {})".format(
+        return "CursedAwards({}, {}, {})".format(
             self.pk,
             self.replay.pk,
-            [(f.name, f.value_from_object(self)) for f in self._meta.fields if f.name not in ('id', 'replay', 'player') and f.value_from_object(self) > 0]
+            [
+                (f.name, f.value_from_object(self))
+                for f in self._meta.fields
+                if f.name not in ("id", "replay", "player")
+                and f.value_from_object(self) > 0
+            ],
         )
 
 
@@ -1099,10 +1322,27 @@ def update_stats(force=False):
     :arg force: bool: run even if has already run in the last 24h
     """
     # statistics like most played maps, most used tags etc. (sed in the browse and all_players views)
-    sist, created = SiteStats.objects.get_or_create(id=1, defaults={'replays': 0, 'tags': "", 'maps': "",
-                                                                    "active_players": "", 'all_players': "",
-                                                                    'comments': "", "games": "", "bawards": ""})
-    if created or force or (datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified).days > 0:
+    sist, created = SiteStats.objects.get_or_create(
+        id=1,
+        defaults={
+            "replays": 0,
+            "tags": "",
+            "maps": "",
+            "active_players": "",
+            "all_players": "",
+            "comments": "",
+            "games": "",
+            "bawards": "",
+        },
+    )
+    if (
+        created
+        or force
+        or (
+            datetime.datetime.now(tz=sist.last_modified.tzinfo) - sist.last_modified
+        ).days
+        > 0
+    ):
         # update stats
         logger.info("starting stats update...")
         timer = SrsTiming()
@@ -1114,28 +1354,54 @@ def update_stats(force=False):
             # no daily uploads on my dev pc - list can be empty
             start_date = now - datetime.timedelta(days=300)
         default_tags = Tag.objects.filter(
-            name__in=["1v1", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8", "Team", "FFA", "TeamFFA", "Tourney"])
-        tags = default_tags.annotate(num_replay=Count('replay'))
-        maps = Map.objects.filter(replay__unixTime__range=(start_date, now)).annotate(
-            num_replay=Count('replay')).order_by('-num_replay')[:10]
+            name__in=[
+                "1v1",
+                "2v2",
+                "3v3",
+                "4v4",
+                "5v5",
+                "6v6",
+                "7v7",
+                "8v8",
+                "Team",
+                "FFA",
+                "TeamFFA",
+                "Tourney",
+            ]
+        )
+        tags = default_tags.annotate(num_replay=Count("replay"))
+        maps = (
+            Map.objects.filter(replay__unixTime__range=(start_date, now))
+            .annotate(num_replay=Count("replay"))
+            .order_by("-num_replay")[:10]
+        )
 
         # statistic on number of matches of each game (for browse page)
         timer.start("games")
         games = list()
         for game in Game.objects.all():
-            games.append((
-                game.id,
-                Replay.objects.filter(gametype__in=game.gamerelease_set.values_list("name", flat=True)).count()))
+            games.append(
+                (
+                    game.id,
+                    Replay.objects.filter(
+                        gametype__in=game.gamerelease_set.values_list("name", flat=True)
+                    ).count(),
+                )
+            )
         games.sort(key=operator.itemgetter(1), reverse=True)
         timer.stop("games")
 
         # most active players in the last 30 days (for browse page)
         timer.start("active_players")
-        active_players = PlayerAccount.objects.filter(accountid__gt=0,
-                                                      player__spectator=False,
-                                                      player__replay__unixTime__range=(start_date, now)
-                                                      ).annotate(Count("player__replay")
-                                                                 ).order_by("-player__replay__count", "accountid")
+        active_players = (
+            PlayerAccount.objects.filter(
+                accountid__gt=0,
+                player__spectator=False,
+                player__replay__unixTime__range=(start_date, now),
+            )
+            .annotate(Count("player__replay"))
+            .order_by("-player__replay__count", "accountid")
+        )
         timer.stop("active_players")
 
         # newest comments (for index page)
@@ -1149,12 +1415,23 @@ def update_stats(force=False):
             tags_s = ""
         if maps.exists():
             # map.id . #matches_last_30d / #matches_total
-            maps_s = "|".join(["{}.{} / {}".format(m.id, m.num_replay, Replay.objects.filter(map_info=m).count())
-                               for m in maps])
+            maps_s = "|".join(
+                [
+                    "{}.{} / {}".format(
+                        m.id, m.num_replay, Replay.objects.filter(map_info=m).count()
+                    )
+                    for m in maps
+                ]
+            )
         else:
             maps_s = ""
         if active_players:
-            act_pls_s = "|".join(["{}.{}".format(pa.id, pa.player__replay__count) for pa in active_players[:20]])
+            act_pls_s = "|".join(
+                [
+                    "{}.{}".format(pa.id, pa.player__replay__count)
+                    for pa in active_players[:20]
+                ]
+            )
         else:
             act_pls_s = ""
         if comments.exists():
@@ -1170,25 +1447,36 @@ def update_stats(force=False):
         #  player names and urls (for all_players page)
         timer.start("all_players")
 
-        pl_pas = PlayerAccount.objects.filter(accountid__gt=0, player__isnull=False).values(
-            "accountid", "player__name").order_by("player__name").distinct()
-        all_players = [("/player/{}/".format(pl["accountid"]), pl["player__name"]) for pl in pl_pas]
+        pl_pas = (
+            PlayerAccount.objects.filter(accountid__gt=0, player__isnull=False)
+            .values("accountid", "player__name")
+            .order_by("player__name")
+            .distinct()
+        )
+        all_players = [
+            ("/player/{}/".format(pl["accountid"]), pl["player__name"]) for pl in pl_pas
+        ]
         timer.stop("all_players")
 
         # BAwards statistics (for hall of fame)
         timer.start("bawards")
-        bawards_fields = [field.name for field in BAwards._meta.get_fields()
-                          if "Award" in field.name and "Score" not in field.name]
+        bawards_fields = [
+            field.name
+            for field in BAwards._meta.get_fields()
+            if "Award" in field.name and "Score" not in field.name
+        ]
         bawards_stats = dict([(field, defaultdict(int)) for field in bawards_fields])
         bawards_no_bots = BAwards.objects.exclude(replay__player__account__accountid=0)
         for field in bawards_fields:
             arg = {"{}__isnull".format(field): False}
             for pa_pk in PlayerAccount.objects.filter(
-                    player__in=bawards_no_bots.filter(**arg).values(field)
+                player__in=bawards_no_bots.filter(**arg).values(field)
             ).values_list("pk", flat=True):
                 bawards_stats[field][pa_pk] += 1
             # converting dict to list, sort, keep only top 10
-            bawards_stats[field] = sorted(bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True)[:10]
+            bawards_stats[field] = sorted(
+                bawards_stats[field].items(), key=operator.itemgetter(1), reverse=True
+            )[:10]
         timer.stop("bawards")
 
         timer.start("save()")
@@ -1226,17 +1514,23 @@ class SrsTiming(object):
         self.counter += 1
 
     def stop(self, name):
-        self.times[name] = (self.times[name][0], datetime.datetime.now() - self.times[name][1], name)
+        self.times[name] = (
+            self.times[name][0],
+            datetime.datetime.now() - self.times[name][1],
+            name,
+        )
 
     @property
     def sorted_list(self):
         return sorted(self.times.values(), key=operator.itemgetter(0))
 
     def __str__(self):
-        return "\n".join([
-            f"{t[2]}: {t[1].seconds}.{int(t[1].microseconds / 10000)}"
-            for t in self.sorted_list
-        ])
+        return "\n".join(
+            [
+                f"{t[2]}: {t[1].seconds}.{int(t[1].microseconds / 10000)}"
+                for t in self.sorted_list
+            ]
+        )
 
 
 # HEAVY DEBUG
@@ -1285,5 +1579,9 @@ def comment_del_callback(sender, instance, **kwargs):
 # automatically log creation of PlayerAccounts
 @receiver(post_save, sender=PlayerAccount)
 def playerAccount_save_callback(sender, instance, **kwargs):
-    logger.debug("PlayerAccount.save(%d): accountid=%d preffered_name=%s", instance.pk, instance.accountid,
-                 instance.preffered_name)
+    logger.debug(
+        "PlayerAccount.save(%d): accountid=%d preffered_name=%s",
+        instance.pk,
+        instance.accountid,
+        instance.preffered_name,
+    )

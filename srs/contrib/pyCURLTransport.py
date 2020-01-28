@@ -34,7 +34,7 @@ import xmlrpclib, pycurl, os
 class PyCURLTransport(xmlrpclib.Transport):
     """Handles a cURL HTTP transaction to an XML-RPC server."""
 
-    def __init__(self, username = None, password = None, timeout = 300):
+    def __init__(self, username=None, password=None, timeout=300):
         xmlrpclib.Transport.__init__(self)
 
         self.verbose = 0
@@ -55,7 +55,7 @@ class PyCURLTransport(xmlrpclib.Transport):
 
         # XML-RPC calls are POST (text/xml)
         self._curl.setopt(pycurl.POST, 1)
-        self._curl.setopt(pycurl.HTTPHEADER, [ "Content-Type: text/xml" ])
+        self._curl.setopt(pycurl.HTTPHEADER, ["Content-Type: text/xml"])
 
         # Set auth info if defined
         if username != None and password != None:
@@ -65,11 +65,10 @@ class PyCURLTransport(xmlrpclib.Transport):
         """Checks return code for various errors"""
         pass
 
-    def request(self, host, handler, request_body, verbose = 0):
+    def request(self, host, handler, request_body, verbose=0):
         """Performs actual request"""
         buf = StringIO()
-        self._curl.setopt(pycurl.URL, 
-                "%s://%s%s" % (self._proto, host, handler))
+        self._curl.setopt(pycurl.URL, "%s://%s%s" % (self._proto, host, handler))
         self._curl.setopt(pycurl.POSTFIELDS, request_body)
         self._curl.setopt(pycurl.WRITEFUNCTION, buf.write)
         self._curl.setopt(pycurl.VERBOSE, verbose)
@@ -78,20 +77,14 @@ class PyCURLTransport(xmlrpclib.Transport):
             self._curl.perform()
             httpcode = self._curl.getinfo(pycurl.HTTP_CODE)
         except pycurl.error, err:
-            raise xmlrpclib.ProtocolError( 
-                    host + handler, 
-                    err[0], 
-                    err[1], 
-                    None)
+            raise xmlrpclib.ProtocolError(host + handler, err[0], err[1], None)
 
         self._check_return(host, handler, httpcode, buf)
 
         if httpcode != 200:
-            raise xmlrpclib.ProtocolError( 
-                    host + handler, 
-                    httpcode, 
-                    buf.getvalue(), 
-                    None)
+            raise xmlrpclib.ProtocolError(
+                host + handler, httpcode, buf.getvalue(), None
+            )
 
         buf.seek(0)
         return self.parse_response(buf)
@@ -99,7 +92,8 @@ class PyCURLTransport(xmlrpclib.Transport):
 
 class PyCURLSafeTransport(PyCURLTransport):
     """Handles a cURL HTTP transaction to an XML-RPC server and also can validate certs."""
-    def __init__(self, username = None, password = None, timeout = 300, cert = None):
+
+    def __init__(self, username=None, password=None, timeout=300, cert=None):
         PyCURLTransport.__init__(self, username, password, timeout)
 
         self._proto = "https"
@@ -110,7 +104,8 @@ class PyCURLSafeTransport(PyCURLTransport):
                 cert_path = cert
             else:
                 from tempfile import NamedTemporaryFile
-                self.cert = NamedTemporaryFile(prefix = "cert")
+
+                self.cert = NamedTemporaryFile(prefix="cert")
                 self.cert.write(cert)
                 self.cert.flush()
                 cert_path = self.cert.name
@@ -121,8 +116,6 @@ class PyCURLSafeTransport(PyCURLTransport):
     def _check_return(self, host, handler, httpcode, buf):
         """Check for SSL certs validity"""
         if httpcode == 60:
-            raise xmlrpclib.ProtocolError( 
-                    host + handler, 
-                    httpcode, 
-                    "SSL certificate validation failed", 
-                    None)
+            raise xmlrpclib.ProtocolError(
+                host + handler, httpcode, "SSL certificate validation failed", None
+            )

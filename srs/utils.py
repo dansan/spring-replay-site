@@ -38,7 +38,9 @@ def fix_missing_winner(replay):
         at_sum_old = sum(match_skills_by_pa[pa][0] for pa in pas)
         at_sum_new = sum(match_skills_by_pa[pa][1] for pa in pas)
 
-        logger.info("Allyteam %s has rating change %r -> %r.", at, at_sum_old, at_sum_new)
+        logger.info(
+            "Allyteam %s has rating change %r -> %r.", at, at_sum_old, at_sum_new
+        )
         if at_sum_new > at_sum_old:
             logger.info("Allyteam %s has won.", at)
             at.winner = True

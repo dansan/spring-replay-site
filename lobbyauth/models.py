@@ -22,7 +22,11 @@ class UserProfile(models.Model):
     is_developer = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return "profile for %s (accID: %s | %d)" % (self.user.username, self.user.last_name, self.accountid)
+        return "profile for %s (accID: %s | %d)" % (
+            self.user.username,
+            self.user.last_name,
+            self.accountid,
+        )
 
     class Meta:
-        ordering = ('user__username',)
+        ordering = ("user__username",)

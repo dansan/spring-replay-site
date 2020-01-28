@@ -8,28 +8,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('srs', '0002_auto_20161105_1230'),
+        ("srs", "0002_auto_20161105_1230"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='playeraccount',
-            name='accountid',
+            model_name="playeraccount",
+            name="accountid",
             field=models.IntegerField(unique=True),
         ),
         migrations.AlterField(
-            model_name='replay',
-            name='gameID',
+            model_name="replay",
+            name="gameID",
             field=models.CharField(max_length=32, unique=True),
         ),
         migrations.AlterField(
-            model_name='sldbmatchskillscache',
-            name='gameID',
+            model_name="sldbmatchskillscache",
+            name="gameID",
             field=models.CharField(max_length=32, unique=True),
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='name',
+            model_name="tag",
+            name="name",
             field=models.CharField(max_length=128, unique=True),
         ),
     ]

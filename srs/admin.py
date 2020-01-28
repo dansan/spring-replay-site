@@ -48,7 +48,16 @@ class RatingAdmin(admin.ModelAdmin):
 
 
 class ReplayAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "map_info", "upload_date", "unixTime", "uploader", "gameID", "autohostname")
+    list_display = (
+        "id",
+        "title",
+        "map_info",
+        "upload_date",
+        "unixTime",
+        "uploader",
+        "gameID",
+        "autohostname",
+    )
     search_fields = ["id", "title", "map_info__name", "uploader__username", "gameID"]
 
 
@@ -83,7 +92,14 @@ class AdditionalReplayOwnerAdmin(admin.ModelAdmin):
 
 
 class ExtraReplayMediaAdmin(admin.ModelAdmin):
-    list_display = ("uploader", "upload_date", "media", "image", "media_magic_mime", "replay")
+    list_display = (
+        "uploader",
+        "upload_date",
+        "media",
+        "image",
+        "media_magic_mime",
+        "replay",
+    )
     search_fields = ["uploader", "media", "image", "media_magic_mime"]
 
 
@@ -97,9 +113,22 @@ class SldbLeaderboardGameAdmin(admin.ModelAdmin):
 
 
 class SldbLeaderboardPlayerAdmin(admin.ModelAdmin):
-    list_display = ("leaderboard", "account", "rank", "trusted_skill", "estimated_skill", "uncertainty", "inactivity")
-    search_fields = ["leaderboard__game__name", "leaderboard__game__sldb_name", "account__preffered_name",
-                     "account__accountid", "rank"]
+    list_display = (
+        "leaderboard",
+        "account",
+        "rank",
+        "trusted_skill",
+        "estimated_skill",
+        "uncertainty",
+        "inactivity",
+    )
+    search_fields = [
+        "leaderboard__game__name",
+        "leaderboard__game__sldb_name",
+        "account__preffered_name",
+        "account__accountid",
+        "rank",
+    ]
 
 
 admin.site.register(Tag, TagAdmin)
