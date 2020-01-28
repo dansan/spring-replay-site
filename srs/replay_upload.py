@@ -16,8 +16,8 @@
 import os
 import sys
 import xmlrpc.client
+from os.path import dirname, join as joinpath, realpath
 from time import sleep
-from os.path import realpath, dirname, join as joinpath
 
 try:
     import argparse

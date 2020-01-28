@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import Replay, PlayerAccount, Game
+from .models import Game, PlayerAccount, Replay
 from .views import hall_of_fame
 
 

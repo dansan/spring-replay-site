@@ -12,14 +12,15 @@
 Django manage.py command to delete 2 month old replay files.
 """
 
+import datetime
+import logging
 import os
 import time
-import logging
-import datetime
-from django.utils import timezone
-from django.core.management.base import BaseCommand
-from srs.models import Replay
 
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from srs.models import Replay
 
 logger = logging.getLogger(__name__)
 

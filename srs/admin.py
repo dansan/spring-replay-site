@@ -7,7 +7,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib import admin
-from .models import AdditionalReplayOwner, Allyteam, ExtraReplayMedia, Game, GameRelease, Map, MapImg, MapOption, ModOption, NewsItem, Player, PlayerAccount, Rating, RatingHistory, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, Tag, Team, UploadTmp
+
+from .models import (
+    AdditionalReplayOwner,
+    Allyteam,
+    ExtraReplayMedia,
+    Game,
+    GameRelease,
+    Map,
+    MapImg,
+    MapOption,
+    ModOption,
+    NewsItem,
+    Player,
+    PlayerAccount,
+    Rating,
+    RatingHistory,
+    Replay,
+    SldbLeaderboardGame,
+    SldbLeaderboardPlayer,
+    Tag,
+    Team,
+    UploadTmp,
+)
 
 
 class PlayerAccountAdmin(admin.ModelAdmin):

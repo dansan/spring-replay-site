@@ -12,11 +12,12 @@
 Django manage.py command to migrate Map.metadata to Map.metadata2.
 """
 
-import time
 import logging
-from django.core.management.base import BaseCommand
-from srs.models import Map
+import time
 
+from django.core.management.base import BaseCommand
+
+from srs.models import Map
 
 logger = logging.getLogger(__name__)
 

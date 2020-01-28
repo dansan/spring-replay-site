@@ -6,10 +6,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django import forms
-from srs.models import Game
-
 import logging
+
+from django import forms
+
+from .models import Game
 
 logger = logging.getLogger(__name__)
 

@@ -6,20 +6,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import magic
 import logging
 import os
 
+import magic
 from django.contrib.auth.decorators import login_required
+from django.forms.formsets import formset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.forms.formsets import formset_factory
 
-from srs.upload import save_uploaded_file, parse_uploaded_file, AlreadyExistsError
-from srs.models import ExtraReplayMedia, Replay, SrsTiming, get_owner_list
-from srs.common import all_page_infos
-from srs.forms import UploadFileForm, UploadMediaForm
-import srs.parse_demo_file as parse_demo_file
+from .common import all_page_infos
+from .forms import UploadFileForm, UploadMediaForm
+from .models import ExtraReplayMedia, Replay, SrsTiming, get_owner_list
+from .parse_demo_file import BadFileType
+from .upload import AlreadyExistsError, parse_uploaded_file, save_uploaded_file
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def upload(request):
                         replay, msg = parse_uploaded_file(path, timer, tags, short, long_text, request.user)
                         logger.debug("replay=%r msg=%r", replay, msg)
                         replays.append((True, replay))
-                    except parse_demo_file.BadFileType:
+                    except BadFileType:
                         form._errors = {'file': [u'Not a spring demofile: %s.' % ufile.name]}
                         replays.append((False, 'Not a spring demofile: %s.' % ufile.name))
                         continue

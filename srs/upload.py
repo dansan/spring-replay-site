@@ -6,34 +6,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import errno
+import gzip
 import logging
+import os
+import pprint
 import shutil
 import stat
-from tempfile import mkstemp
-import gzip
-import pprint
-import magic
-import datetime
-import os
-import errno
 from os.path import join as path_join
-
-from django.db.models import Min
-from django.contrib.sitemaps import ping_google
-import django.contrib.auth
-from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-import django.utils.timezone
+from tempfile import mkstemp
 
 import coreapi
+import django.contrib.auth
+import django.utils.timezone
+import magic
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.contrib.sitemaps import ping_google
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Min
 
-from srs.models import (AdditionalReplayInfo, Allyteam, BAwards, Map, MapImg, MapOption, ModOption, Player,
-                        PlayerAccount, PlayerStats, RatingHistory, Replay, Tag, Team, TeamStats, UploadTmp, XTAwards,
-                        SrsTiming, CursedAwards)
-import srs.parse_demo_file as parse_demo_file
-import srs.springmaps as springmaps
-from srs.sldb import demoskill2float, get_sldb_match_skills, sldb_gametype2matchtype, SLDBError
+from .models import (
+    AdditionalReplayInfo,
+    Allyteam,
+    BAwards,
+    CursedAwards,
+    Map,
+    MapImg,
+    MapOption,
+    ModOption,
+    Player,
+    PlayerAccount,
+    PlayerStats,
+    RatingHistory,
+    Replay,
+    SrsTiming,
+    Tag,
+    Team,
+    TeamStats,
+    UploadTmp,
+    XTAwards,
+)
+from .parse_demo_file import Parse_demo_file
+from .sldb import (
+    SLDBError,
+    demoskill2float,
+    get_sldb_match_skills,
+    sldb_gametype2matchtype,
+)
+from .springmaps import SpringMaps
 
 logger = logging.getLogger(__name__)
 timer = None
@@ -90,9 +112,9 @@ def parse_uploaded_file(path, timer, tags, subject, comment, owner_ac, move=True
     os.nice(max(0, 10 - current_niceness))
 
     timer.start("parse_uploaded_file()")
-    timer.start("parse_demo_file.Parse_demo_file()")
-    demofile = parse_demo_file.Parse_demo_file(path)
-    timer.stop("parse_demo_file.Parse_demo_file()")
+    timer.start("Parse_demo_file()")
+    demofile = Parse_demo_file(path)
+    timer.stop("Parse_demo_file()")
     demofile.check_magic()
     timer.start("parse()")
     demofile.parse()
@@ -489,7 +511,7 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
 
     timer.start("  map creation")
     # get / create map infos
-    smap = springmaps.SpringMaps(demofile.game_setup["host"]["mapname"])
+    smap = SpringMaps(demofile.game_setup["host"]["mapname"])
     try:
         replay.map_info = Map.objects.get(name=demofile.game_setup["host"]["mapname"])
         logger.debug("replay(%d) using existing map_info.pk=%d", replay.pk, replay.map_info.pk)
@@ -918,7 +940,7 @@ def reparse(replay, path=None, tags=None, subject=None, comment=None, owner_ac=N
     path = path or path_join(replay.path, replay.filename)
 
     try:
-        demofile = parse_demo_file.Parse_demo_file(path)
+        demofile = Parse_demo_file(path)
         demofile.check_magic()
         demofile.parse()
     except Exception as exc:

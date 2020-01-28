@@ -6,38 +6,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import gzip
-import magic
-import re
+import logging
 import operator
 import os.path
+import re
 from functools import reduce
-import MySQLdb
 
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import login as django_contrib_auth_login, logout as django_contrib_auth_logout
-from django.views.decorators.cache import never_cache
-from django.http import Http404, HttpResponse
-from django.utils.html import strip_tags
+import magic
+import MySQLdb
 from django.conf import settings
+from django.contrib.auth import (
+    login as django_contrib_auth_login,
+    logout as django_contrib_auth_logout,
+)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.utils.html import strip_tags
+from django.views.decorators.cache import never_cache
 from django_comments.models import Comment
 
-from srs.models import (Allyteam, CursedAwards, ExtraReplayMedia, Game, GameRelease, Map, MapOption, ModOption,
-                        NewsItem, Player, PlayerAccount, RatingBase, RatingHistory, Replay, SiteStats,
-                        SldbPlayerTSGraphCache, Tag, Team, TeamStats, UploadTmp, XTAwards, get_owner_list, update_stats)
-from srs.common import all_page_infos
-from srs.upload import save_tags, set_autotag, save_desc
-from srs.sldb import privatize_skill, get_sldb_pref, set_sldb_pref, get_sldb_leaderboards, get_sldb_match_skills, get_sldb_player_ts_history_graphs, SLDBError
-from srs.ajax_views import replay_filter
-from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
-from srs.utils import fix_missing_winner
-from srs.match_stats import MatchStatsGeneration
+from .ajax_views import replay_filter
+from .common import all_page_infos
+from .forms import EditReplayForm, GamePref, SLDBPrivacyForm
+from .match_stats import MatchStatsGeneration
+from .models import (
+    Allyteam,
+    CursedAwards,
+    ExtraReplayMedia,
+    Game,
+    GameRelease,
+    Map,
+    MapOption,
+    ModOption,
+    NewsItem,
+    Player,
+    PlayerAccount,
+    RatingBase,
+    RatingHistory,
+    Replay,
+    SiteStats,
+    SldbPlayerTSGraphCache,
+    Tag,
+    Team,
+    TeamStats,
+    UploadTmp,
+    XTAwards,
+    get_owner_list,
+    update_stats,
+)
+from .sldb import (
+    SLDBError,
+    get_sldb_leaderboards,
+    get_sldb_match_skills,
+    get_sldb_player_ts_history_graphs,
+    get_sldb_pref,
+    privatize_skill,
+    set_sldb_pref,
+)
+from .upload import save_desc, save_tags, set_autotag
+from .utils import fix_missing_winner
 
 logger = logging.getLogger(__name__)
 

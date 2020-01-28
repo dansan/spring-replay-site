@@ -19,13 +19,14 @@
 
 import logging
 import socket
-from django.contrib.auth.models import User
-from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from xmlrpc.client import ServerProxy, ProtocolError
-from .models import UserProfile
+from xmlrpc.client import ProtocolError, ServerProxy
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+
+from .models import UserProfile
 
 url = 'https://springrts.com/api/uber/xmlrpc'
 logger = logging.getLogger(__name__)

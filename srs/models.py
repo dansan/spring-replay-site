@@ -6,33 +6,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import logging
 import operator
-from os.path import basename
-import datetime
 import os
 import zlib
-from collections import defaultdict, Counter, OrderedDict
+from collections import Counter, OrderedDict, defaultdict
 from functools import reduce
+from os.path import basename
 
-from django.db import models
+import ujson
+from background_task import background
+from django.conf import settings
 from django.contrib.auth.models import User
-from django_comments.models import Comment
-from django.db.models.signals import post_delete, post_save
-from django.db.models.deletion import CASCADE
-from django.dispatch import receiver
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db import models
 from django.db.models import Count
+from django.db.models.deletion import CASCADE
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.conf import settings
-from background_task import background
-import ujson
-
-from srs.mail import send_mail
+from django_comments.models import Comment
 
 from infolog_upload.notifications import Notifications
+
+from .mail import send_mail
 
 logger = logging.getLogger(__name__)
 

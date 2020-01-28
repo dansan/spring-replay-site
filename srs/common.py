@@ -6,11 +6,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 from django.utils.datastructures import MultiValueDictKeyError
 
-from srs.models import Game, PlayerAccount, Replay
+from .models import Game, PlayerAccount, Replay
 
 
 def all_page_infos(request):

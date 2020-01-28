@@ -8,28 +8,37 @@
 
 import datetime
 import json
-from operator import or_
 import logging
 from collections import OrderedDict
-import requests
+from operator import or_
+
 import MySQLdb
-
-from eztables.views import DatatablesView, JSON_MIMETYPE
-
-from django.http import HttpResponse, HttpResponseNotFound
+import requests
+import ujson
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django_comments.models import Comment
-from django.db.models import Q
-from django.core.serializers.json import DjangoJSONEncoder
-from django.core.exceptions import ObjectDoesNotExist
-import ujson
+from eztables.views import JSON_MIMETYPE, DatatablesView
 
-from srs.models import (Game, GameRelease, Player, PlayerAccount, PlayerStats, Map, Rating, Replay,
-                        SldbLeaderboardPlayer, SldbPlayerTSGraphCache, TeamStats)
-from srs.sldb import get_sldb_playerskill, get_sldb_player_stats, SLDBError
-
+from .models import (
+    Game,
+    GameRelease,
+    Map,
+    Player,
+    PlayerAccount,
+    PlayerStats,
+    Rating,
+    Replay,
+    SldbLeaderboardPlayer,
+    SldbPlayerTSGraphCache,
+    TeamStats,
+)
+from .sldb import SLDBError, get_sldb_player_stats, get_sldb_playerskill
 
 logger = logging.getLogger(__name__)
 

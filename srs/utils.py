@@ -7,10 +7,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from srs.models import Replay, SldbMatchSkillsCache
-from srs.springmaps import SpringMaps
-from srs.sldb import SLDBError, get_sldb_match_skills
 
+from .models import Replay, SldbMatchSkillsCache
+from .sldb import SLDBError, get_sldb_match_skills
+from .springmaps import SpringMaps
 
 logger = logging.getLogger(__name__)
 

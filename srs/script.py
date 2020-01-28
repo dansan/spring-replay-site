@@ -17,8 +17,8 @@
 #
 
 import re
-from typing import Union
 from collections import defaultdict
+from typing import Union
 
 
 class Result():

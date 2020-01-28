@@ -1,5 +1,5 @@
-from pathlib import Path
 from multiprocessing import cpu_count
+from pathlib import Path
 
 log_dir = Path.home() / 'logs'
 if not log_dir.exists():

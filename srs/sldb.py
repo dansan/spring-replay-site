@@ -6,22 +6,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import errno
 import logging
-from xmlrpc.client import ServerProxy
+import os.path
+import pickle
 import socket
 from operator import methodcaller
-import datetime
-import pickle
-import errno
-import os.path
 from typing import Optional
+from xmlrpc.client import ServerProxy
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from netifaces import interfaces, ifaddresses, AF_INET
+from netifaces import AF_INET, ifaddresses, interfaces
 
-from srs.models import Game, PlayerAccount, Replay, SldbLeaderboardGame, SldbLeaderboardPlayer, SldbPlayerTSGraphCache, SldbMatchSkillsCache
-
+from .models import (
+    Game,
+    PlayerAccount,
+    Replay,
+    SldbLeaderboardGame,
+    SldbLeaderboardPlayer,
+    SldbMatchSkillsCache,
+    SldbPlayerTSGraphCache,
+)
 
 """
 SLDB is a service provided by a lobby bot written by Bibim: https://github.com/Yaribz/SLDB

@@ -8,31 +8,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import gzip
+import logging
+import pprint
 import re
+import struct
 import sys
+import threading
 import zlib
+from datetime import timedelta
 from struct import unpack
 from time import localtime, strftime
-from datetime import timedelta
-import pprint
-import magic
-import gzip
-import struct
-import logging
-import threading
 from typing import Union
-import ujson
-from srs.match_stats import MatchStatsGeneration
 
+import magic
+import ujson
+
+from .match_stats import MatchStatsGeneration
 
 if not hasattr(magic, "from_file"):
     print("Please install python-magic (with pip, version should be around 0.4, NOT 5.xx)!")
     exit(1)
 
 try:
-    from srs.script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
+    from .script import Script, ScriptAI, ScriptAlly, ScriptGamesetup, ScriptMapoptions, ScriptModoptions, ScriptPlayer, \
         ScriptRestrictions, ScriptTeam
-    from srs.demoparser import Demoparser
+    from .demoparser import Demoparser
     from django.conf import settings
     DEBUG = settings.DEBUG
 except ImportError:

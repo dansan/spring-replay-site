@@ -16,9 +16,9 @@
 # are licensed as GPLv3 (see above).
 #
 
+import logging
 import struct
 import zlib
-import logging
 
 logger = logging.getLogger(__name__)
 

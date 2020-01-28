@@ -8,18 +8,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from xmlrpc.client import ServerProxy
+import logging
 import pprint
 import random
-from PIL import Image, ImageFont, ImageDraw, ImageColor
-import logging
+import sys
+from os.path import exists as path_exists, join as path_join
 from shutil import copyfile
-from os.path import join as path_join, exists as path_exists
+from xmlrpc.client import ServerProxy
 
 import requests
 from django.conf import settings
-from srs.models import Allyteam, Player
+from PIL import Image, ImageColor, ImageDraw, ImageFont
+
+from .models import Allyteam, Player
 
 logger = logging.getLogger(__name__)
 

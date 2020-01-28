@@ -1,19 +1,46 @@
+import django.contrib.sitemaps.views
+import django_xmlrpc.views
 from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-import django.contrib.sitemaps.views
 
-from srs.feeds import LatestUploadsFeed, GameFeed, UploaderFeed, SRSLatestCommentFeed
-from srs.sitemap import ReplaySitemap, PlayerAccountSitemap, HofSitemap
-from srs.views import (all_comments, browse_archive, download, edit_replay, hall_of_fame, index, index_replay_range,
-                       login, logout, media, player, replay, replay_by_id, sldb_privacy_mode, team_stat_div,
-                       ts_history_graph, user_settings)
-from srs.ajax_views import (BrowseReplaysDTView, CommentDTView, ajax_map_lookup, ajax_player_lookup,
-                            ajax_playerrating_tbl_src, ajax_playerreplays_tbl_src, ajax_winloss_tbl_src,
-                            gamerelease_modal, hof_tbl_src, maplinks_modal, modlinks_modal, ratinghistorygraph_modal,
-                            stats_modal, enginelinks_modal)
-from srs.upload_views import upload, upload_media
-import django_xmlrpc.views
-
+from .ajax_views import (
+    BrowseReplaysDTView,
+    CommentDTView,
+    ajax_map_lookup,
+    ajax_player_lookup,
+    ajax_playerrating_tbl_src,
+    ajax_playerreplays_tbl_src,
+    ajax_winloss_tbl_src,
+    enginelinks_modal,
+    gamerelease_modal,
+    hof_tbl_src,
+    maplinks_modal,
+    modlinks_modal,
+    ratinghistorygraph_modal,
+    stats_modal,
+)
+from .feeds import GameFeed, LatestUploadsFeed, SRSLatestCommentFeed, UploaderFeed
+from .sitemap import HofSitemap, PlayerAccountSitemap, ReplaySitemap
+from .upload_views import upload, upload_media
+from .views import (
+    all_comments,
+    browse_archive,
+    download,
+    edit_replay,
+    hall_of_fame,
+    index,
+    index_replay_range,
+    login,
+    logout,
+    media,
+    player,
+    replay,
+    replay_by_id,
+    sldb_privacy_mode,
+    team_stat_div,
+    ts_history_graph,
+    user_settings,
+)
 
 sitemaps = {'replays': ReplaySitemap,
             'players': PlayerAccountSitemap,

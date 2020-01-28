@@ -1,4 +1,5 @@
-from os.path import dirname, abspath, join as path_join
+from os.path import abspath, dirname, join as path_join
+
 from django.conf import global_settings
 
 

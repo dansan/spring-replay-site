@@ -8,8 +8,8 @@
 
 import logging
 
-from django.core.mail import EmailMessage
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 logger = logging.getLogger(__name__)
 

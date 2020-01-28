@@ -13,11 +13,12 @@ Django manage.py command to upload a sdf.
 """
 
 import os.path
+
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
+
 from srs.models import SrsTiming
 from srs.upload import parse_uploaded_file, timer as timer_
-
 
 timer = timer_
 

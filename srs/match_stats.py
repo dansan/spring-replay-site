@@ -9,10 +9,12 @@
 import logging
 import os.path
 from collections import OrderedDict
+
 import plotly
 import plotly.graph_objs as go
+
+from .models import TeamStats
 from .SpringStatsViewer.SpringDemoFile import DemoFileReader
-from srs.models import TeamStats
 
 try:
         from typing import Dict, List, Optional, Tuple, Union
