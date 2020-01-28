@@ -11,7 +11,7 @@ import os.path
 from collections import OrderedDict
 import plotly
 import plotly.graph_objs as go
-from SpringStatsViewer.SpringDemoFile import DemoFileReader
+from .SpringStatsViewer.SpringDemoFile import DemoFileReader
 from srs.models import TeamStats
 
 try:

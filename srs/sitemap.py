@@ -1,8 +1,8 @@
 from django.contrib.sitemaps import Sitemap
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
-from models import Replay, PlayerAccount, Game
-from views import hall_of_fame
+from .models import Replay, PlayerAccount, Game
+from .views import hall_of_fame
 
 
 class ReplaySitemap(Sitemap):

@@ -1,4 +1,5 @@
 {% extends 'srs_base.html' %}
+{% load static %}
 {% load comments %}
 
 {% block pagetitle %}Preview your comment{% endblock %}
@@ -37,5 +38,5 @@
 {% endblock %}
 
 {% block page_js %}
-    {% js "js/dyn/srs_post_comment.js" %}
+    <script src="{% static "js/dyn/srs_post_comment.js" %}"></script>
 {% endblock %}

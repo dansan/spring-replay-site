@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -12,7 +12,7 @@ import magic
 import re
 import operator
 import os.path
-
+from functools import reduce
 import MySQLdb
 
 from django.http import HttpResponseRedirect
@@ -39,7 +39,6 @@ from srs.forms import EditReplayForm, GamePref, SLDBPrivacyForm
 from srs.utils import fix_missing_winner
 from srs.match_stats import MatchStatsGeneration
 
-#add_to_builtins('djangojs.templatetags.js')
 logger = logging.getLogger(__name__)
 
 gameid_re = re.compile("^[0-9a-f]{32}$")
@@ -211,7 +210,7 @@ def replay(request, gameID):
                     old_rating += privatize_skill(pl_old) if pl_old else 0
 
                 if pa.sldb_privacy_mode != 0 and (
-                    not request.user.is_authenticated() or pa.accountid != request.user.userprofile.accountid):
+                    not request.user.is_authenticated or pa.accountid != request.user.userprofile.accountid):
                     if pl_new:
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
@@ -274,11 +273,36 @@ def replay(request, gameID):
                 c["metadata"].append(("Version", replay.map_info.metadata2["version"]))
         except KeyError:
             pass
+        try:
+            c["metadata"].append(("Wind", "{} - {}".format(replay.map_info.metadata2["metadata"]["MinWind"],
+                                                           replay.map_info.metadata2["metadata"]["MaxWind"])))
+        except KeyError:
+            pass
+        try:
+            c["metadata"].append(("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"])))
+        except KeyError:
+            pass
+        for k, v in replay.map_info.metadata2["metadata"].items():
+            if type(v) == str and not v.strip():
+                continue
+            elif type(v) == list and not v:
+                continue
+            elif k.strip() in ["", "Width", "TidalStrength", "MapFileName", "MapMinHeight", "Type", "MapMaxHeight",
+                               "Resources", "Height", "MinWind", "MaxWind", "StartPos"]:
+                # either already added above, or ignore uninteresting data
+                continue
+            else:
+                c["metadata"].append((k.strip(), v))
+        try:
+            if replay.map_info.metadata2["version"]:
+                c["metadata"].append(("Version", replay.map_info.metadata2["version"]))
+        except KeyError:
+            pass
     except Exception as exc:
         c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
-        logger.error("Problem with metadata (replay.id '%d'), replay.map_info.metadata2: %r", replay.id,
-                     replay.map_info.metadata2)
+        logger.error("Problem with metadata (replay.id '%d' map.id %d), replay.map_info.metadata2: %r", replay.id,
+                     replay.map_info.id, replay.map_info.metadata2)
         logger.exception("Exception: %s", exc)
     c["xtaward_heroes"] = XTAwards.objects.filter(replay=replay, isAlive=1)
     c["xtaward_los"] = XTAwards.objects.filter(replay=replay, isAlive=0)
@@ -365,9 +389,9 @@ def download(request, gameID):
         logger.error(errmsg)
         raise Http404(errmsg)
     if filemagic.endswith("gzip") and not replay.filename.endswith(".sdfz"):
-        demofile = gzip.open(path, 'rb')
+        demofile = gzip.open(path, 'r')
     else:
-        demofile = open(path, "rb")
+        demofile = open(path, "r")
     if replay.filename.endswith(".gz"):
         filename = replay.filename[:-3]
     else:
@@ -386,7 +410,7 @@ def respect_privacy(request, accountid):
     :return: bool - if True: use only rounded numbers / don't show TS history graphs / etc
     """
     accountid = int(accountid)
-    if request.user.is_authenticated() and accountid == request.user.userprofile.accountid:
+    if request.user.is_authenticated and accountid == request.user.userprofile.accountid:
         # if the logged in user has the same accountid as the parameter accountid -> no privacy protection
         privacy = False
     else:
@@ -429,7 +453,7 @@ def player(request, accountid):
 
 def ts_history_graph(request, game_abbr, accountid, match_type):
     if respect_privacy(request, accountid):
-        with open(os.path.join(settings.IMG_PATH, "tsh_privacy.png"), "rb") as pic:
+        with open(os.path.join(settings.IMG_PATH, "tsh_privacy.png"), "r") as pic:
             response = HttpResponse(pic.read(), content_type='image/png')
         return response
     path = str()
@@ -445,7 +469,7 @@ def ts_history_graph(request, game_abbr, accountid, match_type):
             path = os.path.join(settings.IMG_PATH, "tsh_error.png")
     if not path:
         path = graphs[SldbPlayerTSGraphCache.match_type2sldb_name[match_type]]
-    with open(path, "rb") as pic:
+    with open(path, "r") as pic:
         response = HttpResponse(pic.read(), content_type='image/png')
     return response
 
@@ -576,9 +600,9 @@ def media(request, mediaid):
             response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
             response['Content-Disposition'] = 'attachment; filename="%s"' % media.media_basename
             return response
-        except IOError, e:
+        except IOError as exc:
             logger.error("Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s" % (
-                media.id, media.replay.id, media.media_basename, str(e)))
+                media.id, media.replay.id, media.media_basename, exc))
             raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum." % media.media_basename)
 
 
@@ -638,12 +662,13 @@ def browse_archive(request, bfilter):
     except ObjectDoesNotExist:
         sist = update_stats.now()
 
-    tags = map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|'))
+    tags = list(map(lambda x: (Tag.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.tags.split('|')))
     c["top_tags"] = list()
     for t in range(0, 12, 3):
-        if t + 3 > len(tags): break
+        if t + 3 > len(tags):
+            break
         c["top_tags"].append((tags[t], tags[t + 1], tags[t + 2]))
-    maps = map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|'))
+    maps = list(map(lambda x: (Map.objects.get(id=int(x.split(".")[0])), x.split(".")[1]), sist.maps.split('|')))
     c["top_maps"] = list()
     for r in range(0, 8, 2):
         if r + 2 > len(maps): break

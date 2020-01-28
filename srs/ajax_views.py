@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -76,7 +76,7 @@ def ajax_playerrating_tbl_src(request, accountid):
         for game in pa.get_all_games().exclude(sldb_name=""):
             if not Rating.objects.filter(game=game, playeraccount=pa).exists():
                 continue
-            user = request.user if request.user.is_authenticated() else None
+            user = request.user if request.user.is_authenticated else None
             try:
                 skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
             except SLDBError as exc:
@@ -221,11 +221,16 @@ def ajax_playerreplays_tbl_src(request, accountid):
                             replay.gameID])
         except ObjectDoesNotExist:
             return HttpResponseNotFound('<h1>Player not found</h1>')
-    return HttpResponse(ujson.dumps({"sEcho": params["sEcho"],
-                                    "iTotalRecords": Replay.objects.filter(
-                                        player__account__accountid=accountid).count(),
-                                    "iTotalDisplayRecords": qs.count(),
-                                    "aaData": replays}))
+    res = {
+        "sEcho": params["sEcho"],
+        "iTotalRecords": Replay.objects.filter(player__account__accountid=accountid).count(),
+        "iTotalDisplayRecords": qs.count(),
+        "aaData": replays
+    }
+    for k, v in res.items():
+        if isinstance(v, bytes):
+            res[k] = v.decode("utf-8")
+    return HttpResponse(ujson.dumps(res))
 
 
 def gamerelease_modal(request, gameid):

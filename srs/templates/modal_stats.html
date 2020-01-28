@@ -1,9 +1,10 @@
+{% load static %}
 {% comment %}
 <!--
 Please see srs_base.html for license information.
 -->
 {% endcomment %}
-          {% js_lib "plotly.min.js" %}
+          <script src="{% static "js/libs/plotly.min.js" %}"></script>
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             <h4 class="modal-title">Statistics</h4>

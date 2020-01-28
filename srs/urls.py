@@ -1,5 +1,4 @@
 from django.conf.urls import include, url
-from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 import django.contrib.sitemaps.views
 
@@ -15,7 +14,6 @@ from srs.ajax_views import (BrowseReplaysDTView, CommentDTView, ajax_map_lookup,
 from srs.upload_views import upload, upload_media
 import django_xmlrpc.views
 
-admin.autodiscover()
 
 sitemaps = {'replays': ReplaySitemap,
             'players': PlayerAccountSitemap,
@@ -24,7 +22,6 @@ sitemaps = {'replays': ReplaySitemap,
 urlpatterns = [url(r'^$', index, name='srs/index'),
                url(r'^index_replay_range/(?P<range_end>[\d]+)/(?P<game_pref>[\d]+)/$', index_replay_range,
                    name='srs/index_replay_range'),
-               url(r'^djangojs/', include('djangojs.urls')),
                url(r'^sitemap\.xml$', django.contrib.sitemaps.views.sitemap, {'sitemaps': sitemaps}),
                url(r'^upload/$', upload, name='srs/upload'),
                url(r'^upload_media/(?P<gameID>[0-9,a-f]+)/$', upload_media, name='srs/upload_media'),
@@ -36,7 +33,6 @@ urlpatterns = [url(r'^$', index, name='srs/index'),
                url(r'^comment_tbl_src$', CommentDTView.as_view(), name='srs/comment_tbl_src$'),
                url(r'^comments/', include('django_comments.urls')),
                url(r'^download/(?P<gameID>[0-9a-f]+)/$', download, name='srs/download'),
-               url(r'^admin/', admin.site.urls),
                url(r'^xmlrpc/$', django_xmlrpc.views.handle_xmlrpc, name='srs/xmlrpc'),
                url(r'^maplinks_modal/(?P<gameID>[0-9a-f]+)/$', maplinks_modal, name='srs/maplinks_modal'),
                url(r'^modlinks_modal/(?P<gameID>[0-9a-f]+)/$', modlinks_modal, name='srs/modlinks_modal'),

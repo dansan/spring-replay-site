@@ -1,4 +1,5 @@
 {% extends 'srs_base.html' %}
+{% load static %}
 
 {% comment %}
 <!-- 
@@ -79,5 +80,5 @@ Please see srs_base.html for license information.
 {% endblock %}
 
 {% block page_js %}
-  {% js "js/dyn/srs_upload.js" %}
+  <script src="{% static "js/dyn/srs_upload.js" %}"></script>
 {% endblock %}

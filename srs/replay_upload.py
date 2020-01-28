@@ -15,7 +15,7 @@
 
 import os
 import sys
-import xmlrpclib
+import xmlrpc.client
 from time import sleep
 from os.path import realpath, dirname, join as joinpath
 
@@ -77,9 +77,9 @@ def main():
                                                                             args.tags, sp))
 
     try:
-        with open(args.path, "rb") as fp:
-            demofile = xmlrpclib.Binary(fp.read())
-    except IOError, ioe:
+        with open(args.path, "r") as fp:
+            demofile = xmlrpc.client.Binary(fp.read())
+    except IOError as ioe:
         print("[Replay Upload] ERROR: could not open spring demo file: {}.".format(ioe))
         return 6
 
@@ -105,7 +105,7 @@ def main():
         trans = None  # use xmlrpclib internal HTTP transport
 
     try:
-        rpc_srv = xmlrpclib.ServerProxy(XMLRPC_URL, transport=trans)
+        rpc_srv = xmlrpc.client.ServerProxy(XMLRPC_URL, transport=trans)
         result = rpc_srv.xmlrpc_upload(XMLRPC_USER, XMLRPC_PASSWORD, os.path.basename(args.path), demofile, args.title,
                                        args.comment, args.tags, args.owner)
     except Exception as exc:

@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
+from os.path import dirname, abspath, join as path_join
 from django.conf import global_settings
-from os.path import realpath, dirname, abspath, join as path_join
 
-SRS_FILE_ROOT = dirname(abspath(__file__))
+
+BASE_DIR = dirname(dirname(abspath(__file__)))
+SRS_FILE_ROOT = path_join(BASE_DIR, "srs")
 IMG_PATH = path_join(SRS_FILE_ROOT, "static/img")
 MAPS_PATH = path_join(SRS_FILE_ROOT, "static/maps")
 REPLAYS_PATH = path_join(SRS_FILE_ROOT, "static/replays")
@@ -27,11 +28,6 @@ INDEX_REPLAY_RANGE = 12
 AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 31457280
 
-LOG_PATH = path_join(SRS_FILE_ROOT, 'log')
-DEBUG_FORMAT = '%(asctime)s %(levelname)-8s %(module)s.%(funcName)s:%(lineno)d  %(message)s'
-INFO_FORMAT = '%(asctime)s %(levelname)-8s %(message)s'
-LOG_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-
 TIME_ZONE = 'Europe/Berlin'
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
@@ -48,25 +44,6 @@ MEDIA_ROOT = path_join(SRS_FILE_ROOT, "static/media")
 # Example: "/home/media/media.lawrence.com/static/"
 STATIC_ROOT = path_join(SRS_FILE_ROOT, 'static')
 
-STATIC_URL = '/static/'
-
-MIDDLEWARE_CLASSES = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.http.ConditionalGetMiddleware',
-    'django.middleware.cache.CacheMiddleware',
-]
-
-ROOT_URLCONF = 'srs.urls'
-
-WSGI_APPLICATION = 'srs.wsgi.application'
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -81,17 +58,30 @@ INSTALLED_APPS = [
     'lobbyauth',
     'django_comments',
     'django_xmlrpc',
-    'djangojs',
     'eztables',
     'django_extensions',
     'jsonrpc',
     'background_task',
 ]
 
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.http.ConditionalGetMiddleware',
+    # 'django.middleware.cache.CacheMiddleware',
+]
+
+ROOT_URLCONF = 'spring_replay_site.urls'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [path_join(SRS_FILE_ROOT, 'templates')],
+        'DIRS': [path_join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,17 +89,52 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request',
-                'djangojs.context_processors.booleans',
             ],
-            'builtins': ['djangojs.templatetags.js'],
         },
     },
 ]
 
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = "DENY"
+WSGI_APPLICATION = 'spring_replay_site.wsgi.application'
+
+# Password validation
+# https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/3.0/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+STATIC_URL = '/static/'
+
+##########################################################################################
+
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_BROWSER_XSS_FILTER = True
+# X_FRAME_OPTIONS = "DENY"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -142,11 +167,11 @@ LOGGING = {
 
 
 # import site specific settings, defaults first
-from local_settings_ import *
+from .local_settings_ import *
 
 # now overwrite default settings
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError:
     print("ERROR: Please copy local_settings_.py to local_settings.py, and overwrite\n       default settings there.")
     exit(1)

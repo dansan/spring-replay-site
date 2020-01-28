@@ -2,7 +2,7 @@
  * This file is part of the "spring relay site / srs" program. It is published
  * under the GPLv3.
  * 
- * Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+ * Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -21,13 +21,13 @@ for (index = 0; index < tables.length; ++index) {
 	"bInfo": false,
 	"bProcessing": true,
 	"bServerSide": true,
-	"sAjaxSource": Django.url( "srs/hof_tbl_src", tid ),
+	"sAjaxSource": "/hof_tbl_src/" + tid,
 	"aoColumnDefs": [
        {
 		  "aTargets": [ 1 ],
 		  "mData": 1,
 		  "mRender": function ( data, type, full ) {
-			  return '<a href="' + Django.url('srs/player', full[6] ) + '">' + data + '</a>';
+			  return '<a href="' + '/player/' + full[6] + '">' + data + '</a>';
 		  }
 	  }],
 	});

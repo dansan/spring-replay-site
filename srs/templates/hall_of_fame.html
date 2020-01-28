@@ -10,7 +10,7 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/libs/datatables.bootstrap.css" %}
+    <link rel="stylesheet" href="{% static "css/libs/datatables.bootstrap.css" %}">
 {% endblock %}
 
 {% block pagetitle %}Hall of Fame{% endblock %}
@@ -218,7 +218,7 @@ Please see srs_base.html for license information.
 {% endblock %}
 
 {% block page_js %}
-  {% datatables_js %}
-  {% datatables_bootstrap_js %}
-  {% js "js/dyn/srs_halloffame.js" %}
+  <script src="{% static "js/libs/datatables/jquery.dataTables.js" %}"></script>
+  <script src="{% static "js/libs/datatables/datatables.bootstrap.js" %}"></script>
+  <script src="{% static "js/dyn/srs_halloffame.js" %}"></script>
 {% endblock %}

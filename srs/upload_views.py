@@ -1,7 +1,7 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -48,7 +48,7 @@ def upload(request):
                     logger.info("User '%s' uploaded file '%s' with title '%s', parsing it now.", request.user,
                                 os.path.basename(path), short[:20])
                     if written_bytes != ufile.size:
-                        logger.warn("written_bytes=%r != ufile.size=%r", written_bytes, ufile.size)
+                        logger.warning("written_bytes=%r != ufile.size=%r", written_bytes, ufile.size)
                     try:
                         replay, msg = parse_uploaded_file(path, timer, tags, short, long_text, request.user)
                         logger.debug("replay=%r msg=%r", replay, msg)
@@ -65,6 +65,7 @@ def upload(request):
                     except Exception as exc:
                         form._errors = {'file': [u'Server error: {}'.format(exc)]}
                         replays.append((False, 'Server error. Please contact admin.'))
+                        logger.exception("Exception >> %s << when parsing form.cleaned_data=%r", exc, form.cleaned_data)
                         continue
                     finally:
                         timer.stop("upload()")
@@ -94,7 +95,7 @@ def upload_media(request, gameID):
     c = all_page_infos(request)
 
     replay = get_object_or_404(Replay, gameID=gameID)
-    if not request.user in get_owner_list(replay.uploader):
+    if request.user not in get_owner_list(replay.uploader):
         return HttpResponseRedirect(replay.get_absolute_url())
 
     UploadMediaFormSet = formset_factory(UploadMediaForm, extra=5)

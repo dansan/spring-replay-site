@@ -3,13 +3,13 @@
 # This file is part of the "spring relay site / srs" program. It is published
 # under the GPLv3.
 #
-# Copyright (C) 2016 Daniel Troeder (daniel #at# admin-box #dot# com)
+# Copyright (C) 2016-2020 Daniel Troeder (daniel #at# admin-box #dot# com)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from xmlrpclib import ServerProxy
+from xmlrpc.client import ServerProxy
 import pprint
 import random
 from PIL import Image, ImageFont, ImageDraw, ImageColor
@@ -28,9 +28,12 @@ class SpringMaps:
     def __init__(self, mapname):
         self.map_name = mapname
         self.full_image_filename = "{}.jpg".format(self.map_name)
-        self.full_image_filepath = path_join(settings.MAPS_PATH, self.full_image_filename)
         self.map_info = None
         self.thumb = None
+
+    @property
+    def full_image_filepath(self):
+        return path_join(settings.MAPS_PATH, self.full_image_filename)
 
     def fetch_info(self):
         """
@@ -53,7 +56,7 @@ class SpringMaps:
             self.map_info = proxy.springfiles.search(searchstring)
         except:
             logger.exception("FIXME: to broad exception handling.")
-            logger.warn("Could not retrieve map-info for map %r.", self.map_name)
+            logger.warning("Could not retrieve map-info for map %r.", self.map_name)
             self.map_info = None
         return self.map_info
 
@@ -75,7 +78,7 @@ class SpringMaps:
                 logger.error('Could not download image %r. Setting image to "map_img_not_avail.jpg".')
                 copyfile(path_join(settings.IMG_PATH, 'map_img_not_avail.jpg'), self.full_image_filepath)
         else:
-            logger.warn("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
+            logger.warning("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
             copyfile(path_join(settings.IMG_PATH, "map_img_not_avail.jpg"), self.full_image_filepath)
         return self.full_image_filename
 
@@ -213,20 +216,18 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
         if len(argv) == 1:
-            print "Usage: %s map_name" % (argv[0])
+            print(f"Usage: {argv[0]} map_name")
             return 1
 
         rmap = SpringMaps(argv[1])
         rmap.fetch_info()
 
-        pp = pprint.PrettyPrinter(depth=6)
-
-        print "################## map_info ##########################"
-        print "map matches: %d" % len(rmap.map_info)
-        print "##################"
+        print("################## map_info ##########################")
+        print(f"map matches: {len(rmap.map_info)}")
+        print("##################")
         pp = pprint.PrettyPrinter(depth=6)
         pp.pprint(rmap.map_info)
-        print "######################################################"
+        print("######################################################")
         return 0
 
 

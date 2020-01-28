@@ -9,10 +9,10 @@ Please see srs_base.html for license information.
 {% endcomment %}
 
 {% block page_css %}
-    {% css "css/libs/ionicons.min.css" %}
-    {% css "css/libs/datatables.bootstrap.css" %}
-    {% css "css/libs/daterangepicker-bs3.css" %}
-    {% css "css/dyn/srs_browse.css" %}
+    <link rel="stylesheet" href="{% static "css/libs/ionicons.min.css" %}">
+    <link rel="stylesheet" href="{% static "css/libs/datatables.bootstrap.css" %}">
+    <link rel="stylesheet" href="{% static "css/libs/daterangepicker-bs3.css" %}">
+    <link rel="stylesheet" href="{% static "css/dyn/srs_browse.css" %}">
 
     <meta name="newestreplay" content="{{ first_replay.unixTime.isoformat }}"/>
     <meta name="oldestreplay" content="{{ last_replay.unixTime.isoformat }}"/>
@@ -371,9 +371,9 @@ Please see srs_base.html for license information.
 {% endblock %}
 
 {% block page_js %}
-  {% datatables_js %}
-  {% datatables_bootstrap_js %}
-  {% js_lib "moment.min.js" %}
-  {% js_lib "daterangepicker.js" %}
-  {% js "js/dyn/srs_browse.js" %}
+  <script src="{% static "js/libs/datatables/jquery.dataTables.js" %}"></script>
+  <script src="{% static "js/libs/datatables/datatables.bootstrap.js" %}"></script>
+  <script src="{% static "js/libs/moment.min.js" %}"></script>
+  <script src="{% static "js/libs/daterangepicker.js" %}"></script>
+  <script src="{% static "js/dyn/srs_browse.js" %}"></script>
 {% endblock %}
