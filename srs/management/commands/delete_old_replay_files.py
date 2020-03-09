@@ -55,18 +55,22 @@ class Command(BaseCommand):
                 os.remove(path)
             except OSError as exc:
                 logger.error("Error deleting %r: %s", path, exc)
-            map_name = replay.map_info.name
             replay.path = ""
             replay.filename = ""
             replay.save(update_fields=("filename", "path"))
-            logger.info("Deleting replay map image...")
-            sm = SpringMaps(map_name)
-            replay_image_filepath = sm.get_full_replay_image_filepath(
-                map_name, replay.gameID
-            )
-            try:
-                os.remove(replay_image_filepath)
-            except OSError as exc:
-                logger.error("Error deleting %r: %s", path, exc)
+            if replay.map_info:
+                logger.info("Deleting replay map image...")
+                sm = SpringMaps(replay.map_info.name)
+                replay_image_filepath = sm.get_full_replay_image_filepath(
+                    replay.map_info.name, replay.gameID
+                )
+                try:
+                    os.remove(replay_image_filepath)
+                except OSError as exc:
+                    logger.error("Error deleting %r: %s", path, exc)
+            else:
+                logger.info(
+                    "Not deleting replay map image, as map_info attribute is not set (broken replay entry)."
+                )
             time.sleep(0.25)  # be gentile to the lobby servers I/O
         logger.info("Finished deleting old replays.")
