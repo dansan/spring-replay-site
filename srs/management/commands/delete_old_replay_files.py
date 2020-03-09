@@ -55,15 +55,14 @@ class Command(BaseCommand):
                 os.remove(path)
             except OSError as exc:
                 logger.error("Error deleting %r: %s", path, exc)
-                continue
-            finally:
-                replay.path = ""
-                replay.filename = ""
-                replay.save(update_fields=("filename", "path"))
+            map_name = replay.map_info.name
+            replay.path = ""
+            replay.filename = ""
+            replay.save(update_fields=("filename", "path"))
             logger.info("Deleting replay map image...")
-            sm = SpringMaps(replay.map_info.name)
+            sm = SpringMaps(map_name)
             replay_image_filepath = sm.get_full_replay_image_filepath(
-                replay.map_info.name, replay.gameID
+                map_name, replay.gameID
             )
             try:
                 os.remove(replay_image_filepath)
