@@ -661,7 +661,7 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
         smap.full_image_filename = MapImg.objects.get(
             startpostype=-1, map_info=replay.map_info
         ).filename
-        if not os.path.exists(smap.full_image_filepath):
+        if not os.path.exists(smap.full_base_image_filepath):
             raise FileNotFoundError
     except (ObjectDoesNotExist, FileNotFoundError) as exc:
         # 1st time upload for this map: fetch info and full map, create thumb

@@ -68,6 +68,7 @@ from .sldb import (
     privatize_skill,
     set_sldb_pref,
 )
+from .springmaps import SpringMaps
 from .upload import save_desc, save_tags, set_autotag
 from .utils import fix_missing_winner
 
@@ -436,6 +437,13 @@ def replay(request, gameID):
                 c["metadata"].append(("Version", replay.map_info.metadata2["version"]))
         except KeyError:
             pass
+        # create map file on demand if missing (#130)
+        sm = SpringMaps(replay.map_info.name)
+        replay_image_filepath = sm.get_full_replay_image_filepath(
+            replay.map_info.name, replay.gameID
+        )
+        if not os.path.exists(replay_image_filepath):
+            sm.create_map_with_boxes(replay)
     except Exception as exc:
         c["metadata"].append(
             ("Error", "Problem with metadata. Please report to Dansan.")

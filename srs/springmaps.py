@@ -33,8 +33,17 @@ class SpringMaps:
         self.thumb = None
 
     @property
-    def full_image_filepath(self):
+    def full_base_image_filepath(self) -> str:
         return path_join(settings.MAPS_PATH, self.full_image_filename)
+
+    @staticmethod
+    def get_replay_image_filepath(map_name, gameID) -> str:
+        return "{}_{}.jpg".format(map_name, gameID)
+
+    @classmethod
+    def get_full_replay_image_filepath(cls, map_name, gameID) -> str:
+        filename = cls.get_replay_image_filepath(map_name, gameID)
+        return path_join(settings.MAPS_PATH, filename)
 
     def fetch_info(self):
         """
@@ -73,11 +82,11 @@ class SpringMaps:
             logger.info(
                 "Downloaded map image from %r into %r...",
                 map_url,
-                self.full_image_filepath,
+                self.full_base_image_filepath,
             )
             response = requests.get(map_url, stream=True)
             if response.status_code == 200:
-                with open(self.full_image_filepath, "wb") as fp:
+                with open(self.full_base_image_filepath, "wb") as fp:
                     for chunk in response:
                         fp.write(chunk)
             else:
@@ -86,7 +95,7 @@ class SpringMaps:
                 )
                 copyfile(
                     path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
-                    self.full_image_filepath,
+                    self.full_base_image_filepath,
                 )
         else:
             logger.warning(
@@ -94,14 +103,14 @@ class SpringMaps:
             )
             copyfile(
                 path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
-                self.full_image_filepath,
+                self.full_base_image_filepath,
             )
         return self.full_image_filename
 
     def make_home_thumb(self):
-        if not self.map_info or not path_exists(self.full_image_filepath):
+        if not self.map_info or not path_exists(self.full_base_image_filepath):
             self.fetch_img()
-        image = Image.open(self.full_image_filepath)
+        image = Image.open(self.full_base_image_filepath)
         size = settings.THUMBNAIL_SIZES["home"]
         image.thumbnail(size, Image.ANTIALIAS)
         self.thumb = "{}_home.jpg".format(self.map_name)
@@ -112,7 +121,7 @@ class SpringMaps:
         """
         create a map picture with start boxes (if any) and player start positions
         """
-        img = Image.open(self.full_image_filepath)
+        img = Image.open(self.full_base_image_filepath)
 
         full_img_x, full_img_y = img.size
         # map positions for players are in pixel
@@ -285,15 +294,13 @@ class SpringMaps:
         del draw
 
         # img.thumbnail(settings.THUMBNAIL_SIZES["replay"], Image.ANTIALIAS)
-        filename = "{}_{}.jpg".format(replay.map_info.name, replay.gameID)
+        full_path = self.get_full_replay_image_filepath(self.map_name, replay.gameID)
         try:
-            img.save(path_join(settings.MAPS_PATH, filename), "JPEG")
+            img.save(full_path, "JPEG")
         except:
             logger.exception("FIXME: to broad exception handling.")
-            logger.exception(
-                "Could not save '%s'", path_join(settings.MAPS_PATH, filename)
-            )
-        return filename
+            logger.exception("Could not save %r.", full_path)
+        return self.get_replay_image_filepath(self.map_name, replay.gameID)
 
 
 def main(argv=None):
