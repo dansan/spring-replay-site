@@ -90,7 +90,6 @@ Install from git::
 
     (srs) $ pip install git+git://github.com/dansan/django-eztables.git
     (srs) $ pip install git+git://github.com/dansan/django-utils.git
-    (srs) $ pip install git+git://github.com/veeloinc/django.js.git
 
 Now install further requirements::
 

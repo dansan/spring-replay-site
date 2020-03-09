@@ -160,7 +160,9 @@ def replay(request, gameID):
             logger.debug("got match data for %s from sldb", replay)
             for player in match_skills["players"]:
                 if isinstance(player["account"], dict):
-                    player["account"] = PlayerAccount.objects.get(pk=player["account"]["pk"])
+                    player["account"] = PlayerAccount.objects.get(
+                        pk=player["account"]["pk"]
+                    )
                 pa = player["account"]
                 pa_skill = pa.get_rating(game, match_type)
                 mu, si = player["skills"][1]
@@ -564,7 +566,9 @@ def download(request, gameID):
     else:
         filename = replay.filename
     with myopen(path, "rb") as demofile:
-        response = HttpResponse(demofile.read(), content_type="application/x-spring-demo")
+        response = HttpResponse(
+            demofile.read(), content_type="application/x-spring-demo"
+        )
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
     return response
 

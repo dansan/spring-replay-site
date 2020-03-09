@@ -15,10 +15,10 @@ from operator import methodcaller
 from typing import Optional
 from xmlrpc.client import ServerProxy
 
+import ujson
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from netifaces import AF_INET, ifaddresses, interfaces
-import ujson
 
 from .models import (
     Game,

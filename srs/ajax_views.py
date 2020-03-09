@@ -634,7 +634,10 @@ class BrowseReplaysDTView(Django17DatatablesView):
     # safe GET data for use in global_search()
     def get(self, request, *args, **kwargs):
         self._GET = request.GET
-        return super(Django17DatatablesView, self).get(request, *args, **kwargs)
+        try:
+            return super(Django17DatatablesView, self).get(request, *args, **kwargs)
+        except AttributeError:
+            return super(Django17DatatablesView, self).get(request, (), {})
 
     def global_search(self, queryset):
         """Filter a queryset with global search"""
