@@ -153,9 +153,9 @@ def _query_sldb(service, *args, **kwargs):
                 settings.SLDB_TIMEOUT, service, args, kwargs, exc
             )
         )
-    except IOError as exc:
-        if exc.errno != errno.EINTR:
-            raise
+    except (IOError, ConnectionError) as exc:
+        # if exc.errno != errno.EINTR:
+        #     raise
         rpc_result = dict(status=9, exception=str(exc))
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
