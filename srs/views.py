@@ -338,11 +338,11 @@ def replay(request, gameID):
     )
     c["metadata"] = list()
     if replay.map_info.width > 128:
-        # api.springfiles.com returnd pixel size
+        # springfiles.springrts.com returnd pixel size
         map_px_x = replay.map_info.width / 512
         map_px_y = replay.map_info.height / 512
     else:
-        # api.springfiles.com returnd Spring Map Size
+        # springfiles.springrts.com returnd Spring Map Size
         map_px_x = replay.map_info.width
         map_px_y = replay.map_info.height
     try:

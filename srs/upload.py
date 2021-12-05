@@ -676,9 +676,9 @@ def store_demofile_data(demofile, tags, path, short, long_text, user):
             width = smap.map_info[0]["metadata"]["Width"]
             full_img = smap.fetch_img()
         else:
-            # no result - either api.springfiles.com is down or it didn't find the map
+            # no result - either springfiles.springrts.com is down or it didn't find the map
             err = (
-                "No map info from api.springfiles.com, using empty img for map '%s'."
+                "No map info from springfiles.springrts.com, using empty img for map '%s'."
                 % demofile.game_setup["host"]["mapname"]
             )
             logger.error(err)

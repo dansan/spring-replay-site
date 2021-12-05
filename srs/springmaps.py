@@ -14,7 +14,6 @@ import random
 import sys
 from os.path import exists as path_exists, join as path_join
 from shutil import copyfile
-from xmlrpc.client import ServerProxy
 
 import requests
 from django.conf import settings
@@ -24,6 +23,22 @@ from .models import Allyteam, Player
 
 logger = logging.getLogger(__name__)
 
+import urllib.request, urllib.parse, json
+
+
+def fetch_map_info(map_name):
+    params = {
+        "category": "map",
+        "springname": map_name,
+        "torrent": False,
+        "metadata": True,
+        "nosensitive": True,
+        "images": True,
+    }
+
+    url = "https://springfiles.springrts.com/json.php?" + urllib.parse.urlencode(params)
+    map_info = json.loads(urllib.request.urlopen(url).read())
+    return map_info
 
 class SpringMaps:
     def __init__(self, mapname):
@@ -47,24 +62,11 @@ class SpringMaps:
 
     def fetch_info(self):
         """
-        fetches map information from api.springfiles.com, stores it in self.map_info
+        fetches map information from springfiles.springrts.com, stores it in self.map_info
         - may raise an Exception when connecting to server
         """
-        proxy = ServerProxy("https://api.springfiles.com/xmlrpc.php", verbose=False)
-        searchstring = {
-            "category": "map",
-            #         "logical" : "or",
-            #         "tag" : self.map_name,
-            #         "filename" : self.map_name,
-            "springname": self.map_name,
-            "torrent": False,
-            "metadata": True,
-            "nosensitive": True,
-            "images": True,
-        }
-
         try:
-            self.map_info = proxy.springfiles.search(searchstring)
+            self.map_info = fetch_map_info(self.map_name)
         except:
             logger.exception("FIXME: to broad exception handling.")
             logger.warning("Could not retrieve map-info for map %r.", self.map_name)
@@ -73,7 +75,7 @@ class SpringMaps:
 
     def fetch_img(self):
         """
-        fetches map image from api.springfiles.com
+        fetches map image from springfiles.springrts.com
         """
         if not self.map_info:
             self.fetch_info()
@@ -128,11 +130,11 @@ class SpringMaps:
         # map pixel size = Spring Map Size (like 16x16) * 512
         # from: http://springrts.com/wiki/Mapdev:diffuse#Image_File
         if replay.map_info.width > 128:
-            # api.springfiles.com returnd pixel size
+            # springfiles.springrts.com returnd pixel size
             map_px_x = replay.map_info.width
             map_px_y = replay.map_info.height
         else:
-            # api.springfiles.com returnd Spring Map Size
+            # springfiles.springrts.com returnd Spring Map Size
             map_px_x = replay.map_info.width * 512
             map_px_y = replay.map_info.height * 512
 
