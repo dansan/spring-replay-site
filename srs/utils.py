@@ -35,8 +35,13 @@ def fix_missing_winner(replay):
         return
     for at in replay.allyteam_set.all():
         pas = [team.teamleader.account for team in at.team_set.all()]
-        at_sum_old = sum(match_skills_by_pa[pa][0] for pa in pas)
-        at_sum_new = sum(match_skills_by_pa[pa][1] for pa in pas)
+        try:
+            at_sum_old = sum(match_skills_by_pa[pa][0] for pa in pas)
+            at_sum_new = sum(match_skills_by_pa[pa][1] for pa in pas)
+        except KeyError:
+            logger.error("Player ID inconsistency between SLDB and replay data detected. Ignoring result.")
+            logger.error("match_skills=%r match_skills_by_pa=%r", match_skills, match_skills_by_pa)
+            return
 
         logger.info(
             "Allyteam %s has rating change %r -> %r.", at, at_sum_old, at_sum_new

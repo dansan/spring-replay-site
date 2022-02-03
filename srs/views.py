@@ -253,8 +253,12 @@ def replay(request, gameID):
                                 return pl
 
                     pl = _get_players_skills(pa)
-                    pl_new = pl["skills"][1][0]
-                    pl_old = pl["skills"][0][0]
+                    if pl:
+                        pl_new = pl["skills"][1][0]
+                        pl_old = pl["skills"][0][0]
+                    else:
+                        pl_new = pl_old = 25
+                        c["skill_error"] = True
                 else:
                     # use old method of DB lookups for current and previous matchs DB entries
                     try:
