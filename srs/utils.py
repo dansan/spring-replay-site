@@ -77,6 +77,9 @@ def fix_missing_map(replay):
 def update_map_info_urls(map_info: Map):
     sm = SpringMaps(map_info.name)
     sm.fetch_info()
-    map_info.metadata2["mapimages"] = sm.map_info[0]["mapimages"]
-    map_info.metadata2["mirrors"] = sm.map_info[0]["mirrors"]
-    map_info.save(update_fields=("metadata2",))
+    if sm.map_info:
+        map_info.metadata2["mapimages"] = sm.map_info[0]["mapimages"]
+        map_info.metadata2["mirrors"] = sm.map_info[0]["mirrors"]
+        map_info.save(update_fields=("metadata2",))
+    else:
+        logger.error("Error fetching map info for %r (%r).", map_info.name, map_info.pk)
