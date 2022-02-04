@@ -72,6 +72,9 @@ class JSONTextField(models.TextField):
                 value["timestamp"] = value["timestamp"].value
             except KeyError:
                 pass
+            except AttributeError:
+                if isinstance(value["timestamp"], datetime.datetime):
+                    value["timestamp"] = value["timestamp"].strftime("%Y%m%dT%H:%M:%S")
         return ujson.dumps(value)
 
     def to_python(self, value):

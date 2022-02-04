@@ -8,7 +8,7 @@
 
 import logging
 
-from .models import Replay, SldbMatchSkillsCache
+from .models import Map, Replay, SldbMatchSkillsCache
 from .sldb import SLDBError, get_sldb_match_skills
 from .springmaps import SpringMaps
 
@@ -72,3 +72,11 @@ def fix_missing_map(replay):
     sm.make_home_thumb()
     replay.map_info.metadata2 = sm.map_info[0]
     replay.map_info.save()
+
+
+def update_map_info_urls(map_info: Map):
+    sm = SpringMaps(map_info.name)
+    sm.fetch_info()
+    map_info.metadata2["mapimages"] = sm.map_info[0]["mapimages"]
+    map_info.metadata2["mirrors"] = sm.map_info[0]["mirrors"]
+    map_info.save(update_fields=("metadata2",))
