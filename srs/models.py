@@ -82,9 +82,11 @@ class JSONTextField(models.TextField):
             return value
         res = ujson.loads(value)
         if isinstance(res, dict) and "timestamp" in res:
-            res["timestamp"] = datetime.datetime.strptime(
-                res["timestamp"], "%Y%m%dT%H:%M:%S"
-            )
+            if "-" in res["timestamp"]:
+                fmt ="%Y-%m-%dT%H:%M:%S"
+            else:
+                fmt = "%Y%m%dT%H:%M:%S"
+            res["timestamp"] = datetime.datetime.strptime(res["timestamp"], fmt)
         return res
 
     def value_to_string(self, obj):

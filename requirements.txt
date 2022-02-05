@@ -1,5 +1,5 @@
 coreapi>=2.3.3
-Django>=3.0.2
+Django>=3.0.2,<4.0
 django-background-tasks>=1.2.5
 django-contrib-comments>=1.9.2
 django-extensions>=2.2.6
@@ -14,6 +14,6 @@ plotly>=4.5.0
 python-magic>=0.4.15
 requests>=2.22.0
 ujson>=1.35
-black
-flake8
-isort
+black>=22.1.0
+flake8>=4.0.1
+isort>=5.10.1
