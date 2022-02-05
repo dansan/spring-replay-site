@@ -20,6 +20,8 @@ class Migration(migrations.Migration):
             field=srs.models.JSONTextField(),
         ),
         migrations.AlterField(
-            model_name="sitestats", name="bawards", field=srs.models.JSONTextField(),
+            model_name="sitestats",
+            name="bawards",
+            field=srs.models.JSONTextField(),
         ),
     ]

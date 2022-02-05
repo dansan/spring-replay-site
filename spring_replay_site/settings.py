@@ -23,9 +23,7 @@ DATETIME_FORMAT = DATE_FORMAT
 SHORT_DATE_FORMAT = "d.m.Y"
 # SHORT_DATETIME_FORMAT = 'd.m.Y H:i:s (T)'
 SHORT_DATETIME_FORMAT = SHORT_DATE_FORMAT
-AUTHENTICATION_BACKENDS = ["lobbyauth.lobbybackend.LobbyBackend"] + list(
-    global_settings.AUTHENTICATION_BACKENDS
-)
+AUTHENTICATION_BACKENDS = ["lobbyauth.lobbybackend.LobbyBackend"] + list(global_settings.AUTHENTICATION_BACKENDS)
 XMLRPC_METHODS = (("srs.upload.xmlrpc_upload", "xmlrpc_upload"),)
 INDEX_REPLAY_RANGE = 12
 AUTH_PROFILE_MODULE = "lobbyauth.UserProfile"
@@ -106,9 +104,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 ]
 
 
@@ -166,7 +170,5 @@ from .local_settings_ import *
 try:
     from .local_settings import *
 except ImportError:
-    print(
-        "ERROR: Please copy local_settings_.py to local_settings.py, and overwrite\n       default settings there."
-    )
+    print("ERROR: Please copy local_settings_.py to local_settings.py, and overwrite\n       default settings there.")
     exit(1)

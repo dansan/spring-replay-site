@@ -27,9 +27,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "air",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Airforce General"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Airforce General"),
                 ),
                 (
                     "bug",
@@ -37,21 +35,15 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "cap",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Mind Magician"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Mind Magician"),
                 ),
                 (
                     "dran",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Dragons & Angels"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Dragons & Angels"),
                 ),
                 (
                     "drankill",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Dragon & Angel Slayer"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Dragon & Angel Slayer"),
                 ),
                 (
                     "emp",
@@ -59,27 +51,19 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "fire",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Master Grill-Chef"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Master Grill-Chef"),
                 ),
                 (
                     "friend",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Friendly Fire Award"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Friendly Fire Award"),
                 ),
                 (
                     "heart",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Queen Heart Breaker"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Queen Heart Breaker"),
                 ),
                 (
                     "hero",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Heros do the job"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Heros do the job"),
                 ),
                 (
                     "herokill",
@@ -87,51 +71,35 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "hover",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Hover Admiral"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Hover Admiral"),
                 ),
                 (
                     "kam",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Kamikaze Award"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Kamikaze Award"),
                 ),
                 (
                     "lycan",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Werewolf Hunter"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Werewolf Hunter"),
                 ),
                 (
                     "mex",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Mineral Prospector"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Mineral Prospector"),
                 ),
                 (
                     "mexkill",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Loot & Pillage"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Loot & Pillage"),
                 ),
                 (
                     "nux",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Apocalyptic Achievement Award"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Apocalyptic Achievement Award"),
                 ),
                 (
                     "ouch",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Big Purple Heart"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Big Purple Heart"),
                 ),
                 (
                     "point",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"This is my Land"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"This is my Land"),
                 ),
                 (
                     "pwn",
@@ -139,9 +107,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "rezz",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Vile Necromancer"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Vile Necromancer"),
                 ),
                 (
                     "share",
@@ -149,9 +115,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "shell",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Turtle Shell"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Turtle Shell"),
                 ),
                 (
                     "slow",
@@ -159,21 +123,15 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "sweeper",
-                    models.PositiveIntegerField(
-                        default=0, verbose_name=b"Land Sweeper"
-                    ),
+                    models.PositiveIntegerField(default=0, verbose_name=b"Land Sweeper"),
                 ),
                 (
                     "player",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Player"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Player"),
                 ),
                 (
                     "replay",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
                 ),
             ],
         ),

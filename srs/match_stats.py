@@ -18,6 +18,7 @@ from .SpringStatsViewer.SpringDemoFile import DemoFileReader
 
 try:
     from typing import Dict, List, Optional, Tuple, Union
+
     from SpringStatsViewer.SpringDemoFile import PlayerStatistics, TeamStatistics
 except ImportError:
     pass
@@ -35,10 +36,7 @@ class MatchStatsGeneration(object):
         # type: (Dict[str, List[TeamStatistics]]) -> Dict[str, Dict[str, List[float]]]
         res = OrderedDict()  # type: Dict
         for ts_attr, label in TeamStats.graphid2label.items():
-            res[ts_attr] = dict(
-                (player, [getattr(s, ts_attr) for s in stats])
-                for player, stats in teamstats.items()
-            )
+            res[ts_attr] = dict((player, [getattr(s, ts_attr) for s in stats]) for player, stats in teamstats.items())
         return res
 
     @staticmethod
@@ -62,9 +60,7 @@ class MatchStatsGeneration(object):
     def make_stats(self):
         # type: () -> Tuple[Dict[str, Dict[str, int]], Dict[str, List[Dict[str, Union[str, List[float]]]]]]
         playerstats_res = {}  # type: Dict[str, Dict[str, int]]
-        teamstats_plotly_kwargs = (
-            {}
-        )  # type: Dict[str, List[Dict[str, Union[str, List[float]]]]]
+        teamstats_plotly_kwargs = {}  # type: Dict[str, List[Dict[str, Union[str, List[float]]]]]
         if (
             self.demofile.header()
             and self.demofile.script()
@@ -88,8 +84,7 @@ class MatchStatsGeneration(object):
                         x_axis.append(x_axis[-1] + teamstatperiod_in_minutes)
                     for ts_type, stats in graphs.items():
                         plot_data_kwargs = [
-                            dict(x=x_axis, y=p_stats, name=player)
-                            for player, p_stats in stats.items()
+                            dict(x=x_axis, y=p_stats, name=player) for player, p_stats in stats.items()
                         ]  # type: List[Dict[str, Union[str, List[float]]]]
                         teamstats_plotly_kwargs[ts_type] = plot_data_kwargs
                 else:

@@ -82,9 +82,7 @@ class SLDBPrivacyForm(forms.Form):
             '<b>Full privacy enabled</b>:<br>Same as "Basic privacy", but even<br>privileged autohost users see only a rough<br>estimate in "!status" output.',
         ),
     )
-    mode = forms.ChoiceField(
-        required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect()
-    )
+    mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect())
 
 
 def _game_choices():

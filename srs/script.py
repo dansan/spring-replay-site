@@ -54,17 +54,13 @@ class Result:
 
     def __repr__(self):
         try:
-            return "Result(player={} team={} died={} quit={})".format(
-                self.player.nick, self.team, self.died, self.quit
-            )
+            return "Result(player={} team={} died={} quit={})".format(self.player.nick, self.team, self.died, self.quit)
         except:
             import logging
 
             logger = logging.getLogger(__name__)
             logger.exception("FIXME: to broad exception handling.")
-            return "Result(team={} died={} quit={})".format(
-                self.team, self.died, self.quit
-            )
+            return "Result(team={} died={} quit={})".format(self.team, self.died, self.quit)
 
 
 def try_make_numeric(val: str) -> Union[int, float, str]:
@@ -130,26 +126,18 @@ class ScriptPlayer(ScriptObject):
             # demofile from zero-k
             self.rank = self.lobbyrank
         else:
-            print(
-                "Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'."
-                % (section, data)
-            )
+            print("Missing required key 'rank' or 'lobbyrank' in section '%s': '%s'." % (section, data))
             self.rank = None
 
         if hasattr(self, "countrycode"):
             pass
         else:
-            print(
-                "Missing required key 'countrycode' in section '%s': '%s'."
-                % (section, data)
-            )
+            print("Missing required key 'countrycode' in section '%s': '%s'." % (section, data))
             self.countrycode = None
 
     def __repr__(self):
         if hasattr(self, "name"):
-            return "ScriptPlayer({}, {})".format(
-                getattr(self, "name", "-"), getattr(self, "accountid", "-")
-            )
+            return "ScriptPlayer({}, {})".format(getattr(self, "name", "-"), getattr(self, "accountid", "-"))
         else:
             return super(self, self.__repr__)
 

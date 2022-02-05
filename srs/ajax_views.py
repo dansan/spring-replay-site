@@ -83,9 +83,7 @@ def ajax_playerrating_tbl_src(request, accountid):
         pa = PlayerAccount.objects.get(accountid=accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
-        logger.exception(
-            "cannot get PlayerAccount for accountid '%d': %s", accountid, exc
-        )
+        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(ujson.dumps(empty_result))
 
     ratings = list()
@@ -95,13 +93,9 @@ def ajax_playerrating_tbl_src(request, accountid):
                 continue
             user = request.user if request.user.is_authenticated else None
             try:
-                skills = get_sldb_playerskill(
-                    game.sldb_name, [pa.accountid], user, True
-                )[0]
+                skills = get_sldb_playerskill(game.sldb_name, [pa.accountid], user, True)[0]
             except SLDBError as exc:
-                logger.error(
-                    "Retrieving skill for player %s for game %s: %s", pa, game, exc
-                )
+                logger.error("Retrieving skill for player %s for game %s: %s", pa, game, exc)
                 continue
             else:
                 if pa != skills["account"]:
@@ -119,9 +113,7 @@ def ajax_playerrating_tbl_src(request, accountid):
                         ratings.append(
                             [
                                 game.name,
-                                Rating.objects.filter(match_type=mt)
-                                .first()
-                                .get_match_type_display(),
+                                Rating.objects.filter(match_type=mt).first().get_match_type_display(),
                                 skills["skills"][i][0],
                             ]
                         )
@@ -165,9 +157,7 @@ def ajax_winloss_tbl_src(request, accountid):
         try:
             player_stats = get_sldb_player_stats(game.sldb_name, pa.accountid)
         except SLDBError as exc:
-            logger.error(
-                "Retrieving stats for player %s for game %s: %s", pa, game, exc
-            )
+            logger.error("Retrieving stats for player %s for game %s: %s", pa, game, exc)
             continue
         else:
             for match_type in ["Duel", "Team", "FFA", "TeamFFA"]:
@@ -222,9 +212,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
                 raise Exception("Unhandled parameter type")
         except Exception as exc:
             logger.error("FIXME: to broad exception handling.")
-            logger.exception(
-                "trouble reading request.GET['%s']='%s', Exception: %s", k, v, exc
-            )
+            logger.exception("trouble reading request.GET['%s']='%s', Exception: %s", k, v, exc)
             return HttpResponse(ujson.dumps(empty_result))
     empty_result["sEcho"] = params["sEcho"]
     try:
@@ -239,9 +227,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
         pa = PlayerAccount.objects.get(accountid=accountid)
     except Exception as exc:
         logger.error("FIXME: to broad exception handling.")
-        logger.exception(
-            "cannot get PlayerAccount for accountid '%d': %s", accountid, exc
-        )
+        logger.exception("cannot get PlayerAccount for accountid '%d': %s", accountid, exc)
         return HttpResponse(ujson.dumps(empty_result))
 
     qs = Replay.objects.filter(player__account__accountid=accountid)
@@ -259,9 +245,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
             qs = qs.order_by("{}unixTime".format(order))
 
     replays = list()
-    for replay in qs[
-        params["iDisplayStart"] : params["iDisplayStart"] + params["iDisplayLength"]
-    ]:
+    for replay in qs[params["iDisplayStart"] : params["iDisplayStart"] + params["iDisplayLength"]]:
         try:
             replays.append(
                 [
@@ -279,9 +263,7 @@ def ajax_playerreplays_tbl_src(request, accountid):
             return HttpResponseNotFound("<h1>Player not found</h1>")
     res = {
         "sEcho": params["sEcho"],
-        "iTotalRecords": Replay.objects.filter(
-            player__account__accountid=accountid
-        ).count(),
+        "iTotalRecords": Replay.objects.filter(player__account__accountid=accountid).count(),
         "iTotalDisplayRecords": qs.count(),
         "aaData": replays,
     }
@@ -394,8 +376,7 @@ def downloadlinks(gameID, category):
             "Error connecting to springfiles.com. Please retry later, or try searching yourself: "
             '<a href="http://springfiles.com/finder/1/%s">game</a>  '
             '<a href="http://springfiles.com/finder/1/%s">map</a>  '
-            '<a href="http://springfiles.com/finder/1/%s">engine</a>.'
-            % (gamename, mapname, enginename)
+            '<a href="http://springfiles.com/finder/1/%s">engine</a>.' % (gamename, mapname, enginename)
         )
     return c
 
@@ -423,9 +404,7 @@ def stats_modal(request, gameID):
         # team stats
         ts = dict(
             (_ts["stat_type"], _ts["pk"])
-            for _ts in TeamStats.objects.filter(replay__gameID=gameID).values(
-                "pk", "stat_type"
-            )
+            for _ts in TeamStats.objects.filter(replay__gameID=gameID).values("pk", "stat_type")
         )  # evaluate filter immediately to get all TeamStats objects with one SQL query
     except (PlayerStats.DoesNotExist, TeamStats.DoesNotExist):
         c["error"] = (
@@ -490,12 +469,8 @@ def replay_filter(queryset, filter_name):
     args = filter_name_splited[2:]
 
     now = datetime.datetime.now(timezone.utc)
-    today = datetime.datetime(
-        year=now.year, month=now.month, day=now.day, tzinfo=timezone.utc
-    )
-    this_month_start = datetime.datetime(
-        year=now.year, month=now.month, day=1, tzinfo=timezone.utc
-    )
+    today = datetime.datetime(year=now.year, month=now.month, day=now.day, tzinfo=timezone.utc)
+    this_month_start = datetime.datetime(year=now.year, month=now.month, day=1, tzinfo=timezone.utc)
     this_month_end = datetime.datetime(
         year=now.year if now.month < 12 else now.year + 1,
         month=((now.month + 1) % 12 or 12),
@@ -506,49 +481,31 @@ def replay_filter(queryset, filter_name):
     last_month_start = datetime.datetime(
         year=last_month_end.year, month=last_month_end.month, day=1, tzinfo=timezone.utc
     )
-    this_year_start = datetime.datetime(
-        year=now.year, month=1, day=1, tzinfo=timezone.utc
+    this_year_start = datetime.datetime(year=now.year, month=1, day=1, tzinfo=timezone.utc)
+    this_year_end = datetime.datetime(year=now.year + 1, month=1, day=1, tzinfo=timezone.utc) - datetime.timedelta(
+        microseconds=1
     )
-    this_year_end = datetime.datetime(
-        year=now.year + 1, month=1, day=1, tzinfo=timezone.utc
-    ) - datetime.timedelta(microseconds=1)
     last_year_end = this_year_start - datetime.timedelta(microseconds=1)
-    last_year_start = datetime.datetime(
-        year=last_year_end.year, month=1, day=1, tzinfo=timezone.utc
-    )
+    last_year_start = datetime.datetime(year=last_year_end.year, month=1, day=1, tzinfo=timezone.utc)
     before_last_year = last_year_start - datetime.timedelta(microseconds=1)
     epoch = datetime.datetime.fromtimestamp(0, tz=timezone.utc)
 
     try:
         if category == "date":
             filterfnc = {
-                "t_today": queryset.filter(
-                    unixTime__range=(today, today + datetime.timedelta(days=1))
-                ),
-                "t_yesterday": queryset.filter(
-                    unixTime__range=(today - datetime.timedelta(days=1), today)
-                ),
-                "t_this_month": queryset.filter(
-                    unixTime__range=(this_month_start, this_month_end)
-                ),
-                "t_last_month": queryset.filter(
-                    unixTime__range=(last_month_start, last_month_end)
-                ),
-                "t_this_year": queryset.filter(
-                    unixTime__range=(this_year_start, this_year_end)
-                ),
-                "t_last_year": queryset.filter(
-                    unixTime__range=(last_year_start, last_year_end)
-                ),
+                "t_today": queryset.filter(unixTime__range=(today, today + datetime.timedelta(days=1))),
+                "t_yesterday": queryset.filter(unixTime__range=(today - datetime.timedelta(days=1), today)),
+                "t_this_month": queryset.filter(unixTime__range=(this_month_start, this_month_end)),
+                "t_last_month": queryset.filter(unixTime__range=(last_month_start, last_month_end)),
+                "t_this_year": queryset.filter(unixTime__range=(this_year_start, this_year_end)),
+                "t_last_year": queryset.filter(unixTime__range=(last_year_start, last_year_end)),
                 "t_ancient": queryset.filter(unixTime__range=(epoch, before_last_year)),
                 "0": queryset,
             }
             if selected == "daterange":
                 range_from = datetime.datetime.fromtimestamp(int(args[0]), timezone.utc)
                 range_to = datetime.datetime.fromtimestamp(int(args[1]), timezone.utc)
-                filterfnc["daterange"] = queryset.filter(
-                    unixTime__range=(range_from, range_to)
-                )
+                filterfnc["daterange"] = queryset.filter(unixTime__range=(range_from, range_to))
             return filterfnc[selected]
         elif category == "map":
             if int(selected) == 0:
@@ -565,17 +522,13 @@ def replay_filter(queryset, filter_name):
                 return queryset
             else:
                 return queryset.filter(
-                    gametype__in=GameRelease.objects.filter(
-                        game__id=int(selected)
-                    ).values_list("name", flat=True)
+                    gametype__in=GameRelease.objects.filter(game__id=int(selected)).values_list("name", flat=True)
                 )
         elif category == "gameversion":
             if int(selected) == 0:
                 return queryset
             else:
-                return queryset.filter(
-                    gametype=GameRelease.objects.get(id=int(selected)).name
-                )
+                return queryset.filter(gametype=GameRelease.objects.get(id=int(selected)).name)
         elif category == "player":
             if int(selected) == 0:
                 return queryset
@@ -614,9 +567,7 @@ class Django17DatatablesView(DatatablesView):
     """
 
     def json_response(self, data):
-        return HttpResponse(
-            json.dumps(data, cls=DjangoJSONEncoder), content_type=JSON_MIMETYPE
-        )
+        return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type=JSON_MIMETYPE)
 
 
 class BrowseReplaysDTView(Django17DatatablesView):
@@ -652,19 +603,13 @@ class BrowseReplaysDTView(Django17DatatablesView):
                     index = int(k.split("bSearchable_")[1])
                     search_fields.append(self.get_db_fields()[index])
             if self.dt_data["bRegex"]:
-                criterions = [
-                    Q(**{"%s__iregex" % field: search})
-                    for field in search_fields
-                    if self.can_regex(field)
-                ]
+                criterions = [Q(**{"%s__iregex" % field: search}) for field in search_fields if self.can_regex(field)]
                 if len(criterions) > 0:
                     search = reduce(or_, criterions)
                     queryset = queryset.filter(search)
             else:
                 for term in search.split():
-                    criterions = (
-                        Q(**{"%s__icontains" % field: term}) for field in search_fields
-                    )
+                    criterions = (Q(**{"%s__icontains" % field: term}) for field in search_fields)
                     search = reduce(or_, criterions)
                     queryset = queryset.filter(search)
         return queryset
@@ -681,9 +626,7 @@ def hof_tbl_src(request, leaderboardid):
         return HttpResponse(ujson.dumps(empty_result))
 
     lps = list(
-        SldbLeaderboardPlayer.objects.filter(
-            leaderboard__id=int(leaderboardid)
-        ).values_list(
+        SldbLeaderboardPlayer.objects.filter(leaderboard__id=int(leaderboardid)).values_list(
             "rank",
             "account__preffered_name",
             "trusted_skill",
@@ -716,6 +659,4 @@ class CommentDTView(Django17DatatablesView):
     )
 
     def global_search(self, queryset):
-        return super(CommentDTView, self).global_search(
-            queryset.filter(is_removed=False)
-        )
+        return super(CommentDTView, self).global_search(queryset.filter(is_removed=False))

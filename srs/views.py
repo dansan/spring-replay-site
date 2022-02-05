@@ -16,10 +16,7 @@ from functools import reduce
 import magic
 import MySQLdb
 from django.conf import settings
-from django.contrib.auth import (
-    login as django_contrib_auth_login,
-    logout as django_contrib_auth_logout,
-)
+from django.contrib.auth import login as django_contrib_auth_login, logout as django_contrib_auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
@@ -82,9 +79,7 @@ def index(request):
     if "game_pref_obj" in c:
         replays = Replay.objects.filter(
             published=True,
-            gametype__in=c["game_pref_obj"].gamerelease_set.values_list(
-                "name", flat=True
-            ),
+            gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True),
         )
     else:
         replays = Replay.objects.filter(published=True)
@@ -94,9 +89,7 @@ def index(request):
     c["popular_replays"] = Replay.objects.order_by("-download_count")[:8]
     c["news"] = NewsItem.objects.filter(show=True).order_by("-pk")[:6]
     c["replay_details"] = False
-    c["latest_comments"] = Comment.objects.filter(is_removed=False).order_by(
-        "-submit_date"
-    )[:5]
+    c["latest_comments"] = Comment.objects.filter(is_removed=False).order_by("-submit_date")[:5]
     return render(request, "index.html", c)
 
 
@@ -115,9 +108,7 @@ def index_replay_range(request, range_end, game_pref):
     if "game_pref_obj" in c:
         replays = Replay.objects.filter(
             published=True,
-            gametype__in=c["game_pref_obj"].gamerelease_set.values_list(
-                "name", flat=True
-            ),
+            gametype__in=c["game_pref_obj"].gamerelease_set.values_list("name", flat=True),
         )
     else:
         replays = Replay.objects.filter(published=True)
@@ -160,17 +151,13 @@ def replay(request, gameID):
             logger.debug("got match data for %s from sldb", replay)
             for player in match_skills["players"]:
                 if isinstance(player["account"], dict):
-                    player["account"] = PlayerAccount.objects.get(
-                        pk=player["account"]["pk"]
-                    )
+                    player["account"] = PlayerAccount.objects.get(pk=player["account"]["pk"])
                 pa = player["account"]
                 pa_skill = pa.get_rating(game, match_type)
                 mu, si = player["skills"][1]
                 if pa_skill.trueskill_mu != mu or pa_skill.trueskill_sigma != si:
                     try:
-                        playername = Player.objects.get(
-                            account=pa, replay=replay, spectator=False
-                        ).name
+                        playername = Player.objects.get(account=pa, replay=replay, spectator=False).name
                     except ObjectDoesNotExist:
                         playername = "??"
                     pa_skill.trueskill_mu = mu
@@ -207,26 +194,17 @@ def replay(request, gameID):
     allyteams = Allyteam.objects.filter(replay=replay)
     if (
         not allyteams.filter(winner=True).exists()
-        or (
-            replay.upload_date.year >= 2016
-            and allyteams.filter(winner=True, num=0).exists()
-        )
+        or (replay.upload_date.year >= 2016 and allyteams.filter(winner=True, num=0).exists())
         and not sldb_connection_error
     ):
         # workaround for issue #89: guess winner from ratings
         fix_missing_winner(replay)
 
     c["allyteams"] = []
-    match_rating_history = RatingHistory.objects.filter(
-        match=replay, match_type=match_type
-    )
-    [
-        entry for entry in match_rating_history
-    ]  # prefetch all ratings of this match by hitting the DB only once
+    match_rating_history = RatingHistory.objects.filter(match=replay, match_type=match_type)
+    [entry for entry in match_rating_history]  # prefetch all ratings of this match by hitting the DB only once
     for at in allyteams:
-        playeraccounts = PlayerAccount.objects.filter(
-            player__team__allyteam=at
-        ).order_by("player__team__num")
+        playeraccounts = PlayerAccount.objects.filter(player__team__allyteam=at).order_by("player__team__num")
         teams = Team.objects.filter(allyteam=at)
         players = all_players.filter(account__in=playeraccounts)
         players_w_rating = list()
@@ -290,16 +268,13 @@ def replay(request, gameID):
                     old_rating += privatize_skill(pl_old) if pl_old else 0
 
                 if pa.sldb_privacy_mode != 0 and (
-                    not request.user.is_authenticated
-                    or pa.accountid != request.user.userprofile.accountid
+                    not request.user.is_authenticated or pa.accountid != request.user.userprofile.accountid
                 ):
                     if pl_new:
                         pl_new = privatize_skill(pl_new)
                     if pl_old:
                         pl_old = privatize_skill(pl_old)
-                players_w_rating.append(
-                    (all_players.get(account=pa, spectator=False), pl_old, pl_new)
-                )
+                players_w_rating.append((all_players.get(account=pa, spectator=False), pl_old, pl_new))
 
         if teams:
             lobby_rank_sum = reduce(
@@ -307,9 +282,7 @@ def replay(request, gameID):
                 [pl.rank for pl in all_players.filter(team__allyteam=at)],
                 0,
             )
-            c["allyteams"].append(
-                (at, players_w_rating, old_rating, new_rating, lobby_rank_sum)
-            )
+            c["allyteams"].append((at, players_w_rating, old_rating, new_rating, lobby_rank_sum))
 
     c["has_bot"] = replay.tags.filter(name="Bot").exists()
     c["specs"] = all_players.filter(replay=replay, spectator=True).order_by("id")
@@ -337,9 +310,7 @@ def replay(request, gameID):
         "video/x-flv",
         "application/ogg",
     ]
-    c["has_video"] = (
-        c["extra_media"].filter(media_magic_mime__in=c["known_video_formats"]).exists()
-    )
+    c["has_video"] = c["extra_media"].filter(media_magic_mime__in=c["known_video_formats"]).exists()
     c["metadata"] = list()
     if replay.map_info.width > 128:
         # springfiles.springrts.com returnd pixel size
@@ -364,9 +335,7 @@ def replay(request, gameID):
         except KeyError:
             pass
         try:
-            c["metadata"].append(
-                ("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"]))
-            )
+            c["metadata"].append(("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"])))
         except KeyError:
             pass
         for k, v in replay.map_info.metadata2["metadata"].items():
@@ -410,9 +379,7 @@ def replay(request, gameID):
         except KeyError:
             pass
         try:
-            c["metadata"].append(
-                ("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"]))
-            )
+            c["metadata"].append(("Tidal", str(replay.map_info.metadata2["metadata"]["TidalStrength"])))
         except KeyError:
             pass
         for k, v in replay.map_info.metadata2["metadata"].items():
@@ -445,15 +412,11 @@ def replay(request, gameID):
             pass
         # create map file on demand if missing (#130)
         sm = SpringMaps(replay.map_info.name)
-        replay_image_filepath = sm.get_full_replay_image_filepath(
-            replay.map_info.name, replay.gameID
-        )
+        replay_image_filepath = sm.get_full_replay_image_filepath(replay.map_info.name, replay.gameID)
         if not os.path.exists(replay_image_filepath):
             sm.create_map_with_boxes(replay)
     except Exception as exc:
-        c["metadata"].append(
-            ("Error", "Problem with metadata. Please report to Dansan.")
-        )
+        c["metadata"].append(("Error", "Problem with metadata. Please report to Dansan."))
         logger.error("FIXME: to broad exception handling.")
         logger.error(
             "Problem with metadata (replay.id '%d' map.id %d), replay.map_info.metadata2: %r",
@@ -527,9 +490,7 @@ def edit_replay(request, gameID):
                 replay.short_text,
                 replay.title,
                 replay.long_text,
-                ", ".join(
-                    Tag.objects.filter(replay=replay).values_list("name", flat=True)
-                ),
+                ", ".join(Tag.objects.filter(replay=replay).values_list("name", flat=True)),
             )
             return HttpResponseRedirect(replay.get_absolute_url())
     else:
@@ -537,9 +498,7 @@ def edit_replay(request, gameID):
             {
                 "short": replay.short_text,
                 "long_text": replay.long_text,
-                "tags": ", ".join(
-                    Tag.objects.filter(replay=replay).values_list("name", flat=True)
-                ),
+                "tags": ", ".join(Tag.objects.filter(replay=replay).values_list("name", flat=True)),
             }
         )
     c["form"] = form
@@ -570,9 +529,7 @@ def download(request, gameID):
     else:
         filename = replay.filename
     with myopen(path, "rb") as demofile:
-        response = HttpResponse(
-            demofile.read(), content_type="application/x-spring-demo"
-        )
+        response = HttpResponse(demofile.read(), content_type="application/x-spring-demo")
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
     return response
 
@@ -585,10 +542,7 @@ def respect_privacy(request, accountid):
     :return: bool - if True: use only rounded numbers / don't show TS history graphs / etc
     """
     accountid = int(accountid)
-    if (
-        request.user.is_authenticated
-        and accountid == request.user.userprofile.accountid
-    ):
+    if request.user.is_authenticated and accountid == request.user.userprofile.accountid:
         # if the logged in user has the same accountid as the parameter accountid -> no privacy protection
         privacy = False
     else:
@@ -614,9 +568,7 @@ def player(request, accountid):
     accountid = int(accountid)
     pa = get_object_or_404(PlayerAccount, accountid=accountid)
     c["pagetitle"] = "Player {}".format(pa.preffered_name)
-    c["pagedescription"] = (
-        "Statistics and match history of player %s" % pa.preffered_name
-    )
+    c["pagedescription"] = "Statistics and match history of player %s" % pa.preffered_name
     c["playeraccount"] = pa
     c["PA"] = pa
     c["all_names"] = pa.get_names()
@@ -675,9 +627,7 @@ def hall_of_fame(request, abbreviation):
         except SLDBError as exc:
             logger.error("get_sldb_leaderboards(%r): %s", game, exc)
     else:
-        c[
-            "errmsg"
-        ] = "No ratings available for this game. Please choose one from the menu."
+        c["errmsg"] = "No ratings available for this game. Please choose one from the menu."
         logger.error("%s (%s)", c["errmsg"], game)
 
     if abbreviation == "ZK":
@@ -720,9 +670,7 @@ def user_settings(request):
             up.save()
             request.session["game_pref"] = up.game_pref
     else:
-        game_pref_form = GamePref(
-            initial={"auto": not up.game_pref_fixed, "game_choice": up.game_pref}
-        )
+        game_pref_form = GamePref(initial={"auto": not up.game_pref_fixed, "game_choice": up.game_pref})
     c["game_pref_form"] = game_pref_form
     return render(request, "settings.html", c)
 
@@ -748,19 +696,14 @@ def login(request):
                 user.last_name,
                 user.userprofile.aliases,
             )
-            if (
-                request.user.userprofile.game_pref_fixed
-                or request.session.get("game_pref", 0) == 0
-            ):
+            if request.user.userprofile.game_pref_fixed or request.session.get("game_pref", 0) == 0:
                 # if pref was set explicitely, always set cookie according to profile
                 # or if no cookie set, use profiles setting (even if 0)
                 request.session["game_pref"] = request.user.userprofile.game_pref
             else:
                 # cookie is already set (!=0), overwrite users pref as it's not fixed
                 try:
-                    request.user.userprofile.game_pref = int(
-                        request.session["game_pref"]
-                    )
+                    request.user.userprofile.game_pref = int(request.session["game_pref"])
                     request.user.userprofile.save()
                 except ValueError:
                     # not int, ignore
@@ -802,22 +745,15 @@ def media(request, mediaid):
         return render(request, "show_svg.html", c)
     else:
         try:
-            response = HttpResponse(
-                media.media.read(), content_type=media.media_magic_mime
-            )
-            response["Content-Disposition"] = (
-                'attachment; filename="%s"' % media.media_basename
-            )
+            response = HttpResponse(media.media.read(), content_type=media.media_magic_mime)
+            response["Content-Disposition"] = 'attachment; filename="%s"' % media.media_basename
             return response
         except IOError as exc:
             logger.error(
                 "Cannot read media from ExtraReplayMedia(%d) of Replay(%d): media '%s'. Exception: %s"
                 % (media.id, media.replay.id, media.media_basename, exc)
             )
-            raise Http404(
-                "Error reading '%s', please contact 'Dansan' in the springrts forum."
-                % media.media_basename
-            )
+            raise Http404("Error reading '%s', please contact 'Dansan' in the springrts forum." % media.media_basename)
 
 
 @login_required
@@ -880,9 +816,7 @@ def browse_archive(request, bfilter):
         "t_last_year",
         "t_ancient",
     ]:
-        c[browse_filter] = replay_filter(
-            Replay.objects.all(), "date {}".format(browse_filter)
-        )
+        c[browse_filter] = replay_filter(Replay.objects.all(), "date {}".format(browse_filter))
 
     try:
         sist = SiteStats.objects.get(id=1)
@@ -925,9 +859,7 @@ def browse_archive(request, bfilter):
     c["maps_all"] = Map.objects.all()
     c["pa_num"] = PlayerAccount.objects.exclude(accountid__lte=0).count()
     c["ah_num"] = Replay.objects.values("autohostname").distinct().count()
-    c["user_num"] = len(
-        [user for user in User.objects.all() if user.replays_uploaded() > 0]
-    )
+    c["user_num"] = len([user for user in User.objects.all() if user.replays_uploaded() > 0])
     c["first_replay"] = Replay.objects.first()
     c["last_replay"] = Replay.objects.last()
     hosts = dict()
@@ -940,9 +872,7 @@ def browse_archive(request, bfilter):
     c["autohosts"] = [(name, count) for name, count in hosts.items() if count > 0]
     c["autohosts"].sort(key=operator.itemgetter(1), reverse=True)
     c["uploaders"] = [
-        (user.username, user.replays_uploaded())
-        for user in User.objects.all()
-        if user.replays_uploaded() > 0
+        (user.username, user.replays_uploaded()) for user in User.objects.all() if user.replays_uploaded() > 0
     ]
     c["uploaders"].sort(key=operator.itemgetter(1), reverse=True)
 
@@ -981,9 +911,7 @@ def browse_archive(request, bfilter):
                         Game.objects.get(id=filter_[1])
                     elif filter_[0] == "gameversion":
                         gr = GameRelease.objects.get(id=filter_[1])
-                        c["game_abbreviation"] = "{} {}".format(
-                            gr.game.abbreviation, gr.version
-                        )
+                        c["game_abbreviation"] = "{} {}".format(gr.game.abbreviation, gr.version)
                     elif filter_[0] == "player":
                         PlayerAccount.objects.get(id=filter_[1])
                     elif filter_[0] == "autohost":
@@ -1011,8 +939,7 @@ def team_stat_div(request, ts_id):
             "name": _ts["name"],
             "x": _ts["x"],
             "y": [
-                val / 15.0 if index == 0 else (val - _ts["y"][index - 1]) / 15.0
-                for index, val in enumerate(_ts["y"])
+                val / 15.0 if index == 0 else (val - _ts["y"][index - 1]) / 15.0 for index, val in enumerate(_ts["y"])
             ],
         }
         for _ts in ts.decompressed
@@ -1020,9 +947,6 @@ def team_stat_div(request, ts_id):
     div_str = MatchStatsGeneration.get_team_stat_plot(
         TeamStats.graphid2label[ts.stat_type],
         ts_reversed,
-        "markers"
-        if ts.stat_type
-        in ("unitsReceived", "unitsSent", "unitsCaptured", "unitsOutCaptured")
-        else "lines",
+        "markers" if ts.stat_type in ("unitsReceived", "unitsSent", "unitsCaptured", "unitsOutCaptured") else "lines",
     )
     return HttpResponse(content=div_str)

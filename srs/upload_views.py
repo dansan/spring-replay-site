@@ -62,27 +62,15 @@ def upload(request):
                             ufile.size,
                         )
                     try:
-                        replay, msg = parse_uploaded_file(
-                            path, timer, tags, short, long_text, request.user
-                        )
+                        replay, msg = parse_uploaded_file(path, timer, tags, short, long_text, request.user)
                         logger.debug("replay=%r msg=%r", replay, msg)
                         replays.append((True, replay))
                     except BadFileType:
-                        form._errors = {
-                            "file": ["Not a spring demofile: %s." % ufile.name]
-                        }
-                        replays.append(
-                            (False, "Not a spring demofile: %s." % ufile.name)
-                        )
+                        form._errors = {"file": ["Not a spring demofile: %s." % ufile.name]}
+                        replays.append((False, "Not a spring demofile: %s." % ufile.name))
                         continue
                     except AlreadyExistsError as exc:
-                        form._errors = {
-                            "file": [
-                                'Uploaded replay already exists: "{}"'.format(
-                                    exc.replay.title
-                                )
-                            ]
-                        }
+                        form._errors = {"file": ['Uploaded replay already exists: "{}"'.format(exc.replay.title)]}
                         replays.append(
                             (
                                 False,
@@ -151,9 +139,7 @@ def upload_media(request, gameID):
                         media.seek(0)
                         media_magic_text = magic.from_buffer(media.read(1024))
                         media.seek(0)
-                        media_magic_mime = magic.from_buffer(
-                            media.read(1024), mime=True
-                        )
+                        media_magic_mime = magic.from_buffer(media.read(1024), mime=True)
                         media.seek(0)
                     else:
                         media_magic_text = None

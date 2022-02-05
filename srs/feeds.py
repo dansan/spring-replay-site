@@ -53,9 +53,7 @@ class GameFeed(Feed):
 
     def items(self, game):
         gr_names = GameRelease.objects.filter(game=game).values_list("name", flat=True)
-        return Replay.objects.filter(gametype__in=gr_names).order_by("-upload_date")[
-            :20
-        ]
+        return Replay.objects.filter(gametype__in=gr_names).order_by("-upload_date")[:20]
 
     def item_title(self, replay):
         return super(GameFeed, self).item_title(replay.title)
@@ -107,11 +105,7 @@ class SRSLatestCommentFeed(LatestCommentFeed):
 
     def item_title(self, item):
         dots = "..." if len(item.comment) > 50 else ""
-        return super(SRSLatestCommentFeed, self).item_title(
-            item.user.username + ": " + item.comment[:50] + dots
-        )
+        return super(SRSLatestCommentFeed, self).item_title(item.user.username + ": " + item.comment[:50] + dots)
 
     def item_description(self, item):
-        return super(SRSLatestCommentFeed, self).item_description(
-            item.user.username + ": " + item.comment
-        )
+        return super(SRSLatestCommentFeed, self).item_description(item.user.username + ": " + item.comment)

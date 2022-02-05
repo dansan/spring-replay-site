@@ -33,9 +33,7 @@ class Command(BaseCommand):
         start_date = datetime.datetime(1970, 1, 1, tzinfo=tz)
         end_date = now - datetime.timedelta(days=60)
         replays = (
-            Replay.objects.exclude(path="", filename="")
-            .filter(unixTime__range=(start_date, end_date))
-            .order_by("pk")
+            Replay.objects.exclude(path="", filename="").filter(unixTime__range=(start_date, end_date)).order_by("pk")
         )
         total = replays.count()
         logger.info("Going to delete %d replay files...", total)
@@ -61,16 +59,12 @@ class Command(BaseCommand):
             if replay.map_info:
                 logger.info("Deleting replay map image...")
                 sm = SpringMaps(replay.map_info.name)
-                replay_image_filepath = sm.get_full_replay_image_filepath(
-                    replay.map_info.name, replay.gameID
-                )
+                replay_image_filepath = sm.get_full_replay_image_filepath(replay.map_info.name, replay.gameID)
                 try:
                     os.remove(replay_image_filepath)
                 except OSError as exc:
                     logger.error("Error deleting %r: %s", path, exc)
             else:
-                logger.info(
-                    "Not deleting replay map image, as map_info attribute is not set (broken replay entry)."
-                )
+                logger.info("Not deleting replay map image, as map_info attribute is not set (broken replay entry).")
             time.sleep(0.25)  # be gentile to the lobby servers I/O
         logger.info("Finished deleting old replays.")

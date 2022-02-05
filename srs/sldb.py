@@ -141,9 +141,7 @@ def _query_sldb(service, *args, **kwargs):
     socket_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(settings.SLDB_TIMEOUT)
     rpc_srv = ServerProxy(settings.SLDB_URL)
-    rpc = methodcaller(
-        service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs
-    )
+    rpc = methodcaller(service, settings.SLDB_ACCOUNT, settings.SLDB_PASSWORD, *args, **kwargs)
     try:
         rpc_result = rpc(rpc_srv)
     except socket.timeout as exc:
@@ -205,9 +203,7 @@ def _get_PlayerAccount(accountid, privacy_mode=1, preffered_name=""):
             except:
                 logger.exception("FIXME: to broad exception handling.")
                 pass
-    if (
-        account.preffered_name == "" or account.preffered_name == "??"
-    ) and preffered_name:
+    if (account.preffered_name == "" or account.preffered_name == "??") and preffered_name:
         account.preffered_name = preffered_name
         account.save()
     return account
@@ -234,9 +230,7 @@ def get_sldb_playerskill(game_abbr, accountids, user=None, privatize=True):
     rpc_skills = _query_sldb("getSkills", game_abbr, accountids)
 
     for pa_result in rpc_skills:
-        pa_result["account"] = _get_PlayerAccount(
-            pa_result["accountId"], privacy_mode=-1
-        )
+        pa_result["account"] = _get_PlayerAccount(pa_result["accountId"], privacy_mode=-1)
         if pa_result["status"] != 0:
             pa_result["skills"] = [
                 [0.0, 0.0],
@@ -322,9 +316,7 @@ def get_sldb_match_skills(gameIDs):
     cache_miss = dict()
     result = list()
     for gameid in gameIDs:
-        cache_entry, created = SldbMatchSkillsCache.objects.get_or_create(
-            gameID=gameid, defaults={"text": ""}
-        )
+        cache_entry, created = SldbMatchSkillsCache.objects.get_or_create(gameID=gameid, defaults={"text": ""})
         if created or cache_entry.text == "":
             #             logger.debug("MatchSkills cache miss for %s", gameid)
             cache_miss[gameid] = cache_entry
@@ -345,9 +337,7 @@ def get_sldb_match_skills(gameIDs):
                 )
             else:
                 for player in match["players"]:
-                    player["account"] = _get_PlayerAccount(
-                        player["accountId"], player["privacyMode"]
-                    )
+                    player["account"] = _get_PlayerAccount(player["accountId"], player["privacyMode"])
                     for i in range(4):
                         mu = float(player["skills"][i].split("|")[0])
                         si = float(player["skills"][i].split("|")[1])
@@ -372,22 +362,15 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
     if game.sldb_name == "":
         raise SLDBbadArgumentError("game", game)
     try:
-        [
-            (matchtype2sldb_gametype[match_type], match_type)
-            for match_type in match_types
-        ]
+        [(matchtype2sldb_gametype[match_type], match_type) for match_type in match_types]
     except:
         logger.exception("FIXME: to broad exception handling.")
         raise SLDBbadArgumentError("match_types", match_types)
 
     refresh_lbg = list()
     for match_type in match_types:
-        lbg, created = SldbLeaderboardGame.objects.get_or_create(
-            game=game, match_type=match_type
-        )
-        if created or datetime.datetime.now(
-            tz=lbg.last_modified.tzinfo
-        ) - lbg.last_modified > datetime.timedelta(1):
+        lbg, created = SldbLeaderboardGame.objects.get_or_create(game=game, match_type=match_type)
+        if created or datetime.datetime.now(tz=lbg.last_modified.tzinfo) - lbg.last_modified > datetime.timedelta(1):
             # new entry or older than 1 day -> refresh
             #             logger.debug("Leaderboard cache stale for %s", lbg)
             refresh_lbg.append(lbg)
@@ -405,9 +388,7 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
             # problem fetching data from SLDB, mark existing data as stale, so it will be retried next website reload
             logger.error("getLeaderboards '%s': %s", query_args, exc)
             for lbg in refresh_lbg:
-                lbg.last_modified = datetime.datetime(
-                    1970, 1, 1, tzinfo=lbg.last_modified.tzinfo
-                )
+                lbg.last_modified = datetime.datetime(1970, 1, 1, tzinfo=lbg.last_modified.tzinfo)
                 lbg.save()
             leaderboards = list()
         for leaderboard in leaderboards:
@@ -429,9 +410,7 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
                     # save player infos
                     rank += 1
                     defaults = {
-                        "account": _get_PlayerAccount(
-                            player["accountId"], -1, player["name"]
-                        ),
+                        "account": _get_PlayerAccount(player["accountId"], -1, player["name"]),
                         "trusted_skill": float(player["trustedSkill"]),
                         "estimated_skill": float(player["estimatedSkill"]),
                         "uncertainty": float(player["uncertainty"]),
@@ -440,17 +419,13 @@ def get_sldb_leaderboards(game, match_types=["1", "T", "F", "G", "L"]):
                     (
                         sldb_lb_player,
                         created,
-                    ) = SldbLeaderboardPlayer.objects.get_or_create(
-                        leaderboard=lbg, rank=rank, defaults=defaults
-                    )
+                    ) = SldbLeaderboardPlayer.objects.get_or_create(leaderboard=lbg, rank=rank, defaults=defaults)
                     if not created:
                         for k, v in defaults.items():
                             setattr(sldb_lb_player, k, v)
                         sldb_lb_player.save()
                 # remove unused ranks
-                SldbLeaderboardPlayer.objects.filter(
-                    leaderboard=lbg, rank__gt=rank
-                ).delete()
+                SldbLeaderboardPlayer.objects.filter(leaderboard=lbg, rank__gt=rank).delete()
                 # update timestamp
                 lbg.last_modified = datetime.datetime.now(tz=lbg.last_modified.tzinfo)
                 lbg.save()
@@ -544,8 +519,7 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
         if result["status"] == 0:
             path = os.path.join(
                 settings.TS_HISTORY_GRAPHS_PATH,
-                "%d_%s_%s_%s.png"
-                % (accountid, game_abbr, match_type, now.strftime("%Y-%m-%d")),
+                "%d_%s_%s_%s.png" % (accountid, game_abbr, match_type, now.strftime("%Y-%m-%d")),
             )
             open(path, "wb").write(result["graph"].data)
         else:

@@ -12,5 +12,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name="map", name="metadata",),
+        migrations.RemoveField(
+            model_name="map",
+            name="metadata",
+        ),
     ]

@@ -17,9 +17,7 @@ def all_page_infos(request):
     c = {}
     try:
         gameid = int(request.GET["game_pref"])
-        request.session.modified = (
-            True  # force a reload in the client to update the top menu
-        )
+        request.session.modified = True  # force a reload in the client to update the top menu
         request.session["game_pref"] = gameid
         if (
             request.user.is_authenticated
@@ -33,9 +31,7 @@ def all_page_infos(request):
         pass
     if request.user.is_authenticated:
         try:
-            c["logged_in_pa"] = PlayerAccount.objects.get(
-                accountid=request.user.userprofile.accountid
-            )
+            c["logged_in_pa"] = PlayerAccount.objects.get(accountid=request.user.userprofile.accountid)
         except ObjectDoesNotExist:
             pass
         if not request.session.get("game_pref"):

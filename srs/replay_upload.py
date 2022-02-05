@@ -54,16 +54,12 @@ def parse_cmdline():
         help="throttle upload to x byte/s, 0 means no throttling",
         type=int,
     )
-    parser.add_argument(
-        "-v", "--verbose", help="increase output verbosity", action="store_true"
-    )
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     parser.add_argument("title", help="short description (50 char max)")
     parser.add_argument("comment", help="long description (512 char max)")
     parser.add_argument("tags", help="tags (comma separated)")
     parser.add_argument("path", help="path of .sdf")
-    parser.add_argument(
-        "owner", help="lobby account that will be saved as the uploader"
-    )
+    parser.add_argument("owner", help="lobby account that will be saved as the uploader")
     args = parser.parse_args()
 
     if (args.result == "undecided" and args.duration < 300) or args.duration < 180:
@@ -149,11 +145,7 @@ def main():
             args.owner,
         )
     except Exception as exc:
-        print(
-            "[Replay Upload] Error sending data to replay site. Exception:\n{}\n".format(
-                exc
-            )
-        )
+        print("[Replay Upload] Error sending data to replay site. Exception:\n{}\n".format(exc))
         return 1
 
     if args.verbose:

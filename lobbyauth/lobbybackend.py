@@ -80,17 +80,14 @@ class LobbyBackend(ModelBackend):
                     # a user already exists that has a username that another account with a different accountID
                     # (once) had -> modify username
                     logger.info(
-                        "Someone has the same username ('%s') but different accountID, user: '%s' (accountID: "
-                        "%s)",
+                        "Someone has the same username ('%s') but different accountID, user: '%s' (accountID: " "%s)",
                         username,
                         user_with_name,
                         user_with_name.last_name,
                     )
                     # search for unused username
                     counter = 0
-                    while User.objects.filter(
-                        username="{}_{}".format(username, counter)
-                    ).exists():
+                    while User.objects.filter(username="{}_{}".format(username, counter)).exists():
                         counter += 1
                     username = "{}_{}".format(username, counter)
                 except ObjectDoesNotExist:

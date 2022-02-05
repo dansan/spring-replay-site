@@ -29,9 +29,7 @@ class Migration(migrations.Migration):
                 ("stats", models.BinaryField(blank=True, default=None, null=True)),
                 (
                     "replay",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
                 ),
             ],
         ),

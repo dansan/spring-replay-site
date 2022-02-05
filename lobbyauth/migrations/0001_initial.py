@@ -43,6 +43,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ("user__username",),},
+            options={
+                "ordering": ("user__username",),
+            },
         ),
     ]

@@ -23,9 +23,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="mapimg",
             name="startpostype",
-            field=models.IntegerField(
-                blank=True, null=True, verbose_name="-1 means full image"
-            ),
+            field=models.IntegerField(blank=True, null=True, verbose_name="-1 means full image"),
         ),
         migrations.AlterField(
             model_name="rating",

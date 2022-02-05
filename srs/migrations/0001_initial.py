@@ -46,7 +46,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["uploader__username"],},
+            options={
+                "ordering": ["uploader__username"],
+            },
         ),
         migrations.CreateModel(
             name="Allyteam",
@@ -121,7 +123,9 @@ class Migration(migrations.Migration):
                     models.CharField(blank=True, max_length=128, null=True),
                 ),
             ],
-            options={"ordering": ["-upload_date"],},
+            options={
+                "ordering": ["-upload_date"],
+            },
         ),
         migrations.CreateModel(
             name="Game",
@@ -143,7 +147,9 @@ class Migration(migrations.Migration):
                     models.ManyToManyField(blank=True, to=settings.AUTH_USER_MODEL),
                 ),
             ],
-            options={"ordering": ["name"],},
+            options={
+                "ordering": ["name"],
+            },
         ),
         migrations.CreateModel(
             name="GameRelease",
@@ -161,12 +167,12 @@ class Migration(migrations.Migration):
                 ("version", models.CharField(max_length=64)),
                 (
                     "game",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Game"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Game"),
                 ),
             ],
-            options={"ordering": ["name", "version"],},
+            options={
+                "ordering": ["name", "version"],
+            },
         ),
         migrations.CreateModel(
             name="Map",
@@ -186,12 +192,12 @@ class Migration(migrations.Migration):
                 ("width", models.IntegerField()),
                 (
                     "metadata",
-                    picklefield.fields.PickledObjectField(
-                        blank=True, editable=False, null=True
-                    ),
+                    picklefield.fields.PickledObjectField(blank=True, editable=False, null=True),
                 ),
             ],
-            options={"ordering": ["name"],},
+            options={
+                "ordering": ["name"],
+            },
         ),
         migrations.CreateModel(
             name="MapImg",
@@ -208,15 +214,11 @@ class Migration(migrations.Migration):
                 ("filename", models.CharField(max_length=128)),
                 (
                     "startpostype",
-                    models.IntegerField(
-                        blank=True, null=True, verbose_name=b"-1 means full image"
-                    ),
+                    models.IntegerField(blank=True, null=True, verbose_name=b"-1 means full image"),
                 ),
                 (
                     "map_info",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Map"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Map"),
                 ),
             ],
         ),
@@ -274,7 +276,9 @@ class Migration(migrations.Migration):
                 ("startposy", models.FloatField(blank=True, null=True)),
                 ("startposz", models.FloatField(blank=True, null=True)),
             ],
-            options={"ordering": ["name"],},
+            options={
+                "ordering": ["name"],
+            },
         ),
         migrations.CreateModel(
             name="PlayerAccount",
@@ -293,7 +297,9 @@ class Migration(migrations.Migration):
                 ("preffered_name", models.CharField(db_index=True, max_length=128)),
                 ("sldb_privacy_mode", models.SmallIntegerField(default=1)),
             ],
-            options={"ordering": ["accountid"],},
+            options={
+                "ordering": ["accountid"],
+            },
         ),
         migrations.CreateModel(
             name="Rating",
@@ -323,17 +329,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "playername",
-                    models.CharField(
-                        blank=True, db_index=True, max_length=128, null=True
-                    ),
+                    models.CharField(blank=True, db_index=True, max_length=128, null=True),
                 ),
                 ("trueskill_mu", models.FloatField(default=25.0)),
                 ("trueskill_sigma", models.FloatField(default=8.333333333333334)),
                 (
                     "game",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Game"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Game"),
                 ),
                 (
                     "playeraccount",
@@ -343,7 +345,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["-trueskill_mu"], "abstract": False,},
+            options={
+                "ordering": ["-trueskill_mu"],
+                "abstract": False,
+            },
         ),
         migrations.CreateModel(
             name="RatingHistory",
@@ -373,9 +378,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "playername",
-                    models.CharField(
-                        blank=True, db_index=True, max_length=128, null=True
-                    ),
+                    models.CharField(blank=True, db_index=True, max_length=128, null=True),
                 ),
                 ("trueskill_mu", models.FloatField(default=25.0)),
                 ("trueskill_sigma", models.FloatField(default=8.333333333333334)),
@@ -385,12 +388,12 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "game",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Game"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Game"),
                 ),
             ],
-            options={"ordering": ["-match_date", "playername"],},
+            options={
+                "ordering": ["-match_date", "playername"],
+            },
         ),
         migrations.CreateModel(
             name="Replay",
@@ -416,9 +419,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "autohostname",
-                    models.CharField(
-                        blank=True, db_index=True, max_length=128, null=True
-                    ),
+                    models.CharField(blank=True, db_index=True, max_length=128, null=True),
                 ),
                 ("gametype", models.CharField(db_index=True, max_length=256)),
                 ("startpostype", models.IntegerField(blank=True, null=True)),
@@ -452,7 +453,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["-upload_date"], "get_latest_by": "upload_date",},
+            options={
+                "ordering": ["-upload_date"],
+                "get_latest_by": "upload_date",
+            },
         ),
         migrations.CreateModel(
             name="SiteStats",
@@ -506,9 +510,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "game",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Game"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Game"),
                 ),
             ],
         ),
@@ -544,7 +546,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["rank"],},
+            options={
+                "ordering": ["rank"],
+            },
         ),
         migrations.CreateModel(
             name="SldbMatchSkillsCache",
@@ -590,9 +594,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "game",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Game"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Game"),
                 ),
             ],
         ),
@@ -632,15 +634,11 @@ class Migration(migrations.Migration):
                 ("num", models.SmallIntegerField()),
                 (
                     "allyteam",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Allyteam"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Allyteam"),
                 ),
                 (
                     "replay",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
                 ),
                 (
                     "teamleader",
@@ -666,9 +664,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "replay",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
                 ),
             ],
         ),
@@ -690,15 +686,11 @@ class Migration(migrations.Migration):
                 ("age", models.IntegerField(default=-1)),
                 (
                     "player",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Player"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Player"),
                 ),
                 (
                     "replay",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
                 ),
             ],
         ),
@@ -744,23 +736,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="replay",
             name="uploader",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name="ratinghistory",
             name="match",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="ratinghistory",
             name="playeraccount",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.PlayerAccount"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.PlayerAccount"),
         ),
         migrations.AddField(
             model_name="player",
@@ -775,9 +761,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="player",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="player",
@@ -792,23 +776,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="mapmodoption",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="extrareplaymedia",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="extrareplaymedia",
             name="uploader",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name="bawards",
@@ -945,9 +923,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bawards",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="bawards",
@@ -963,29 +939,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="allyteam",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
         migrations.AddField(
             model_name="additionalreplayowner",
             name="additional_owner",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.PlayerAccount"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.PlayerAccount"),
         ),
         migrations.AddField(
             model_name="additionalreplayowner",
             name="uploader",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
             model_name="additionalreplayinfo",
             name="replay",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="srs.Replay"),
         ),
     ]

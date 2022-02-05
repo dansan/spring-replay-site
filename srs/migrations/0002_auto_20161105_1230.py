@@ -23,7 +23,9 @@ class Migration(migrations.Migration):
             field=models.BooleanField(db_index=True, default=True),
         ),
         migrations.AlterField(
-            model_name="newsitem", name="text", field=models.CharField(max_length=1024),
+            model_name="newsitem",
+            name="text",
+            field=models.CharField(max_length=1024),
         ),
         migrations.AlterField(
             model_name="playeraccount",

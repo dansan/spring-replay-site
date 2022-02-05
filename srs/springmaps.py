@@ -8,10 +8,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import pprint
 import random
 import sys
+import urllib.parse
+import urllib.request
 from os.path import exists as path_exists, join as path_join
 from shutil import copyfile
 
@@ -22,8 +25,6 @@ from PIL import Image, ImageColor, ImageDraw, ImageFont
 from .models import Allyteam, Player
 
 logger = logging.getLogger(__name__)
-
-import urllib.request, urllib.parse, json
 
 
 def fetch_map_info(map_name):
@@ -39,6 +40,7 @@ def fetch_map_info(map_name):
     url = "https://springfiles.springrts.com/json.php?" + urllib.parse.urlencode(params)
     map_info = json.loads(urllib.request.urlopen(url).read())
     return map_info
+
 
 class SpringMaps:
     def __init__(self, mapname):
@@ -92,17 +94,13 @@ class SpringMaps:
                     for chunk in response:
                         fp.write(chunk)
             else:
-                logger.error(
-                    'Could not download image %r. Setting image to "map_img_not_avail.jpg".'
-                )
+                logger.error('Could not download image %r. Setting image to "map_img_not_avail.jpg".')
                 copyfile(
                     path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
                     self.full_base_image_filepath,
                 )
         else:
-            logger.warning(
-                "We have no map-info, setting image to 'map_img_not_avail.jpg'."
-            )
+            logger.warning("We have no map-info, setting image to 'map_img_not_avail.jpg'.")
             copyfile(
                 path_join(settings.IMG_PATH, "map_img_not_avail.jpg"),
                 self.full_base_image_filepath,
@@ -177,10 +175,8 @@ class SpringMaps:
                 team_layer = Image.new(
                     "RGBA",
                     (
-                        int(at.startrectright * full_img_x)
-                        - int(at.startrectleft * full_img_x),
-                        int(at.startrectbottom * full_img_y)
-                        - int(at.startrecttop * full_img_y),
+                        int(at.startrectright * full_img_x) - int(at.startrectleft * full_img_x),
+                        int(at.startrectbottom * full_img_y) - int(at.startrecttop * full_img_y),
                     ),
                     (256, 256, 256, 96),
                 )
@@ -218,14 +214,10 @@ class SpringMaps:
             #
             # draw players actual start positions
             #
-            font = ImageFont.truetype(
-                path_join(settings.FONTS_PATH, "VeraMono.ttf"), 28
-            )
+            font = ImageFont.truetype(path_join(settings.FONTS_PATH, "VeraMono.ttf"), 28)
             for player in players:
                 pl_img_pos_x = player.startposx / map_img_mult_x
-                pl_img_pos_y = (
-                    player.startposz / map_img_mult_y
-                )  # z is in spring what y is in img
+                pl_img_pos_y = player.startposz / map_img_mult_y  # z is in spring what y is in img
                 team_color = ImageColor.getrgb("#{}".format(player.team.rgbcolor))
                 # center number and circle above startpoint --> move up and left by text-size/2
                 text_w, text_h = font.getsize(str(player.team.num))
@@ -283,8 +275,7 @@ class SpringMaps:
             # draw start positions saved in map
             #
             for startpos in [
-                (float(pair.split(",")[0]), float(pair.split(",")[1]))
-                for pair in replay.map_info.startpos.split("|")
+                (float(pair.split(",")[0]), float(pair.split(",")[1])) for pair in replay.map_info.startpos.split("|")
             ]:
                 draw_pos_x = startpos[0] / map_img_mult_x
                 draw_pos_y = startpos[1] / map_img_mult_y

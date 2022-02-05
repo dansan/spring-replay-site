@@ -39,8 +39,6 @@ class Command(BaseCommand):
         timer.start("cmdline_upload()")
         UserModel = get_user_model()
         user = UserModel.objects.get(username="root")
-        replay, msg = parse_uploaded_file(
-            path, timer, None, None, "Uploaded on cmdline.", user, False, True
-        )
+        replay, msg = parse_uploaded_file(path, timer, None, None, "Uploaded on cmdline.", user, False, True)
         self.stdout.write("Replay(id={}): {}".format(replay.pk, msg))
         timer.stop("cmdline_upload()")

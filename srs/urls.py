@@ -55,13 +55,9 @@ urlpatterns = [
         index_replay_range,
         name="srs/index_replay_range",
     ),
-    url(
-        r"^sitemap\.xml$", django.contrib.sitemaps.views.sitemap, {"sitemaps": sitemaps}
-    ),
+    url(r"^sitemap\.xml$", django.contrib.sitemaps.views.sitemap, {"sitemaps": sitemaps}),
     url(r"^upload/$", upload, name="srs/upload"),
-    url(
-        r"^upload_media/(?P<gameID>[0-9,a-f]+)/$", upload_media, name="srs/upload_media"
-    ),
+    url(r"^upload_media/(?P<gameID>[0-9,a-f]+)/$", upload_media, name="srs/upload_media"),
     url(r"^media/(?P<mediaid>[0-9]+)/$", media, name="srs/media"),
     url(r"^settings/$", user_settings, name="srs/settings"),
     url(r"^login/$", login, name="srs/login"),
@@ -127,17 +123,13 @@ urlpatterns = [
         hall_of_fame,
         name="srs/hall_of_fame",
     ),
-    url(
-        r"^hof_tbl_src/(?P<leaderboardid>[\d-]+)/$", hof_tbl_src, name="srs/hof_tbl_src"
-    ),
+    url(r"^hof_tbl_src/(?P<leaderboardid>[\d-]+)/$", hof_tbl_src, name="srs/hof_tbl_src"),
     url(
         r"^ajax_player_lookup/(?P<name>.+)/$",
         ajax_player_lookup,
         name="srs/ajax_player_lookup",
     ),
-    url(
-        r"^ajax_map_lookup/(?P<name>.+)/$", ajax_map_lookup, name="srs/ajax_map_lookup"
-    ),
+    url(r"^ajax_map_lookup/(?P<name>.+)/$", ajax_map_lookup, name="srs/ajax_map_lookup"),
     url(
         r"^ajax_playerrating_tbl_src/(?P<accountid>[\d-]+)/$",
         ajax_playerrating_tbl_src,

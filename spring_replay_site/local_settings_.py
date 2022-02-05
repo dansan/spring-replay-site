@@ -42,7 +42,13 @@ MEDIA_URL = "http://replays.springrts.com/static/media/"
 SLDB_URL = ""
 SLDB_ACCOUNT = ""
 SLDB_PASSWORD = ""
-SLDB_SKILL_ORDER = [("1", 0,), ("F", 1), ("T", 2), ("G", 3), ("L", 4)]
+SLDB_SKILL_ORDER = [
+    ("1", 0),
+    ("F", 1),
+    ("T", 2),
+    ("G", 3),
+    ("L", 4),
+]
 SLDB_TIMEOUT = 3
 SLDB_QUERY_PAUSE_ON_TIMEOUT = 180
 SLDB_ALLOWED_IPS = ["78.46.100.157"]
@@ -75,15 +81,21 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "filters": {
-        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse",},
-        "require_debug_true": {"()": "django.utils.log.RequireDebugTrue",},
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
     },
     "formatters": {
         "django.server": {
             "()": "django.utils.log.ServerFormatter",
             "format": DEBUG_FORMAT,
         },
-        "srs": {"format": DEBUG_FORMAT,},
+        "srs": {
+            "format": DEBUG_FORMAT,
+        },
     },
     "handlers": {
         "console": {
@@ -103,14 +115,26 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["console", "mail_admins"], "level": "INFO",},
+        "django": {
+            "handlers": ["console", "mail_admins"],
+            "level": "INFO",
+        },
         "django.server": {
             "handlers": ["django.server"],
             "level": "INFO",
             "propagate": False,
         },
-        "infolog_upload": {"handlers": ["console"], "level": "DEBUG",},
-        "lobbyauth": {"handlers": ["console"], "level": "DEBUG",},
-        "srs": {"handlers": ["console"], "level": "DEBUG",},
+        "infolog_upload": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "lobbyauth": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "srs": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
