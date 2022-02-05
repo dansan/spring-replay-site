@@ -212,7 +212,7 @@ def replay(request, gameID):
         new_rating = 0
         lobby_rank_sum = 0
         if (
-            replay.rated == False
+            not replay.rated
             or replay.notcomplete
             or not players.exists()
             or not replay.game_release.game.sldb_name
@@ -638,7 +638,8 @@ def hall_of_fame(request, abbreviation):
         ]
     c["games"] = Game.objects.exclude(sldb_name="")
     c["ladders"] = [x[1] for x in RatingBase.MATCH_TYPE_CHOICES]
-    #    games_with_bawards = Game.objects.filter(gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
+    #    games_with_bawards = Game.objects.filter(
+    #       gamerelease__name__in=BAwards.objects.values_list("replay__gametype", flat=True).distinct()).distinct()
     # FIXME: show awards that belong to each game separately. for now only BA.
     games_with_bawards = Game.objects.filter(name="Balanced Annihilation")
     if game in games_with_bawards:
@@ -786,7 +787,7 @@ def sldb_privacy_mode(request):
             new_mode = int(form.cleaned_data["mode"])
             logger.debug("new_mode: %d (user: %s)", new_mode, request.user)
             try:
-                sldb_pref = set_sldb_pref(accountid, "privacyMode", str(new_mode))
+                set_sldb_pref(accountid, "privacyMode", str(new_mode))
             except:
                 logger.exception("FIXME: to broad exception handling.")
                 c["new_privacy_mode"] = -1

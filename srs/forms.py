@@ -71,15 +71,20 @@ class SLDBPrivacyForm(forms.Form):
     MODE_CHOICES = (
         (
             0,
-            '<p><b>Privacy disabled</b>:<br>Your exact trueskill rating is shown to<br>everyone on the replay website and in<br>"!status" output on the autohosts.</p>',
+            "<p><b>Privacy disabled</b>:<br>Your exact trueskill rating is shown to<br>everyone on the replay "
+            'website and in<br>"!status" output on the autohosts.</p>',
         ),
         (
             1,
-            '<b>Basic privacy enabled <u>(default)</u></b>:<br>Players and website visitors only see a<br>rough estimate of your trueskill rating.<br>If you log into the website you will still<br>see your own exact ratings. On the autohosts<br>only privileged users can still see an exact value<br>in "!status" output.',
+            "<b>Basic privacy enabled <u>(default)</u></b>:<br>Players and website visitors only see a<br>rough "
+            "estimate of your trueskill rating.<br>If you log into the website you will still<br>see your own "
+            'exact ratings. On the autohosts<br>only privileged users can still see an exact value<br>in "!status" '
+            "output.",
         ),
         (
             2,
-            '<b>Full privacy enabled</b>:<br>Same as "Basic privacy", but even<br>privileged autohost users see only a rough<br>estimate in "!status" output.',
+            '<b>Full privacy enabled</b>:<br>Same as "Basic privacy", but even<br>privileged autohost users see only '
+            'a rough<br>estimate in "!status" output.',
         ),
     )
     mode = forms.ChoiceField(required=False, label="", choices=MODE_CHOICES, widget=forms.RadioSelect())

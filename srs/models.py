@@ -621,7 +621,8 @@ class PlayerAccount(models.Model):
         """
         Find top 10 hero and "lost in service" units for this player. Sorted by headcount.
 
-        :return: tuple: heroes, lost. each is a list of tuples: ([(u'Sumo', 9), (u'Light Laser Tower', 8), ...], [(), ..])
+        :return: tuple: heroes, lost. each is a list of tuples:
+            ([(u'Sumo', 9), (u'Light Laser Tower', 8), ...], [(), ..])
         """
         awards = XTAwards.objects.filter(player__account=self, isAlive=1).values_list("unit", flat=True)
         co = Counter(awards)
@@ -824,7 +825,7 @@ class RatingBase(models.Model):
             return 0
 
     def __unicode__(self):
-        return "{}({}, {}, {}) TS: ({}, {})".format(
+        return "{}({}, {}, {}, {}) TS: ({}, {})".format(
             self.__class__.__name__,
             self.pk,
             self.playername,

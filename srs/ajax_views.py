@@ -599,7 +599,7 @@ class BrowseReplaysDTView(Django17DatatablesView):
         if search:
             search_fields = list()
             for k, v in self.dt_data.items():
-                if k.startswith("bSearchable_") and v == True:
+                if k.startswith("bSearchable_") and v is True:
                     index = int(k.split("bSearchable_")[1])
                     search_fields.append(self.get_db_fields()[index])
             if self.dt_data["bRegex"]:

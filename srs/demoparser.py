@@ -72,7 +72,7 @@ class Demoparser(object):
             cmd = "setplayername"
             size, playerNum = struct.unpack("<BB", data[:2])
             playerName = data[2:]
-            if not playerNum in self.players:
+            if playerNum not in self.players:
                 self.players[playerNum] = playerName.strip(b"\0")
             return self.write(locals(), "cmd", "size", "playerNum", "playerName")
         elif cmd == 7:
@@ -136,7 +136,7 @@ class Demoparser(object):
             commandCount = struct.unpack("<h", data[pos : pos + 2])[0]
             pos += 2
             commands = []
-            for i in xrange(commandCount):
+            for i in range(commandCount):
                 cmdID, options, size = struct.unpack("<iBh", data[pos : pos + 7])
                 pos += 7
                 params = struct.unpack("<%if" % size, data[pos : pos + (4 * size)])

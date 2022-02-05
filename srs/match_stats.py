@@ -19,7 +19,7 @@ from .SpringStatsViewer.SpringDemoFile import DemoFileReader
 try:
     from typing import Dict, List, Optional, Tuple, Union
 
-    from SpringStatsViewer.SpringDemoFile import PlayerStatistics, TeamStatistics
+    from SpringStatsViewer.SpringDemoFile import TeamStatistics
 except ImportError:
     pass
 

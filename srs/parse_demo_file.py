@@ -209,14 +209,16 @@ class Parse_demo_file:
         #  'winningAllyTeamsSize': 1}
         self.start_stats_thread()
         with myopen(self.filename, "rb") as self.demofile:
-            self.parse_header()  # pos:       0 -     352 (0 -> headerSize)
-            self.parse_script()  # pos:     352 -    4885 (headerSize -> + scriptSize)
-            self.parse_demostream()  # pos:    4885 - 3093743 (headerSize + scriptSize -> + demoStreamSize | END)
+            self.parse_header()  # pos:        0 -     352 (0 -> headerSize)
+            self.parse_script()  # pos:      352 -    4885 (headerSize -> + scriptSize)
+            self.parse_demostream()  # pos: 4885 - 3093743 (headerSize + scriptSize -> + demoStreamSize | END)
             #                                                        352 + 4533 + 3088877 = 3093762
-            # self.parse_player_stats()      # pos:       ? -       ? (numPlayers * playerStatElemSize = playerStatSize -> 23 * 20 = 460)
-            # self.parse_team_stats()        # pos:       ? -       ? (teamStatSize = numTeams * char/uint (size of teams stats)
-            #                                                                       + numTeams * teams stats * teamStatElemSize)
-            self.parse_winningAllyTeams()  # pos: 3093762 - 3093763 (headerSize + scriptSize + demoStreamSize -> + winningAllyTeamsSize)
+            # self.parse_player_stats() # pos: ? -       ? (numPlayers * playerStatElemSize = playerStatSize
+            #                                                         -> 23 * 20 = 460)
+            # self.parse_team_stats()   # pos: ? -       ? (teamStatSize = numTeams * char/uint (size of teams stats)
+            #                                                              + numTeams * teams stats * teamStatElemSize)
+            self.parse_winningAllyTeams()  # pos: 3093762 - 3093763 (headerSize + scriptSize + demoStreamSize
+            #                                                        -> + winningAllyTeamsSize)
         logger.debug("Waiting for stats thread...")
         self.join_stats_thread()
         logger.info("Stats thread finished.")
@@ -309,7 +311,7 @@ class Parse_demo_file:
         while winnning_team < self.header["winningAllyTeamsSize"]:
             blob = self.read_blob(self.demofile.tell(), 1)
             logger.debug("blob=%r", blob)
-            team = unpack_B = unpack("B", blob)
+            team = unpack("B", blob)
             self.winningAllyTeams.append(team[0])
             winnning_team += 1
         logger.debug("self.winningAllyTeams=%r", self.winningAllyTeams)
@@ -461,7 +463,6 @@ class Parse_demo_file:
         packet = True
         currentFrame = 0
         playerIDToName = {}
-        ba_platform_stats = {}
         if DEBUG:
             kop = open("/tmp/msg.data", "wb")
             stats_fp = open("/tmp/stats.log", "wb")
@@ -599,10 +600,10 @@ class Parse_demo_file:
                             try:
                                 # unfortunately numbers in this sequence were encoded differently, so parsing
                                 # is a little tricky, example:
-                                # r1850: (len:  31): '\xa17\xa15\xa16\xa25\xa215\xa23\xa33\xa312\xa315\xa40\xa510\xa615\xa74'
-                                # r2043: (len: 124): '\xa11:1147\xa10:0\xa10:0\xa21:946348\xa23:nil\xa22:102684\xa33:1.317666888237\xa31:1.2887364625931\xa32:0.75686019659042\xa40\xa51:6590859\xa63:56526.171875\xa70:0'
-                                # (unpack'B'): (161, 55, 161, 53, 161, 54, 162, 53, 162, 49, 53, 162, 51, 163, 51, 163, 49, 50, 163, 49, 53, 164, 48, 165, 49, 48, 166, 49, 53, 167, 52)
-                                # (unpack'c'): ('\xa1', '7', '\xa1', '5', '\xa1', '6', '\xa2', '5', '\xa2', '1', '5', '\xa2', '3', '\xa3', '3', '\xa3', '1', '2', '\xa3', '1', '5', '\xa4', '0', '\xa5', '1', '0', '\xa6', '1', '5', '\xa7', '4')
+                                # r1850: (len:  31): '\xa17\xa15\xa16\xa25\xa215\xa23\xa33\xa312\xa315\xa40\xa510\xa615\xa74'  # noqa: E501
+                                # r2043: (len: 124): '\xa11:1147\xa10:0\xa10:0\xa21:946348\xa23:nil\xa22:102684\xa33:1.317666888237\xa31:1.2887364625931\xa32:0.75686019659042\xa40\xa51:6590859\xa63:56526.171875\xa70:0'  # noqa: E501
+                                # (unpack'B'): (161, 55, 161, 53, 161, 54, 162, 53, 162, 49, 53, 162, 51, 163, 51, 163, 49, 50, 163, 49, 53, 164, 48, 165, 49, 48, 166, 49, 53, 167, 52)  # noqa: E501
+                                # (unpack'c'): ('\xa1', '7', '\xa1', '5', '\xa1', '6', '\xa2', '5', '\xa2', '1', '5', '\xa2', '3', '\xa3', '3', '\xa3', '1', '2', '\xa3', '1', '5', '\xa4', '0', '\xa5', '1', '0', '\xa6', '1', '5', '\xa7', '4')  # noqa: E501
                                 # award markers are ints 161-167 encoded in one unsigned char, but the
                                 # player numbers are ints 0-31 encoded each digit as a single char
                                 # ':' is 58 in str_B (and ':' in str_c)
@@ -628,7 +629,8 @@ class Parse_demo_file:
                                             # gadget version < r2043 has no ':score' after the teamID
                                             awards_data.append([int(s_[0]) - 1, -1])
                                         except ValueError:
-                                            # beware typo in gadget: http://imolarpg.dyndns.org/trac/balatest/changeset/2070
+                                            # beware typo in gadget:
+                                            # http://imolarpg.dyndns.org/trac/balatest/changeset/2070
                                             awards_data.append([int(s_[0]) - 1, -2])
                                         start = end
                                 else:
@@ -707,7 +709,8 @@ class Parse_demo_file:
                             except KeyError:
                                 self.additional["xtawards"] = [xtawards]
                         else:
-                            # logger.debug('unknown luamsg messageData["msgid"]=%r messageData["msg"]=%r', messageData["msgid"], messageData["msg"])
+                            # logger.debug('unknown luamsg messageData["msgid"]=%r messageData["msg"]=%r',
+                            #   messageData["msgid"], messageData["msg"])
                             pass
             except Exception as exc:
                 logger.error("FIXME: to broad exception handling.")

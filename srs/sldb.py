@@ -7,7 +7,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
-import errno
 import logging
 import os.path
 import socket
@@ -457,8 +456,9 @@ def get_sldb_player_ts_history_graphs(game_abbr, accountid):
 
     SLDB XmlRpc interface docu: https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L141
 
-    :param game_abbr:  str - one of: "BA", "EVO", "KP", "NOTA", "S1944", "TA", "XTA", "ZK" (see "modShortName" in https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L7)
-    :param accountid:  int - accountID of playeraccount for which the graph should be fetched
+    :param str game_abbr: one of: "BA", "EVO", "KP", "NOTA", "S1944", "TA", "XTA", "ZK" (see "modShortName" in
+        https://github.com/Yaribz/SLDB/blob/master/XMLRPC#L7)
+    :param int accountid: accountID of playeraccount for which the graph should be fetched
     :return: Dict - SldbPlayerTSGraphCache.as_dict()
             or SLDBstatusError
             or SLDBbadArgumentError

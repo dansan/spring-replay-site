@@ -164,11 +164,11 @@ LOGGING = {
 
 
 # import site specific settings, defaults first
-from .local_settings_ import *
+from .local_settings_ import *  # noqa: E402, F401, F403
 
 # now overwrite default settings
 try:
-    from .local_settings import *
+    from .local_settings import *  # noqa: E402, F401, F403
 except ImportError:
     print("ERROR: Please copy local_settings_.py to local_settings.py, and overwrite\n       default settings there.")
     exit(1)
